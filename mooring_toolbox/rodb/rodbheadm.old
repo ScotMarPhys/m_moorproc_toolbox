@@ -1,0 +1,262 @@
+function [vars,formats,lengths,names] = rodbhead(ident)
+%RODBHEAD Decode RO database keywords.
+%  [VARS,FORMATS,LENGTHS,NAMES] = RODBHEAD(IDENT)
+%
+%  input  :      ident           : header array of RODB file
+%
+%  output :      vars            : keyword numbers
+%                formats         : keyword formats
+%                lengths         : data lengths of keyword information
+%
+%  TYPE rodbhead  help   FOR MORE INFORMATIONS ON IDENTIFIERS
+
+%  G.Krahmann, IfM Kiel, Oct 1995
+%  number changed to EPIC conventions    G.Krahmann, Feb 1996, 0.1.0-->0.1.1
+%  added identifier                      G.Krahmann, Feb 1996, 0.1.1-->0.1.2
+%  added identifier and 'disp'           G.Krahmann, Feb 1996, 0.1.2-->0.1.3
+%  about 50% faster                      C. Mertens, May 1997, 0.1.3-->0.1.4
+%  version 0.1.4                          last change 26.05.1997
+%  added ccl4, tco2, maxpress            d.kieke,    Aug 2000, 0.1.4-->0.1.5
+
+global allkeys allkeys1 nall
+
+if isempty(allkeys)
+%
+% keyword array (first 20 characters) , its C-format (8 characters),
+% the number of rows, which are necessary for the information and the
+% keyword identifying number, negative values indicate header keywords
+%
+allkeys = [ ...
+'Filename            %s       0   -1'; ...  % (raw data) file name
+'Shipname            %s       0   -2'; ...  % ship name
+'Cruise              %s       0   -3'; ...  % cruise identifier
+'Mooring             %s       0   -4'; ...  % mooring identifer
+'Model               %s       0   -5'; ...  % model identifer
+'Instrument          %s       0  -10'; ...  % instrument identifier
+'InstrType           %s       0  -10'; ...  % instrument identifier
+'Serial_Number       %d       1  -11'; ...  % serial number
+'SerialNumber        %d       1  -11'; ...  % serial number
+'Station             %s       0  -12'; ...  % station number or name
+'Profile             %s       0  -13'; ...  % profile identifier
+'CTD_File            %s       0  -20'; ...  % CTD file name
+'Meteo_File          %s       0  -21'; ...  % meterological data file name
+'WaterTemp           %g       1  -31'; ...  % water temp (deg C)
+'WaterDepth          %d       1  -32'; ...  % water depth (m)
+'Max_Depth           %d       1  -33'; ...  % maximum profile depth (m)
+'MaxDepth            %d       1  -34'; ...  % maximum profile depth (m)
+'Max_Press           %d       1  -41'; ...  % maximum profile pressure (dbar)
+'MaxPress            %d       1  -41'; ...  % maximum profile pressure (dbar)
+'InstrDepth          %d       1  -35'; ...  % instrument depth (m)
+'Depth               %d       1  -36'; ...  % (instrument) depth (m)
+'SensorSpacing       %d       1  -37'; ...  % sensor spacing (m) (thermistor strings)
+'LayerThickness      %g       1  -38'; ...  % 
+'Press_offset        %g       1  -39'; ...  % pressure offset (dbar)
+'Mag_Deviation       %g       1  -40'; ...
+'LatentHeat          %g       1  -50'; ...
+'ThermalExpansion    %g       1  -51'; ...
+'HalineContraction   %g       1  -52'; ...
+'ReferenceTemperature%g       1  -53'; ...
+'ReferenceSalinity   %g       1  -54'; ...
+'ReferenceDensity    %g       1  -55'; ...
+'Temp_Coef           %s       0  -60'; ...
+'Cond_Coef           %s       0  -61'; ...
+'Gravity             %g       1  -70'; ...
+'Start_Date          %d/%d/%d 3  -80'; ...  % start date
+'Date                %d/%d/%d 3  -80'; ...  % (start) date
+'Start_Time          %d:%d    2  -81'; ...  % start time
+'Time                %d:%d    2  -81'; ...  % (start) time
+'End_Date            %d/%d/%d 3  -82'; ...  % end date
+'End_Time            %d:%d    2  -83'; ...  % end time
+'Time_Step           %g       1  -84'; ...
+'Start_Lat           pos      1  -90'; ...  % start latitude
+'Latitude            pos      1  -90'; ...  % (start) latitude
+'Start_Lon           pos      1  -91'; ...  % start longitude
+'Start_Long          pos      1  -91'; ...  % start longitude
+'Longitude           pos      1  -91'; ...  % (start) longitude
+'End_Lat             pos      1  -92'; ...  % end latitude
+'End_Lon             pos      1  -93'; ...  % end longitude
+'End_Long            pos      1  -93'; ...  % end longitude
+'Columns             col      0 -100'; ...  % Columns in data file
+'Columns cont.       col      0 -101'; ...  % Columns in data file
+'P                   dat      0    1'; ...  % pressure (dbar)
+'D                   dat      0    3'; ...  % depth (m)
+'Z                   dat      0    3'; ...  % depth (m)
+'MLD                 dat      0    8'; ...  % mixed layer depth (m)
+'T                   dat      0   20'; ...  % temperature (deg C)
+'WT                  dat      0   19'; ...  % wet bulb temperature (deg C)
+'AT                  dat      0   21'; ...  % air temperature (deg C)
+'PT                  dat      0   30'; ...  % potential temp (deg C)
+'S                   dat      0   41'; ...  % salinity
+'C                   dat      0   50'; ...  % conductivity (mS/cm)
+'O                   dat      0   60'; ...  % oxygen (ml/l)
+'BO                  dat      0   61'; ...  % bottle oxygen (ml/l)
+'DO                  dat      0   67'; ...  % oxygen difference (ml/l)
+'ST                  dat      0   70'; ...  % sigma-t (kg/m^3)
+'STH                 dat      0   71'; ...  % sigma-theta (kg/m^3)
+'SV                  dat      0   80'; ...  % sound velocity (m/s)
+'SCN                 dat      0  100'; ...  % scan number
+'BTL                 dat      0  103'; ...  % niskin bottle number
+'PRF                 dat      0  104'; ...  % profile/cast number
+'STN                 dat      0  105'; ...  % station
+'OC                  dat      0  110'; ...  % oxygen current (micro A)
+'OT                  dat      0  111'; ...  % oxygen temperature (deg C)
+'DOC                 dat      0  112'; ...  % dOc/Dt (micro A/s)
+'QS                  dat      0  133'; ...  % shortwave radiation (W/m^2)
+'QL                  dat      0  136'; ...  % longwave radiation (W/m^2)
+'QH                  dat      0  137'; ...  % latent heat flux (W/m^2)
+'QB                  dat      0  138'; ...  % sensible heat flux (W/m^2)
+'F11                 dat      0  150'; ...  % freon 11 (micro moles/kg)
+'F12                 dat      0  151'; ...  % freon 12 (micro moles/kg)
+'CCL4                dat      0  190'; ...  % carbon tetrachloride (pico moles/kg)
+'NO3                 dat      0  182'; ...  % nitrate (micro moles/l)
+'NO2                 dat      0  184'; ...  % nitrite (micro moles/l)
+'NN                  dat      0  185'; ...  % nitrite + nitrate (micro moles/l)
+'PO4                 dat      0  186'; ...  % phosphate (micro moles/l)
+'SI                  dat      0  188'; ...  % silicate (micro moles/l)
+'IC                  dat      0  215'; ...  % ice concentration (percent)
+'CS                  dat      0  300'; ...  % current speed (cm/s)
+'CD                  dat      0  310'; ...  % current direction (deg)
+'U                   dat      0  320'; ...  % zonal current (cm/s)
+'V                   dat      0  321'; ...  % meridional current (cm/s)
+'W                   dat      0  329'; ...  % vertical velocity (cm/s)
+'WS                  dat      0  401'; ...  % wind speed (m/s)
+'WD                  dat      0  410'; ...  % wind direction (deg) (0-360)
+'WU                  dat      0  422'; ...  % wind speed (m/s) (going E)
+'WV                  dat      0  423'; ...  % wind speed (m/s) (going N)
+'TX                  dat      0  446'; ...  % zonal wind stress (N/m^2)
+'TY                  dat      0  447'; ...  % meridional wind stress (N/m^2)
+'LAT                 dat      0  500'; ...  % latitude (degrees north)
+'LON                 dat      0  501'; ...  % longitude (degrees east)
+'YY                  dat      0  601'; ...  % year
+'YYYY                dat      0  601'; ...  % year
+'MM                  dat      0  602'; ...  % month
+'DD                  dat      0  603'; ...  % day
+'HH                  dat      0  604'; ...  % hour (decimal)
+'TIM                 dat      0  626'; ...  % time since start (s)
+'PG                  dat      0  721'; ...  % ADCP percent good pings
+'EV                  dat      0  722'; ...  % ADCP error velocity (cm/s)
+'AMP                 dat      0  723'; ...  % ADCP amplitude
+'AGC                 dat      0 1202'; ...  % ADCP Echo intensity (counts)
+'HDG                 dat      0 1215'; ...  % ADCP heading (deg)
+'PIT                 dat      0 1216'; ...  % ADCP pitch (deg)
+'ROL                 dat      0 1217'; ...  % ADCP roll (deg)
+'TLT                 dat      0 1218'; ...  % FSI ACM Tilt (deg)
+'F113                dat      0 1703'; ...  % freon 113 (pico moles/kg)
+'TCO2                           1751'; ...  % total dissolved organic carbon (micro moles/kg)
+'T1                  dat      0 9111'; ...  % temp TC sensor 1 (deg C)
+'T2                  dat      0 9112'; ...  % temp TC sensor 2 (deg C)
+'T3                  dat      0 9113'; ...  % temp TC sensor 3 (deg C)
+'T4                  dat      0 9114'; ...  % temp TC sensor 4 (deg C)
+'T5                  dat      0 9115'; ...  % temp TC sensor 5 (deg C)
+'T6                  dat      0 9116'; ...  % temp TC sensor 6 (deg C)
+'T7                  dat      0 9117'; ...  % temp TC sensor 7 (deg C)
+'T8                  dat      0 9118'; ...  % temp TC sensor 8 (deg C)
+'T9                  dat      0 9119'; ...  % temp TC sensor 9 (deg C)
+'T10                 dat      0 9120'; ...  % temp TC sensor 10 (deg C)
+'T11                 dat      0 9121'; ...  % temp TC sensor 11 (deg C)
+'T12                 dat      0 9122'; ...  % temp TC sensor 12 (deg C)
+'PT1                 dat      0 9131'; ...  % pot temp TC sensor 1 (deg C)
+'PT2                 dat      0 9132'; ...  % pot temp TC sensor 2 (deg C)
+'PT3                 dat      0 9133'; ...  % pot temp TC sensor 3 (deg C)
+'PT4                 dat      0 9134'; ...  % pot temp TC sensor 4 (deg C)
+'PT5                 dat      0 9135'; ...  % pot temp TC sensor 5 (deg C)
+'PT6                 dat      0 9136'; ...  % pot temp TC sensor 6 (deg C)
+'PT7                 dat      0 9137'; ...  % pot temp TC sensor 7 (deg C)
+'PT8                 dat      0 9138'; ...  % pot temp TC sensor 8 (deg C)
+'PT9                 dat      0 9139'; ...  % pot temp TC sensor 9 (deg C)
+'PT10                dat      0 9140'; ...  % pot temp TC sensor 10 (deg C)
+'PT11                dat      0 9141'; ...  % pot temp TC sensor 11 (deg C)
+'PT12                dat      0 9142'; ...  % pot temp TC sensor 12 (deg C)
+'                                   ';];
+
+allkeys1 = allkeys;
+allkeys(:,1:20) = upper(allkeys(:,1:20));
+nall = abs(allkeys(:,1:20));
+
+end
+
+
+%
+% check for empty input
+%
+if isempty(ident)
+  vars=[];
+  formats=[];
+  lengths=[];
+  return
+end
+  
+% delimiter
+d = ':';
+
+if strcmp(ident,'help')
+  more on
+  type rodbhead
+  more off
+end
+
+s = size(allkeys);
+
+%
+% check for multiple keywords in 'ident'
+% or for header keyword list
+%
+ident = upper(ident);
+nident = abs(ident);
+sident = size(ident);
+if sident(1) == 1
+  multi = find(nident == abs(d));
+else
+  multi = [];
+end
+if isempty(multi)
+  [dummy,xma] = min(abs(nident' - abs(' ')));
+  [dummy2,xma2] = min(abs(nident' - abs('=')));
+  dummy = dummy + dummy2;
+  xma = min([xma;xma2]);
+  if all(dummy)
+    xmi = 1;
+    xma = sident(2);
+    yyy = 1;
+  else
+    xmi = ones(1,length(xma));
+    xma = xma - 1;
+    yyy = [1:sident(1)];
+  end    
+  nkeys = sident(1);
+else
+  dels = find(ident == abs(d));
+  xmi = [1,dels+1];
+  xma = [dels-1,length(ident)];
+  yyy = ones(1,length(xmi));
+  nkeys = length(dels) + 1;
+end     
+
+%
+% search for keywords in keyword list
+%
+names = 32*ones(nkeys,20);
+for n = 1:nkeys
+
+  i = find(nall(:,1) == nident(yyy(n),xmi(n)));
+  if length(i) > 1
+    m = length(i);
+    s1 = ones(m,1)* ...
+          [nident(yyy(n),xmi(n):xma(n)),32*ones(1,20-(xma(n)-xmi(n)+1))];
+    j = find(sum(abs(s1 - nall(i,:))') == 0);
+    i = i(j);
+  end
+
+  if ~isempty(i)
+    names(n,:) = allkeys1(i,1:20);
+    vars(n) = sscanf(allkeys(i,31:35),'%d',1);
+    formats(n,:) = allkeys(i,21:28);
+    lengths(n) = abs(allkeys(i,30) - 48);
+  else
+    vars(n) = -9999;
+    formats(n,:) = blanks(8);
+    lengths(n) = -9999;
+  end
+
+end
+

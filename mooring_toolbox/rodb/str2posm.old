@@ -1,0 +1,48 @@
+function [pos,degs,mins] = str2pos(posstr)
+% function [pos,degs,mins] = str2pos(posstr)
+%
+% converts a position string into a decimal position
+%
+% Input: - posstr		: string with position information
+%				  may look like
+%					'43.1234'
+%				    or  '43N07'
+%				    or  '43 07 N'
+% 
+% Output: - pos			: decimal position [degrees]
+%	  - degs		: full degrees
+%	  - mins		: decimal minutes
+%				  degs and mins are negative for W or S
+%
+% version 1.0.1		last change 09.07.1997
+
+% Gerd Krahmann, IfM Kiel, Jan 1995
+% added third string version	G.Krahmann, LODYC Paris, Jul 1997
+
+% check which format is used
+good=find( (posstr=='N') | (posstr=='S') | (posstr=='E') | (posstr=='W') );
+if isempty(good)
+  pos=str2num(posstr);
+  degs=fix(pos);
+  mins=(pos-degs)*60;
+else
+  if good(1)==length(posstr)
+    [degs,mins]=strtok(posstr,' ');
+    degs=str2num(degs);
+    [mins,ns]=strtok(mins,' ');
+    mins=str2num(mins);
+  else
+    degs=str2num(posstr(1:good-1));
+    mins=str2num(posstr(good+1:length(posstr)));
+  end
+  if isempty(mins)
+    mins=0;
+  end
+  pos=degs+mins/60;
+  if ( (posstr(good)=='S') | (posstr(good)=='W') )
+    degs=-degs;
+    mins=-mins;
+    pos=-pos;
+  end
+end
+

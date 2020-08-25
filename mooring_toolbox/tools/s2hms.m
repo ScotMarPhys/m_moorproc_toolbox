@@ -1,0 +1,1 @@
+% function [hour,min,sec] = s2hms(secs)function [hour,min,sec] = s2hms(secs)ii = find(secs<0);    hour = floor(abs(secs)./3600);secs = abs(secs) - 3600 * hour;min  = floor(secs./60);sec = secs - 60 * min;hour(ii) = hour(ii)*(-1);min(ii)  = min(ii)*(-1);sec(ii)  = sec(ii)*(-1);

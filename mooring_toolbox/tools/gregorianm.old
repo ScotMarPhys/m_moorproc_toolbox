@@ -1,0 +1,37 @@
+function [yy,mm,dd,hh] = gregorian(jd)
+%GREGORIAN Convert Julian day to Gregorian date.
+%  [YY,MM,DD,HH] = GREGORIAN(JD) converts decimal Julian days to Gregorian
+%  dates using the astronomical convension, but with time zero starting
+%  at midnight instead of noon.  In this convention, Julian day 2440000
+%  begins at 0000 hours, May 23, 1968. With one output argument a four
+%  column time matrix is returned.
+%
+%  See also JULIAN.
+
+%  Christian Mertens, IfM Kiel
+%  $Revision: 1.1 $ $Date: 1998/08/31 14:04:24 $
+
+hh = rem(jd,1)*24;
+jd = fix(jd);
+
+igreg = jd > 2299161;
+ja = fix((jd(igreg) - 1867216 - 0.25)/36524.25);
+jd(igreg) = jd(igreg) + 1 + ja - fix(0.25*ja);
+jd = jd + 1524;
+yy = fix(6680 + (jd - 2439870 - 122.1)/365.25);
+jb = 365*yy + fix(0.25*yy);
+mm = fix((jd - jb)/30.6001);
+dd = jd - jb - fix(30.6001*mm);
+mm = mm - 1;
+i = mm > 12;
+mm(i) = mm(i) - 12;
+yy = yy - 4715;
+i = mm > 2;
+yy(i) = yy(i) - 1;
+i = yy <= 0;
+yy(i) = yy(i) - 1;
+
+if nargout < 2
+  yy = [yy mm dd hh];
+end
+

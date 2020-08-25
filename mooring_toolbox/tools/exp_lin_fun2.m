@@ -1,0 +1,1 @@
+function elf = exp_lin_fun2(coeff,x)%%  function elf = exp_lin_fun2(coeff,x)%  for the use with nlinfit for exponential linear curve fitting%  x0 = x(1);%  elf = coeff(1)*(1-exp(-coeff(2)*(x-x0))) + coeff(3)*(x-x0) + coeff(4);%%  T.Kanzowx0 = x(1);elf = coeff(1)*(1-exp(-coeff(2)*(x-x0))) + coeff(3)*(x-x0) + coeff(4);

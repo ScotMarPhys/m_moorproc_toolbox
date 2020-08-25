@@ -1,0 +1,56 @@
+function [uvmode,dispmode,rhomode,z ]=qgmodes(z,n2,modes);
+
+% QGMODES  is a function to calculate quasigeostrophic modes
+%          for a given N^2 Profile.
+%
+%          [uvmode,dispmode,rhomode,z] = qgmodes(z,n2,modes);
+%
+% input  : 	z         	: depth vector (must be equidistant !!)
+%		n2		: buoyancy frequency profile
+%          	modes     	: number of modes to be calculated
+%
+% output :     	uvmodes   	: velocity modes 
+%          	dispmodes 	: displacement modes 
+%          	rhomode   	: density pertubation modes
+%
+% version 1.0.1		last change 20.12.1995
+
+%          translated from FORTRAN to Matlab 3.5
+%          by Ulf Garternicht in january 1994 for IfM Kiel
+% changed input and header		G.Krahmann, IfM Kiel, Sep 1995
+% corrected header			G.Krahmann, IfM Kiel, Dec 1995
+
+% calculate eigenfunctions of tridiagonal matrix
+
+A=n2.^(-1);
+dz=z(2)-z(1);
+r=1/dz/dz;
+len=length(A);
+B=r.*(diag(2*A(2:len-1))+diag(-A(3:len-1),-1)+diag(-A(2:len-2),1));
+[eigfct,eigval]=eig(B);
+eigval=diag(eigval);
+
+[tmp n]=sort(eigval);
+eigfct=eigfct(:,n(1:modes));
+eigval=eigval(n(1:modes)); 
+% normalize displacement modes with relation
+% dispmodes(:,i)'*(dispmodes(:,j).*n2) = delta(i,j) ,
+% velocity modes with  d dispmode(z) /dz + eigval*uvmode(z) = 0
+
+[m n]=size(eigfct);
+for i=1:n
+ ortho=eigfct(:,i)'*(eigfct(:,i).*n2(2:len-1));
+ dispmode(:,i)=[0; -eigfct(:,i)./sqrt(ortho)*sqrt(m+1) ;0];
+end;
+
+z=-z;
+len=length(z);
+zz=z(1:len-1)-dz/2;
+for i=1:n
+ umode=-diff(dispmode(:,i))./diff(z);
+ uvmode(:,i)=table1f([zz umode],z,1);
+ ortho=uvmode(:,i)'*uvmode(:,i);
+ uvmode(:,i)=uvmode(:,i)./sqrt(ortho)*sqrt(m+1);
+ z=-z; % ??????
+ rhomode(:,i)=dispmode(:,i).*n2;
+end;

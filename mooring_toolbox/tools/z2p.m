@@ -1,0 +1,1 @@
+function p=z2p(z,lat)% function p=z2p(z,lat)% Z2P inverts p2z functionif nargin < 2, lat=54; endpp=1:10:4000;zz=p2z(pp,lat);dif=pp-zz;c=polyfit(zz,dif,3);p=polyval(c,z)+z;
