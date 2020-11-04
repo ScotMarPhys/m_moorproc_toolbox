@@ -1,0 +1,1 @@
+rbrraw2use_02('cast6','procpath','/local/users/pstar/Data/rpdmoc/rapid/data/moor/proc/','outpath','/local/users/pstar/Data/rpdmoc/rapid/data/moor/proc_calib/d334/cal_dip/rbr/cast6/','ctd')

@@ -1,0 +1,7 @@
+% L. Houpert, 6 MArch 2017
+%
+% - gridding of individual deployments is made through:
+%			 velocity_grid_nor(or adcp)_osnap.m
+% - merging of the several years of deployment (and if necessary moorings) is made through:
+% 			 CM_(rtwb1, rteb, rtwb2)_merging_02_2015.m
+

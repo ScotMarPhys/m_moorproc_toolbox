@@ -1,0 +1,185 @@
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests
+END
+test_nc_dump.m
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_dump.m
+END
+test_nc_cat_a.m
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_cat_a.m
+END
+test_nc_getall.m
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_getall.m
+END
+test_nc_diff.m
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_diff.m
+END
+test_nc_getbuffer.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_getbuffer.m
+END
+test_nc_archive_buffer.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_archive_buffer.m
+END
+test_nc_iscoordvar.m
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_iscoordvar.m
+END
+test_nc_addnewrecs.m
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_addnewrecs.m
+END
+test_nc_addhist.m
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_addhist.m
+END
+test_nc_varrename.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_varrename.m
+END
+test_nc_create_empty.m
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_create_empty.m
+END
+test_nc_attput.m
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_attput.m
+END
+test_nc_varput.m
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_varput.m
+END
+README
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/README
+END
+test_nc_varsize.m
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_varsize.m
+END
+test_nc_isvar.m
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_isvar.m
+END
+test_snctools.m
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_snctools.m
+END
+test_nc_getdiminfo.m
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_getdiminfo.m
+END
+test_snc2mat.m
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_snc2mat.m
+END
+test_nc_attget.m
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_attget.m
+END
+test_nc_varget.m
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_varget.m
+END
+test_nc_info.m
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_info.m
+END
+test_nc_add_dimension.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_add_dimension.m
+END
+test_nc_isunlimitedvar.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_isunlimitedvar.m
+END
+test_nc_datatype_string.m
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_datatype_string.m
+END
+test_nc_addvar.m
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_addvar.m
+END
+create_empty_file.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/create_empty_file.m
+END
+test_nc_getlast.m
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_getlast.m
+END
+test_nc_add_recs.m
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_add_recs.m
+END
+test_nc_getvarinfo.m
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/test_nc_getvarinfo.m
+END

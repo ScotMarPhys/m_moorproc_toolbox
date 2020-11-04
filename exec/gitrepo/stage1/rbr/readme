@@ -1,0 +1,3 @@
+Will not work straight away on sohydro6 since paths (especially for
+calibration dip data since the required directory structure does not exist). 
+For mooring data it should work if the data paths are correctly set.

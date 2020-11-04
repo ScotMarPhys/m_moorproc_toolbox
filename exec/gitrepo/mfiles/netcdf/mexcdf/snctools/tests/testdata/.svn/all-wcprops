@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/testdata
+END
+full.nc
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/testdata/full.nc
+END
+getlast.nc
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/testdata/getlast.nc
+END
+just_one_fixed_size_variable.nc
+K 25
+svn:wc:ra_dav:version-url
+V 103
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/testdata/just_one_fixed_size_variable.nc
+END
+attget.nc
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/testdata/attget.nc
+END
+varget.nc
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/testdata/varget.nc
+END
+iscoordvar.nc
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/testdata/iscoordvar.nc
+END
+just_one_dimension.nc
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/testdata/just_one_dimension.nc
+END
+empty.nc
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svnroot/mexcdf/!svn/ver/2554/snctools/tags/mexcdf-2.9.3/tests/testdata/empty.nc
+END

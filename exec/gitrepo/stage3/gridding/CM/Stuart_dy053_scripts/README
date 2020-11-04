@@ -1,0 +1,20 @@
+Stuart, DY053. July 2016
+
+Gridding of velocity data into vertical profiles at 10db.
+
+velocity_grid_adcp.m
+Grids adcp data
+
+
+velocity_grid_nor.m
+Grids nortek current meter data from eb1 or wb1 [should also run on wb2 but I haven't done that yet]
+
+
+The respective _analysis.m programmes are the beginning of analysis to discover methods for interpolation and some analysis.
+
+To run these scripts will require some changes of pathnames. They were originally written on my 
+mac mini during the cruise.
+
+
+
+
