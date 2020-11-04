@@ -1,0 +1,436 @@
+% function s4raw2use_v2(moor, inpath, outpath, infofile, plot_interval)
+% basic preprocessing for S4 data once in rodb format.
+% modified from Torsten's microcat_raw2use_002.m program  
+% features
+%      1. eliminate lauching and recovery period
+%      2. save data to rodb file
+%      3. create data overview sheet
+%
+% INPUTS:- infile - s4 data in rodb format (*.raw produced by s42rodb.m)
+%          outfile - output rodb file
+%          infofile - mooring info file
+%          log - filename of log file
+%          plot_interval - 2 rows x 4 column matrix with start and end
+%                          dates of plot e.g. [2004 02 01 00;2005 06 01 00]
+% OUTPUTS:- outfile - stage2 processed s4 data in rodb format 
+%                     replace .raw extension with .use from infile
+%           outfile.use.ps - postscritp plot of data
+%           outfile.use_lowpass.ps - postcript plot of filtered data
+%                                    (filtered data not saved - just for
+%                                    refrence)
+% Uses the following functions:-
+% rodbload.m
+% rodbsave.m
+% hms2h.m
+% Edits
+%  2010/12/28 efw - made more like the microcat processing
+
+clear all
+close all
+startup
+cruise ='d359';
+operator='efw';
+moor = 'mar1_6_200940';
+moor = 'mar2_5_200942';
+    
+infofile=[basedir,'moor/proc/',moor,'/',moor,'info.dat'];
+inpath = [basedir,'moor/proc/',moor,'/s4/'];
+outpath = [basedir,'moor/proc/',moor,'/s4/'];
+
+plot_interval = [2009 11 07 00; 2010 12 25 00];
+
+     
+% -- set path for data input and output
+
+%inpath  = ['/data/rapid/cd170/moorings/',moor,'/microcat/'];
+%outpath = ['/data/rapid/cd170/moorings/',moor,'/microcat/'];
+
+% --- get moring information from infofile 
+%infofile =['/data/rapid/cd170/moorings/',moor,'/',moor,'info.dat'];
+[id,sn,z,s_t,s_d,e_t,e_d,lat,lon,wd,mr]  =  rodbload(infofile,'instrument:serialnumber:z:Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:WaterDepth:Mooring');
+
+ii = find(id == 302);  % 302 is id number for S4s
+sn = sn(ii);
+z  = z(ii);
+
+[z,zx] = sort(z);  % sort instruments by their depth
+sn     = sn(zx);
+
+%[gash, operator]=system('whoami');  % This line will not work if run from a PC. May need to edit it out.
+
+fid_stat= fopen([outpath,moor,'stage2_log'],'a');
+fprintf(fid_stat,['Processing steps taken by ',mfilename, ':\n']);
+fprintf(fid_stat,'  1. eliminate lauching and recovery period\n');
+fprintf(fid_stat,'  2. save data to rodb file\n');
+fprintf(fid_stat,'  3. create data overview sheet\n');  
+operator = 'PGW';
+fprintf(fid_stat,'\n Operated by: %s  on %s\n',operator,datestr(clock)); 
+fprintf(fid_stat,['        S4 in Mooring ',moor,'\n\n\n']);
+fprintf(fid_stat,'      ID       Depth   Start         End       Cycles  Spikes  Gaps  Mean    STD    Max     Min\n');          
+
+dummy    = -9999;
+
+
+%-----------------------------------------
+% --- preprocessing loop -------------------
+% ----------------------------------------
+
+
+jd_s  = julian(s_d(1),s_d(2),s_d(3),s_t(1)+s_t(2)/60);  % start time
+jd_e  = julian(e_d(1),e_d(2),e_d(3),e_t(1)+e_t(2)/60);  % end time
+
+for proc = 1 : length(sn),
+  infile  = [inpath,moor,'_',sprintf('%d',sn(proc)),'.raw'];
+  if exist(infile)   > 0 
+ 
+    rodbfile= [moor,'_',sprintf('%d',sn(proc)),'.use']; 
+    outfile = [outpath,rodbfile];
+
+
+    [YY,MM,DD,HH,U,V,T,C,P,HDG] = rodbload(infile,'YY:MM:DD:HH:U:V:T:C:P:HDG');
+    
+    %------------------------------------------
+    % Average records if required
+    %------------------------------------------
+    % This will be necessary when have incorrect averaging when S4 setup
+    
+    if HH(2)-HH(1) < 1/60  % Check if 2nd record is less than 1 minute after 1st record
+        count = 1;
+        while HH(count+1)-HH(count) < 1/60
+            count=count+1;
+        end
+        increment=1;
+        for increment=1:floor(size(YY)/count)
+            YY2(increment)=median(YY(increment*count-count+1:increment*count));
+            MM2(increment)=median(MM(increment*count-count+1:increment*count));
+            DD2(increment)=median(DD(increment*count-count+1:increment*count));
+            HH2(increment)=median(HH(increment*count-count+1:increment*count));
+            % median dates as averaging is not necessary and can cause
+            % problems if have time wrapping around a day/month
+            U2(increment)=nanmean(U(increment*count-count+1:increment*count));
+            V2(increment)=nanmean(V(increment*count-count+1:increment*count));
+            T2(increment)=nanmean(T(increment*count-count+1:increment*count));
+            C2(increment)=nanmean(C(increment*count-count+1:increment*count));
+            P2(increment)=nanmean(P(increment*count-count+1:increment*count));
+            HDG2(increment)=nanmean(HDG(increment*count-count+1:increment*count));
+        end
+        YY=YY2; MM=MM2; DD=DD2; HH=HH2;
+        T=T2'; C=C2'; P=P2'; U=U2'; V=V2'; HDG=HDG2'; 
+    end
+    
+    
+    %------------------------------------------ 
+    %----- cut off launching and recovery period
+    %------------------------------------------
+    disp('cut off launching and recovery period')
+ 
+    jd               = julian(YY,MM,DD,HH);
+    ii               = find(jd <= jd_e & jd >= jd_s );
+    YY=YY(ii);MM=MM(ii);DD=DD(ii);HH=HH(ii);c=C(ii);t=T(ii);hdg=HDG(ii);u=U(ii);v=V(ii);
+    jd  = jd(ii); 
+    if length(P) > 1   
+        p = P(ii); 
+    end
+
+    cycles     = length(ii);
+    Start_Date = [YY(1) MM(1) DD(1)];
+    Start_Time = HH(1);
+    End_Date = [YY(cycles) MM(cycles) DD(cycles)];
+    End_Time = HH(cycles);     
+
+    
+    % -----------------------------------------
+    % ---  basic statistics -------------------
+    % -----------------------------------------
+   
+
+    tm = nanmean(t);
+    cm = nanmean(c);
+    um = nanmean(u);
+    vm = nanmean(v);
+    
+    % need to mean headings differently
+    coshdg=cos(hdg/180*pi);
+    sinhdg=sin(hdg/180*pi);
+    hdgm=(atan(nanmean(sinhdg)/nanmean(coshdg)))*180/pi;
+    if nanmean(coshdg)<0
+        hdgm = hdgm+180;
+    elseif nanmean(coshdg)>0 & nanmean(sinhdg)<0
+        hdgm = hdgm+360;
+    end
+    
+    tsd= nanstd(t);
+    csd= nanstd(c);
+    usd= nanstd(u);
+    vsd= nanstd(v);
+    %hdgsd= nanstd(hdgstat); % need to std headings differently not going
+    %to do yet
+
+    tmx = max(t);
+    cmx = max(c);
+    umx = max(u);
+    vmx = max(v);
+    hdgmx = max(hdg);
+    tmn = min(t);
+    cmn = min(c);
+    umn = min(u);
+    vmn = min(v);
+    hdgmn = min(hdg);
+
+    if length(P) > 1
+      pm  = nanmean(p);
+      psd = nanstd(p);
+      pmx = max(p);
+      pmn = min(p);
+    end 
+     
+    %------------------------------------------
+    %---- fill time gaps  with dummy
+    %------------------------------------------
+
+    disp(' fill time gaps  with dummy')
+
+    djd = diff(jd);           % time step  
+    sr  = median(djd);        % sampling interval
+    ii  = find(djd > 1.5*sr);  % find gaps
+    gap = round(djd(ii)/sr)-1;
+    addt= []; 
+
+    for i = 1 : length(gap), 
+      addt = [addt; [[1:gap(i)]*sr + jd(ii(i))]'];
+                         
+    end 
+
+    [jd,xx] = sort([jd; addt]);   % add time
+    ngap    = length(addt);       % number of time gaps         
+    gt      = gregorian(jd);
+    YY=gt(:,1); MM=gt(:,2); DD=gt(:,3); 
+    if size(gt,2) == 6
+       HH=hms2h(gt(:,4),gt(:,5),gt(:,6)); 
+    else 
+       HH= gt(:,4);
+    end    
+       
+   
+    t = [t;dummy*ones(ngap,1)]; t = t(xx);
+    c = [c;dummy*ones(ngap,1)]; c = c(xx); 
+    u = [u;dummy*ones(ngap,1)]; u = u(xx);
+    v = [v;dummy*ones(ngap,1)]; v = v(xx);
+    hdg = [hdg;dummy*ones(ngap,1)]; hdg = hdg(xx);
+    
+    if length(P) > 1
+       p = [p;dummy*ones(ngap,1)]; p = p(xx); 
+    end
+    %-----------------------------------------------------
+    %  write output to logfile ---------------------------
+    %-----------------------------------------------------
+
+    disp(' write output to logfile')
+
+           
+    fprintf(fid_stat,'T     %d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d   %d          %d   %5.2f   %5.2f   %5.2f   %5.2f \n',...
+               sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,tm,tsd,tmx,tmn'); 
+
+    fprintf(fid_stat,'C     %d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d   %d          %d   %5.2f   %5.2f   %5.2f   %5.2f \n',...
+               sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,cm,csd,cmx,cmn'); 
+
+    fprintf(fid_stat,'U     %d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d   %d          %d   %5.2f   %5.2f   %5.2f   %5.2f \n',...
+               sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,um,usd,umx,umn'); 
+
+    fprintf(fid_stat,'V     %d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d   %d          %d   %5.2f   %5.2f   %5.2f   %5.2f \n',...
+               sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,vm,vsd,vmx,vmn'); 
+    
+    NotUsed = 'Not Used';
+    fprintf(fid_stat,'HDG   %d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d   %d          %d   %5.2f   %s   %5.2f   %5.2f \n',...
+               sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,hdgm,NotUsed,hdgmx,hdgmn'); 
+
+
+    if length(P) > 1
+      fprintf(fid_stat,'P     %d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d   %d          %d    %5.1f   %5.2f   %5.2f   %5.2f \n',...
+               sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,pm,psd,pmx,pmn');  
+    end
+    fprintf(fid_stat,'\n');
+
+    %-----------------------------------  
+    %--- write data to rodb format -----
+    %-----------------------------------
+
+    disp(['writing data to ',outfile]) 
+         
+    if length(P) <= 1
+       sub =5;
+       fort = '%4.4d  %2.2d  %2.2d  %7.5f   %7.4f  %7.4f  %6.4f  %6.4f  %4.1f';
+       cols = 'YY:MM:DD:HH:U:V:T:C:HDG';
+       rodbsave(outfile,...
+         'Latitude:Longitude:Columns:Start_Date:Start_Time:SerialNumber:Mooring:WaterDepth:Instrdepth:End_Date:End_Time',...
+          fort,...
+          lat,lon,cols,Start_Date,Start_Time,sn(proc),mr,wd,z(proc),End_Date,End_Time,...
+          [YY MM DD HH u v t c hdg]);
+    else
+      sub  = 6;  
+      fort = '%4.4d  %2.2d  %2.2d  %7.5f   %7.4f  %7.4f  %6.4f  %6.4f  %6.4f  %4.1f';
+       cols = 'YY:MM:DD:HH:U:V:T:C:P:HDG';
+      rodbsave(outfile,...
+          'Latitude:Longitude:Columns:Start_Date:Start_Time:SerialNumber:Mooring:WaterDepth:Instrdepth:End_Date:End_Time',...
+           fort,...
+          lat,lon,cols,Start_Date,Start_Time,sn(proc),mr,wd,z(proc),End_Date,End_Time,...
+           [YY MM DD HH u v t c p hdg]); % mpc change 'lat,lat,..' to 'lat,lon,..'
+%          lat,lat,cols,Start_Date,Start_Time,sn(proc),mr,wd,z(proc),End_Date,End_Time,... 
+         
+    end
+
+  %%%%%%%%%% Graphics %%%%%%%%%%%%%%%%
+  
+  jd1 = julian(plot_interval(1,:));
+  jd2 = julian(plot_interval(2,:)); 
+
+%set figure sizes on screen for better viewing
+bdwidth = 5;
+topbdwidth = 30;
+set(0,'Units','pixels') 
+scnsize = get(0,'ScreenSize');
+pos1  = [1/8*scnsize(3),8*bdwidth,1/2*scnsize(3),(scnsize(4) - 30*bdwidth)];
+pos2  = [3/8*scnsize(3),8*bdwidth,1/2*scnsize(3),(scnsize(4) - 30*bdwidth)];
+fig1=figure('Position',pos1);
+fig2=figure('Position',pos2);
+%set print area of figure
+set(fig1,'PaperUnits','centimeters');
+set(fig2,'PaperUnits','centimeters');
+set(fig1, 'PaperType', 'A4');
+set(fig2, 'PaperType', 'A4');
+papersize = get(fig1,'PaperSize');
+width=17; height=26; left = (papersize(1)- width)/2; bottom = (papersize(2)- height)/2;
+figuresize = [left, bottom, width, height];
+set(fig1, 'PaperPosition', figuresize);
+set(fig2, 'PaperPosition', figuresize);
+
+    figure(fig1);clf
+     subplot(sub,1,1); ii = find(~isnan(t)&t>dummy);
+       plot(jd(ii)-jd1,t(ii))
+         title(['S4 s/n: ',num2str(sn(proc)),'; Target Depth: ',num2str(z(proc))])
+         ylabel('Temperature [deg C]')
+         grid on
+         xlim([0 jd2-jd1])
+	 timeaxis(plot_interval(1,1:3));   
+ 
+     subplot(sub,1,2); ii = find(~isnan(c)&c>dummy);
+       plot(jd(ii)-jd1,c(ii))
+	 ylabel('Conductivity [mS/cm]')
+         grid on
+         xlim([0 jd2-jd1])
+	 timeaxis(plot_interval(1,1:3));   
+    
+     subplot(sub,1,3); ii = find(~isnan(u)&u>dummy);
+       plot(jd(ii)-jd1,u(ii))
+	 ylabel({'U-Velocity';'Component [cm/s]'})
+         grid on
+         xlim([0 jd2-jd1])
+	 timeaxis(plot_interval(1,1:3));   
+
+     subplot(sub,1,4); ii = find(~isnan(v)&v>dummy);
+       plot(jd(ii)-jd1,v(ii))
+	 ylabel({'V-Velocity';'Component [cm/s]'})
+         grid on
+         xlim([0 jd2-jd1])
+	 timeaxis(plot_interval(1,1:3));   
+
+     subplot(sub,1,5); ii = find(~isnan(hdg)&hdg>dummy);
+       plot(jd(ii)-jd1,hdg(ii))
+	 ylabel({'Instrument';'Heading [deg M]'})
+         grid on
+         xlim([0 jd2-jd1])
+         ylim([0 360])
+	 timeaxis(plot_interval(1,1:3));   
+
+
+     if sub == 6 
+
+      subplot(sub,1,6); ii = find(~isnan(p)&p>dummy);
+
+       plot(jd(ii)-jd1,p(ii))
+
+         ylabel('Pressure [dbar]')
+         grid on 
+         xlim([0 jd2-jd1])
+	 timeaxis(plot_interval(1,1:3));   
+
+     end
+       eval(['print -dps ',outfile,'.ps']) 
+
+  
+  % filtering of time series     
+  
+  sampling_rate = 1/median(diff(jd));
+  tf            = auto_filt(t, sampling_rate, 1/2,'low',4);
+  cf            = auto_filt(c, sampling_rate, 1/2,'low',4);
+  pf            = auto_filt(p, sampling_rate, 1/2,'low',4);
+  uf            = auto_filt(u, sampling_rate, 1/2,'low',4);
+  vf            = auto_filt(v, sampling_rate, 1/2,'low',4);
+  hdgf            = auto_filt(hdg, sampling_rate, 1/2,'low',4);
+  
+  
+  
+
+  figure(fig2);clf
+     subplot(sub,1,1); 
+       plot(jd-jd1,tf)
+         title(['2-day low-pass; S4 s/n: ',num2str(sn(proc)),'; Target Depth: ',num2str(z(proc))])
+         ylabel('Temperature [deg C]')
+         grid on  
+         xlim([0 jd2-jd1])
+	 timeaxis(plot_interval(1,1:3));   
+    
+     subplot(sub,1,2); 
+        plot(jd-jd1,cf)
+	 ylabel('Conductivity [mS/cm]')
+         grid on
+         xlim([0 jd2-jd1])
+	 timeaxis(plot_interval(1,1:3));   
+
+     subplot(sub,1,3); 
+        plot(jd-jd1,uf)
+	 ylabel({'U-Velocity';'Component [cm/s]'})
+         grid on
+         xlim([0 jd2-jd1])
+	 timeaxis(plot_interval(1,1:3));   
+
+     subplot(sub,1,4); 
+        plot(jd-jd1,vf)
+	 ylabel({'V-Velocity';'Component [cm/s]'})
+         grid on
+         xlim([0 jd2-jd1])
+	 timeaxis(plot_interval(1,1:3));   
+
+     subplot(sub,1,5); 
+        plot(jd-jd1,hdgf)
+	 ylabel({'Instrument';'Heading [deg M]'})
+         grid on
+         xlim([0 jd2-jd1])
+         ylim([0 360])
+	 timeaxis(plot_interval(1,1:3));   
+
+    if sub == 6 
+           
+       subplot(sub,1,6)
+ 
+         plot(jd-jd1,pf)
+	   ylabel('Pressure [dbar]')
+           grid on 
+           xlim([0 jd2-jd1])
+           timeaxis(plot_interval(1,1:3));   
+
+    end
+      eval(['print -dps ',outfile,'_lowpass.ps']) 
+ 
+  
+
+  end
+
+ 
+
+
+end
+       
+  
+
+

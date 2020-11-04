@@ -1,0 +1,107 @@
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/src
+END
+mexopts.R2008a.bat
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/src/mexopts.R2008a.bat
+END
+r2008a.mk
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/src/r2008a.mk
+END
+mexopts.R2008a.sh
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/src/mexopts.R2008a.sh
+END
+mexopts.R2007b.sh
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/src/mexopts.R2007b.sh
+END
+win32_make_mexnc.m
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/src/win32_make_mexnc.m
+END
+mexopts.R2008b.sh
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/src/mexopts.R2008b.sh
+END
+mexopts.R2008a.win64.bat
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/src/mexopts.R2008a.win64.bat
+END
+win64_make_mexnc.m
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/src/win64_make_mexnc.m
+END
+mexgateway.c
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/src/mexgateway.c
+END
+README
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/src/README
+END
+mexnc.h
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/src/mexnc.h
+END
+netcdf2.c
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/src/netcdf2.c
+END
+netcdf3.c
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/src/netcdf3.c
+END
+common.c
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/src/common.c
+END
+netcdf2.h
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/src/netcdf2.h
+END
+netcdf3.h
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/src/netcdf3.h
+END
+makefile
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/src/makefile
+END

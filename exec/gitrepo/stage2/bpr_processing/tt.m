@@ -1,0 +1,1 @@
+load 002_21.mat[m,n] = size(TT);lim =[6.57 6.59];  % basis despikinglimI = find(TT>lim(2) & TT<lim(1));TT(limI) = NaN;tm = meannan(TT')';tm2 = mean(reshape(tm,6,m/6));

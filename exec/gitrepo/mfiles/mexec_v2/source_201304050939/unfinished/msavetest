@@ -1,0 +1,101 @@
+% save matlab vars as mstar file
+% not a function, so that we can access variables in current matlab
+% filespace
+
+% called from msave. We want to hide most of the work in function.
+
+m_common
+Mprog = 'msave';
+m_proghd;
+
+prog = Mprog; % save for later
+
+m1 = ' If you want to run this as a script without typing all the responses ';
+m2 = ' Then queue the responses in the cell array MARGS_IN ';
+m3 = ' eg to msave variables x and y in mystarfile.nc with or without units/comments ';
+m4 = ' MARGS_IN = {''mymstarfile'' ''x'' ''z'' ''/'' ''/'' ''7'' ''-1'' ''comment 1'' ''comment 2'' ''/'' ''/'' ''8'' ''0'' ''/'' ''xunits'' ''/'' ''zunits'' ''/'' ''/''};msave; ';
+m5 = ' MARGS_IN = {''mymstarfile'' ''x'' ''z'' ''/'' ''s''};msave; ';
+
+fprintf(Mfidterm,'%s\n',m1,m2,m3,m4,m5,' ');
+
+fprintf(Mfidterm,'%s','Enter name of output disc file  ')
+fn_ot = m_getfilename;
+ncfile.name = fn_ot;
+
+MSAVE_VLIST = {ncfile.name};
+ok = 0;
+while ok == 0;
+    m = 'next var name or, return or ''/'' to end ';
+    reply = m_getinput(m,'s');
+    if strcmp(reply,' ') == 1; break; end
+    if strcmp(reply,'/') == 1; break; end
+    reply = m_remove_outside_spaces(reply);
+    vname = m_check_nc_varname(reply);
+    if strcmp(vname,reply) ~= 1
+        m = [' The var name you entered is not a valid name in mstar NetCDF files: ''' reply ''''];
+        m2 = ' If this wasn''t the result of a typing error, I''m afraid you ';
+        m3 = ' will have to rename the variable before you can save it';
+        fprintf(Mfider,'%s\n',m,m2,m3)
+        continue
+    end
+
+    cmd = ['vlistadd = {reply ' reply '};'];
+    eval(cmd)
+    MSAVE_VLIST = [MSAVE_VLIST vlistadd];
+end
+
+
+% Now run m_matlab_to_mstar, which has no terminal prompts
+
+margs1 = MARGS_OT; % keep a record of input arguments for this prog
+Mhistory_skip = 1;
+m_matlab_to_mstar % data are passed in global MSAVE_VLIST
+Mhistory_skip = 0;
+
+MARGS_OT = {}; % clear MARGS_OT from m_matlab_to_mstar so we can use it to collect response to mheadr questions
+margs2 = {};
+margs3 = {};
+
+ok = 0;
+while ok == 0
+    % queue responses for mheadr ahead of any other MARGS_IN responses left
+    % over from m_matlab_to_mstar;
+    MARGS_IN = MARGS_IN_OLD;
+    m1 = ' Now set the units or other header data ''s'' to skip; anything else to proceed ';
+    m1 = sprintf('%s\n',' ',' ',m1);
+    reply = m_getinput(m1,'s');
+    margs2 = MARGS_OT;
+    
+    if strcmp(reply,'s') == 1; break; end
+
+    MARGS_IN = [ncfile.name 'y' MARGS_IN(:)']
+    
+    Mhistory_skip = 1;
+    mheadr
+    Mhistory_skip = 0;
+    margs3 = MARGS_OT(3:end); % keep a record of input arguments for this prog; skip the first two that weren't taken from terminal
+
+    break
+end
+
+Mprog = prog;
+
+MARGS_OT = [margs1 margs2 margs3];
+
+
+
+% fake the input file details so that write_history works
+h = m_read_header(ncfile);
+histin = h;
+histin.filename = [];
+histin.dataname = [];
+histin.version = [];
+histin.mstar_site = [];
+Mhistory_in{1} = histin;
+
+h = m_read_header(ncfile);
+hist = h;
+hist.filename = ncfile.name;
+Mhistory_ot{1} = hist;
+
+m_write_history;
