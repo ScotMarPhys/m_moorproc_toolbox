@@ -12,20 +12,8 @@ Contributions are more than welcome, if one wants to make comments, create a new
 
 ### How do I get set up? ###
 
-1- Pull the "master" branch and add the .m files to your MATLAB search path by using, for example, the command:
-
-
-```
-#!matlab
-addpath(genpath(*path of the toolbox*))
-
-```
-
-2- [Download example processing scripts from here](https://bitbucket.org/Lhoupert/mooring_processing_toolbox/downloads/example_processing_scripts.zip). This will give you an idea how to call the functions.
-
-3- Have a look to the notes about how to go through the different stages of the microcat processing by reading this [summary document](https://bitbucket.org/Lhoupert/mooring_processing_toolbox/downloads/summary_OSNAP_microcat_postprocessing.pdf). The processing of the current meter is detailled in this [processing report](https://bitbucket.org/Lhoupert/mooring_processing_toolbox/downloads/proc_report_curren_meter_OSNAP1_v1.pdf)
-
-4- [An example of the directory structure (with control metadatafiles) can be downloaded here](https://bitbucket.org/Lhoupert/mooring_processing_toolbox/downloads/osnap_directory_structure.zip)  
+Docs and readme in preparation... 
+Open an issue if you are interested to use the toolbox.
 
 ### Who do I talk to? ###
 
