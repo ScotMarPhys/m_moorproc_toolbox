@@ -13,13 +13,14 @@ close all
 %========================================================================
 % Calculation of calibration coefficient
 p_insitucal.cruise           =  'dy120';%'dy078';%'dy053';%'pe400'; %'kn221-02'; %'pe399';       % campaign cd177 / cd170 / d304 / kn182, ...
-p_insitucal.cast             = 9;  %26;   %35          % number of ctd - cast (e.g. kn221-02: 4, 5)
+p_insitucal.cast             = 5;  %26;   %35          % number of ctd - cast (e.g. kn221-02: 4, 5)
 p_insitucal.depl_period      = 'osnap5'; %'osnap2'    % move1; move2; rapid 1; rapid 2
 
 % ---- parameters ----------------------------------------------------
 p_insitucal.sensorselec      = 1;
 p_insitucal.sensor_id        = [332 337];  % MicroCAT ID range (in info.dat)
 p_insitucal.basedir          = pathosnap; % base directory on cruise D382
+p_insitucal.datadir          = datadir; % data directory on git repo
 p_insitucal.apply_offset   = 'n'; % if offset == 'y'/'n'/'i', time offset between CTD and MC 
                      % will / will not be applied / individual offsets
                      % applied  
@@ -178,6 +179,42 @@ elseif strcmp(p_insitucal.cruise,'dy120') & p_insitucal.cast == 1
     p_insitucal.dp_interval    = [-10 10];   
     p_insitucal.p_interval       = [0  2580];
     p_insitucal.average_interval = [1000 2580];% [1000 2150];     
+elseif strcmp(p_insitucal.cruise,'dy120') & p_insitucal.cast == 3
+    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0  1850];
+    p_insitucal.average_interval = [1000 1850];% [1000 2150]; 
+elseif strcmp(p_insitucal.cruise,'dy120') & p_insitucal.cast == 4
+    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0  2000];
+    p_insitucal.average_interval = [1000 2000];% [1000 2150];  
+elseif strcmp(p_insitucal.cruise,'dy120') & p_insitucal.cast == 5
+    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0  2000];
+    p_insitucal.average_interval = [1000 2000];% [1000 2150];
+elseif strcmp(p_insitucal.cruise,'dy120') & p_insitucal.cast == 8
+    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0  1850];
+    p_insitucal.average_interval = [1000 1850];% [1000 2150]; 
+elseif strcmp(p_insitucal.cruise,'dy120') & p_insitucal.cast == 9
+    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0  2000];
+    p_insitucal.average_interval = [1000 2000];% [1000 2150];  
+elseif strcmp(p_insitucal.cruise,'dy120') & p_insitucal.cast == 10
+    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0  2000];
+    p_insitucal.average_interval = [1000 2000];% [1000 2150];
 else
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
