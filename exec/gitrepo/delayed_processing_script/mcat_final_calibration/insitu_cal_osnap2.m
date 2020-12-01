@@ -945,29 +945,16 @@ subplot(1,sub,2)
   
 
 
-if strcmp('rb0701',cruise)
-    if cast == 27
-eval(['print -dpsc ',mc_dir,'cast',num2str(cast+1),'/',output_name,'.ps'])
-    elseif cast == 28
-        eval(['print -dpsc ',mc_dir,'cast',num2str(cast-1),'/',output_name,'.ps'])
-    else
-        eval(['print -dpsc ',mc_dir,'cast',num2str(cast),'/',output_name,'.ps'])   
-    end
-else
+set(figure(2),'Paperunits','centimeters','Paperposition',[0 0 29 21])
+set(0,'currentfigure',figure(2))     
 
-    set(figure(2),'Paperunits','centimeters','Paperposition',[0 0 29 21])
-    set(0,'currentfigure',figure(2))     
-    
-    eval(['print -dpng -painters ',mc_dir,'cast',num2str(cast),'/',output_name,'.png'])    
-    
-    set(0,'currentfigure',figure(2))  
-    orient landscape
- 
-    
-    eval(['print -dpsc ',mc_dir,'cast',num2str(cast),'/',output_name,'.ps'])
-    
-end
+print([mc_dir,'cast',num2str(cast),'/',output_name,'.png'],'-dpng');
 
+set(0,'currentfigure',figure(2))  
+orient landscape
+
+print([mc_dir,'cast',num2str(cast),'/',output_name,'.png'],'-dpsc');
+    
 
 if ~isempty(pproblem) 
   figure(4);clf;hold on
