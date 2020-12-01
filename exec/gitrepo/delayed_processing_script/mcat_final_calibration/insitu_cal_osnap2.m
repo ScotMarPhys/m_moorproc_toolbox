@@ -25,7 +25,7 @@
 %                 are defined (see osnap/users/loh/mcatpostcruisecalib/postcalib_process)  
 %               - add a parameter mc_cunit
 close all
-clearvars  -except pathosnap p_insitucal 
+clearvars  -except pathgitrepo pathosnap p_insitucal 
 warning off
 global cruise
 
@@ -39,6 +39,7 @@ p_interval           = p_insitucal.p_interval;
 cruise               = p_insitucal.cruise;
 depl_period          = p_insitucal.depl_period;
 basedir              = p_insitucal.basedir;
+datadir              = p_insitucal.datadir;
 apply_offset         = p_insitucal.apply_offset;
 interval_move        = p_insitucal.interval_move;  
 ctd_latestart_offset = p_insitucal.ctd_latestart_offset;
@@ -182,7 +183,7 @@ end
 
 % Deployment Depths File Directory 
 %ein_dir     = '/users/odb/rpdmoc/rapid/data/moor/proc_calib/cal_coef/'; 
-ein_dir     = [basedir '/data/moor/cal_coef/']; 
+ein_dir     = [datadir '/moor/cal_coef/']; 
 
 %Data Files
 if strcmp('kn221-02',cruise)
@@ -953,7 +954,7 @@ print([mc_dir,'cast',num2str(cast),'/',output_name,'.png'],'-dpng');
 set(0,'currentfigure',figure(2))  
 orient landscape
 
-print([mc_dir,'cast',num2str(cast),'/',output_name,'.png'],'-dpsc');
+print([mc_dir,'cast',num2str(cast),'/',output_name,'.ps'],'-dpsc');
     
 
 if ~isempty(pproblem) 
