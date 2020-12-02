@@ -13,7 +13,7 @@ close all
 %========================================================================
 % Calculation of calibration coefficient
 p_insitucal.cruise           =  'dy120';%'dy078';%'dy053';%'pe400'; %'kn221-02'; %'pe399';       % campaign cd177 / cd170 / d304 / kn182, ...
-p_insitucal.cast             = 5;  %26;   %35          % number of ctd - cast (e.g. kn221-02: 4, 5)
+p_insitucal.cast             = 10;  %26;   %35          % number of ctd - cast (e.g. kn221-02: 4, 5)
 p_insitucal.depl_period      = 'osnap5'; %'osnap2'    % move1; move2; rapid 1; rapid 2
 
 % ---- parameters ----------------------------------------------------
@@ -184,37 +184,37 @@ elseif strcmp(p_insitucal.cruise,'dy120') & p_insitucal.cast == 3
     p_insitucal.t_interval     = [-.02 .02];
     p_insitucal.dp_interval    = [-10 10];   
     p_insitucal.p_interval       = [0  1850];
-    p_insitucal.average_interval = [1000 1850];% [1000 2150]; 
+    p_insitucal.average_interval = [1500 1800];% [1000 2150]; 
 elseif strcmp(p_insitucal.cruise,'dy120') & p_insitucal.cast == 4
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
     p_insitucal.dp_interval    = [-10 10];   
-    p_insitucal.p_interval       = [0  2000];
-    p_insitucal.average_interval = [1000 2000];% [1000 2150];  
+    p_insitucal.p_interval       = [0  2050];
+    p_insitucal.average_interval = [1500 2050];% [1000 2150];  
 elseif strcmp(p_insitucal.cruise,'dy120') & p_insitucal.cast == 5
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
     p_insitucal.dp_interval    = [-10 10];   
-    p_insitucal.p_interval       = [0  2000];
-    p_insitucal.average_interval = [1000 2000];% [1000 2150];
+    p_insitucal.p_interval       = [0  2050];
+    p_insitucal.average_interval = [1500 2050];% [1000 2150];
 elseif strcmp(p_insitucal.cruise,'dy120') & p_insitucal.cast == 8
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
     p_insitucal.dp_interval    = [-10 10];   
-    p_insitucal.p_interval       = [0  1850];
-    p_insitucal.average_interval = [1000 1850];% [1000 2150]; 
+    p_insitucal.p_interval       = [0  3000];
+    p_insitucal.average_interval = [2000 3000];% [1000 2150]; 
 elseif strcmp(p_insitucal.cruise,'dy120') & p_insitucal.cast == 9
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
     p_insitucal.dp_interval    = [-10 10];   
-    p_insitucal.p_interval       = [0  2000];
-    p_insitucal.average_interval = [1000 2000];% [1000 2150];  
+    p_insitucal.p_interval       = [0  3000];
+    p_insitucal.average_interval = [2000 2000];% [1000 2150];  
 elseif strcmp(p_insitucal.cruise,'dy120') & p_insitucal.cast == 10
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
     p_insitucal.dp_interval    = [-10 10];   
-    p_insitucal.p_interval       = [0  2000];
-    p_insitucal.average_interval = [1000 2000];% [1000 2150];
+    p_insitucal.p_interval       = [0  3000];
+    p_insitucal.average_interval = [1500 2950];% [1000 2150];
 else
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
