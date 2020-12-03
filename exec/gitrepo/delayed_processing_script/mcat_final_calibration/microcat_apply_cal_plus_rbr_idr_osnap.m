@@ -11,7 +11,7 @@
 % edited by Loic Houpert 21/10/2015
 %
 close all
-clearvars  -except pathosnap 
+clearvars  -except pathosnap pathgit
 warning off
 
 %pathosnap = '../../../..';
@@ -19,8 +19,11 @@ warning off
 %moor = 'rtwb1_03_2016';
 %'rtwb2_01_2014';
 %moor = 'rtwb1_04_2017';
-moor = 'rteb1_04_2017';
+%moor = 'rteb1_04_2017';
 %moor = 'rtwb2_04_2017';
+%moor = 'rtwb1_04_2017';
+%moor = 'rteb1_04_2017';
+moor = 'rtwb2_05_2018';
 
 %=========================================================================
 % Apply calibration coefficients to series, removes bad data. If required, applies
@@ -32,16 +35,23 @@ p_applycal.delim = ',';
 % input directories & files 
 p_applycal.mooring_dir         = [pathosnap '/data/moor/proc/'];
 p_applycal.mooring_outdir      = [pathosnap '/data/moor/proc/'];
-p_applycal.coef_dir            = [pathosnap '/data/moor/cal_coef/']; 
+p_applycal.coef_dir            = [pathgit '/data/moor/cal_coef/']; 
 p_applycal.external_ctd_dir    = [pathosnap '/cruise_data/'];
 p_applycal.ctd_ref_cruises     = {''};%{'pe400'}; %{'kn221-02';'pe399'}; % references cruises for the QC
 p_applycal.distrangectd        = 100e3; % distance of the reference ctd from the mooring
-p_applycal.strformat.mctemptxt = '%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s';
-p_applycal.strformat.mctempnum = '%f%f%s%s%f%s%s%f%f%s%s%f%s%s%f%s%s%f%s%s%f%s%s%f%s%s';
-p_applycal.strformat.mcsaltxt  = '%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s';
-p_applycal.strformat.mcsalnum  = '%f%f%s%s%f%s%s%f%f%s%s%f%s%s%f%s%s%f%s%s%f%s%s%f%s%s';
-p_applycal.strformat.mcprestxt = '%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s';
-p_applycal.strformat.mcpresnum = '%f%s%f%s%s%s%f%s%s%s%f%s%s%s%f%s%s%s%f%s%s%s%f%s%s%s%f%s%s%s%f%s%s%s%f%s%s%s%f%s%s%s%f%s%s%s%f%s%s';
+% p_applycal.strformat.mctemptxt = '%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s';
+% p_applycal.strformat.mctempnum = '%f%f%s%s%f%s%s%f%f%s%s%f%s%s%f%s%s%f%s%s%f%s%s%f%s%s';
+% p_applycal.strformat.mcsaltxt  = '%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s';
+% p_applycal.strformat.mcsalnum  = '%f%f%s%s%f%s%s%f%f%s%s%f%s%s%f%s%s%f%s%s%f%s%s%f%s%s';
+% p_applycal.strformat.mcprestxt = '%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s';
+% p_applycal.strformat.mcpresnum = '%f%s%f%s%s%s%f%s%s%s%f%s%s%s%f%s%s%s%f%s%s%s%f%s%s%s%f%s%s%s%f%s%s%s%f%s%s%s%f%s%s%s%f%s%s%s%f%s%s';
+p_applycal.strformat.mctemptxt = repmat('%s',1,32);
+p_applycal.strformat.mctempnum = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,7)];
+p_applycal.strformat.mcsaltxt  = repmat('%s',1,32);
+p_applycal.strformat.mcsalnum  = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,7)];
+p_applycal.strformat.mcprestxt = repmat('%s',1,61);
+p_applycal.strformat.mcpresnum = ['%f' repmat('%s%f%s%s',1,15)];
+
 
 loclegend = 'north';
 
@@ -722,7 +732,8 @@ for mc = 1: length(serial)
   
   figure(6)
   
-  eval(['print -dpng ',mcfig_out,'_salinity', '.png' ])   
+%   eval(['print -dpng ',mcfig_out,'_salinity', '.png' ])   
+  print([mcfig_out,'_salinity', '.png'],'-dpng');
   %JC 
      sss=sw_salt(c/c3515,t*t90_68,p);
      figure(8);clf; hold on
@@ -1238,7 +1249,9 @@ end
 %      fprintf(1,[' Name of the figure '  mcfig_out  '.eps' '\n\n'])
 %      eval(['print -depsc2 -tiff ',mcfig_out , '.eps' ])
       fprintf(1,[' Name of the figure '  mcfig_out  '.png' '\n\n'])
-      eval(['print -dpng ',mcfig_out , '.png' ])     
+%       eval(['print -dpng ',mcfig_out , '.png' ])
+        print([mcfig_out, '.png'],'-dpng');
+
       break
     end    
   end % end while
