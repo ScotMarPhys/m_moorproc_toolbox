@@ -23,7 +23,9 @@ warning off
 %moor = 'rtwb2_04_2017';
 %moor = 'rtwb1_04_2017';
 %moor = 'rteb1_04_2017';
-moor = 'rtwb2_05_2018';
+% moor = 'rtwb2_05_2018';
+moor = 'rtwb1_05_2018';
+% moor = 'rteb1_05_2018';
 
 %=========================================================================
 % Apply calibration coefficients to series, removes bad data. If required, applies
