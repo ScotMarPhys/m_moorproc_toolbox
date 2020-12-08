@@ -1034,9 +1034,10 @@ if iiNOR>0
        hold off;
        title(['NORTEK SN: ',sprintf('%4.4d',vecNOR(i)), ' High-pass filtered V Component'])
        
-       eval(['print -depsc2 -tiff ',outfile , '.eps' ])
-       eval(['print -dpng ',outfile, '.png' ])     
-            
+%        eval(['print -depsc2 -tiff ',outfile , '.eps' ])
+%        eval(['print -dpng ',outfile, '.png' ])     
+       print([outfile , '.eps'],'-depsc2','-tiff');
+       print([outfile , '.png'],'-dpng')     
        %--------------------------------------------------------------------------------------------
        % no filter
        figure(fig)
@@ -1069,9 +1070,10 @@ if iiNOR>0
        hold off;
        title(['NORTEK SN: ',sprintf('%4.4d',vecNOR(i)), ' Non-filtered V Component'])
        
-       eval(['print -depsc2 -tiff ',outfilenonfilt , '.eps' ])
-       eval(['print -dpng ',outfilenonfilt, '.png' ])     
-            
+%        eval(['print -depsc2 -tiff ',outfilenonfilt , '.eps' ])
+%        eval(['print -dpng ',outfilenonfilt, '.png' ])     
+       print([outfilenonfilt , '.eps'],'-depsc2','-tiff');
+       print([outfilenonfilt , '.png'],'-dpng')              
                         
        
        % low pass product again
@@ -1121,9 +1123,10 @@ if iiNOR>0
        hold off;
        title(['NORTEK SN: ',sprintf('%4.4d',vecNOR(i)), ' 12-hour resolution low-pass filtered currents'])
        legend({'u-component','v-component','w-component'})
-       eval(['print -depsc2 -tiff ',outfile1 , '.eps' ])
-       eval(['print -dpng ',outfile1, '.png' ])     
-       
+%        eval(['print -depsc2 -tiff ',outfile1 , '.eps' ])
+%        eval(['print -dpng ',outfile1, '.png' ])     
+       print([outfile1 , '.eps'],'-depsc2','-tiff');
+       print([outfile1 , '.png'],'-dpng')         
        %--------------------------------------
        % Non filtered data
        %--------------------------------------       
@@ -1570,9 +1573,10 @@ if iiADCP>0
        hold off;
        title(['ADCP SN: ',sprintf('%4.4d',vecADCP(i)),' bin ',num2str(j,'%2d'),' High-pass filtered V Component'])
        
-       eval(['print -depsc2 -tiff ',outfile , '.eps' ])
-       eval(['print -dpng ',outfile, '.png' ])     
-            
+%        eval(['print -depsc2 -tiff ',outfile , '.eps' ])
+%        eval(['print -dpng ',outfile, '.png' ])     
+       print([outfile , '.eps'],'-depsc2','-tiff');
+       print([outfile , '.png'],'-dpng')             
        %---------------------------------------------------------
        % Non filtered
        figure(fig) %change jd-jd(1) by ti;-jd(1)
@@ -1606,9 +1610,10 @@ if iiADCP>0
        hold off;
        title(['ADCP SN: ',sprintf('%4.4d',vecADCP(i)),' bin ',num2str(j,'%2d'),' Non-filtered filtered V Component'])
        
-       eval(['print -depsc2 -tiff ',outfilenonfilt , '.eps' ])
-       eval(['print -dpng ',outfilenonfilt, '.png' ])     
-                       
+%        eval(['print -depsc2 -tiff ',outfilenonfilt , '.eps' ])
+%        eval(['print -dpng ',outfilenonfilt, '.png' ])     
+       print([outfilenonfilt , '.eps'],'-depsc2','-tiff');
+       print([outfilenonfilt , '.png'],'-dpng')                        
        
        % low pass product again
        uf=mfilter(u(abc),1,1/nt,0);
@@ -1661,9 +1666,10 @@ if iiADCP>0
        hold off;
        title(['ADCP SN: ',sprintf('%4.4d',vecADCP(i)),' bin ',num2str(j,'%2d'),' 12-hour resolution low-pass filtered currents'])
        legend({'u-component','v-component','w-component'})
-       eval(['print -depsc2 -tiff ',outfile1 , '.eps' ])
-       eval(['print -dpng ',outfile1, '.png' ])     
-       
+%        eval(['print -depsc2 -tiff ',outfile1 , '.eps' ])
+%        eval(['print -dpng ',outfile1, '.png' ])     
+       print([outfile1 , '.eps'],'-depsc2','-tiff');
+       print([outfile1 , '.png'],'-dpng')        
 
        %replace NANs with -9999
        t(isnan(t))=-9999;
