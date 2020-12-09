@@ -88,7 +88,7 @@ else
     moor{2} = 'rteb_osnap_02_2015';
     moor{3} = 'rteb_osnap_03_2016';
     moor{4} = 'rteb_osnap_04_2017';
-    moor{5} = 'rteb_osnap_04_2017';
+    moor{5} = 'rteb_osnap_05_2018';
 end
 
 col         = {'r','b','m','c','g','y','r--','b--','m--','c--','g--','y--','r:',...
@@ -1064,7 +1064,7 @@ width=35; height=20; FS=12; FN='Arial';
 set(gca,'fontsize', FS, 'FontName',FN);
 set(gcf,'units','centimeters','position',[5 5 width height])
 print('-dpng',[grdatdir outputfile '_S_all'])
-print(gcf, '-dpng',[basedir '/Figures/East/sal_temp']);
+% print(gcf, '-dpng',[basedir '/Figures/East/sal_temp']);
 
 %%
 % DENSITY
@@ -1095,7 +1095,7 @@ set(gca,'fontsize', FS, 'FontName',FN);
 set(gcf,'units','centimeters','position',[5 5 width height])
 
 print('-dpng',[grdatdir outputfile '_RHO_all'])
-print(gcf, '-dpng',[basedir '/Figures/East/Density']);
+% print(gcf, '-dpng',[basedir '/Figures/East/Density']);
 
    
 % --------------ALLOCATE VARIABLES AND SAVE--------------------------------
