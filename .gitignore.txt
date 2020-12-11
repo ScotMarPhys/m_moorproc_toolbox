@@ -1,3 +1,0 @@
-
-# ignore oceansites_format folder
-export_Oceansites\oceansites_format
