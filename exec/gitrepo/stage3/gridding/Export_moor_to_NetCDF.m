@@ -17,7 +17,7 @@ clearvars; close('all')
 %%%%%%%%%%%%%%%%%%%%%%%%%% T S DATA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Load western array data
 indir               =[getenv('OSNAP') '/data/moor/proc/hydro_grid_merged/'];
-ffile               ='RTWB_merg_linear_interp_2017.mat';
+ffile               ='RTWB_merg_linear_interp_2018.mat';
 load([indir ffile]);
 % rename vars, convert degC to K, and make NaN 99999
 TG_WEST             =RTWB_merg.TGfs2;
@@ -32,7 +32,7 @@ clearvars -except TG_WEST SG_WEST pressure time indir
     
 
 %Load eastern array data
-ffile               ='RTEB_merg_linear_interp_2017.mat';
+ffile               ='RTEB_merg_linear_interp_2018.mat';
 load([indir ffile]);
 % rename vars
 TG_EAST             =RTEB_merg.TGfs2; 
@@ -86,6 +86,7 @@ clearvars -except U_EAST V_EAST W_EAST...
             
             
 %%%%%%%%%%%%%%%%%%%%% WRITE FILE TO DIR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+outdir                      = [getenv('OSNAP') '/data/moor/THREDDS/'];
 
 fprintf('Begin %s\n', datestr(now));
 
@@ -97,7 +98,6 @@ PressureDim                 = length(pressure);
 filename                    ='T_S_gridded';
 
 % Open the file to write
-outdir                      = [getenv('OSNAP') '/data/moor/THREDDS/'];
 outfile                     = [outdir filename,'.nc'];
 nc                          = netcdf.create(outfile,'CLOBBER'); % CLOBBER overwrites 
 netcdf.close(nc)

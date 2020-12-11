@@ -5,6 +5,7 @@
 %=========================================================================
 clearvars -except pathosnap pathgit ; close('all')
 
+
 %======================== SET GRID AND QA PARAMETERS =====================
 p_hydrogrid.dum         = -9999.0000;
 p_hydrogrid.c1535       = 42.914;
@@ -41,7 +42,7 @@ mc_check_plot           = true; %false ;  % turns on/off the microcat check plot
 jg_start                = datenum(2014,6,01,00,00,00);
 jg_end                  = datenum(2020,10,20,00,00,00);
 
-lastyeardata            = 2018;
+lastyeardata            = '2018';
 
 JG                      = jg_start: 0.5: jg_end; % full time series using 2 samples per day
 pgg                     = 0:20:2000; % depths in 20dbar bins
@@ -195,7 +196,7 @@ switch answer
             if ismember(moor{1}(3:4),'eb')
                 run merge_osnap_data_east.m
             else
-                run merge_osnap_data_west_INDEV.m
+                run merge_osnap_data_west.m
             end
     case 'Cancel'
         case 'Wrong moorings'
@@ -261,7 +262,7 @@ case 'Merge'
             if ismember(moor{1}(3:4),'eb')
                 run merge_osnap_data_east.m
             else
-                run merge_osnap_data_west_INDEV.m
+                run merge_osnap_data_west.m
             end
 
         case 'Cancel'
@@ -287,7 +288,7 @@ case 'Merge'
             if ismember(moor{1}(3:4),'eb')
                 run merge_osnap_data_east.m
             else
-                run merge_osnap_data_west_INDEV.m
+                run merge_osnap_data_west.m
             end
     end
 end
