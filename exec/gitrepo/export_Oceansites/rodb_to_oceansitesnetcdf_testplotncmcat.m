@@ -29,17 +29,17 @@ set(fig,'PaperUnits','centimeters','PaperOrientation','portrait',...
 				    'Paperposition',figpos)
 subplot(3,1,1)
 plot(mcatncdata.time, mcatncdata.PRES);
-title('P (db)')
+title([moor ' P (db)'])
 datetick
 
 subplot(3,1,2)
 plot(mcatncdata.time, mcatncdata.TEMP);
-title('T (C)')
+title([moor ' T (C)'])
 datetick
 
 subplot(3,1,3)
 plot(mcatncdata.time, mcatncdata.PSAL);
-title('SAL')
+title([moor ' SAL'])
 datetick
 
 print('-dpng',namefig1)

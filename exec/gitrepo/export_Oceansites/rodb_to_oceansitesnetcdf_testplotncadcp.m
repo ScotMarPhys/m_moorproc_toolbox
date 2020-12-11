@@ -35,7 +35,7 @@ set(gca,'ylim', plotylim)
 shading flat
 view([0 90])
 caxis([-0.5 0.5])
-title('U (m.s-1)')
+title([moor ' U (m.s-1)'])
 datetick
 colormap(cmapvel)
 colorbar
@@ -46,7 +46,7 @@ set(gca,'ylim', plotylim)
 shading flat
 view([0 90])
 caxis([-0.5 0.5])
-title('V (m.s-1)')
+title([moor ' V (m.s-1)'])
 datetick
 colormap(cmapvel)
 colorbar
