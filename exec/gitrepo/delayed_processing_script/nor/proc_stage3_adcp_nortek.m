@@ -8,8 +8,10 @@
 close all, 
 clearvars  -except pathosnap datadir execdir
 
-moor = 'rteb1_05_2018';
 %moor = 'rtwb1_02_2015';
+% moor = 'rteb1_05_2018';
+% moor = 'rtwb1_05_2018';
+moor = 'rtwb2_05_2018';
 % 
 % if exist('/Volumes/rpdmoc/rapid/data/exec/jc103/stage1/microcat/mc_call_caldip_jc103_v3.m','file')
 %     % using DR Mac with mount to banba on JC103
@@ -24,5 +26,5 @@ moor = 'rteb1_05_2018';
 
 procpath = [pathosnap '/data/moor/proc/' ];
 
-cm_edit_NOCS_v4(moor,'procpath',procpath)
+cm_edit_NOCS_v5(moor,'procpath',procpath)
 
