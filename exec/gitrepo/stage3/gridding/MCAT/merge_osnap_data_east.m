@@ -866,8 +866,8 @@ x=JG;
 y=pgg;
 z=TG_east;
 [c,h]=contourf(x,y,z,100,'LineColor','none');
-caxis([floor(min(min(TG_east))) ceil(max(max(TG_east)))]);
-C = colorbar;colormap(ax(1),'jet')
+caxis([ceil(min(min(TG_east))) floor(max(max(TG_east)))]);
+C = colorbar;
 C.Label.String = 'Conservative Temperature (^{o} C)';
 C.Ticks=[floor(min(min(TG_east))):1:ceil(max(max(TG_east)))];
 C.TickLength=0.03;
@@ -884,6 +884,8 @@ date2=datenum(max(Y),1,1);
 datetick('x','Keeplimits');
 axis ij
 title('Rockall Trough Eastern Boundary Gridded Temperature')
+cmap=cmocean('Thermal')
+colormap(ax(1),cmap)
 
 % SALINITY
 ax(2)=subplot(2,1,2)
@@ -893,7 +895,8 @@ z=SG_east;
 [c,h]=contourf(x,y,z,12,'LineColor','none');
 caxis([round(min(min(z)),1) round(max(max(z)),1)]);
 C = colorbar;
-cmap=colormap('parula');
+% cmap=colormap('parula');
+cmap=cmocean('Haline')
 colormap(ax(2),cmap);
 C.Label.String = 'Absolute Salinity (g kg^{-1})';
 C.Ticks=[round(min(min(z)),1):0.1:round(max(max(z)),1)];

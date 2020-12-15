@@ -274,7 +274,6 @@ end
 
 nnan   = find(~isnan(postC) & ~isnan(preC));%lines 1:5 are header
 val    = find(abs(postC(nnan))<0.02 & abs(preC(nnan)) < 0.02);
-
 Ctrend = -mean(preC(nnan(val)))+mean(postC(nnan(val)));  %allg. Vergleich pre - post cruise 
 
 nnan   = find(~isnan(postT) & ~isnan(preT));%lines 1:5 are header

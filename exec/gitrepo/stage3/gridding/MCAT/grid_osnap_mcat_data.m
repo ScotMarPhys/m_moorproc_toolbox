@@ -220,7 +220,7 @@ switch answer
             if ismember(moor{1}(3:4),'eb')
                 run merge_osnap_data_east.m
             else
-                run merge_osnap_data_west_INDEV.m
+                run merge_osnap_data_west.m
             end
 
     end
