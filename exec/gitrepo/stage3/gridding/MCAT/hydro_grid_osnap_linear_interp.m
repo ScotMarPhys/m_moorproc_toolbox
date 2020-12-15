@@ -517,9 +517,9 @@ z=gsw_rho(X,Y,0);
 [h,c]=contour(X,Y,z);
 clabel(h,c);
 hold on
-plot(SGfs,pt_Gfs,'.m');
+plot(SGfs,pt_Gfs,'.k');
 hold on
-plot(Sf',pt','k.');
+plot(Sf',pt','.');
 hold on
 xli = get(gca,'Xlim');
 yli = get(gca,'Ylim');
