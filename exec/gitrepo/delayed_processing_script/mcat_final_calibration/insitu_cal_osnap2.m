@@ -25,7 +25,7 @@
 %                 are defined (see osnap/users/loh/mcatpostcruisecalib/postcalib_process)  
 %               - add a parameter mc_cunit
 close all
-clearvars  -except pathgitrepo pathosnap p_insitucal 
+clearvars  -except pathgitrepo pathosnap p_insitucal pathgit
 warning off
 global cruise
 
@@ -271,73 +271,6 @@ if strcmp(ctdformat,'aoml')
   if strcmp('rb0701',cruise)
       cnv_cor_save = cnv_cal;
   end
-  if strcmp('sj08',cruise)
-      cnv_cor_save = cnv_cal;
-   %   for iii=1:length(cnv_cor_save)
-   %   cnv_cor_save(iii).conductivity = cnv_cor_save(iii).cond;
-   %   cnv_cor_save(iii).temperature = cnv_cor_save(iii).temp;
-   %   cnv_cor_save(iii).elap_time_sec= cnv_cor_save(iii).ellapsed_time;
-   %   end
-  end
-  if strcmp('rb0901',cruise)
-      cnv_cor_save = cnv_cal;
-  end
-  if strcmp('d345',cruise)
-      cnv_cor_save = cnv_cal;
-  end
-  if strcmp('oc459',cruise)
-      cnv_cor_save = cnv_cal;
-   %   for iii=1:length(cnv_cor_save)
-   %   cnv_cor_save(iii).conductivity = cnv_cor_save(iii).cond;
-   %   cnv_cor_save(iii).temperature = cnv_cor_save(iii).temp;
-   %   cnv_cor_save(iii).elap_time_sec= cnv_cor_save(iii).elapsed_time;
-   %   end
-  end
-  if strcmp('rb1009',cruise)
-      cnv_cor_save = cnv_cal;
-  end
-    if strcmp('kn200_4',cruise)
-      cnv_cor_save = cnv_cal;
-    end
-  if strcmp('rb1201',cruise)
-      cnv_cor_save = cnv_cal_1hz;
-      if cast ==2
-          cst=5;
-       elseif cast == 10
-              cst=45;
-      elseif cast == 1
-          cst=1;
-      elseif cast == 3
-          cst=10;
-      elseif cast == 4
-          cst=14;
-      elseif cast == 5
-          cst=19;
-      else
-          cst=cast+24;
-      end
-      for i = 1 : length(cnv_cor_save)
-      if cnv_cor_save(i).station == cst
-          
-          d.cond  = cnv_cor_save(i).conductivity;
-          d.temp  = cnv_cor_save(i).temperature;
-          d.press = cnv_cor_save(i).pressure;
-          %if strcmp(ctd_cunit,'S/m')
-          d.cond = d.cond;%*10;
-          %end   
-    
-          ctd_time_ori = julian([cnv_cor_save(i).gtime(1:3) hms2h(cnv_cor_save(i).gtime(4:6))]);
-          d.time = cnv_cor_save(i).elap_time_sec/86400 + ctd_time_ori; 
-          
-      end
-      end
-  end
-     if strcmp('en517',cruise)
-      cnv_cor_save = cnv_cal_1hz;
-     end
-     if strcmp('ae1404',cruise)
-         cnv_cor_save=cnv_cal_1hz;
-     end
   if  strcmp('kn221-02',cruise) | strcmp('kn221-03',cruise)
     cnv_cor_save=sbe;
   end
@@ -404,7 +337,7 @@ elseif strcmp(ctdformat,'mstar')
   ctd_time_ori = julian(year,month,day,hour); %julian(year+h.icent, month, day,hour);
   d.time       = d.time/86400 + ctd_time_ori; % ctd time in julian days 
 % if strcmp(cruise,'jc064')
-    elseif strcmp(cruise,'dy120') | strcmp(cruise,'ar304') | strcmp(cruise,'dy078') | strcmp(cruise,'dy053') | strcmp(cruise,'pe399') 
+elseif strcmp(cruise,'dy120') | strcmp(cruise,'ar304') | strcmp(cruise,'dy078') | strcmp(cruise,'dy053') | strcmp(cruise,'pe399') 
     ctd_file
     if sensorselec==1    
         [d h]=mload(ctd_file,'time','press','temp1','cond1',' ','q');
@@ -419,7 +352,7 @@ elseif strcmp(ctdformat,'mstar')
  jtime=h.data_time_origin(1:3);
  jtime=[jtime HH];
  d.time=julian(jtime)+d.time/86400;
-    else
+else
     ctd_file
   dd  = netcdf(ctd_file); %,'press temp cond time','silent');
   d = struct('press',dd{'press'}(:),'temp',dd{'temp1'}(:),'cond',dd{'cond1'}(:),'time',dd{'time'}(:));
@@ -496,9 +429,6 @@ end
 % --------------------------------------------------------------------------
 % 2. ---- water impact times: determine time offsets between ctd and mc ----
 % --------------------------------------------------------------------------
-if strcmp('en517',cruise)
-fprintf(1,'!!!!No time channel in cnv files - can not calculate time offset!!!!\n')
-else
 % CTD impact
 ctd_cond_threshold = cond_threshold;
 if strcmp(ctd_cunit,'S/m')
@@ -517,6 +447,7 @@ end
 if strcmp(mc_cunit,'S/m')
     C = C*10;
 end    
+
 for i = 1 : ninst
   if strcmp(impact_var,'c') 
     ii = find(C(:,i) > cond_threshold);           % water impact mc
@@ -556,7 +487,6 @@ end
 fprintf(1,'\n Time offset of MicroCATs rel. to CTD:\n\n') 
 fprintf(1,'  ID    HH    MM   SS\n')
 fprintf(1,'  %d: %d  %d  %d\n',[instr';oh';om';round(os')]);
-end
 
 %-------------------------------------------------------
 % 3. ---- extract data from bottle stops ---------------

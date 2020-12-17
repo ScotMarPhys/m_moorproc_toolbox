@@ -9,23 +9,23 @@
 %
 % kanzow, 23.08.05 
 % edited by Loic Houpert 21/10/2015
-%
+% edited by lewis Drysdale Dec 2020
+
 close all
 clearvars  -except pathosnap pathgit
 warning off
 
-%pathosnap = '../../../..';
 % path of the mooring data define in the startup file under osnap/
 %moor = 'rtwb1_03_2016';
-%'rtwb2_01_2014';
+%moor ='rtwb2_01_2014';
 %moor = 'rtwb1_04_2017';
 %moor = 'rteb1_04_2017';
 %moor = 'rtwb2_04_2017';
 %moor = 'rtwb1_04_2017';
 %moor = 'rteb1_04_2017';
 % moor = 'rtwb2_05_2018';
-% moor = 'rtwb1_05_2018';
-moor = 'rteb1_05_2018';
+moor = 'rtwb1_05_2018';
+% moor = 'rteb1_05_2018';
 
 %=========================================================================
 % Apply calibration coefficients to series, removes bad data. If required, applies
@@ -34,6 +34,7 @@ p_applycal.operator  = 'SJ';
 p_applycal.mooring  = moor;   
 p_applycal.sensortyp = 'microcat';   % arg / microcat / rbr / idr
 p_applycal.delim = ',';
+
 % input directories & files 
 p_applycal.mooring_dir         = [pathosnap '/data/moor/proc/'];
 p_applycal.mooring_outdir      = [pathosnap '/data/moor/proc/'];
@@ -48,7 +49,6 @@ p_applycal.strformat.mcsalnum  = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,7)]
 p_applycal.strformat.mcprestxt = repmat('%s',1,61);
 p_applycal.strformat.mcpresnum = ['%f' repmat('%s%f%s%s',1,15)];
 
-
 loclegend = 'north';
 
 %-------------------------------------------------------------------------
@@ -56,7 +56,6 @@ loclegend = 'north';
 % external_ctd_dir . If not, script to convert mstar ctd format to rodb 
 % format are in users/loh/mcatpostcruisecalib/ctd_matfile_rodb/
 % ---------------------------------------------------------------------------
-
 
 % ---------------------------------------------------------------------------
 operator  = p_applycal.operator; 
@@ -67,14 +66,12 @@ strformat = p_applycal.strformat;
 delim = p_applycal.delim;
 
 distrangectd = p_applycal.distrangectd;
-% input directories & files 
-% rodbpath('/users/odb/rpdmoc/users/tok/rapid/data/'); 
-% rodbpath('/users/odb/rpdmoc/users/tok/rapid/data/'); 
 mooring_dir         = p_applycal.mooring_dir;
 mooring_outdir      = p_applycal.mooring_outdir;
 coef_dir            = p_applycal.coef_dir;
 external_ctd = [];
 external_ctd_file = [];
+
 for ijk=1:length(p_applycal.ctd_ref_cruises)
     external_ctd        = [external_ctd ; ...
             [p_applycal.external_ctd_dir p_applycal.ctd_ref_cruises{ijk} '/ctdref/']];
@@ -82,10 +79,7 @@ for ijk=1:length(p_applycal.ctd_ref_cruises)
             [p_applycal.ctd_ref_cruises{ijk} '_pos.mat']];
 end
 
-
 % extract calibration cruise indices from database (.xls spreadsheet)
-
-%[cruiseI,moors,raw]  = xlsread([coef_dir,'microcat_calib_cruise.xls']);
 fid_cruise = fopen([coef_dir,'microcat_calib_cruise.csv']);
 cruise     = textscan(fid_cruise,'%s%d%d','delimiter',delim,'HeaderLines',2);
 fclose(fid_cruise)
@@ -100,21 +94,21 @@ cruiseI              = cruise(moorI,:);
 deplcr = txt(find(num==cruiseI(1))+1);
 reccr  = txt(find(num==cruiseI(2))+1);
 
-% ---  output  data ---- 
+% ------ output  data ---- 
 
 %%ext      = '.microcat';
 dum      = -9999; 
 pref     = 0;
 t90_68   = 1.00024;  % convert its90 to its68 for cond. to sal.
 
-%%conversion
+% ------ conversion ------------
 cols      = 'YY:MM:DD:HH:T:C'; % column info for rodb header
 colsp     = 'YY:MM:DD:HH:T:C:P'; % column info for rodb header (mc with pressure sensor)
 colsarg   = 'YY:MM:DD:HH:T:TCAT:P:PCAT:C:U:V:W';
 fort      = '%4.4d  %2.2d  %2.2d  %7.5f   %6.4f  %6.4f'; %data output format
 fortp     = '%4.4d  %2.2d  %2.2d  %7.5f   %6.4f  %6.4f  %5.1f'; %data output format(mc with pressure sensor)  
 
-% sensor specific settings
+% ------ sensor specific settings ------
 
 if strcmp('microcat',sensortyp)
   typ_id = [333 337];
@@ -125,25 +119,20 @@ elseif strcmp('rbr',sensortyp)
 elseif strcmp('idr',sensortyp)
     typ_id = [339];
 end
-
-
 ext = ['.',sensortyp];
-% ---- microcat raw data ----
 
+% ---- microcat raw data ----
 head    = ['Mooring:SerialNumber:WaterDepth:InstrDepth:Start_Date:Start_Time:End_Date:End_Time:Latitude:Longitude:Columns'];
 
-
 % ---- load calib offsets (pre and post cruise) ----
-
-
 % Conductivity / Temperature / Depth
+
 if strcmp('microcat',sensortyp) | strcmp('idr',sensortyp) | strcmp('rbr',sensortyp)
  
   fidt  = fopen([coef_dir,'microcat_temp.csv'],'r');
   ttext = textscan(fidt,strformat.mctemptxt,'delimiter',delim);
   fseek(fidt,0,'bof');
   tnum  = textscan(fidt,strformat.mctempnum,'delimiter',delim,'HeaderLines',5);
-  
   
   fidc  = fopen([coef_dir,'microcat_cond.csv'],'r');
   ctext = textscan(fidc,strformat.mcsaltxt ,'delimiter',delim);
@@ -156,8 +145,8 @@ if strcmp('microcat',sensortyp) | strcmp('idr',sensortyp) | strcmp('rbr',sensort
   fseek(fidp,0,'bof');
   pnum  = textscan(fidp,strformat.mcpresnum,'delimiter',delim,'HeaderLines',5);
 
-  
 elseif strcmp('arg',sensortyp)
+    
   [cnum,ctext] = xlsread([coef_dir,'microcat_cond.xls']);
   [tnum,ttext] = xlsread([coef_dir,'microcat_temp.xls']);
   [pnum,ptext] = xlsread([coef_dir,'microcat_pres.xls']);
@@ -185,23 +174,22 @@ if cruiseI(1) < 0
     preP(1:length(pin),1) = NaN;
     preCcomment(1:length(cin),1) = {' '};
     preTcomment(1:length(tin),1) = {' '};
-    prePcomment(1:length(pin),1) = {' '};
-    
+    prePcomment(1:length(pin),1) = {' '};  
 else
 
-  %  ccol  = find(cnum(2,:) == cruiseI(1));
+    
+% ------ Codcutivity ------
   for i = 1 :clen
     cvalI(i)=strcmp(ctext{i}{2},num2str(cruiseI(1)));
   end
   ccol = find(cvalI == 1);
-
+% ------ Temperature ------
   for i = 1 :tlen
     tvalI(i)=strcmp(ttext{i}{2},num2str(cruiseI(1)));
   end
   tcol = find(tvalI == 1);
-
-  
-   for i = 1 :plen
+% ------ Pressure ------
+  for i = 1 :plen
     pvalI(i)=strcmp(ptext{i}{2},num2str(cruiseI(1)));
   end
   pcol = find(pvalI == 1);
@@ -213,15 +201,12 @@ else
   preTcomment =  tnum{tcol+2};
   
     if ~isempty(find(strcmp(ptext{pcol(1)-1},mooring)>0))
- 
-    preP  = pnum{pcol(1)};
-    prePcomment =  pnum{pcol(1)+2};
-  
-  elseif ~isempty(find(strcmp(ptext{pcol(2)-1},mooring)>0))
-      %%preP  = pnum(:,pcol(2)); 
-      preP  = pnum{pcol(2)}; 
-      prePcomment =  pnum{pcol(2)+2};
-  end
+        preP  = pnum{pcol(1)};
+        prePcomment =  pnum{pcol(1)+2};
+    elseif ~isempty(find(strcmp(ptext{pcol(2)-1},mooring)>0))
+        preP  = pnum{pcol(2)}; 
+        prePcomment =  pnum{pcol(2)+2};
+    end
 end
 
 % ----- post cruise calibration -----------------
@@ -236,18 +221,18 @@ if cruiseI(2) < 0
     postPcomment(1:length(pin),1) = {' '};
 
 else
-
+    
   for i = 1 :clen
     cvalI(i)=strcmp(ctext{i}{2},num2str(cruiseI(2)));
   end
   ccol = find(cvalI == 1);
-
+  
   for i = 1 :tlen
     tvalI(i)=strcmp(ttext{i}{2},num2str(cruiseI(2)));
   end
   tcol = find(tvalI == 1);
   
-    for i = 1 :plen
+  for i = 1 :plen
      pvalI(i)=strcmp(ptext{i}{2},num2str(cruiseI(2)));
   end
   pcol = find(pvalI == 1);
@@ -292,8 +277,7 @@ if isempty(val)
   Ptrend = 0;    
 end
 
-
-% %% ---- 1) apply dedrift --------- %%%%%%%%
+% ---- 1) apply dedrift ---------
 
 [typ,dep,serial] = rodbload([mooring_dir,mooring,'/',mooring,'info.dat'],...
                         ['instrument:z:serialnumber']);
@@ -304,24 +288,18 @@ serial  = serial(mcI);
 typ     = typ(mcI);
 
 for mc = 1: length(serial)
-    
-    close all
-
-  %mcfile_out = [mooring_dir,mooring,'/',sensortyp,'/',mooring,'_',sprintf('%3.3d',mc),ext]; 
+  close all
   mcfile_out = [mooring_outdir,mooring,'/',sensortyp,'/',mooring,'_',sprintf('%3.3d',mc),ext]; 
   mcfig_out = [mooring_outdir,mooring,'/',sensortyp,'/',mooring,'_',sprintf('%3.3d',mc)]; 
   if exist(mcfile_out) == 2 
-    over = input([mcfile_out,' exists already: do you want to overwrite it? y/n '],'s');  
-    
+    over = input(['File ' [sprintf('%3.3d',mc) ext] ' for instrument ' num2str(serial(mc)) ' exists already: do you want to overwrite it? y/n '],'s');  
     if ~strcmp(over,'y')
          continue
     end
     [succ1,mess1] =copyfile(mcfile_out,[mcfile_out,date]);
     [succ2,mess2] =copyfile([mcfile_out,'.txt'],[mcfile_out,'.txt',date]);
-
   end  
-    
-  
+     
   if exist('diag','var')
       fclose(diag);
       diag=fopen('CTD_near.txt','w+');
@@ -337,8 +315,8 @@ for mc = 1: length(serial)
       continue
   end
   
-  if strcmp(sensortyp,'microcat') | strcmp(sensortyp,'rbr') | strcmp(sensortyp,'idr')
-  
+  % read .USE file
+  if strcmp(sensortyp,'microcat') | strcmp(sensortyp,'rbr') | strcmp(sensortyp,'idr')  
     [yy,mm,dd,hh,t,c,p]= rodbload(mcfile,colsp);
   elseif strcmp(sensortyp,'arg')
     [yy,mm,dd,hh,t,tcat,p,pcat,c,u,v,w]= rodbload(mcfile,colsarg);
@@ -364,6 +342,7 @@ for mc = 1: length(serial)
     sp       = 4;   
   end
 
+%% CONDUCTIVITY
   warn = 0;
   if isempty(cinI)
      disp(['no conduct. calibration entry found for serial number ',num2str(serial0)])
@@ -396,10 +375,12 @@ for mc = 1: length(serial)
       disp(['Choice ',num2str(keep),' not defined'])
       break
     end
-        
+    
+    % clibration offsets for conductivity
     cal1     =  preC(cinI);
     cal2     =  postC(cinI);       
-
+      
+    % IF one of the offsets is a nan, we can use a general trend
     if isnan(cal1)
       applytrendcg = input('SHOULD GENERAL TREND FOR CONDUCTIVITIES BE APPLIED? [y/n]','s');
       if strcmp(applytrendcg,'y')
@@ -407,8 +388,7 @@ for mc = 1: length(serial)
       else
         cal1   =  cal2-Ctrend*0;
       end    
-      warn = 1;
-   
+      warn = 1;  
     end
     
     if isnan(cal2)
@@ -420,23 +400,8 @@ for mc = 1: length(serial)
       end  
       warn = 2;
     end  
-
-   if 0 
-    if isnan(cal1)
-       cal1   = cal2-Ctrend;
-         warn = 1;
-       disp(['no pre-cruise cond. cal. found for # ',num2str(serial0),':  GENERAL TREND APPLIED'])
-    end
-    if isnan(cal2)
-      cal2   =  cal1+Ctrend;
-        warn = 2;
-       disp(['no post-cruise cond. cal. found for # ',num2str(serial0),':  GENERAL TREND APPLIED'])
-    end  
-   end % if 0
-   
-   
-   %%%JC: Apply trend or average 
     
+    % Ask if want to use average 
     if keep == 0
         applytrendc = input('SHOULD AVERAGE OF CONDUCTIVITY COEFFICIENTS BE APPLIED? [y/n]','s');
       if strcmp(applytrendc,'y')
@@ -449,7 +414,7 @@ for mc = 1: length(serial)
       warn = 3;
     end
       
-    %%%JC
+    % calculate the correction to be applied to the data
     corrC    =  cal1 + (cal2 - cal1)/max(jd0)*jd0; 
     
     if isempty(find(~isnan(corrC)))
@@ -458,13 +423,13 @@ for mc = 1: length(serial)
       corrC    =  0; 
     end    
   end  
-    
+  
+%% TEMPERATURE    
   if isempty(tinI)
      disp(['no temp. calibration entry found for serial number ',num2str(serial0)])
      skipT    =  input('skip (0) or save data without calibration(1) ');
      corrT    =  0;
   else
-      
     cal1comment = preTcomment(tinI); 
     cal2comment = postTcomment(tinI);
     cal1        =  preT(tinI);
@@ -502,7 +467,6 @@ for mc = 1: length(serial)
       warn = 1;
     end
   
- 
     if isnan(cal2)
       applytrendtg = input('SHOULD GENERAL TREND FOR TEMPERATURES BE APPLIED? [y/n]','s');  
       if strcmp(applytrendtg,'y')
@@ -512,8 +476,6 @@ for mc = 1: length(serial)
       end  
       warn = 2;
     end  
-    
-    %%%JC: Apply trend or average 
     
     if keep == 0
         applytrendt = input('SHOULD AVERAGE OF TEMPERATURE COEFFICIENTS BE APPLIED? [y/n]','s');
@@ -526,24 +488,22 @@ for mc = 1: length(serial)
       end
       warn = 3;
     end
-      
-    %%%JC
+
     corrT    =  cal1 + (cal2 - cal1)/max(jd0)*jd0; 
     if isempty(find(~isnan(corrT)))
       disp(['no temp. calibration found for serial number ',num2str(serial0)])
       skipT    =  input('skip (0) or save temp. data without calibration(1) ')
       corrT    =  0; 
     end    
-
   end
 
-  if strcmp(p_exist,'y')
+  %% PRESSURE
+if strcmp(p_exist,'y')
     if isempty(pinI)
         disp(['no pressure calibration found for serial number ',num2str(serial0)])
         skipP    =  input('skip (0) or save data without calibration(1) ');
         corrP    =  0;
-    else
-    
+    else   
       cal1comment = prePcomment(pinI); 
       cal2comment = postPcomment(pinI);
       cal1        =  preP(pinI);
@@ -573,15 +533,14 @@ for mc = 1: length(serial)
       cal1     =  preP(pinI);
       cal2     =  postP(pinI); 
       
-      if isnan(cal1)
+    if isnan(cal1)
       applytrendpg = input('SHOULD GENERAL TREND FOR PRESSURES BE APPLIED? [y/n]','s');
       if strcmp(applytrendpg,'y')
         cal1   =  cal2-Ptrend;
       else
         cal1   =  cal2-Ptrend*0;
       end    
-      warn = 1;
-   
+      warn = 1;  
     end
     
     if isnan(cal2)
@@ -594,19 +553,6 @@ for mc = 1: length(serial)
       warn = 2;
     end  
 
-      if 0
-      if isnan(cal1)
-        cal1   =  cal2-Ptrend;
-          warn = 1;
-         disp(['no pre-cruise pres. cal. found for # ',num2str(serial0),':  GENERAL TREND APPLIED'])
-      end
-      if isnan(cal2)
-        cal2   =  cal1+Ptrend;
-        disp(['no post-cruise pres. cal. found for # ',num2str(serial0),':  GENERAL TREND APPLIED'])
-       warn = 2;
-      end 
-      end % if 0%%%JC: Apply trend or average 
-    
     if keep == 0
         applytrendp = input('SHOULD AVERAGE OF PRESSURE COEFFICIENTS BE APPLIED? [y/n]','s');
       if strcmp(applytrendp,'y')
@@ -619,24 +565,20 @@ for mc = 1: length(serial)
       warn = 3;
     end
       
-    %%%JC
-    
-      corrP    =  cal1 + (cal2 - cal1)/max(jd0)*jd0; 
-      if isempty(find(~isnan(corrP)))
-        disp(['no pressure calibration found for serial number ',num2str(serial0)])
-        skipP    =  input('skip (0) or save pressure data without calibration(1) ');
-        corrP    =  0; 
-    end    
+    corrP    =  cal1 + (cal2 - cal1)/max(jd0)*jd0; 
+        if isempty(find(~isnan(corrP)))
+            disp(['no pressure calibration found for serial number ',num2str(serial0)])
+            skipP    =  input('skip (0) or save pressure data without calibration(1) ');
+            corrP    =  0; 
+        end    
 
     end 
    
     pn       = p - corrP;
     
-    %%MW added to deal with pressure offset in eb1_8_200935, 005 (s/n 3893)
-    if strcmp(mooring,'eb1_8_200935')&mc==5
-      pn(15784:end)=pn(15784:end)+2;  
-    end
-  end
+end
+
+%% apply offsets 
 
   tn       = t - corrT;      
   cn       = c - corrC;
@@ -646,7 +588,6 @@ for mc = 1: length(serial)
   pn(spikeP) = dum;
   
   figure(1)
-  
   subplot(1,sp,1)
   hold off
   ii = find(tn>dum);
@@ -661,7 +602,7 @@ for mc = 1: length(serial)
   plot(jd0(ii),c(ii),'k')
   hold on
   plot(jd0(ii),cn(ii),'r')
-  grid on;  title('conductivity');xlim(xli);
+  grid on;  title('C raw=black plus offset=red');xlim(xli);
 
   if strcmp(p_exist,'y')
     subplot(1,sp,sp-1)
@@ -714,9 +655,12 @@ for mc = 1: length(serial)
   end 
   grid on 
  
+  % Conductivity at (35,15,0)
   c3515   = sw_c3515;
   
-  ii = find(cn>dum & pn>dum);     
+  ii = find(cn>dum & pn>dum); 
+  
+  % Salinity from cndr, T, P
   sn = sw_salt(cn(ii)/c3515,tn(ii)*t90_68,pn(ii));
  
   figure(6);clf; hold on
@@ -727,18 +671,14 @@ for mc = 1: length(serial)
   
   figure(6)
   
-%   eval(['print -dpng ',mcfig_out,'_salinity', '.png' ])   
   print([mcfig_out,'_salinity', '.png'],'-dpng');
-  %JC 
-     sss=sw_salt(c/c3515,t*t90_68,p);
-     figure(8);clf; hold on
+  sss=sw_salt(c/c3515,t*t90_68,p);
+  figure(8);clf; hold on
+  plot(sss,t,'.')
+  xlabel('Salinity')
+  ylabel('Temperature')
   
-     plot(sss,t,'.')
-     xlabel('Salinity')
-     ylabel('Temperature')
-  %JC
-  
-  %%%%%%%%%%%%%% --- 2) conductivity pressure correction
+%%%%%%%%%%%%%% --- 2) conductivity pressure correction
 
 acc_cpcor = input('Is a pressure dependant correction is required for the conductivity (see Fig. 1)? y/n ','s');
 
@@ -747,7 +687,7 @@ if strcmp(acc_cpcor,'y')
   invalcpcor = input('Insert time interval where correction is required, e.g. [3 56] denotes days 3-56 ');
   dumI = find(cn == dum);
   
-  for i = 1 : length(invalcpcor)/2,  
+  for i = 1 : length(invalcpcor)/2  
     corI = find(jd0>= invalcpcor(i*2-1) & jd0 <= invalcpcor(i*2));    
     cn(corI) = mc_concorr(cn(corI),pref,pn(corI));
   end
@@ -767,20 +707,12 @@ elseif ~strcmp(acc_cpcor,'y') & ~strcmp(acc_cpcor,'n')
   
 end
 
-
-
-
-  %%%%%%%%% 3)  pressure drift removal ---------------
+%%%%%%%%% 3)  pressure drift removal ---------------
 
 acc_drift = input('Does the pressure record require drift removal (see Fig. 1)?  y/n ','s');
 
 if strcmp(acc_drift,'y')
-  
-  %dumN = find(pn == dum);
-  %pn(dumN:end)=NaN;
-
-  [coef,fit]= exp_lin_fit2(jd,pn,[1 1 1 1]);  % [1 1 1 1]
-
+  [coef,fit]= exp_lin_fit2(jd,pn,[1 1 1 1]);
   
   figure(3);clf;hold on
 
@@ -788,12 +720,6 @@ if strcmp(acc_drift,'y')
 
   plot(jd0,fit,'r','Linewidth',2)
   grid on
-  
-  
-%  for i=1:length(pn)
-%  pp(i)=pn(end);
-%  end
-%  pp=pp';
   
   if warn == 1
     pp = pn - fit + fit(end);
@@ -814,7 +740,6 @@ if strcmp(acc_drift,'y')
   end
   plot(jd0,pp,'g')
   
- 
   figure(111);clf;hold on
     plot(so,tn(ii),'b.')
     plot(sn,tn(ii),'r.')
@@ -839,18 +764,6 @@ if strcmp(acc_drift,'y')
     legend('raw','P corr')
     pn(spikeP)=dum;
     
-    % Output coefficients of fit to txt file
-    
-   % pn(dumN)=dum;
-   %%re-derive cond after pressure correction for eb1_8_100935, 017 (MW)
-%    if strcmp(mooring,'eb1_8_200935')&mc==17
-%      cn1=cn;
-%     for n=1:length(cn)
-%       cn(n) = mc_concorr(cn(n),pn(n),pn(n));
-%     end
-%     cn(spikeP)=dum;
-%     cn(spikeC)=dum;
-%    end
   else
     disp('drift removal discarded')
     acc_drift = 'n';
@@ -863,8 +776,6 @@ elseif ~strcmp(acc_drift,'y') & ~strcmp(acc_drift,'n')
   acc_drift = 'n';
 end    
 
-
-  
   %%%%%%%----- 4)  set suspicious data to dummies -------%%%%%%%%%%
   
   invalT = 0; invalC = 0; invalP = 0;
@@ -983,8 +894,7 @@ end
     plot(jd0(ii),tn(ii),'b')
     title('temperature');xlim(xli);
     end
-  
-   
+    
   inval = input('Does an offset need to be applied to part of the conductivity series y/n \n','s');
    
     if strcmp(inval,'y')
@@ -1056,17 +966,11 @@ end
       plot(jd0(ii),pn(ii),'r')
       title('pressure');xlim(xli);
     end
-  
-  
-  
  
 %%%%%%%%%%%%%% 5) interactive despiking  %%%%%%%%%%%%%%%%%%
-  
-  
   c3515   = sw_c3515;
 
   val = find(cn>dum & pn>dum);  
-
 
   if isempty(val)
     val = find(cn>dum);
@@ -1075,14 +979,11 @@ end
     sn = sw_salt(cn(val)/c3515,tn(val)*t90_68,pn(val));
   end 
 
-  
   figure(111);hold off
   if ~isempty(find(pn>dum))
-      %%plot(sn,theta(pn(val),tn(val),sn,median(pn(val))),'.k') %TK
       plot(sn,sw_ptmp(sn,tn(val),pn(val),median(pn(val))),'.k')
-  else     
-   
-    plot(sn,tn(val),'.r')
+  else       
+      plot(sn,tn(val),'.r')
   end 
   grid on
   
@@ -1111,16 +1012,12 @@ for zz=1:size(external_ctd_file,1)
 
       if ~isempty(find(pn>dum))
         %%plot(ctd_s,theta(ctd_p,ctd_t,ctd_s,median(pn(val))),'g')
-        plot(ctd_s,sw_ptmp(ctd_s,ctd_t,ctd_p,median(pn(val))),'g')
-              
+        plot(ctd_s,sw_ptmp(ctd_s,ctd_t,ctd_p,median(pn(val))),'g'              
       else     
         plot(ctd_s,ctd_t,'y')
- 
       end 
 
       xlim(xli);ylim(yli);
-      
-      
       
    elseif ~isempty(strfind(external_ctd(zz,:),'pe399'))
    ctd_file = [external_ctd(zz,1:max(findstr(external_ctd(zz,:),'/'))),external_ctd_file(zz,1:5),'_',sprintf('%3.3d',ctd_prof(near(qq))),'.ctd'];
@@ -1140,7 +1037,7 @@ for zz=1:size(external_ctd_file,1)
  
       end       
       
-   elseif ~isempty(strfind(external_ctd(zz,:),'pe400'))
+elseif ~isempty(strfind(external_ctd(zz,:),'pe400'))
        ctd_t(ctd_t==0)=nan;
        ctd_s(ctd_s==0)=nan;   
        hold on
@@ -1157,8 +1054,7 @@ for zz=1:size(external_ctd_file,1)
       end 
 
       xlim(xli);ylim(yli);
-   else
-%for qq=1:length(near)
+else
    ctd_file = [external_ctd(zz,1:max(findstr(external_ctd(zz,:),'/'))),external_ctd_file(zz,1:4),'_',sprintf('%3.3d',ctd_prof(near(qq))),'.ctd'];
        [ctd_p,ctd_t,ctd_s] = rodbload(ctd_file,'p:t:s');
       hold on
@@ -1166,43 +1062,24 @@ for zz=1:size(external_ctd_file,1)
       yli = get(gca,'Ylim');
 
       if ~isempty(find(pn>dum))
-        %  if ~(isempty(strfind(external_ctd(zz,:),char(deplcr))))
-         %       plot(ctd_s,sw_ptmp(ctd_s,ctd_t,ctd_p,median(pn(val))),'r')
-         % elseif ~(isempty(strfind(external_ctd(zz,:),char(reccr))))
-         %     plot(ctd_s,sw_ptmp(ctd_s,ctd_t,ctd_p,median(pn(val))),'m')
           
                 if ~(isempty(strfind(external_ctd(zz,:),'d382')))   %'sj08')))                
                       plot(ctd_s,sw_ptmp(ctd_s,ctd_t,ctd_p,median(pn(val))),'r')
                 elseif ~(isempty(strfind(external_ctd(zz,:),'jc103')))   
                       plot(ctd_s,sw_ptmp(ctd_s,ctd_t,ctd_p,median(pn(val))),'m')%color',[0.5 0.5 0.5])
-         %       elseif ~(isempty(strfind(external_ctd(zz,:),'d334')))   
-         %             plot(ctd_s,sw_ptmp(ctd_s,ctd_t,ctd_p,median(pn(val))),'color',[0.5 0 0.5])
-         %       elseif ~(isempty(strfind(external_ctd(zz,:),'d324')))   
-         %             plot(ctd_s,sw_ptmp(ctd_s,ctd_t,ctd_p,median(pn(val))),'color',[1 0.5 0])
-         %       elseif ~(isempty(strfind(external_ctd(zz,:),'rb0901')))   
-         %             plot(ctd_s,sw_ptmp(ctd_s,ctd_t,ctd_p,median(pn(val))),'color',[0.5 0.5 0])
-         %       elseif ~(isempty(strfind(external_ctd(zz,:),'d344')))   
-         %%             plot(ctd_s,sw_ptmp(ctd_s,ctd_t,ctd_p,median(pn(val))),'color',[0.9 0.9 0])
-          %      elseif ~(isempty(strfind(external_ctd(zz,:),'rb1009')))   
-          %            plot(ctd_s,sw_ptmp(ctd_s,ctd_t,ctd_p,median(pn(val))),'color',[0 0.5 0])
-          %        elseif ~(isempty(strfind(external_ctd(zz,:),'kn2004')))   
-          %            plot(ctd_s,sw_ptmp(ctd_s,ctd_t,ctd_p,median(pn(val))),'color',[0.5 0 0])
                 else
-        %%plot(ctd_s,theta(ctd_p,ctd_t,ctd_s,median(pn(val))),'g')
                      plot(ctd_s,sw_ptmp(ctd_s,ctd_t,ctd_p,median(pn(val))),'b')
                 end
       else     
         plot(ctd_s,ctd_t,'y')
  
       end 
-    end
-   
+   end
       xlim(xli);ylim(yli);
    end
 end
 end
 
-    title('kn221=green, pe399=blue, recovery= magenta, deployment=red, other=gray, problem p=yellow')
   ELIM = []; 
   if exist('diag')==1
   fclose(diag);
@@ -1216,23 +1093,18 @@ end
       [x,y] = ginput;
       x = [x ;x(1)];
       y = [y ;y(1)];
-      %elim = find(sn>min(x) & sn<max(x) & tn(val)>min(y) &tn(val)<max(y));
       elim = find(inpolygon(sn,tn(val),x,y) == 1);
      
       ELIM = [ELIM;elim];
       hold on
       if ~isempty(find(pn>dum))
-         %plot(sn(elim),theta(pn(val(elim)),tn(val(elim)),sn(elim),median(pn(val))),'.w') 
          plot(sn(elim),sw_ptmp(sn(elim),tn(val(elim)),pn(val(elim)),median(pn(val))),'.w') 
-
-      else     
-   
+      else       
          plot(sn(elim),tn(val(elim)),'.w')
       end 
       
      
     else
-      %%tn(val(ELIM)) = dum; 
       figure(1)
       subplot(1,sp,2)
       
@@ -1241,11 +1113,8 @@ end
       ii = find(cn>dum);
       plot(jd0(ii),cn(ii),'g')
       fprintf(1,'%d data points eliminated \n\n\n',length(ELIM)) 
-%      fprintf(1,[' Name of the figure '  mcfig_out  '.eps' '\n\n'])
-%      eval(['print -depsc2 -tiff ',mcfig_out , '.eps' ])
       fprintf(1,[' Name of the figure '  mcfig_out  '.png' '\n\n'])
-%       eval(['print -dpng ',mcfig_out , '.png' ])
-        print([mcfig_out, '.png'],'-dpng');
+      print([mcfig_out, '.png'],'-dpng');
 
       break
     end    
@@ -1310,16 +1179,10 @@ end
  ii     = find(isnan(tn));
  tn(ii) = dum;
  
- %%%JC
-  
- %eval(['print -dpsc ',mcfile_out,'.ps'])
- 
- %%%JC
- 
  
 %%%%%%%%%%% ---- 6) save data ------%%%%%%%%%%% 
 
-  if skipT == 1 & skipC == 1 & skipP == 1    
+if skipT == 1 & skipC == 1 & skipP == 1    
     if isempty(find(~isnan(p)))
       dat = [yy mm dd hh tn cn];   
       rodbsave(mcfile_out,head,fort,moo,serial0,wd,id,sd,st,ed,et,lt,ln,cols,dat)
@@ -1328,9 +1191,9 @@ end
       rodbsave(mcfile_out,head,fortp,moo,serial0,wd,id,sd,st,ed,et,lt,ln,colsp,dat) % instr with pressure option
     end
     fprintf(1,[mcfile_out,' has been saved\n\n\n'])
-  else  
+else  
     fprintf(1,[mcfile_out,' has NOT been saved\n\n\n'])
-  end 
+end 
  
  
   
