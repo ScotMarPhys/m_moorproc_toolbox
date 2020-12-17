@@ -4,7 +4,7 @@
 %       by loh, 06/05/2016
 %
 
-close all
+close all 
 
 % caldip casts for ar304: 1, 2, 3, 5, 6, 45
 % NEED to reprocess station 6 and 45, look for problem in detection of
@@ -13,7 +13,7 @@ close all
 %========================================================================
 % Calculation of calibration coefficient
 p_insitucal.cruise           =  'dy120' ;%'ar304'; %'ar304' %'dy078';%'dy053';%'pe400'; %'kn221-02'; %'pe399';       % campaign cd177 / cd170 / d304 / kn182, ...
-p_insitucal.cast             = 8;  %26;   %35          % number of ctd - cast (e.g. kn221-02: 4, 5)
+p_insitucal.cast             = 3;  %26;   %35          % number of ctd - cast (e.g. kn221-02: 4, 5)
 p_insitucal.depl_period      = 'osnap5'; %'osnap2'    % move1; move2; rapid 1; rapid 2
 
 % ---- parameters ----------------------------------------------------
