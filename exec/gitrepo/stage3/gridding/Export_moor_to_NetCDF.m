@@ -334,6 +334,6 @@ finfo2=ncinfo(outfile);
 
 x=ncread(outfile,'TIME');
 y=ncread(outfile,'PRES');
-z=ncread(outfile,'W_WEST_2');
+z=ncread(outfile,'TG_EAST');
 figure;
-imagesc(x,y,z)
+imagesc(z)
