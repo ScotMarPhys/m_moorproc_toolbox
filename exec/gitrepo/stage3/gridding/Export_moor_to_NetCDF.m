@@ -14,6 +14,8 @@
 % -------------------------------------------------------------------------
 clearvars; close('all')
 
+last_year = '_2020';
+
 %%%%%%%%%%%%%%%%%%%%%%%%%% T S DATA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Load western array data
 indir               =[getenv('OSNAP') '/data/moor/proc/hydro_grid_merged/'];
@@ -46,7 +48,7 @@ clearvars -except TG_WEST SG_WEST TG_EAST SG_EAST pressure time indir
 indir               =[getenv('OSNAP') '/data/moor/proc/velocity_grid_merged/'];
 
 % western boundary 1
-ffile               ='RTWB1_merg_linear_interp_2018.mat';
+ffile               ='RTWB1_merg_linear_interp_2020.mat';
 load([indir ffile]);
 % rename vars
 U_WEST_1             =RTWB1_merg_CM.UGfs2; U_WEST_1(isnan(U_WEST_1))=99999;
@@ -58,7 +60,7 @@ clearvars -except U_WEST_1 V_WEST_1 W_WEST_1...
                 pressure time indir
 
 % western boundary 2
-ffile               ='RTWB2_merg_linear_interp_2018.mat';
+ffile               ='RTWB2_merg_linear_interp_2020.mat';
 load([indir ffile]);
 % rename vars
 U_WEST_2             =RTWB2_merg_CM.UGfs2;U_WEST_2(isnan(U_WEST_2))=99999;
@@ -71,7 +73,7 @@ clearvars -except U_WEST_2 V_WEST_2 W_WEST_2...
                 pressure time indir
             
 % eastern boundary 
-ffile               ='RTEB_merg_linear_interp_2018.mat';
+ffile               ='RTEB_merg_linear_interp_2020.mat';
 load([indir ffile]);
 % rename vars
 U_EAST             =RTEB_merg_CM.UGfs2;U_EAST(isnan(U_EAST))=99999;
@@ -334,6 +336,6 @@ finfo2=ncinfo(outfile);
 
 x=ncread(outfile,'TIME');
 y=ncread(outfile,'PRES');
-z=ncread(outfile,'TG_EAST');
+z=ncread(outfile,'U_WEST_2');
 figure;
 imagesc(z)
