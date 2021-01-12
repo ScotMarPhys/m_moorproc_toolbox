@@ -1,4 +1,4 @@
-function cm_edit_NOCS(moor,varargin)
+function cm_edit_NOCS_v4(moor,varargin)
 % moor = 'rteb1_01_2014';
 % exemple of utilisation : cm_edit_NOCS_v4(moor,'filfac',10,'procpath','home/mstar/osnap/data/moor/proc/')
 
@@ -65,8 +65,6 @@ function cm_edit_NOCS(moor,varargin)
 %                  See example in proc/nocm4_02_2015/nocm4_02_2015_20960_pg1pg4_manualflag.mat. 
 %                  The variable loaded by this script is named ibaddata. It is a logical indicating good (1) or bad data (0). 
 %					 - Correct the script so it doesnt interpolate for large data gaps in timeseries, but leave nan instead.
-% Edited by Lewis Drysdale, 2020
-%                     - prescribe ALL filter types in embedded function: mfliter (see v3,4 for prevous code
 %
 
 if nargin <1
@@ -2521,11 +2519,11 @@ n=f0/max(f1,f2);
 ss=1;
 
 %lp
-if f2==0, Wn=f1/f0*2; ,ftype='low'; 
+if f2==0, Wn=f1/f0*2; ,ftype=''; 
 %hp
 elseif f1==0, Wn=f2/f0*2; ,ftype='high'; 
 %bp
-elseif f2>f1, Wn=[f1 f2]/f0*2; ,ftype='bandpass'; 
+elseif f2>f1, Wn=[f1 f2]/f0*2; ,ftype=''; 
 %bs
 elseif f1>f2, Wn=[f2 f1]/f0*2; ,ftype='stop'; 
 end
