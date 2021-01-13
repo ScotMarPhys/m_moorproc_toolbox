@@ -358,14 +358,3 @@ for i = 1:length(varnumber)
     varargout{i} = varargout{i}(1:rowmax(i),1:j);
   end
 end
-
-
-
-
-
-
-
-
-
-
-
