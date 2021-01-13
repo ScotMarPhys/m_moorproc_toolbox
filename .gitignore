@@ -4,3 +4,6 @@ exec/gitrepo/export_Oceansites/oceansites_format/
 
 # nc files
 *.nc
+
+# ignore gridded figures folder
+exec/gitrepo/export_THREDDS/Figure/
