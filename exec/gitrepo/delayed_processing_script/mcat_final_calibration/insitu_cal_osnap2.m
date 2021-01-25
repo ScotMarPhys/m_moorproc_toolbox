@@ -448,14 +448,23 @@ if strcmp(mc_cunit,'S/m')
     C = C*10;
 end    
 
-for i = 1 : ninst
+wit_mc_jd = nan(1,ninst);
+for inst = 1 : ninst
   if strcmp(impact_var,'c') 
-    ii = find(C(:,i) > cond_threshold);           % water impact mc
+    ii = find(C(:,inst) > cond_threshold);           % water impact mc
   elseif strcmp(impact_var,'p')
-     ii = find(P(:,i) > cond_threshold);           % water impact mc    
+     ii = find(P(:,inst) > cond_threshold);           % water impact mc    
   end 
+  if isnan(nanmean(C(:,inst)))
+      disp(' '); 
+      error(['NO DATA FOR INSTRUMENT ' num2str(instr(inst)) ...
+          '. MAKE SURE THAT A FILE cast' num2str(p_insitucal.cast) '_' num2str(instr(inst)) ...
+          '.raw EXISTS IN cal_dip/microcat/cast' num2str(p_insitucal.cast) ...
+          '/  OR REMOVE THE INSTRUMENT ' num2str(instr(inst))  ' FROM THE FILE ' ....
+          'moor/proc_calib/' p_insitucal.cruise '/cal_dip/cast' num2str(p_insitucal.cast) 'info.dat' ]) 
+  end
   ii = ii(1); 
-  wit_mc_jd(i)  = julian([YY(ii,i),MM(ii,i),DD(ii,i),HH(ii,i)]);
+  wit_mc_jd(inst)  = julian([YY(ii,inst),MM(ii,inst),DD(ii,inst),HH(ii,inst)]);
 end
 
 wit_mc_jd    =  wit_mc_jd'; 
