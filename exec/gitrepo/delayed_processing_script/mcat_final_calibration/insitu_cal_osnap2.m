@@ -40,6 +40,7 @@ cruise               = p_insitucal.cruise;
 depl_period          = p_insitucal.depl_period;
 basedir              = p_insitucal.basedir;
 datadir              = p_insitucal.datadir;
+coef_dir             = p_insitucal.coef_dir;
 apply_offset         = p_insitucal.apply_offset;
 interval_move        = p_insitucal.interval_move;  
 ctd_latestart_offset = p_insitucal.ctd_latestart_offset;
@@ -182,8 +183,7 @@ end
 
 
 % Deployment Depths File Directory 
-%ein_dir     = '/users/odb/rpdmoc/rapid/data/moor/proc_calib/cal_coef/'; 
-ein_dir     = [datadir '/moor/cal_coef/']; 
+ein_dir     = coef_dir ; 
 
 %Data Files
 if strcmp('kn221-02',cruise)
@@ -258,7 +258,10 @@ instr         = instr(val);
 
 ein           = [ein_dir,depl_period,'_deploymentdepths.dat'];
 [dep,typ,ssn] = rodbload(ein,'z:instrument:serialnumber');
-								   
+if isempty(dep)
+    error(['!! MAKE sure the file ' ein ' exists or edit the filepath !!' ])    
+    return
+end		   
 % ---- CTD ----------------
 
 fprintf(1,'\n Loading CTD data ...\n')
@@ -845,7 +848,7 @@ end
 
  %plot values at MicroCAT deployment depths
 
-for i = 1 : ninst,
+for i = 1 : ninst
     subplot(1,sub,1)
     plot(mcdep(i),dt_mcdep(i),[mrkd(:,i)],'Linewidth',2,'MarkerSize',11)
     subplot(1,sub,2)
