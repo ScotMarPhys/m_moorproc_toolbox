@@ -8,7 +8,7 @@
 % basedir      = '/home/sa02lh/Data/Dropbox/Work/Postdoc_OSNAP/OSNAP_mooring/backup_mdrive';
 basedir = pathosnap;
 
-for iyear=1:4 %1:3
+for iyear=4 %1:3
 switch(iyear)
     case(1)
         year = '_01_2014'; jg_start = datenum(2014,7,19,00,00,00);  jg_end = datenum(2015,6,20,00,00,00);
@@ -31,18 +31,18 @@ end
      end
     
 
-dnumi               = jg_start: 0.5: jg_end; % full time series using 2 samples per day
-pgrid               = 0:20:2000; % depths in 20dbar bins
-gap_max             = 10; % no more than 10 days of nan in a row
+dnumi              = jg_start: 0.5: jg_end; % full time series using 2 samples per day
+pgrid = 0:20:2000; % depths in 20dbar bins
+gap_max      = 10; % no more than 10 days of nan in a row
 
-moor                = [moorselect year];
+moor = [moorselect year];
 
-p_hydrogrid.moor    = moor;   
-mooringpath         = [basedir '/data/moor/proc/' moor ];
-out_path            = [basedir '/data/moor/proc/velocity_grid/'];
+p_hydrogrid.moor   = moor;   
+mooringpath  = [basedir '/data/moor/proc/' moor ];
+out_path     = [basedir '/data/moor/proc/velocity_grid/'];
 
 % --- get moring information from infofile
-infofile            =[mooringpath '/' moor 'info.dat'];
+infofile =[mooringpath '/' moor 'info.dat'];
 [id,sn,z,s_t,s_d,e_t,e_d,lat,lon,wd,mr]  =  rodbload(infofile,'instrument:serialnumber:z:Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:WaterDepth:Mooring');
 
 vec=find((id==368|id==370)); % Nortek id number
@@ -84,7 +84,6 @@ for proc = 1 : length(vec);
     vnan_sum = sum(isnan(v));
     wnan_sum = sum(isnan(w));
     pnan_sum = sum(isnan(p));
-    
     % filtering parameter
     sr  = median(diff(dnum)); % sampling interval
     co = sr/((1/sr)*2); % 2-day low-pass
@@ -231,40 +230,8 @@ for i= 1:size(ufii_pchip,1);
     end
 end
 
-%% plot the mean velocity data
-
-figure;
-ax(1)=subplot(3,1,1)
-[c,h]=contourf(dnumi,pgrid,ufii,'LineColor','none');
-cmocean('balance','pivot',0);
-axis ij
-datetick('x',12, 'keeplimits')
-ylabel('Pressure (db)');
-C=colorbar;
-ylabel(C,' u velocity (cm s^{-1})')
-
-
-ax(1)=subplot(3,1,2)
-[c,h]=contourf(dnumi,pgrid,vfii,'LineColor','none');
-cmocean('balance','pivot',0);
-axis ij
-datetick('x',12, 'keeplimits')
-ylabel('Pressure (db)');
-C=colorbar;
-ylabel(C,' v velocity (cm s^{-1})')
-
-ax(1)=subplot(3,1,3)
-[c,h]=contourf(dnumi,pgrid,wfii,'LineColor','none');
-cmocean('balance','pivot',0);
-axis ij
-datetick('x',12, 'keeplimits')
-ylabel('Pressure (db)');
-C=colorbar;
-ylabel(C,' w velocity (cm s^{-1})')
-
-print(gcf,[pathosnap '/Figures/CM/' moor],'-djpeg');
 %% This just saves all the original data. Most of if is crap from the last bin loaded
-save([out_path moor '_velocity_grid.mat']);
+eval(['save ' out_path moor '_velocity_grid.mat']);
 
  end
 end
