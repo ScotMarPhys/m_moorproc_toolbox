@@ -10,17 +10,19 @@ close all
 % NEED to reprocess station 6 and 45, look for problem in detection of
 % bottle stop (diff mcat-ctd = nan)
 
+
 %========================================================================
 % Calculation of calibration coefficient
+% For cruise dy120: cast= [1,3,4,5,8,9,10]
 p_insitucal.cruise           =  'dy120' ;%'ar304'; %'ar304' %'dy078';%'dy053';%'pe400'; %'kn221-02'; %'pe399';       % campaign cd177 / cd170 / d304 / kn182, ...
-p_insitucal.cast             = 3;  %26;   %35          % number of ctd - cast (e.g. kn221-02: 4, 5)
+p_insitucal.cast             = 3;  
 p_insitucal.depl_period      = 'osnap5'; %'osnap2'    % move1; move2; rapid 1; rapid 2
 
 % ---- parameters ----------------------------------------------------
 p_insitucal.sensorselec      = 1;
 p_insitucal.sensor_id        = [332 337];  % MicroCAT ID range (in info.dat)
-p_insitucal.basedir          = pathosnap; % base directory on cruise D382
-p_insitucal.datadir          = datadir; % data directory on git repo
+p_insitucal.basedir          = pathosnap; % base directory for osnap mooring
+p_insitucal.datadir          = [p_insitucal.basedir filesep 'data']; % data directory 
 p_insitucal.apply_offset   = 'n'; % if offset == 'y'/'n'/'i', time offset between CTD and MC 
                      % will / will not be applied / individual offsets
                      % applied  
