@@ -16,11 +16,9 @@
 %
 function rodb_to_oceansitesnetcdf(moor,procpath,moorinfo)
 if nargin <1
-    help pressure_overlay
+    help rodb_to_oceansitesnetcdf
     return
 end
-
-
 
 if isunix
     infofile=[procpath,moor,'/',moor,'info.dat'];
@@ -97,8 +95,6 @@ iiiSG=find(depths(:,1)==301);
 iiiADCP=find(depths(:,1)>=319 & depths(:,1)<=328);
 iii=[iiiS4;iiiRCM11;iiiARG;iiiNOR;iiiMC;iiiRBR;iiiIDR;iiiSG;iiiADCP];
 
-
-
 % -----------------------------------
 % START OF READING IN INSTRUMENT DATA
 % -----------------------------------
@@ -130,8 +126,7 @@ if iiMC>0
         fileopen=fopen(infile,'r');
         
         if fileopen>0
-            % read data into vectors and then into structure array
-            
+            % read data into vectors and then into structure array          
             [yy,mm,dd,hh,t,c,p,instrdpth] = ...
                 rodbload(infile,'yy:mm:dd:hh:t:c:p:InstrDepth');
             jd=julian(yy,mm,dd,hh);
