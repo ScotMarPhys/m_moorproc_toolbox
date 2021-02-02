@@ -10,27 +10,20 @@
 % kanzow, 23.08.05 
 % edited by Loic Houpert 21/10/2015
 % edited by lewis Drysdale Dec 2020
+% edited by Loic Houpert Jan 2021
 
 close all
 clearvars  -except pathosnap pathgit
 warning off
 
 % path of the mooring data define in the startup file under osnap/
-%moor = 'rtwb1_03_2016';
-%moor ='rtwb2_01_2014';
-%moor = 'rtwb1_04_2017';
-%moor = 'rteb1_04_2017';
-%moor = 'rtwb2_04_2017';
-%moor = 'rtwb1_04_2017';
-%moor = 'rteb1_04_2017';
-% moor = 'rtwb2_05_2018';
-moor = 'rtwb1_05_2018';
-% moor = 'rteb1_05_2018';
+%moor = 'rtwb1_05_2018';
+moor = 'ib3_01_2018';
 
 %=========================================================================
 % Apply calibration coefficients to series, removes bad data. If required, applies
 % constant offsets, and conductivity pressure correction
-p_applycal.operator  = 'SJ';
+p_applycal.operator  = 'LH';
 p_applycal.mooring  = moor;   
 p_applycal.sensortyp = 'microcat';   % arg / microcat / rbr / idr
 p_applycal.delim = ',';
@@ -46,8 +39,8 @@ p_applycal.strformat.mctemptxt = repmat('%s',1,32);
 p_applycal.strformat.mctempnum = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,7)];
 p_applycal.strformat.mcsaltxt  = repmat('%s',1,32);
 p_applycal.strformat.mcsalnum  = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,7)];
-p_applycal.strformat.mcprestxt = repmat('%s',1,61);
-p_applycal.strformat.mcpresnum = ['%f' repmat('%s%f%s%s',1,15)];
+p_applycal.strformat.mcprestxt = repmat('%s',1,65);
+p_applycal.strformat.mcpresnum = ['%f' repmat('%s%f%s%s',1,16)];
 
 loclegend = 'north';
 
@@ -1012,7 +1005,7 @@ for zz=1:size(external_ctd_file,1)
 
       if ~isempty(find(pn>dum))
         %%plot(ctd_s,theta(ctd_p,ctd_t,ctd_s,median(pn(val))),'g')
-        plot(ctd_s,sw_ptmp(ctd_s,ctd_t,ctd_p,median(pn(val))),'g'              
+        plot(ctd_s,sw_ptmp(ctd_s,ctd_t,ctd_p,median(pn(val))),'g')          
       else     
         plot(ctd_s,ctd_t,'y')
       end 
