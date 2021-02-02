@@ -17,8 +17,8 @@ clearvars  -except pathosnap pathgit
 warning off
 
 % path of the mooring data define in the startup file under osnap/
-%moor = 'rtwb1_05_2018';
-moor = 'ib3_01_2018';
+moor = 'rteb1_05_2018';
+% moor = 'ib3_01_2018';
 
 %=========================================================================
 % Apply calibration coefficients to series, removes bad data. If required, applies
