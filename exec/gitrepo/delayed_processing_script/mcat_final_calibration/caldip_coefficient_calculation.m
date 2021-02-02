@@ -13,13 +13,13 @@ close all
 
 %========================================================================
 % Calculation of calibration coefficient
+% For cruise ar304, casts for IB moorings = [1,2]
 % For cruise dy120: cast= [1,3,4,5,8,9,10]
 p_insitucal.cruise           =  'dy120' ;%'ar304'; %'ar304' %'dy078';%'dy053';%'pe400'; %'kn221-02'; %'pe399';       % campaign cd177 / cd170 / d304 / kn182, ...
-<<<<<<< HEAD
 p_insitucal.cast             = 4;  
-=======
 p_insitucal.cast             = 8;  
->>>>>>> af98b3d6aa948cf0be7403b1bb095d795eacf1ae
+p_insitucal.cruise           =  'ar304'; %'dy120' ;%'ar304'; % CTD cruise
+p_insitucal.cast             = 2;  
 p_insitucal.depl_period      = 'osnap5'; %'osnap2'    % move1; move2; rapid 1; rapid 2
 
 % ---- parameters ----------------------------------------------------
