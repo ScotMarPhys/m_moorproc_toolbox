@@ -19,10 +19,15 @@ p_insitucal.cruise           =  'dy120' ;%'ar304'; %'ar304' %'dy078';%'dy053';%'
 p_insitucal.cast             = 4;  
 p_insitucal.cast             = 8;  
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 p_insitucal.cruise           =  'ar304'; %'dy120' ;%'ar304'; % CTD cruise
 p_insitucal.cast             = 2;  
 >>>>>>> add-IBmoors
+=======
+p_insitucal.cruise           =  'ar304'; %'dy120' ;%'ar304'; % CTD cruise
+p_insitucal.cast             = 2;  
+>>>>>>> 06bb32a0943b28a87ad7c4d49185df297ff676ee
 p_insitucal.depl_period      = 'osnap5'; %'osnap2'    % move1; move2; rapid 1; rapid 2
 
 % ---- parameters ----------------------------------------------------
