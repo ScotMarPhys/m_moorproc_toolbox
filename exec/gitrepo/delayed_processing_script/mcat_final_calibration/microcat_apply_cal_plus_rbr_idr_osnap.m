@@ -17,8 +17,13 @@ clearvars  -except pathosnap pathgit
 warning off
 
 % path of the mooring data define in the startup file under osnap/
+<<<<<<< HEAD
 %moor = 'rtwb1_05_2018';
 moor = 'ib5_01_2018';
+=======
+moor = 'rteb1_05_2018';
+% moor = 'ib3_01_2018';
+>>>>>>> postdy120
 
 %=========================================================================
 % Apply calibration coefficients to series, removes bad data. If required, applies
@@ -131,7 +136,6 @@ if strcmp('microcat',sensortyp) | strcmp('idr',sensortyp) | strcmp('rbr',sensort
   ctext = textscan(fidc,strformat.mcsaltxt ,'delimiter',delim);
   fseek(fidc,0,'bof');
   cnum  = textscan(fidc,strformat.mcsalnum,'delimiter',delim,'HeaderLines',5);
-
 
   fidp  = fopen([coef_dir,'microcat_pres.csv'],'r');
   ptext = textscan(fidp,strformat.mcprestxt,'delimiter',delim);
