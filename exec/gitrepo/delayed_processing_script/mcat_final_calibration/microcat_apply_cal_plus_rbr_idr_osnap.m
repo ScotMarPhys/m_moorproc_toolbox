@@ -132,7 +132,6 @@ if strcmp('microcat',sensortyp) | strcmp('idr',sensortyp) | strcmp('rbr',sensort
   fseek(fidc,0,'bof');
   cnum  = textscan(fidc,strformat.mcsalnum,'delimiter',delim,'HeaderLines',5);
 
-
   fidp  = fopen([coef_dir,'microcat_pres.csv'],'r');
   ptext = textscan(fidp,strformat.mcprestxt,'delimiter',delim);
   fseek(fidp,0,'bof');
