@@ -4,7 +4,7 @@ clear all ; close all ;
 prognam = 'velocity_grid_nor' ;
 
 
-for iyear=1:3
+for iyear=1:5
 switch(iyear)
     case(1)
         year = '_01_2014';
@@ -13,7 +13,9 @@ switch(iyear)
     case(3)
         year = '_03_2016';   
     case(4)
-        year = '_03_2016';
+        year = '_04_2017'; 
+    case(5)
+        year = '_05_2018';
 end
 
  for imoor=1:3
@@ -35,8 +37,8 @@ gridpath  = [basedir '/data/moor/proc/velocity_grid/'];
 plotpath  = [gridpath 'PLOTS/'];
 
 %% This just saves all the original data. Most of if is crap from the last bin loaded
-eval(['load(''',gridpath,moor,'_velocity_grid.mat'')']);
-
+% eval(['load(''',gridpath,moor,'_velocity_grid.mat'')']);
+load([gridpath moor '_velocity_grid.mat'])
 %%
 if do_plot ;
     figure(10);clf; figure(11);clf;

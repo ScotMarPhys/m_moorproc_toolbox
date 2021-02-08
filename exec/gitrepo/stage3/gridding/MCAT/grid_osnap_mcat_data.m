@@ -3,9 +3,9 @@
 %--------------- GRID AND MERGE DATA for OSNAP mooring --------------------
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %=========================================================================
-clear variables; close('all')
-%-------------------------------- SET PATH --------------------------------
-pathosnap               = '/local/users/pstar/osnap';
+clearvars -except pathosnap pathgit ; close('all')
+
+
 %======================== SET GRID AND QA PARAMETERS =====================
 p_hydrogrid.dum         = -9999.0000;
 p_hydrogrid.c1535       = 42.914;
@@ -30,10 +30,9 @@ p_hydrogrid.iss          = 12; % initial sub-sampling frequency [1/days]
 p_hydrogrid.fss          = 2;  % final sub-sampling frequency [1/days]
 
 %======================== SET DIRECTORIES FOR MERGE =======================
-basedir                 = [pathosnap filesep];
-hydrodir                = [basedir 'data/moor/proc/hydro_grid/'];
-grdatdir                = [basedir 'data/moor/proc/hydro_grid_merged/'];
-boundarydir             = [basedir 'exec/dy120/stage3/gridding/MCAT/'];
+hydrodir                = [pathosnap filesep 'data/moor/proc/hydro_grid/'];
+grdatdir                = [pathosnap filesep 'data/moor/proc/hydro_grid_merged/'];
+boundarydir             = [pathgit filesep 'exec/gitrepo/stage3/gridding/MCAT/'];
 
 %======================== MERGE INITIALISATION =============================
 gridding                = 1  ;  % 1: linear, 2: using climatological profiles
@@ -42,13 +41,13 @@ mc_check_plot           = true; %false ;  % turns on/off the microcat check plot
 
 jg_start                = datenum(2014,6,01,00,00,00);
 jg_end                  = datenum(2020,10,20,00,00,00);
-lastyeardata            = '_2017'; % for datafilename
+
+lastyeardata            = '2018';
 
 JG                      = jg_start: 0.5: jg_end; % full time series using 2 samples per day
 pgg                     = 0:20:2000; % depths in 20dbar bins
 depthminforhoriz_interp = 40; % in case no data are available at a specific time
 % (e.g.: mooring turn around, knock-down of the mooring head) don't interpolate on a time basis for level above 40 m
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %======================== MOORING FILE NAMES =============================
@@ -138,7 +137,11 @@ for ii=1:numel(indx) % for each mooring to process
 moor=mlist{ii}; % select the first moooring to process
 
 p_hydrogrid.mc_ind=cell2mat(ilist(ii)); % get instrument order
-p_hydrogrid.mc_int=cell2mat(tlist(ii)); % get instrument order
+
+% if there is a requirement to process uncalibrtaed data make nect line
+% uncommented, and update serial numbers above
+% p_hydrogrid.mc_int=cell2mat(tlist(ii)); % get instrument list
+p_hydrogrid.mc_int=[]; % get instrument list
 
 %======================== SET PATHS ======================================
 p_hydrogrid.basedir      = pathosnap;
@@ -193,7 +196,7 @@ switch answer
             if ismember(moor{1}(3:4),'eb')
                 run merge_osnap_data_east.m
             else
-                run merge_osnap_data_west_INDEV.m
+                run merge_osnap_data_west.m
             end
     case 'Cancel'
         case 'Wrong moorings'
@@ -217,7 +220,7 @@ switch answer
             if ismember(moor{1}(3:4),'eb')
                 run merge_osnap_data_east.m
             else
-                run merge_osnap_data_west_INDEV.m
+                run merge_osnap_data_west.m
             end
 
     end
@@ -259,7 +262,7 @@ case 'Merge'
             if ismember(moor{1}(3:4),'eb')
                 run merge_osnap_data_east.m
             else
-                run merge_osnap_data_west_INDEV.m
+                run merge_osnap_data_west.m
             end
 
         case 'Cancel'
@@ -285,7 +288,7 @@ case 'Merge'
             if ismember(moor{1}(3:4),'eb')
                 run merge_osnap_data_east.m
             else
-                run merge_osnap_data_west_INDEV.m
+                run merge_osnap_data_west.m
             end
     end
 end

@@ -50,7 +50,7 @@ stop  = [end_date' end_time(1)+end_time(2)/60];
 %     p_mc      = dum2nan(p,dum);
 % end
 
-
+% bypass the calbrtaion stage for shipboard/ealry processsing
 if ~isempty(mc_int)
     mc_path = [mooringpath,':',moor,':microcat:[',num2str(mc_int),']'];  
     [yy_mc,mm,dd,hh,t,c,p,sn_mc,depth_mc] = ...
@@ -59,6 +59,14 @@ if ~isempty(mc_int)
     t_mc      = dum2nan(t,dum);
     c_mc      = dum2nan(c,dum);
     p_mc      = dum2nan(p,dum);
+else
+    mc_path = [mooringpath,':',moor,':microcat:[',num2str(mc_ind),']'];  
+    [yy_mc,mm,dd,hh,t,c,p,sn_mc,depth_mc] = ...
+        rodbload(mc_path,'yy:mm:dd:hh:t:c:p:SerialNumber:Instrdepth');
+    jd_mc     = julian(yy_mc,mm,dd,hh);
+    t_mc      = dum2nan(t,dum);
+    c_mc      = dum2nan(c,dum);
+    p_mc      = dum2nan(p,dum);    
 end
 
 % ----- interpolate T and C onto pressure time grid
@@ -509,9 +517,9 @@ z=gsw_rho(X,Y,0);
 [h,c]=contour(X,Y,z);
 clabel(h,c);
 hold on
-plot(SGfs,pt_Gfs,'.m');
+plot(SGfs,pt_Gfs,'.k');
 hold on
-plot(Sf',pt','k.');
+plot(Sf',pt','.');
 hold on
 xli = get(gca,'Xlim');
 yli = get(gca,'Ylim');

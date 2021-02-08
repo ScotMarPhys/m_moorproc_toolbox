@@ -14,10 +14,12 @@
 % -------------------------------------------------------------------------
 clearvars; close('all')
 
+last_year = '_2020';
+
 %%%%%%%%%%%%%%%%%%%%%%%%%% T S DATA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Load western array data
 indir               =[getenv('OSNAP') '/data/moor/proc/hydro_grid_merged/'];
-ffile               ='RTWB_merg_linear_interp_2017.mat';
+ffile               ='RTWB_merg_linear_interp_2018.mat';
 load([indir ffile]);
 % rename vars, convert degC to K, and make NaN 99999
 TG_WEST             =RTWB_merg.TGfs2;
@@ -30,9 +32,8 @@ pressure            =RTWB_merg.PGfs(:,1);
 time                =RTWB_merg.JG; 
 clearvars -except TG_WEST SG_WEST pressure time indir
     
-
 %Load eastern array data
-ffile               ='RTEB_merg_linear_interp_2017.mat';
+ffile               ='RTEB_merg_linear_interp_2018.mat';
 load([indir ffile]);
 % rename vars
 TG_EAST             =RTEB_merg.TGfs2; 
@@ -46,7 +47,7 @@ clearvars -except TG_WEST SG_WEST TG_EAST SG_EAST pressure time indir
 indir               =[getenv('OSNAP') '/data/moor/proc/velocity_grid_merged/'];
 
 % western boundary 1
-ffile               ='RTWB1_merg_linear_interp_2018.mat';
+ffile               ='RTWB1_merg_linear_interp_2020.mat';
 load([indir ffile]);
 % rename vars
 U_WEST_1             =RTWB1_merg_CM.UGfs2; U_WEST_1(isnan(U_WEST_1))=99999;
@@ -58,7 +59,7 @@ clearvars -except U_WEST_1 V_WEST_1 W_WEST_1...
                 pressure time indir
 
 % western boundary 2
-ffile               ='RTWB2_merg_linear_interp_2018.mat';
+ffile               ='RTWB2_merg_linear_interp_2020.mat';
 load([indir ffile]);
 % rename vars
 U_WEST_2             =RTWB2_merg_CM.UGfs2;U_WEST_2(isnan(U_WEST_2))=99999;
@@ -71,7 +72,7 @@ clearvars -except U_WEST_2 V_WEST_2 W_WEST_2...
                 pressure time indir
             
 % eastern boundary 
-ffile               ='RTEB_merg_linear_interp_2018.mat';
+ffile               ='RTEB_merg_linear_interp_2020.mat';
 load([indir ffile]);
 % rename vars
 U_EAST             =RTEB_merg_CM.UGfs2;U_EAST(isnan(U_EAST))=99999;
@@ -86,6 +87,7 @@ clearvars -except U_EAST V_EAST W_EAST...
             
             
 %%%%%%%%%%%%%%%%%%%%% WRITE FILE TO DIR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+outdir                      = [getenv('OSNAP') '/data/moor/THREDDS/'];
 
 fprintf('Begin %s\n', datestr(now));
 
@@ -97,7 +99,6 @@ PressureDim                 = length(pressure);
 filename                    ='T_S_gridded';
 
 % Open the file to write
-outdir                      = [getenv('OSNAP') '/data/moor/THREDDS/'];
 outfile                     = [outdir filename,'.nc'];
 nc                          = netcdf.create(outfile,'CLOBBER'); % CLOBBER overwrites 
 netcdf.close(nc)
@@ -330,10 +331,223 @@ fprintf('Finish %s\n', datestr(now));
 clearvars -except outfile
 finfo2=ncinfo(outfile);
 
-%% read and check plot
-
-x=ncread(outfile,'TIME');
-y=ncread(outfile,'PRES');
-z=ncread(outfile,'W_WEST_2');
+%% plot gridded T-S data
 figure;
-imagesc(x,y,z)
+mooring='EAST';
+% mooring='WEST';
+
+KN221=datenum(2014,7,18,00,00,00);
+PE399=datenum(2015,6,21,00,00,00);
+DY053=datenum(2016,7,01,00,00,00);
+dy078=datenum(2017,5,12,00,00,00);
+ar30=datenum(2018,7,10,00,00,00);
+dy120=datenum(2020,10,18,00,00,00);
+
+%%%%%%%%%%%%%%%%%%% TEMPERATURE %%%%%%%%%%%%%%%%%%%
+x=ncread(outfile,'TIME')+datenum(1950,1,1,0,0,0);
+y=ncread(outfile,'PRES');
+z=gsw_pt_from_CT(ncread(outfile,['SG_' mooring]),ncread(outfile,['TG_' mooring])-273.15);
+ax(1)=subplot(3,1,1);
+[c,h]=contourf(x,y,z,100,'LineColor','none');
+caxis([ceil(min(min(z))) floor(max(max(z)))]);
+C = colorbar;
+C.Label.String = '\theta (^{o} C)';
+C.Ticks=[floor(min(min(z))):2:ceil(max(max(z)))];
+C.TickLength=0.135;
+ylabel(gca,'Depth (m)');
+[Y,~,~]=datevec(x);
+date1=datenum(min(Y),1,1);
+date2=datenum(max(Y),1,1);
+datetick('x','Keeplimits');
+axis ij
+% title('Rockall Trough Eastern Boundary Gridded Temperature')
+cmap=cmocean('Thermal');
+colormap(cmap);
+text(KN221,0,'KN221','Rotation',45,'fontsize', 16, 'FontName','Helvetica');
+text(PE399,0,'PE399','Rotation',45,'fontsize', 16, 'FontName','Helvetica');
+text(DY053,0,'DY053','Rotation',45,'fontsize', 16, 'FontName','Helvetica');
+text(dy078,0,'DY078','Rotation',45,'fontsize', 16, 'FontName','Helvetica');
+text(dy120,0,'DY120','Rotation',45,'fontsize', 16, 'FontName','Helvetica');
+text(ar30,0,'AR30','Rotation',45,'fontsize', 16, 'FontName','Helvetica');
+hold on
+plot([KN221 KN221],[0 1800],'--k','LineWidth',2);
+plot([PE399 PE399],[0 1800],'--k','LineWidth',2);
+plot([DY053 DY053],[0 1800],'--k','LineWidth',2);
+plot([dy078 dy078],[0 1800],'--k','LineWidth',2);
+plot([dy120 dy120],[0 1800],'--k','LineWidth',2);
+plot([ar30 ar30],[0 1800],'--k','LineWidth',2);
+
+
+%%%%%%%%%%%%%%%%%%% SALINITY %%%%%%%%%%%%%%%%%%%
+ax(2)=subplot(3,1,2);
+x=ncread(outfile,'TIME')+datenum(1950,1,1,0,0,0);
+y=ncread(outfile,'PRES');
+z=ncread(outfile,['SG_' mooring]);
+[c,h]=contourf(x,y,z,12,'LineColor','none');
+caxis([round(min(min(z)),1) round(max(max(z)),1)]);
+C = colorbar;
+cmap=cmocean('-Haline');
+colormap(ax(2),cmap);
+C.Label.String = 'S_{a} (g kg^{-1})';
+C.Ticks=[round(min(min(z)),1):0.2:round(max(max(z)),1)];
+C.TickLength=0.135;
+hold on
+% [c,h]=contour(JG , pgg, SGfs,[35.2 35.4 35.6],'LineColor','k','LineWidth',0.25); 
+% clabel(c,h,'LabelSpacing',500,'Color','w')
+ylabel(gca,'Depth (m)');
+% SORT LABELS
+[Y,~,~]=datevec(x);
+date1=datenum(min(Y),1,1);
+date2=datenum(max(Y),1,1);
+datetick('x','Keeplimits');
+axis ij
+hold on
+plot([KN221 KN221],[0 1800],'--k','LineWidth',2);
+plot([PE399 PE399],[0 1800],'--k','LineWidth',2);
+plot([DY053 DY053],[0 1800],'--k','LineWidth',2);
+plot([dy078 dy078],[0 1800],'--k','LineWidth',2);
+plot([dy120 dy120],[0 1800],'--k','LineWidth',2);
+plot([ar30 ar30],[0 1800],'--k','LineWidth',2);
+
+
+%%%%%%%%%%%%%%%%%%% DENSITY %%%%%%%%%%%%%%%%%%%
+ax(3)=subplot(3,1,3);
+x=ncread(outfile,'TIME')+datenum(1950,1,1,0,0,0);
+y=ncread(outfile,'PRES');
+z=gsw_rho(ncread(outfile,['SG_' mooring]),ncread(outfile,['TG_' mooring])-273.15,0)-1000;
+[c,h]=contourf(x,y,z,12,'LineColor','none');
+caxis([round(min(min(z)),1) round(max(max(z)),1)]);
+C = colorbar;
+cmap=cmocean('Dense');
+colormap(ax(3),cmap);
+C.Label.String = '\sigma (kg/m^{3})';
+C.Ticks=[round(min(min(z)),1):0.4:round(max(max(z)),1)];
+C.TickLength=0.135;
+hold on
+% [c,h]=contour(JG , pgg, SGfs,[35.2 35.4 35.6],'LineColor','k','LineWidth',0.25); 
+% clabel(c,h,'LabelSpacing',500,'Color','w')
+ylabel(gca,'Depth (m)');
+% SORT LABELS
+[Y,~,~]=datevec(x);
+date1=datenum(min(Y),1,1);
+date2=datenum(max(Y),1,1);
+datetick('x','Keeplimits');
+axis ij
+hold on
+plot([KN221 KN221],[0 1800],'--k','LineWidth',2);
+plot([PE399 PE399],[0 1800],'--k','LineWidth',2);
+plot([DY053 DY053],[0 1800],'--k','LineWidth',2);
+plot([dy078 dy078],[0 1800],'--k','LineWidth',2);
+plot([dy120 dy120],[0 1800],'--k','LineWidth',2);
+plot([ar30 ar30],[0 1800],'--k','LineWidth',2);
+
+
+width=35; height=20; FS=20; FN='Helvetica';
+set(ax(1:3),'fontsize', FS, 'FontName',FN);
+set(gcf,'units','centimeters','position',[5 5 width height])
+print('-dpng',['Figures/' mooring '_TS'])
+
+
+%% currents
+mooring='EAST';
+% mooring='WEST_1';
+figure;
+%%%%%%%%%%%%%%%%%%% U %%%%%%%%%%%%%%%%%%%
+x=ncread(outfile,'TIME')+datenum(1950,1,1,0,0,0);
+y=ncread(outfile,'PRES');
+z=ncread(outfile,['U_' mooring])/100;
+ax(1)=subplot(3,1,1);
+[c,h]=contourf(x,y,z,100,'LineColor','none');
+caxis([min(min(z)) max(max(z))]);
+C = colorbar;
+C.Label.String = 'm s^{-1}';
+C.Ticks=[floor(min(min(z))):0.1:ceil(max(max(z)))];
+C.TickLength=0.135;
+ylabel(gca,'Depth (m)');
+[Y,~,~]=datevec(x);
+date1=datenum(min(Y),1,1);
+date2=datenum(max(Y),1,1);
+datetick('x','Keeplimits');
+axis ij
+% title('Rockall Trough Eastern Boundary Gridded Temperature')
+cmap=cmocean('Balance','pivot',0);
+colormap(cmap);
+text(KN221,0,'KN221','Rotation',45,'fontsize', 16, 'FontName','Helvetica');
+text(PE399,0,'PE399','Rotation',45,'fontsize', 16, 'FontName','Helvetica');
+text(DY053,0,'DY053','Rotation',45,'fontsize', 16, 'FontName','Helvetica');
+text(dy078,0,'DY078','Rotation',45,'fontsize', 16, 'FontName','Helvetica');
+text(dy120,0,'DY120','Rotation',45,'fontsize', 16, 'FontName','Helvetica');
+text(ar30,0,'AR30','Rotation',45,'fontsize', 16, 'FontName','Helvetica');
+hold on
+plot([KN221 KN221],[0 1800],'--k','LineWidth',2);
+plot([PE399 PE399],[0 1800],'--k','LineWidth',2);
+plot([DY053 DY053],[0 1800],'--k','LineWidth',2);
+plot([dy078 dy078],[0 1800],'--k','LineWidth',2);
+plot([dy120 dy120],[0 1800],'--k','LineWidth',2);
+plot([ar30 ar30],[0 1800],'--k','LineWidth',2);
+
+
+%%%%%%%%%%%%%%%%%%% V %%%%%%%%%%%%%%%%%%%
+
+x=ncread(outfile,'TIME')+datenum(1950,1,1,0,0,0);
+y=ncread(outfile,'PRES');
+z=ncread(outfile,['V_' mooring])/100;
+ax(1)=subplot(3,1,2);
+[c,h]=contourf(x,y,z,100,'LineColor','none');
+caxis([min(min(z)) max(max(z))]);
+C = colorbar;
+C.Label.String = 'm s^{-1}';
+C.Ticks=[floor(min(min(z))):0.1:ceil(max(max(z)))];
+C.TickLength=0.135;
+ylabel(gca,'Depth (m)');
+[Y,~,~]=datevec(x);
+date1=datenum(min(Y),1,1);
+date2=datenum(max(Y),1,1);
+datetick('x','Keeplimits');
+axis ij
+% title('Rockall Trough Eastern Boundary Gridded Temperature')
+cmap=cmocean('Balance','pivot',0);
+colormap(cmap);
+
+hold on
+plot([KN221 KN221],[0 1800],'--k','LineWidth',2);
+plot([PE399 PE399],[0 1800],'--k','LineWidth',2);
+plot([DY053 DY053],[0 1800],'--k','LineWidth',2);
+plot([dy078 dy078],[0 1800],'--k','LineWidth',2);
+plot([dy120 dy120],[0 1800],'--k','LineWidth',2);
+plot([ar30 ar30],[0 1800],'--k','LineWidth',2);
+
+%%%%%%%%%%%%%%%%%%% W %%%%%%%%%%%%%%%%%%%
+
+x=ncread(outfile,'TIME')+datenum(1950,1,1,0,0,0);
+y=ncread(outfile,'PRES');
+z=ncread(outfile,['W_' mooring])/100;
+ax(1)=subplot(3,1,3);
+[c,h]=contourf(x,y,z,100,'LineColor','none');
+caxis([min(min(z)) max(max(z))]);
+C = colorbar;
+C.Label.String = 'm s^{-1}';
+C.Ticks=[floor(min(min(z))):0.1:ceil(max(max(z)))];
+C.TickLength=0.135;
+ylabel(gca,'Depth (m)');
+[Y,~,~]=datevec(x);
+date1=datenum(min(Y),1,1);
+date2=datenum(max(Y),1,1);
+datetick('x','Keeplimits');
+axis ij
+% title('Rockall Trough Eastern Boundary Gridded Temperature')
+cmap=cmocean('Balance','pivot',0);
+colormap(cmap);
+
+hold on
+plot([KN221 KN221],[0 1800],'--k','LineWidth',2);
+plot([PE399 PE399],[0 1800],'--k','LineWidth',2);
+plot([DY053 DY053],[0 1800],'--k','LineWidth',2);
+plot([dy078 dy078],[0 1800],'--k','LineWidth',2);
+plot([dy120 dy120],[0 1800],'--k','LineWidth',2);
+plot([ar30 ar30],[0 1800],'--k','LineWidth',2);
+
+width=35; height=20; FS=20; FN='Helvetica';
+set(ax(1:3),'fontsize', FS, 'FontName',FN);
+set(gcf,'units','centimeters','position',[5 5 width height])
+print('-dpng',['Figures/' mooring '_NOR'])
