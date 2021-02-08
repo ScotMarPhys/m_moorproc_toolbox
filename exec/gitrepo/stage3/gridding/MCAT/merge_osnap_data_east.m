@@ -88,7 +88,7 @@ else
     moor{2} = 'rteb_osnap_02_2015';
     moor{3} = 'rteb_osnap_03_2016';
     moor{4} = 'rteb_osnap_04_2017';
-    moor{5} = 'rteb_osnap_04_2017';
+    moor{5} = 'rteb_osnap_05_2018';
 end
 
 col         = {'r','b','m','c','g','y','r--','b--','m--','c--','g--','y--','r:',...
@@ -347,8 +347,6 @@ for i = 1: length(sn3)
     
 end
 
-
-
 % % If a merge product of RTEB is available for this time period: 
 % jd2 = jdnew; SGfs2 = SGfs; TGfs2 = TGfs; PG2 = p_grid; % only keep the grid for the last microcat
 
@@ -362,18 +360,7 @@ disp('---------  OSNAP 4 (DY078--> AR30) ---------')
 fileID4 = fopen([boundarydir, moor{4}, '.dat']);
 delimiter = {'\t',' '};
 startRow = 6;
-% % Format string for each line of text:
-%   column1: text (%s)
-%	column2: double (%f)
-%   column3: double (%f)
-%	column4: double (%f)
-%   column5: double (%f)
-% For more information, see the TEXTSCAN documentation.
 formatSpec = '%s%f%f%f%f%*s%*s%[^\n\r]';
-% % Read columns of data according to format string.
-% This call is based on the structure of the file used to generate this
-% code. If an error occurs for a different file, try regenerating the code
-% from the Import Tool.
 file4_data = textscan(fileID4, formatSpec, 'Delimiter', delimiter, 'MultipleDelimsAsOne', true, 'HeaderLines' ,startRow-1, 'ReturnOnError', false);
 % % Close the text file.
 fclose(fileID4);
@@ -432,29 +419,14 @@ for i = 1: length(sn4)
     
 end
 
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %  2c.  OSNAP 4 (AR30 --> DY120)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%  Notes:
-%  ------
-%
 disp('---------  OSNAP 5 (AR30--> DY120) ---------')
 fileID5 = fopen([boundarydir, moor{5}, '.dat']);
 delimiter = {'\t',' '};
 startRow = 6;
-% % Format string for each line of text:
-%   column1: text (%s)
-%	column2: double (%f)
-%   column3: double (%f)
-%	column4: double (%f)
-%   column5: double (%f)
-% For more information, see the TEXTSCAN documentation.
 formatSpec = '%s%f%f%f%f%*s%*s%[^\n\r]';
-% % Read columns of data according to format string.
-% This call is based on the structure of the file used to generate this
-% code. If an error occurs for a different file, try regenerating the code
-% from the Import Tool.
 file5_data = textscan(fileID5, formatSpec, 'Delimiter', delimiter, 'MultipleDelimsAsOne', true, 'HeaderLines' ,startRow-1, 'ReturnOnError', false);
 % % Close the text file.
 fclose(fileID5);
@@ -519,82 +491,68 @@ close all
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%  3.  CONCATENATE AND ORDER THE MATRICES
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
 %  This step adds alll the matrices for the deployments together to form
 %  large data sets.  These are then sorted into pressure order at every
 %  time step before the gridding takes place.
 
-%if mc_check_plot
+PDENfs1 = sw_pden(Sfs1,Tfs1,Pfs1,0) - 1000;
+PDENfs2 = sw_pden(Sfs2,Tfs2,Pfs2,0) - 1000;  
+PDENfs3 = sw_pden(Sfs3,Tfs3,Pfs3,0) - 1000;
+PDENfs4 = sw_pden(Sfs4,Tfs4,Pfs4,0) - 1000;
+PDENfs5 = sw_pden(Sfs5,Tfs5,Pfs5,0) - 1000;
 
-    PDENfs1 = sw_pden(Sfs1,Tfs1,Pfs1,0) - 1000;
-    PDENfs2 = sw_pden(Sfs2,Tfs2,Pfs2,0) - 1000;  
-    PDENfs3 = sw_pden(Sfs3,Tfs3,Pfs3,0) - 1000;
-    PDENfs4 = sw_pden(Sfs4,Tfs4,Pfs4,0) - 1000;
-    PDENfs5 = sw_pden(Sfs5,Tfs5,Pfs5,0) - 1000;
+figure(11)   %  graph of the data to show that it is all there!
+clf;
+subplot(2,1,1);
+hold on; box on;
+plot(JG , Tfs1, 'k.')
+plot(JG , Tfs2, 'b.')
+plot(JG , Tfs3, 'g.')
+plot(JG , Tfs4, 'r.')
+plot(JG , Tfs5, 'm.')
 
-    figure(11)   %  graph of the data to show that it is all there!
-    clf;
-    subplot(2,1,1);
-    hold on; box on;
-    plot(JG , Tfs1, 'k.')
-    plot(JG , Tfs2, 'b.')
-    plot(JG , Tfs3, 'g.')
-    plot(JG , Tfs4, 'r.')
-    plot(JG , Tfs5, 'm.')
+ylabel('C')
+datetick
+title('TEMPERATURE')
 
-    ylabel('C')
-    datetick
-    title('TEMPERATURE')
+subplot(2,1,2);
+hold on; box on;
+plot(JG , Sfs1, 'k.')
+plot(JG , Sfs2, 'b.')
+plot(JG , Sfs3, 'g.')  
+plot(JG , Sfs4, 'r.')
+plot(JG , Sfs5, 'm.')
 
-    subplot(2,1,2);
-    hold on; box on;
-    plot(JG , Sfs1, 'k.')
-    plot(JG , Sfs2, 'b.')
-    plot(JG , Sfs3, 'g.')  
-    plot(JG , Sfs4, 'r.')
-    plot(JG , Sfs5, 'm.')
-
-%     plot(JG , Sfs3a, 'r.')
-%     plot(JG , Sfs3b, 'y.')
-%     plot(JG , Sfs4, 'b.')
-%     plot(JG , Sfs5, 'r.')
-%     plot(JG , Sfs6, 'g.')
-%     plot(JG , Sfs7, 'k.')
-%     plot(JG , Sfs8, 'b.')
-%     plot(JG , Sfs9, 'r.')
-%     plot(JG , Sfs10, 'g.')
-    ylabel('SAL.')
-    datetick
-    title('SALINITY')
+ylabel('SAL.')
+datetick
+title('SALINITY')
     
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)   
 print('-dpng',[grdatdir 'otherfigure' filesep  'RTEBmerged_beforegrid_check1'])
 
-   figure(10)   %  graph of the data to show that it is all there!
-    clf;
-    subplot(2,1,1);
-    hold on; box on;
-    plot(JG , Pfs1, 'k.')
-    plot(JG , Pfs2, 'b.')
-    plot(JG , Pfs3, 'g.')  
-    plot(JG , Pfs4, 'r.')  
-    plot(JG , Pfs5, 'm.')  
-    ylabel('dbar')
-    datetick
-    title('PRES')   
-    
-    subplot(2,1,2);
-    hold on; box on;
-    plot(JG , PDENfs1, 'k.')
-    plot(JG , PDENfs2, 'b.')
-    plot(JG , PDENfs3, 'g.')  
-    plot(JG , PDENfs4, 'r.')
-    plot(JG , PDENfs5, 'm.')
-    ylabel('kg/m3.')
-    datetick
-    title('POT. DENS')   
+figure(10)   %  graph of the data to show that it is all there!
+clf;
+subplot(2,1,1);
+hold on; box on;
+plot(JG , Pfs1, 'k.')
+plot(JG , Pfs2, 'b.')
+plot(JG , Pfs3, 'g.')  
+plot(JG , Pfs4, 'r.')  
+plot(JG , Pfs5, 'm.')  
+ylabel('dbar')
+datetick
+title('PRES')   
 
+subplot(2,1,2);
+hold on; box on;
+plot(JG , PDENfs1, 'k.')
+plot(JG , PDENfs2, 'b.')
+plot(JG , PDENfs3, 'g.')  
+plot(JG , PDENfs4, 'r.')
+plot(JG , PDENfs5, 'm.')
+ylabel('kg/m3.')
+datetick
+title('POT. DENS')   
 
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)   
 print('-dpng',[grdatdir 'otherfigure' filesep  'RTEBmerged_beforegrid_check2'])
@@ -635,13 +593,10 @@ clear Pfs1 Pfs2 Pfs3 Pfs4 Pfs5
 clear Sfs1 Sfs2 Sfs3 Sfs4 Sfs5
 clear Tfs1 Tfs2 Tfs3 Tfs4 Tfs5
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%  4.  GRIDDING
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 % Hydro-Gridding....
-
 %  This is the most contentious part of this code.  I have edited the
 %  gridding function con_tprof0.m to select the pressure grid at every time
 %  step rather than just take the the common range throught out the whole
@@ -660,133 +615,64 @@ clear Tfs1 Tfs2 Tfs3 Tfs4 Tfs5
 %  years of mooring data - i.e. using the rough 'climatology' from TOK as a
 %  first iteration before re-gridding using the 5 year mean.
 
-
-    pmin = ceil(min(Pfss)/20) * 20;
-    pmax = floor(max(Pfss)/20) * 20;
+pmin = ceil(min(Pfss)/20) * 20;
+pmax = floor(max(Pfss)/20) * 20;
     
 if gridding == 2 % using climatological profiles
-    outputfile = ['RTEB_merg_' TS_CLIMATOLOGY_TP ' ' TS_CLIMATOLOGY lastyeardata ];
+    outputfile = ['RTEB_merg_' TS_CLIMATOLOGY_TP ' ' TS_CLIMATOLOGY '_' lastyeardata ];
     if strcmp(TS_CLIMATOLOGY_TP,'annual')
-        display('con_tprof0_annual')
+        disp('con_tprof0_annual')
         [TGfs, SGfs] = con_tprof0_annual(Tfss, Sfss, Pfss, pgg', 0*ones(1, size(Tfss, 2)), int_step, TSclim, ...
                                           TS_CLIMATOLOGY,TS_CLIMATOLOGY_NAME);
     elseif strcmp(TS_CLIMATOLOGY_TP,'seasonal')
-        display('con_tprof0_monthly')
+        disp('con_tprof0_monthly')
         [TGfs, SGfs] = con_tprof0_monthly(Tfss, Sfss, Pfss, pgg', GTV(:,2), int_step, TSclim,TS_CLIMATOLOGY, ...
                                           TS_CLIMATOLOGY_NAME );
     end
-    
-    % time is passed in as 0 in the above line?!?
-    % pass the month of measurement into con_tprof0, instead of the empty time vector.
-    %
-    %	Tfss -- timeseries of discrete temperature measurements from the moorings (e.g. 25x5001)
-    %       Tfss -- timeseries of discrete temperature measurements from the moorings.
-    %       Tfss -- timeseries of discrete temperature measurements from the moorings.
-    %       pgg   -- pressure grid onto which the profiles will be integrated
-    %       GTV  -- months when each measurement was made.
-    %	int_step -- integration step size [dbar] between grid points
-    %	TSclim   = path to the file containing the dT/dP and dS/dP climatology
-        
    
 elseif gridding == 1 % linear interpolation   
-    
-        outputfile = ['RTEB_merg_linear_interp' lastyeardata ];
-        TGfs = nan(length(pgg),length(JG));
-        SGfs = nan(length(pgg),length(JG)); 
-        for ijj=1:length(JG)
-            itok = find(~isnan(Tfss(:,ijj)));
-            isok = find(~isnan(Sfss(:,ijj)));
-            if length(itok)>1
-                TGfs(:,ijj) = interp1(Pfss(itok,ijj),Tfss(itok,ijj),pgg) ; 
-            end
-            if length(isok)>1
-                SGfs(:,ijj) = interp1(Pfss(isok,ijj),Sfss(isok,ijj),pgg) ;     
-            end
-        end
-       
-    
+
+outputfile = ['RTEB_merg_linear_interp' '_' lastyeardata ];
+TGfs = nan(length(pgg),length(JG));
+SGfs = nan(length(pgg),length(JG)); 
+for ijj=1:length(JG)
+    itok = find(~isnan(Tfss(:,ijj)));
+    isok = find(~isnan(Sfss(:,ijj)));
+    if length(itok)>1
+        TGfs(:,ijj) = interp1(Pfss(itok,ijj),Tfss(itok,ijj),pgg) ; 
+    end
+    if length(isok)>1
+        SGfs(:,ijj) = interp1(Pfss(isok,ijj),Sfss(isok,ijj),pgg) ;     
+    end
+end
 end 
 
-    
-    display(['saving: ' outputfile '.mat'])
-    % Alloacte variables into a structure
-    RTEB_merg.JG     = JG;
-    RTEB_merg.Tfs    = Tfs;
-    RTEB_merg.Sfs    = Sfs;
-    RTEB_merg.Pfs    = Pfs;
-    RTEB_merg.PGfs    = pgg';    
-    RTEB_merg.TGfs   = TGfs;
-    RTEB_merg.SGfs   = SGfs;
-%     RTEB_merg.P_sort = P_sort;
-%     RTEB_merg.T_sort = T_sort;
-%     RTEB_merg.S_sort = S_sort;
+disp(['saving: ' outputfile '.mat'])
+% Alloacte variables into a structure
+RTEB_merg.JG     = JG;
+RTEB_merg.Tfs    = Tfs;
+RTEB_merg.Sfs    = Sfs;
+RTEB_merg.Pfs    = Pfs;
+RTEB_merg.PGfs    = pgg';    
+RTEB_merg.TGfs   = TGfs;
+RTEB_merg.SGfs   = SGfs;
 if gridding == 2 % using climatological profiles    
     RTEB_merg.TS_CLIMATOLOGY   = TS_CLIMATOLOGY;
     RTEB_merg.TS_CLIMATOLOGY_TP= TS_CLIMATOLOGY_TP;
     RTEB_merg.TS_CLIMATOLOGY_NAME= TS_CLIMATOLOGY_NAME;
     RTEB_merg.clim_file        = TSclim;
 end    
-%     RTEB_merg.OUT_FILE         = OUT_FILE;
-%     RTEB_merg.EB_creation_date = datestr(now);
-%     RTEB_merg.MERG_REVISION    = REV(6:8);            % store the revision number of this script
-%     RTEB_merg.MERG_AUTHOR      = REV_AUTHOR(9:end-1); % store the revision author of this script
-%     RTEB_merg.MERG_DATE        = REV_DATE(7:end-1);   % store the revision date of this script
-%     RTEB_merg.EB_path = grdatdir; % path to output file
-%     RTEB_merg.function_name = function_name; % the name and path to this function
-%     RTEB_merg.interpolation_depth=idepth-20;
-%     RTEB_merg.matlab_version = version;
-%     
-% % bim September 2014
-% % load in climatology to save in the data file
-% % read in and save as a structure
-% % load in climatology
-% 	eval([' load ' TSclim])
-% % convert to structure
-% 
-% 	eval(['matObj = matfile( '''  TSclim ''')' ])
-%         info=whos(matObj);
-% 	for kk=1:length(info);
-% 	  eval([ 'clim.' info(kk).name ' = ' info(kk).name])
-% 	end
-%     RTEB_merg.climatology = clim; % structure of the climatology variables used to grid the data
-% 
-%     RTEB_merg
-		
+
+stddy_tol  = 10; % 4
+std_win    = 3.5; % 3.5 * std of the time series
+[nloop]    = 5; % 5
+graphics   = 'y';
+temp = []; salinity = [];
     
-    % interpolating over the shorter gaps in the data - but leaving the
-    % larger ones close to the surface as they will be extrapolated once
-    % the transports have been calculated by the MOC code.  The idea is
-    % then that this product can be imported into the MOC code
-    
-    % A problem is that it wants to level out the gaps in the surface layer
-    % that are best treated by extrapolating the derived transports in the
-    % MOC code...  temp fix by ignoring the upper layer...
-    
-    %clear all; close all
-    %clear
-    %    load ../mat_files/EB_merged_data_no_interp_2010.mat
-    %eval(['load ../mat_files/EB_merged_annual_' TS_CLIMATOLOGY '_2010.mat'])
-    
-    %JG -- julian day
-    %Tfs -- original stacked Temperature data from the deployments (144x5001)
-    %Sfs -- original stacked salinity data from the deployments (144x5001)
-    %Pfs -- original stacked Pressure data from the deployments (144x5001)
-    %PGfs -- pressure grid    
-    %TGfs -- temperature interpolated onto the pressure grid (PG)
-    %SGfs -- salinity interpolated onto the pressure grid (PG)
-    %P_sort -- Pfs sorted on pressure
-    %T_sort -- Tfs sorted on pressure
-    %S_sort -- Sfs sorted on pressure
-    
-    stddy_tol  = 10; % 4
-    std_win    = 3.5; % 3.5 * std of the time series
-    [nloop]    = 5; % 5
-    graphics   = 'y';
-    temp = []; salinity = [];
-    
-    %%%%%%
-    %  despike time series
-    %%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+% despike time series
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
     for i = 1 : length(TGfs(:,1))   % loop through each depth level
         
         [temp(i,:),dx,ndx] = ddspike(TGfs(i,:),[-std_win*nanstd(TGfs(i,:)),...
@@ -795,54 +681,46 @@ end
             std_win*nanstd(SGfs(i,:))],stddy_tol,[nloop],'y',NaN);
     end
     
-    [m,n] = size(TGfs);
-    TG_east = NaN * ones(m,n); SG_east = NaN * ones(m,n);
-    
-    % GDM, 9/4/2013
-    % Need to interpolate horizontally over nans but...
-    % Don't want to create fake values above knocked down moorings
-    % So select a depth below which, interpoation happens
-    
-    idepth = depthminforhoriz_interp; % multiples of 20
-    I = find(pgg == idepth);
-    
-    % copy the top idepth into the new file
-    % no temporal interpolation
-    SG_east([1:I-1],:)=SGfs([1:I-1],:);
-    TG_east([1:I-1],:)=TGfs([1:I-1],:);
-    
-    %    i = 1; j = 1;
-    %    for i = 1: 6 % top 100m based on a grid of 20dbar
-    %        SG_east(j,:) = SGfs(i, :);
-    %        TG_east(j,:) = TGfs(i, :);
-    %        j = j + 1;
-    %    end
-%
-    
-    % this piece of code has the ability to create spurious values of T & S ** tk
-    % how large are the temporal gaps in the time series ?
-    % linear should only be used for small gaps.
-    
-    %     i = 7; j = 7; % PG(7) = 120;
-    %     i = 11; j = 11; % PG(11) = 120;
+[m,n] = size(TGfs);
+TG_east = NaN * ones(m,n); SG_east = NaN * ones(m,n);
 
-    i = I; j = I;
-    for i = I: length(pgg) % for each depth
-        
-        % locate all non nan values in the despiked temperature
-        it = find(~isnan(temp(i,:)));
-        if length(it) < 2
-            continue
-        end
-        % locate all non nan values in the despiked salinity
-        is = find(~isnan(salinity(i,:)));
-        % interpolate in time over the missing data
-        SG_east(j,:) = interp1(JG(is), salinity(i, is), JG);
-        % interpolate in time over the missing data
-        TG_east(j,:) = interp1(JG(it), temp(i, it), JG);
-        
-        j = j + 1;
+% GDM, 9/4/2013
+% Need to interpolate horizontally over nans but...
+% Don't want to create fake values above knocked down moorings
+% So select a depth below which, interpoation happens
+
+idepth = depthminforhoriz_interp; % multiples of 20
+I = find(pgg == idepth);
+
+% copy the top idepth into the new file
+% no temporal interpolation
+SG_east([1:I-1],:)=SGfs([1:I-1],:);
+TG_east([1:I-1],:)=TGfs([1:I-1],:);
+
+% this piece of code has the ability to create spurious values of T & S ** tk
+% how large are the temporal gaps in the time series ?
+% linear should only be used for small gaps.
+
+%     i = 7; j = 7; % PG(7) = 120;
+%     i = 11; j = 11; % PG(11) = 120;
+
+i = I; j = I;
+for i = I: length(pgg) % for each depth
+
+    % locate all non nan values in the despiked temperature
+    it = find(~isnan(temp(i,:)));
+    if length(it) < 2
+        continue
     end
+    % locate all non nan values in the despiked salinity
+    is = find(~isnan(salinity(i,:)));
+    % interpolate in time over the missing data
+    SG_east(j,:) = interp1(JG(is), salinity(i, is), JG);
+    % interpolate in time over the missing data
+    TG_east(j,:) = interp1(JG(it), temp(i, it), JG);
+
+    j = j + 1;
+end
     
 figure;
 % spurious values created in the interpolation?
@@ -853,8 +731,6 @@ plot(SGfs,TGfs,'r--')
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %%  6.  PLOTTING THE GRIDDED AND MERGED PROFILES
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    
 close all
 figure(1); clf
 subplot(3,1,1)
@@ -889,7 +765,6 @@ C.Label.String = 'Conservative Temperature (^{o} C)';
 C.Ticks=[floor(min(min(temp))):1:ceil(max(max(temp)))];
 C.TickLength=0.05;
 
-
 subplot(3,1,3)
 contourf(JG , pgg, TG_east,28,'LineColor','none'); 
 hold on
@@ -908,8 +783,6 @@ C.TickLength=0.05;
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
 print('-dpng',[grdatdir outputfile '_temperature'])
 
-%%
-
 figure(2);clf
 subplot(3,1,1)
 contourf(JG , pgg, SGfs,28,'LineColor','none'); 
@@ -927,7 +800,6 @@ C.Label.String = 'Absolute Salinity (g kg^{-1})';
 C.Ticks=[round(min(min(SGfs)),1):0.1:round(max(max(SGfs)),1)];
 C.TickLength=0.03;
 
-
 subplot(3,1,2)
 contourf(JG , pgg, salinity,28,'LineColor','none'); 
 hold on
@@ -942,7 +814,6 @@ C = colorbar;
 C.Label.String = 'Absolute Salinity (g kg^{-1})';
 C.Ticks=[round(min(min(salinity)),1):0.1:round(max(max(salinity)),1)];
 C.TickLength=0.03;
-
 
 subplot(3,1,3)
 contourf(JG , pgg, SG_east,28,'LineColor','none'); 
@@ -959,12 +830,10 @@ C.Label.String = 'Absolute Salinity (g kg^{-1})';
 C.Ticks=[round(min(min(SG_east)),1):0.1:round(max(max(SG_east)),1)];
 C.TickLength=0.03;
 
-
- set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)   
+set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)   
 print('-dpng',[grdatdir outputfile '_salinity'])
 
 %%
-
 PDENGfs = sw_pden(SGfs,TGfs,pgg',0);
 pden = sw_pden(salinity,temp,pgg',0);   
 PDENG_east = sw_pden(SG_east,TG_east,pgg',0);   
@@ -981,22 +850,13 @@ datetick; ylabel('POT. DENS.')
 title('AFTER DESPIKING')
 subplot(3,1,3)
 contourf(JG , pgg,PDENG_east,10); axis ij
-  caxis([min(PDENGfs(:)) max(PDENGfs(:))])
+caxis([min(PDENGfs(:)) max(PDENGfs(:))])
 datetick; ylabel('POT. DENS.')
 title('AFTER DESPIKING AND INTERPOLATION')
-
- set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)   
+set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)   
 print('-dpng',[grdatdir outputfile '_potdens'])
-
     
- % ------------- MAKE MERGED DAT ONLY FIGURE -----------------------------
- 
-% check for dir
-% if exist([basedir '\Figures\East'],'dir')
-% else
-%     mkdir([basedir '\Figures\East'])
-% end
-%%
+% ------------- MAKE MERGED DAT ONLY FIGURE -----------------------------
 
 % TEMPERATURE
 figure;
@@ -1006,8 +866,8 @@ x=JG;
 y=pgg;
 z=TG_east;
 [c,h]=contourf(x,y,z,100,'LineColor','none');
-caxis([floor(min(min(TG_east))) ceil(max(max(TG_east)))]);
-C = colorbar;colormap(ax(1),'jet')
+caxis([ceil(min(min(TG_east))) floor(max(max(TG_east)))]);
+C = colorbar;
 C.Label.String = 'Conservative Temperature (^{o} C)';
 C.Ticks=[floor(min(min(TG_east))):1:ceil(max(max(TG_east)))];
 C.TickLength=0.03;
@@ -1024,14 +884,9 @@ date2=datenum(max(Y),1,1);
 datetick('x','Keeplimits');
 axis ij
 title('Rockall Trough Eastern Boundary Gridded Temperature')
+cmap=cmocean('Thermal')
+colormap(ax(1),cmap)
 
-
-% width=25; height=20; FS=14; FN='Arial';
-% set(gca,'fontsize', FS, 'FontName',FN);
-% set(gcf,'units','centimeters','position',[5 5 width height])
-% 
-% print('-dpng',[grdatdir outputfile '_T_all'])
-% print(gcf, '-dpng',[basedir '/Figures/East/Temperature']);
 % SALINITY
 ax(2)=subplot(2,1,2)
 x=JG;
@@ -1040,7 +895,8 @@ z=SG_east;
 [c,h]=contourf(x,y,z,12,'LineColor','none');
 caxis([round(min(min(z)),1) round(max(max(z)),1)]);
 C = colorbar;
-cmap=colormap('parula');
+% cmap=colormap('parula');
+cmap=cmocean('Haline')
 colormap(ax(2),cmap);
 C.Label.String = 'Absolute Salinity (g kg^{-1})';
 C.Ticks=[round(min(min(z)),1):0.1:round(max(max(z)),1)];
@@ -1054,8 +910,6 @@ ylabel(gca,'Pressure (m)');
 [Y,~,~]=datevec(JG);
 date1=datenum(min(Y),1,1);
 date2=datenum(max(Y),1,1);
-% xticks(gca,[date1:365:date2]);
-% xticklabels(gca,datestr([date1:365:date2],'YYYY'));
 datetick('x','Keeplimits');
 axis ij
 title('Rockall Trough Eastern Boundary Gridded Salinity')
@@ -1064,7 +918,6 @@ width=35; height=20; FS=12; FN='Arial';
 set(gca,'fontsize', FS, 'FontName',FN);
 set(gcf,'units','centimeters','position',[5 5 width height])
 print('-dpng',[grdatdir outputfile '_S_all'])
-print(gcf, '-dpng',[basedir '/Figures/East/sal_temp']);
 
 %%
 % DENSITY
@@ -1095,15 +948,11 @@ set(gca,'fontsize', FS, 'FontName',FN);
 set(gcf,'units','centimeters','position',[5 5 width height])
 
 print('-dpng',[grdatdir outputfile '_RHO_all'])
-print(gcf, '-dpng',[basedir '/Figures/East/Density']);
+% print(gcf, '-dpng',[basedir '/Figures/East/Density']);
 
-   
 % --------------ALLOCATE VARIABLES AND SAVE--------------------------------
-
 RTEB_merg.TGfs2= TG_east;
 RTEB_merg.SGfs2= SG_east;
-
-
 RTEB_merg.comment{1,1}= 'JG -- julian day';
 RTEB_merg.comment{2,1}= 'Tfs -- original stacked Temperature data from the deployments';
 RTEB_merg.comment{3,1}= 'Sfs -- original stacked salinity data from the deployments ';

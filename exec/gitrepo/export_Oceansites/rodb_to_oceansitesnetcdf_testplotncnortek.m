@@ -32,12 +32,12 @@ set(fig,'PaperUnits','centimeters','PaperOrientation','portrait',...
 				    'Paperposition',figpos)
 subplot(2,1,1)
 plot(nortekncdata.time, nortekncdata.UCUR);
-title('U (m.s-1)')
+title([moor ' U (m.s-1)'])
 datetick
 
 subplot(2,1,2)
 plot(nortekncdata.time, nortekncdata.VCUR);
-title('V (m.s-1)')
+title([moor ' V (m.s-1)'])
 datetick
 
 print('-dpng',namefignor1)
@@ -49,7 +49,7 @@ set(fig,'PaperUnits','centimeters','PaperOrientation','portrait',...
 
 subplot(2,1,1)
 plot(nortekncdata.time, nortekncdata.WCUR);
-title('W (m.s-1)')
+title([moor ' W (m.s-1)'])
 datetick
 
 subplot(2,1,2)

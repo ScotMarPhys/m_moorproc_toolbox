@@ -13,6 +13,7 @@ clearvars -except MEXEC MEXEC_A MEXEC_G pathosnap;
 %moor = 'rtwb1_04_2017';
 %moor  = 'ib5_01_2018';
 moor  = 'ib3_01_2018';
+moor  = 'rteb1_05_2018';
 
 if exist('pathosnap','var')
     basedir = [pathosnap filesep 'data' filesep];
@@ -23,5 +24,5 @@ end
 procpath = [basedir 'moor/proc/' ];
 
 
-cm_edit_NOCS_v4(moor,'procpath',procpath)
+cm_edit_NOCS(moor,'procpath',procpath)
 
