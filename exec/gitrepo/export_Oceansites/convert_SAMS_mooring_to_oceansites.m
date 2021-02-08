@@ -7,7 +7,7 @@ close all
 %pathosnap = pwd;
 
 %basedir  = '~/Dropbox/Work/Dataproc/Postdoc_OSNAP/OSNAP_mooring/'; %
-basedir = [execdir 'gitrepo/export_Oceansites'];
+basedir = [pathgit filesep 'exec/gitrepo/export_Oceansites'];
 % directory with the processed mooring data
 % procpath = '/media/SAMS/m/Mar_Phys/OSNAP_mooring_data_processing/osnap/data/moor/proc/' % NEED TO BE UPDATE:[basedir 'backup_mdrive/proc/'];	
 %procpath = '~/osnap/data/moor/proc/' % NEED TO BE UPDATE:[basedir 'backup_mdrive/proc/'];	
