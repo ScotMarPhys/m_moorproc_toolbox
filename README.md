@@ -119,7 +119,7 @@ declination correction, data filtering
 
 Users of the osnap mooring processing toolbox should request a new
 branch from the latest post cruise updated master from
-<https://github.com/LewisDrysdale/m_moorproc_toolbox>. This should be
+<https://github.com/ScotMarPhys/m_moorproc_toolbox>. This should be
 the last working version used and updated since the last mooring cruise
 and the branch should be renamed to reflect the upcoming cruise. A copy
 of this branch should be physically taken on the ship (i.e.
@@ -143,18 +143,18 @@ are using windows you may also want to install a nice terminal (e.g.
 2\. Open a terminal, move in your working directory (e.g. \~/Work) and
 then **clone the project** repository with the command*:*
 
-git clone https://github.com/LewisDrysdale/m_moorproc_toolbox.git
+git clone https://github.com/ScotMarPhys/m_moorproc_toolbox.git
 
 3\. Enter the git repository:
 
 cd m_moorproc_toolbox
 
 4\. **Fork the repository**
-<https://github.com/LewisDrysdale/m_moorproc_toolbox.git> to your
+<https://github.com/ScotMarPhys/m_moorproc_toolbox.git> to your
 personal account. To do that just click the Fork button on the main repo
 page.
 
-![](media/image1.png){width="6.6930555555555555in"
+![](https://github.com/ScotMarPhys/m_moorproc_toolbox/Documents/Processing_documents/md_images/Figure1.JPG){width="6.6930555555555555in"
 height="0.8375853018372703in"}
 
 5\. **Add your fork as a remote.** This remote will be named after your
@@ -356,7 +356,7 @@ If you have already a git version of the repository set up following
 This will update the local version of the repository with the latest
 version of the remote directory.
 
-### Create a branch for your development 
+### Create a branch for your development
 
 Before modifying the code, you should create a new branch. More
 information are given in the previous section, see 1.4)
@@ -670,7 +670,7 @@ Data are saved as a mat file in
 *\~\\osnap\\data\\moor\\proc\\hydro_grid\\.* The gridded .mat files have
 the variable naming conventions listed in Table 1
 
-###  merging of the several years of deployment (and if necessary moorings) 
+###  merging of the several years of deployment (and if necessary moorings)
 
 First, we have to create 2 .dat files with instrument data from EB1 in
 one file. The same for WB1 and WB2 combined in the same file. Note, only
@@ -898,15 +898,15 @@ follows:
 Thoroughly check through the script for other instances that need to be
 changed with the addition of a new mooring.
 
-# DeepSeapHOx Data Processing 
+# DeepSeapHOx Data Processing
 
-## Stage 0 -- Data Download 
+## Stage 0 -- Data Download
 
 After download the data are backed up and transferred to the network
 drive, then copied onto the processing computer in the directory
 *osnap/data/moor/raw/\$cruise/seaphox_caldip*
 
-## Stage 1 -- Conversion to standard RDB format 
+## Stage 1 -- Conversion to standard RDB format
 
 The script *seaphox_call_caldip* performs stage1 processing on
 DeepSeapHOx data. It converts the data from raw to RDB format. The user
