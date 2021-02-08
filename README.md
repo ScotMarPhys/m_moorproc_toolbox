@@ -1,37 +1,33 @@
-# Contents {#contents .TOC-Heading}
+# OSNAP-CLASS MOORING PROCESSING TOOLBOX
+### verison 1.2
 
-[Setup and version control 3](#setup-and-version-control)
+# Contents
 
-[1. Git 3](#git)
+[Setup and version control](#setup-and-version-control)
 
-[1.1. A word on git 3](#a-word-on-git)
+[1. Git](##git)
 
-[1.2. Git setup 3](#git-setup)
+[1.1. A word on git](##a-word-on-git)
 
-[1.3. Check the local and remote branches
-4](#check-the-local-and-remote-branches)
+[1.2. Git setup](##git-setup)
 
-[1.4. Making changes 5](#making-changes)
+[1.3. Check the local and remote branches](##check-the-local-and-remote-branches)
 
-[1.5. Push changes on the original remote repository
-6](#push-changes-on-the-original-remote-repository)
+[1.4. Making changes](#making-changes)
 
-[1.6. More on Git 7](#more-on-git)
+[1.5. Push changes on the original remote repository](##push-changes-on-the-original-remote-repository)
 
-[2. Setup and run locally the toolbox
-7](#setup-and-run-locally-the-toolbox)
+[1.6. More on Git](##more-on-git)
 
-[2.1. Get the most recent version of the toolbox
-7](#get-the-most-recent-version-of-the-toolbox)
+[2. Setup and run locally the toolbox](#setup-and-run-locally-the-toolbox)
 
-[2.2. Create a branch for your development
-7](#create-a-branch-for-your-development)
+[2.1. Get the most recent version of the toolbox](##get-the-most-recent-version-of-the-toolbox)
 
-[2.3. Set up the toolbox in your matlab path
-8](#set-up-the-toolbox-in-your-matlab-path)
+[2.2. Create a branch for your development](##create-a-branch-for-your-development)
 
-[Real-time and delayed-time processing of microCAT data
-9](#real-time-and-delayed-time-processing-of-microcat-data)
+[2.3. Set up the toolbox in your matlab path](#s#et-up-the-toolbox-in-your-matlab-path)
+
+[Real-time and delayed-time processing of microCAT data](#real-time-and-delayed-time-processing-of-microcat-data)
 
 [1. Introduction 9](#introduction)
 
