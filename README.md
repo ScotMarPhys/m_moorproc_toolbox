@@ -57,8 +57,7 @@ temperature calibration coefficients
 11](#calculation-of-the-pre--or-post--deployment-conductivity-and-temperature-calibration-coefficients)
 
 [5.4. Gridding of the data: creation of a lowpass filtered, regular
-gridded data set.
-12](#gridding-of-the-data-creation-of-a-lowpass-filtered-regular-gridded-data-set.)
+gridded data set.](#gridding-of-the-data-creation-of-a-lowpass-filtered-regular-gridded-data-set.)
 
 [5.5. merging of the several years of deployment (and if necessary
 moorings)
