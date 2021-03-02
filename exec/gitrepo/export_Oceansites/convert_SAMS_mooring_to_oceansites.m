@@ -21,13 +21,14 @@ outpath = [basedir 'gitrepo/export_Oceansites/oceansites_format'];
 % depyear ='02_2015';
 % depyear = '03_2016';
 % depyear = '04_2017';
-depyear='05_2018';
+depyear='01_2018';
 %-------------------------------------
 %% Selection of the mooring to process
 %moorlist ={'nocm1','nocm2','nocm3','nocm4','nocm5'};
 %moorlist ={'nocm2'};
-moorlist = {'rteb1','rtwb1','rtwb2'};
+% moorlist = {'rteb1','rtwb1','rtwb2'};
 %moorlist = {'rtadcp1'};%
+moorlist = {'ib3','ib4','ib5'};
  		
 % eval(['cd ' basedir]);
 cd(basedir)
@@ -121,6 +122,48 @@ for ijk= 1:length(moorlist)
             moorinfo.adcp.pingperens          =	42;
             moorinfo.adcp.timepinggroup       =	'85s';   
             
+         case {'ib3','ib4','ib5'}
+            
+         %Microcat   
+            moorinfo.mcat.principal_investigator = 'Penny Holliday';	% CHANGE
+            moorinfo.mcat.principal_investigator_email = 'penny.holliday@noc.ac.uk';	% CHANGE
+            moorinfo.mcat.principal_investigator_url = 'http://www.noc.ac.uk';	% CHANGE
+            moorinfo.mcat.institution = 'National Oceanography Centre, NOC';	% CHANGE
+            moorinfo.mcat.contributor_name = 'Penny Holliday; Loic Houpert';	% CHANGE
+            moorinfo.mcat.contributor_role = 'data processing and interpretation';	% CHANGE
+            moorinfo.mcat.contributor_email = 'penny.holliday@noc.ac.uk'	% CHANGE              
+            
+         %Nortek   
+            moorinfo.nortek.principal_investigator = 'Penny Holliday';	% CHANGE
+            moorinfo.nortek.principal_investigator_email = 'penny.holliday@noc.ac.uk';	% CHANGE
+            moorinfo.nortek.principal_investigator_url = 'http://www.noc.ac.uk';	% CHANGE
+            moorinfo.nortek.institution = 'National Oceanography Centre, NOC';	% CHANGE
+            moorinfo.nortek.contributor_name = 'Penny Holliday; Loic Houpert';	% CHANGE
+            moorinfo.nortek.contributor_role = 'data processing and interpretation';	% CHANGE
+            moorinfo.nortek.contributor_email = 'penny.holliday@noc.ac.uk' ;	% CHANGE         
+          
+        %ADCP
+            moorinfo.adcp.principal_investigator = 'Penny Holliday';	% CHANGE
+            moorinfo.adcp.principal_investigator_email = 'penny.holliday@noc.ac.uk';	% CHANGE
+            moorinfo.adcp.principal_investigator_url = 'http://www.noc.ac.uk';	% CHANGE
+            moorinfo.adcp.institution = 'National Oceanography Centre, NOC';	% CHANGE
+            moorinfo.adcp.contributor_name = 'Penny Holliday; Loic Houpert';	% CHANGE
+            moorinfo.adcp.contributor_role = 'data processing and interpretation';	% CHANGE
+            moorinfo.adcp.contributor_email = 'penny.holliday@noc.ac.uk; loic.houpert@noc.ac.uk';	% CHANGE
+            moorinfo.adcp.proclvl             = 'calibrated;good data';
+            moorinfo.adcp.sensor_model        = 'Workhorse 300 kHz';
+            moorinfo.adcp.sensor_manufacturer = 'Teledyne RDI';	
+            moorinfo.adcp.sensor_ref          = 'http://rdinstruments.com/__documents/Brochures/sentinel_datasheet_lr.pdf';
+            moorinfo.adcp.velaccuracy         = '+- 1% of the water velocity relative to ADCP +- 5mm/s';
+            moorinfo.adcp.velresolution       = '1mm/s';
+            moorinfo.adcp.sensor_mount        = 'mounted_on_mooring_line';
+            moorinfo.adcp.sens_orientation    = 'downward';
+            moorinfo.adcp.coordsyst           = 'earth';
+            moorinfo.adcp.dist1stbin          =  6.2; 
+            moorinfo.adcp.binsize             =	4;
+            moorinfo.adcp.nbbins              =	28;
+            moorinfo.adcp.pingperens          =	42;
+            moorinfo.adcp.timepinggroup       =	'85s';             
     end
     
     
