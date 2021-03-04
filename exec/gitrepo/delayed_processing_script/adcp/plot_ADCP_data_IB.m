@@ -7,7 +7,7 @@ close all, clear all
 
 %----------------------------------------------------
 % Graphical parameter
-vsblfig = 'off';
+vsblfig = 'on';
 zsc = get(0,'MonitorPositions');
 scrsz = [1 1 1600 1200]/2; % zsc(1,:);
 figpos = scrsz/30; %[0 0 27 21];
@@ -28,6 +28,7 @@ datatype = 'lowedt' %'use';%'lowedt'; %"edt" for no filtered data and "lowedt" f
 
 
 basedir  = '~/osnap/data/moor/';
+basedir='C:\Users\SA01LD\OneDrive - SAMS\OSNAP_mooring_processing_DY120\osnap\data/moor/';
 procpath = [basedir 'proc/'];
 % outpath  = [procpath mooring '/adcp/'];
 outpath  = [procpath moor '/adp/'];

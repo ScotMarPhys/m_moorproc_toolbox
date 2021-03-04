@@ -556,8 +556,15 @@ if iiADCP>0
        adcpinfo = moorinfo.adcp;
        adcpinfo.serial_num = serialno;
        bin_depth = round(nanmean(ADCPdata(i).z,2)); % nominal depth of the bin
-
-       pres = sw_pres(ADCPdata(i).z,lat);
+       
+       if size(lat,1)==size(ADCPdata(i).z,1)
+       else
+            % if szie not same, then make lat same size as ADCPdata(i).z 
+            % for sw_pres to work. but keep lat var as count==1
+            lat_pres=repmat(lat,size(ADCPdata(i).z));
+       end
+       
+       pres = sw_pres(ADCPdata(i).z,lat_pres);
 
        write_ADCP_to_NetCDF(netcdffilepath, moor, lat, lon, adcpinfo, bin_depth, instrument_depth, pres, ADCPdata(i).time(1,:), ADCPdata(i).u, ADCPdata(i).v,  ADCPdata(i).w, ADCPdata(i).err)
 
