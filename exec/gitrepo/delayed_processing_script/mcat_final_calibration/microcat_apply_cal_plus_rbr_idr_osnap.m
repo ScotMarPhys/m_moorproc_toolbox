@@ -289,8 +289,8 @@ for mc = 1: length(serial)
     if ~strcmp(over,'y')
          continue
     end
-    [succ1,mess1] =copyfile(mcfile_out,[mcfile_out,date]);
-    [succ2,mess2] =copyfile([mcfile_out,'.txt'],[mcfile_out,'.txt',date]);
+    [succ1,mess1] =copyfile(mcfile_out,[mcfile_out]);
+    [succ2,mess2] =copyfile([mcfile_out,'.txt'],[mcfile_out,'.txt']);
   end  
      
   if exist('diag','var')
