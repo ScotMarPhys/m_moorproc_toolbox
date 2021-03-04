@@ -479,7 +479,7 @@ if iiADCP>0
     num_bins=dir([procpath,moor,'/adp/',moor,'_',num2str(vecADCP(i)),'_bin*' '.edt'])
     num_bins=length(num_bins)
     num_bins
-
+    count=0;
     for j=1:num_bins % loop for total number of bins
         
         columns = ['YY:MM:DD:HH:Z:T:U:V:W:HDG:PIT:ROL:CS:CD:BEAM1SS:BEAM2SS:BEAM3SS'...
@@ -498,6 +498,7 @@ if iiADCP>0
             disp(['infile: ' infile ' does not exist.'])
 
         elseif exist(infile,'file')   > 0 
+            count=count+1;
 
             [YY,MM,DD,HH,z,t,u,v,w,hdg,pit,rol,spd,direction,Amp1,Amp2,Amp3,Amp4,...
                 Beam1Cor,Beam2Cor,Beam3Cor,Beam4Cor,err,PG1,PG2,PG3,PG4,instrument_depth] = ...
@@ -525,20 +526,20 @@ if iiADCP>0
            bad_data=find(PG3==-9999); PG3(bad_data)=99999;        
            bad_data=find(PG4==-9999); PG4(bad_data)=99999;   
            
-            ADCPdata(i).time(j,:) = datenum(YY(timeok),MM(timeok),DD(timeok),HH(timeok),0*HH(timeok),0*HH(timeok)); %julian(YY,MM,DD,HH);
-            ADCPdata(i).z(j,:) = z(timeok);
-            ADCPdata(i).t(j,:) = t(timeok);          
-            ADCPdata(i).u(j,:) = u(timeok);
-            ADCPdata(i).v(j,:) = v(timeok);       
-            ADCPdata(i).w(j,:) = w(timeok);   
-            ADCPdata(i).err(j,:) = err(timeok);    
-            ADCPdata(i).hdg(j,:) = hdg(timeok);       
-            ADCPdata(i).pit(j,:) = pit(timeok);   
-            ADCPdata(i).rol(j,:) = rol(timeok);                
-            ADCPdata(i).PG1(j,:) = PG1(timeok);       
-            ADCPdata(i).PG2(j,:) = PG2(timeok);    
-            ADCPdata(i).PG3(j,:) = PG3(timeok);       
-            ADCPdata(i).PG4(j,:) = PG4(timeok);       
+            ADCPdata(i).time(count,:) = datenum(YY(timeok),MM(timeok),DD(timeok),HH(timeok),0*HH(timeok),0*HH(timeok)); %julian(YY,MM,DD,HH);
+            ADCPdata(i).z(count,:) = z(timeok);
+            ADCPdata(i).t(count,:) = t(timeok);          
+            ADCPdata(i).u(count,:) = u(timeok);
+            ADCPdata(i).v(count,:) = v(timeok);       
+            ADCPdata(i).w(count,:) = w(timeok);   
+            ADCPdata(i).err(count,:) = err(timeok);    
+            ADCPdata(i).hdg(count,:) = hdg(timeok);       
+            ADCPdata(i).pit(count,:) = pit(timeok);   
+            ADCPdata(i).rol(count,:) = rol(timeok);                
+            ADCPdata(i).PG1(count,:) = PG1(timeok);       
+            ADCPdata(i).PG2(count,:) = PG2(timeok);    
+            ADCPdata(i).PG3(count,:) = PG3(timeok);       
+            ADCPdata(i).PG4(count,:) = PG4(timeok);       
 
         end
         
