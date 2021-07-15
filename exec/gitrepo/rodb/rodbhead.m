@@ -19,6 +19,7 @@ function [vars,formats,lengths,names] = rodbhead(ident)
 %  added several header and data variables   d.kieke, Aug 2000
 %  added several variables  T Kanzow, summer 2005
 %  added O2 oxygen variable in umol/kg, D. Rayner 2014
+%  added pH and pH voltage variables, L. Drysdale 2021
 global allkeys allkeys1 nall
 
 
@@ -120,9 +121,13 @@ allkeys = [ ...
 'BO                  dat      0   61'; ...  % bottle oxygen (ml/l)
 'O2                  dat      0   62'; ...  % oxygen (umol/kg)
 'DO                  dat      0   67'; ...  % oxygen difference (ml/l)
+'PH_V                dat      0   68'; ...  % pH
+'PH                  dat      0   69'; ...  % pH Voltage
 'ST                  dat      0   70'; ...  % sigma-t (kg/m^3)
 'STH                 dat      0   71'; ...  % sigma-theta (kg/m^3)
 'SV                  dat      0   80'; ...  % sound velocity (m/s)
+'BATT1               dat      0   81'; ...  % Main battery voltage for seaphox 
+'BATT2               dat      0   82'; ...  % 2nd battery voltage for seaphox
 'TT                  dat      0   85'; ...  % acoustic travel time (s)
 'TT1                 dat      0   86'; ...  % acoustic travel time 1 (PIES) (s)
 'TT2                 dat      0   87'; ...  % acoustic travel time 2 (PIES) (s)
