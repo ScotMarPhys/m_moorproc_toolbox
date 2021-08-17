@@ -928,6 +928,10 @@ the DeepseapHOx (e.g. moor/proc/rteb1_04_2017/rteb1_04_2017 info.dat).
 Run process_seaphox\_\$cruise.m producing timeseries for each
 instrument, converting raw data to RODB format and summary statistics.
 
+## Stage 2
+
+Run seaphox_raw2use.m, making sure to change the relevant parameters at the beginning of the script.
+
 # Data reports tools
 
 A set of scripts can be used to quickly generated summary statistics and
