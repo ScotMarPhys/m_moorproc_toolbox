@@ -194,9 +194,9 @@ switch answer
         case 'Continue'
             disp([answer ' Merging.'])
             if ismember(moor{1}(3:4),'eb')
-                run merge_osnap_data_east.m
+                run merge_osnap_data_east.mlx
             else
-                run merge_osnap_data_west.m
+                run merge_osnap_data_west.mlx
             end
     case 'Cancel'
         case 'Wrong moorings'
@@ -218,9 +218,9 @@ switch answer
             disp([answer ' Merging.'])
 
             if ismember(moor{1}(3:4),'eb')
-                run merge_osnap_data_east.m
+                run merge_osnap_data_east.mlx
             else
-                run merge_osnap_data_west.m
+                run merge_osnap_data_west.mlx
             end
 
     end
@@ -260,9 +260,9 @@ case 'Merge'
             % the difference is the way the data is indexed in the code,
             % and could probably do with an overhaul
             if ismember(moor{1}(3:4),'eb')
-                run merge_osnap_data_east.m
+                run merge_osnap_data_east.mlx
             else
-                run merge_osnap_data_west.m
+                run merge_osnap_data_west.mlx
             end
 
         case 'Cancel'
@@ -286,9 +286,9 @@ case 'Merge'
             disp([answer ' Merging.'])
 
             if ismember(moor{1}(3:4),'eb')
-                run merge_osnap_data_east.m
+                run merge_osnap_data_east.mlx
             else
-                run merge_osnap_data_west.m
+                run merge_osnap_data_west.mlx
             end
     end
 end
