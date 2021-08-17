@@ -1,9 +1,11 @@
 % MICROCAT_RAW2USE_003 is a script that performs stage2 processing
-cruise = 'dy120';
+global basedir datadir execdir
+
+cruise = 'ar304';
 operator  = 'lad';
-moor = 'rteb1_05_2018';
+moor = 'rteb1_04_2017';
 % the start and end times of the time axis for plotting
-plot_interval = [2018 09 07; 2020 14 10];
+plot_interval = [2017 09 07; 2018 14 10];
 % ----------------- set path for data input and output --------------
 %inpath   = [basedir,'moor/raw/',cruise,'/microcat/'];
 inpath  = [basedir,'data/moor/proc/',moor,'/seaphox/'];
@@ -46,7 +48,7 @@ infile  = [inpath, moor,'_',num2str(sn(proc)),'.raw'];
         disp(['infile: ' infile ' does not exist.'])
 
     elseif exist(infile)   > 0 
-        rodbfile= [moor,'_',num2str(sn(proc)),'.use']; 
+        rodbfile= [moor,'_',sprintf('%4.4d',sn(proc)),'.use']; 
         outfile = [outpath,rodbfile];
         fprintf(fid_stat,'Serialnumber %d \n',sn(proc));
         fprintf(fid_stat,'Infile %s \n',infile);
