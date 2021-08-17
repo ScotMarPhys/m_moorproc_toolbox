@@ -1,9 +1,9 @@
 clearvars -except MEXEC MEXEC_A MEXEC_G;
 close all;
 
-pathosnap = '/home/mstar/osnap';
+% pathosnap = '/home/mstar/osnap';
 
-cruise = 'dy120';
-castnber = '3'; 
+cruise = 'ar304';
+castnber = '6'; 
 
 seaphox2rodb_01(['cast' castnber],'cruise',cruise)

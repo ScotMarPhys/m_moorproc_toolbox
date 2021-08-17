@@ -15,13 +15,13 @@ close all
 % Calculation of calibration coefficient
 % For cruise ar304, casts for IB moorings = [1,2]
 % For cruise dy120: cast= [1,3,4,5,8,9,10]
-p_insitucal.cruise           =  'dy120' ;%'ar304'; %'ar304' %'dy078';%'dy053';%'pe400'; %'kn221-02'; %'pe399';       % campaign cd177 / cd170 / d304 / kn182, ...
+p_insitucal.cruise           =  'ar304';%'dy120' ;'ar304'; %'ar304' %'dy078';%'dy053';%'pe400'; %'kn221-02'; %'pe399';       % campaign cd177 / cd170 / d304 / kn182, ...
 p_insitucal.cast             = 6;   
 p_insitucal.depl_period      = 'osnap5'; %'osnap2'    % move1; move2; rapid 1; rapid 2
 
 % ---- parameters ----------------------------------------------------
 p_insitucal.sensorselec      = 1;
-p_insitucal.sensor_id        = [332 337];  % MicroCAT ID range (in info.dat)
+p_insitucal.sensor_id        = [375];  % MicroCAT ID range (in info.dat)
 p_insitucal.basedir          = pathosnap; % base directory for osnap mooring
 p_insitucal.datadir          = [p_insitucal.basedir filesep 'data']; % data directory 
 p_insitucal.coef_dir         = [pathgit '/data/moor/cal_coef/']; 
@@ -123,6 +123,20 @@ elseif strcmp(p_insitucal.cruise,'dy053') & p_insitucal.cast == 22
     p_insitucal.dp_interval    = [-10 10];   
     p_insitucal.p_interval       = [0  2950];
     p_insitucal.average_interval = [1000 2950]; 
+% MICROCAT    
+% elseif strcmp(p_insitucal.cruise,'dy078') & p_insitucal.cast == 1 
+%     p_insitucal.c_interval     = [-0.025 0.025]; 
+%     p_insitucal.t_interval     = [-.02 .02];
+%     p_insitucal.dp_interval    = [-10 10];   
+%     p_insitucal.p_interval       = [0  2100];
+%     p_insitucal.average_interval = [300 800]; 
+% SEAPHOX
+elseif strcmp(p_insitucal.cruise,'dy078') & p_insitucal.cast == 1 
+    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0  2100];
+    p_insitucal.average_interval = [800 1200];  
 elseif strcmp(p_insitucal.cruise,'dy078') & p_insitucal.cast == 2 
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
@@ -202,7 +216,7 @@ elseif strcmp(p_insitucal.cruise,'dy120') & p_insitucal.cast == 5
     p_insitucal.p_interval       = [0  2050];
     p_insitucal.average_interval = [1500 2050];% [1000 2150];
 elseif strcmp(p_insitucal.cruise,'dy120') & p_insitucal.cast == 8
-    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.c_interval     = [-10.0 0.0];%[-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
     p_insitucal.dp_interval    = [-10 10];   
     p_insitucal.p_interval       = [0  3000];
@@ -253,7 +267,7 @@ p_insitucal.cnv_time_correction=  0;  % time correction for CTD .CNV file (rel. 
                           % cnv,btl,ros or microcats. Normally 1 hour out.
                           
                           % !! Do not apply changes here, but below where input is defined 
-p_insitucal.lat   = 58.0    % latitude to convert depths into pressures. Difference between 
+p_insitucal.lat   = 58.0;    % latitude to convert depths into pressures. Difference between 
                          % pressures using 23.5N or 28N are <2dbar (upto
                          % depths of 6000m)
                           
