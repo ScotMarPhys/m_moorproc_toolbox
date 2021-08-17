@@ -18,7 +18,8 @@ last_year = '_2020';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%% T S DATA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Load western array data
-indir               =[getenv('OSNAP') '/data/moor/proc/hydro_grid_merged/'];
+indir = 'D:\Work_computer_sync\OSNAP_work\osnap\data\moor\proc\hydro_grid_merged\'; % SJ
+%indir               =[getenv('OSNAP') '/data/moor/proc/hydro_grid_merged/'];
 ffile               ='RTWB_merg_linear_interp_2018.mat';
 load([indir ffile]);
 % rename vars, convert degC to K, and make NaN 99999
@@ -44,7 +45,8 @@ SG_EAST             =RTEB_merg.SGfs2; SG_EAST(isnan(SG_EAST))=99999;
 clearvars -except TG_WEST SG_WEST TG_EAST SG_EAST pressure time indir
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%% VELOCITY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-indir               =[getenv('OSNAP') '/data/moor/proc/velocity_grid_merged/'];
+indir = 'D:\Work_computer_sync\OSNAP_work\osnap\data\moor\proc\velocity_grid_merged\'; % SJ
+% indir               =[getenv('OSNAP') '/data/moor/proc/velocity_grid_merged/'];
 
 % western boundary 1
 ffile               ='RTWB1_merg_linear_interp_2020.mat';
@@ -87,7 +89,8 @@ clearvars -except U_EAST V_EAST W_EAST...
             
             
 %%%%%%%%%%%%%%%%%%%%% WRITE FILE TO DIR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-outdir                      = [getenv('OSNAP') '/data/moor/THREDDS/'];
+outdir                      = ['D:\Work_computer_sync\OSNAP_work\osnap\data\moor\THREDDS\']; % SJ
+% outdir                      = [getenv('OSNAP') '/data/moor/THREDDS/'];
 
 fprintf('Begin %s\n', datestr(now));
 

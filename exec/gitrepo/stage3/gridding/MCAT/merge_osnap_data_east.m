@@ -715,11 +715,11 @@ for i = I: length(pgg) % for each depth
     % locate all non nan values in the despiked salinity
     is = find(~isnan(salinity(i,:)));
     % interpolate in time over the missing data
-    SG_east(j,:) = interp1(JG(is), salinity(i, is), JG);
+    SG_east(i,:) = interp1(JG(is), salinity(i, is), JG);
     % interpolate in time over the missing data
-    TG_east(j,:) = interp1(JG(it), temp(i, it), JG);
+    TG_east(i,:) = interp1(JG(it), temp(i, it), JG);
 
-    j = j + 1;
+    %j = j + 1;
 end
     
 figure;

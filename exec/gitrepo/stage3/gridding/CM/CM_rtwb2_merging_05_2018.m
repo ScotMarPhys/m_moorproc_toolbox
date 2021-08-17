@@ -877,7 +877,7 @@ end
                 WG_2(i,iv(ibad(isss)):iv(ibad(isss)+1))=nan;
             end
         end
-        j = j + 1;
+        % j = j + 1;
     end
     
     
