@@ -658,11 +658,11 @@ for i = I: length(pgg) % for each depth
     % locate all non nan values in the despiked salinity
     is = find(~isnan(salinity(i,:)));
     % interpolate in time over the missing data
-    SG_west(j,:) = interp1(JG(is), salinity(i, is), JG);
+    SG_west(i,:) = interp1(JG(is), salinity(i, is), JG);
     % interpolate in time over the missing data
-    TG_west(j,:) = interp1(JG(it), temp(i, it), JG);
+    TG_west(i,:) = interp1(JG(it), temp(i, it), JG);
 
-    j = j + 1;
+    %j = j + 1;
 end
 
 %----------------- PLOTTTING--------------------------------------
