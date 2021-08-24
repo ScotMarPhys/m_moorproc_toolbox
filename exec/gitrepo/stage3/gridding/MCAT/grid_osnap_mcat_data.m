@@ -32,7 +32,7 @@ p_hydrogrid.fss          = 2;  % final sub-sampling frequency [1/days]
 %======================== SET DIRECTORIES FOR MERGE =======================
 hydrodir                = [pathosnap filesep 'data/moor/proc/hydro_grid/'];
 grdatdir                = [pathosnap filesep 'data/moor/proc/hydro_grid_merged/'];
-boundarydir             = [pathgit filesep 'exec/gitrepo/stage3/gridding/MCAT/'];
+boundarydir             = [pathgit filesep 'exec/gitrepo/stage3/gridding/MCAT/DAT/'];
 
 %======================== MERGE INITIALISATION =============================
 gridding                = 1  ;  % 1: linear, 2: using climatological profiles
