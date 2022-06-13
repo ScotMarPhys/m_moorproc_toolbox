@@ -6,7 +6,7 @@ exec/gitrepo/export_Oceansites/oceansites_format/
 *.nc
 
 # ignore gridded figures folder
-exec/gitrepo/export_THREDDS/Figure/
+#exec/gitrepo/export_THREDDS/Figure/
 
 # temporary matlab file:
 *~
