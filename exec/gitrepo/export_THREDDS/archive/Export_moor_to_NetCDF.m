@@ -1,62 +1,96 @@
-%% GATHER AND CONVERT ROCKALL TROUGH MOORING DATA IN .MAT FORMAT AND CONVERT TO NETCDF
-% Lewis Drysdale, SAMS, 2020
+% GATHER AND CONVERT ROCKALL TROUGH MOORING DATA IN .MAT FORMAT AND CONVERT
+% TO NETCDF
+%
+% -------------------------------------------------------------------------
+% Adapted by Lewis Drysdale SAMS, 2020 for Rockall Trough gridded mooring 
+% data from a function write_MCAT_to_NetCDF.m with history:
+%
+% Copyright, IFREMER, 2012
+% Modified by Thomas Richter at NIOZ, 2014
+% Adapted for OSNAP MCTD data by Feili Li at Duke University, 2016
+% Last updated: August 12, 2016
+% Edited by Loic Houpert, SAMS 18/11/2016
+%
+% -------------------------------------------------------------------------
+clearvars; close('all')
 
-close('all')
 last_year = '_2020';
 
-% outdir                      = ['W:\common\OSNAP\THREDDS'];
-outdir                      = [pathosnap '/data/moor/THREDDS'];
-tsdir                       = [pathosnap '/data/moor/proc/hydro_grid_merged/'];
-vldir                       = [pathosnap '/data/moor/proc/velocity_grid_merged/'];
-% T S DATA 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%% T S DATA %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Load western array data
-ffile                   ='RTWB_merg_linear_interp_2018.mat';
-load([tsdir ffile]);
-% rename var and make NaN 99999
-TG_WEST                 =RTWB_merg.TGfs2;
-TG_WEST(isnan(TG_WEST)) =99999;
+indir = 'D:\Work_computer_sync\OSNAP_work\osnap\data\moor\proc\hydro_grid_merged\'; % SJ
+%indir               =[getenv('OSNAP') '/data/moor/proc/hydro_grid_merged/'];
+ffile               ='RTWB_merg_linear_interp_2018.mat';
+load([indir ffile]);
+% rename vars, convert degC to K, and make NaN 99999
+TG_WEST             =RTWB_merg.TGfs2;
+% convert to kelvin
+TG_WEST             = convtemp(TG_WEST,'C','K');
+TG_WEST(isnan(TG_WEST))=99999;
 
-SG_WEST                 =RTWB_merg.SGfs2; SG_WEST(isnan(SG_WEST))=99999;
-pressure                =RTWB_merg.PGfs(:,1); 
-time                    =RTWB_merg.JG; 
+SG_WEST             =RTWB_merg.SGfs2; SG_WEST(isnan(SG_WEST))=99999;
+pressure            =RTWB_merg.PGfs(:,1); 
+time                =RTWB_merg.JG; 
+clearvars -except TG_WEST SG_WEST pressure time indir
     
 %Load eastern array data
-ffile                   ='RTEB_merg_linear_interp_2018.mat';
-load([tsdir ffile]);
+ffile               ='RTEB_merg_linear_interp_2018.mat';
+load([indir ffile]);
 % rename vars
-TG_EAST                 =RTEB_merg.TGfs2;
-TG_EAST(isnan(TG_EAST)) =99999;
-SG_EAST                 =RTEB_merg.SGfs2; SG_EAST(isnan(SG_EAST))=99999;
+TG_EAST             =RTEB_merg.TGfs2; 
+% convert to kelvin
+TG_EAST             = convtemp(TG_EAST,'C','K');
+TG_EAST(isnan(TG_EAST))=99999;
+SG_EAST             =RTEB_merg.SGfs2; SG_EAST(isnan(SG_EAST))=99999;
+clearvars -except TG_WEST SG_WEST TG_EAST SG_EAST pressure time indir
 
-%  VELOCITY
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%% VELOCITY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+indir = 'D:\Work_computer_sync\OSNAP_work\osnap\data\moor\proc\velocity_grid_merged\'; % SJ
+% indir               =[getenv('OSNAP') '/data/moor/proc/velocity_grid_merged/'];
 
 % western boundary 1
 ffile               ='RTWB1_merg_linear_interp_2020.mat';
-load([vldir ffile]);
+load([indir ffile]);
 % rename vars
 U_WEST_1             =RTWB1_merg_CM.UGfs2; U_WEST_1(isnan(U_WEST_1))=99999;
 V_WEST_1             =RTWB1_merg_CM.VGfs2; V_WEST_1(isnan(V_WEST_1))=99999;
 W_WEST_1             =RTWB1_merg_CM.WGfs2; W_WEST_1(isnan(W_WEST_1))=99999;
+clearvars -except U_WEST_1 V_WEST_1 W_WEST_1...
+                TG_WEST SG_WEST...
+                TG_EAST SG_EAST...
+                pressure time indir
 
 % western boundary 2
 ffile               ='RTWB2_merg_linear_interp_2020.mat';
-load([vldir ffile]);
+load([indir ffile]);
 % rename vars
 U_WEST_2             =RTWB2_merg_CM.UGfs2;U_WEST_2(isnan(U_WEST_2))=99999;
 V_WEST_2             =RTWB2_merg_CM.VGfs2;V_WEST_2(isnan(V_WEST_2))=99999;
 W_WEST_2             =RTWB2_merg_CM.WGfs2;W_WEST_2(isnan(W_WEST_2))=99999;
+clearvars -except U_WEST_2 V_WEST_2 W_WEST_2...
+                U_WEST_1 V_WEST_1 W_WEST_1...
+                TG_WEST SG_WEST...
+                TG_EAST SG_EAST...
+                pressure time indir
             
 % eastern boundary 
 ffile               ='RTEB_merg_linear_interp_2020.mat';
-load([vldir ffile]);
+load([indir ffile]);
 % rename vars
 U_EAST             =RTEB_merg_CM.UGfs2;U_EAST(isnan(U_EAST))=99999;
 V_EAST             =RTEB_merg_CM.VGfs2;U_EAST(isnan(U_EAST))=99999;
 W_EAST             =RTEB_merg_CM.WGfs2;U_EAST(isnan(U_EAST))=99999;
+clearvars -except U_EAST V_EAST W_EAST...
+                U_WEST_2 V_WEST_2 W_WEST_2...
+                U_WEST_1 V_WEST_1 W_WEST_1...
+                TG_WEST SG_WEST...
+                TG_EAST SG_EAST...
+                pressure time
             
-% WRITE FILE 
+            
+%%%%%%%%%%%%%%%%%%%%% WRITE FILE TO DIR %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+outdir                      = ['D:\Work_computer_sync\OSNAP_work\osnap\data\moor\THREDDS\']; % SJ
+% outdir                      = [getenv('OSNAP') '/data/moor/THREDDS/'];
 
 fprintf('Begin %s\n', datestr(now));
 
@@ -68,15 +102,14 @@ PressureDim                 = length(pressure);
 filename                    ='Rockall-Trough-Mooring-Time-Series-2020';
 
 % Open the file to write
-outfile                     = fullfile(outdir, [filename '.nc']);
+outfile                     = [outdir filename,'.nc'];
 nc                          = netcdf.create(outfile,'CLOBBER'); % CLOBBER overwrites 
 netcdf.close(nc)
 
   
-%  Write global attributes 
-% These use the CF (Climate and Forecast) metadata conventions <http:// https://cfconventions.org/index.html  
-% ><https://cfconventions.org/ https://cfconventions.org/>
-
+%%%%%%%%%%%%%%%%%%%% Write global attributes %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
+% these use the CF (Climate and Forecast) metadata conventions 
+% https://cfconventions.org/index.html
 
 ncwriteatt(outfile,'/','title', ['CLASS Rockall Trough mooring data ',datestr(time(1),'mm/yyyy'),'-',datestr(time(end),'mm/yyyy')]); 
 ncwriteatt(outfile,'/','institution', ['Scottish Association for Marine Science, Scottish Marine Institute Oban, Argyll, PA37 1QA, UK']); 
@@ -85,8 +118,7 @@ ncwriteatt(outfile,'/','id', filename);
 ncwriteatt(outfile,'/','source', 'subsurface mooring');
 ncwriteatt(outfile,'/','project','Climate Linked Atlantic Sector Science');
 
-% GEO-SPATIAL-TEMPORAL
-
+%%%%%%%%%%%%%%%%%%%%%%% GEO-SPATIAL-TEMPORAL %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 ncwriteatt(outfile,'/','area', 'North Atlantic Ocean');
 ncwriteatt(outfile,'/','geospatial_vertical_min', pressure(1));
@@ -102,13 +134,11 @@ ncwriteatt(outfile,'/','time_coverage_duration', ['P',num2str(dDD),'D',num2str(d
 dMM = round(mean(diff(time)*24*60));
 ncwriteatt(outfile,'/','time_coverage_resolution', ['PT',num2str(dMM),'M']);  
 
-% CONVENTIONS USED 
-
+%%%%%%%%%%%%%%%%%%%%% CONVENTIONS USED %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 ncwriteatt(outfile,'/','netcdf_version','4.3');
 
-% ACKNOWLEDGMENT
-
+%%%%%%%%%%%%%%%%%%%%% ACKNOWLEDGMENT %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 ncwriteatt(outfile,'/','publisher_url', '');  %CHANGE  
 ncwriteatt(outfile,'/','references', 'http://www.o-snap.org');
@@ -116,8 +146,7 @@ ncwriteatt(outfile,'/','citation', 'These data were collected and made freely av
 ncwriteatt(outfile,'/','acknowledgement', 'Funding source: the UK Natural Environment Research Council (NERC), UK OSNAP project');  %CHANGE
 
 
-% PROVENANCE
-
+%%%%%%%%%%%%%%%%%%%%% PROVENANCE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 ncwriteatt(outfile,'/','date_created', datestr(now+8/24,'yyyy-mm-ddTHH:MM:SSZ'));
 ncwriteatt(outfile,'/','date_modified', datestr(now+8/24,'yyyy-mm-ddTHH:MM:SSZ'));
@@ -125,8 +154,7 @@ ncwriteatt(outfile,'/','history', 'Delayed time processed quality controlled');
 ncwriteatt(outfile,'/','processing_level','');
 ncwriteatt(outfile,'/','QC_indicator','');
    
-% Write coordinate variables
-
+%%%%%%%%%%%%%%%%%%%%% Write coordinate variables %%%%%%%%%%%%%%%%%%%%%%%%%%
 
 nccreate(outfile,'TIME', 'Dimensions',{'TIME',TimeDim}, 'Datatype','double');
 ncwrite(outfile,'TIME', double(time) - datenum(1950,1,1,0,0,0));
@@ -140,6 +168,7 @@ ncwriteatt(outfile,'TIME', 'valid_max', single(90000));
 ncwriteatt(outfile,'TIME', 'QC_indicator','good data');
 ncwriteatt(outfile,'TIME', 'processing_level','Data manually reviewed');
 
+
 nccreate(outfile,'PRES', 'Dimensions',{'PRES',PressureDim}, 'Datatype','single');
 ncwrite(outfile,'PRES', single(pressure));
 ncwriteatt(outfile,'PRES', 'standard_name','sea_water_pressure');
@@ -150,13 +179,13 @@ ncwriteatt(outfile,'PRES', 'long_name','pressure grid');
 ncwriteatt(outfile,'PRES', 'axis','Z');
 ncwriteatt(outfile,'PRES', 'positive','down');
 ncwriteatt(outfile,'PRES', 'QC_indicator','good data');
-% Write data variables
 
+%%%%%%%%%%%%%%%%%%%%% Write data variables %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
 
 nccreate(outfile,'TG_EAST', 'Dimensions',{'PRES',PressureDim, 'TIME',TimeDim}, 'Datatype','single');
 ncwrite(outfile,'TG_EAST', single(TG_EAST));
 ncwriteatt(outfile,'TG_EAST', 'standard_name','sea_water_conservative_temperature');
-ncwriteatt(outfile,'TG_EAST', 'units','^{o} C');
+ncwriteatt(outfile,'TG_EAST', 'units','K');
 ncwriteatt(outfile,'TG_EAST', '_FillValue', single(99999));
 ncwriteatt(outfile,'TG_EAST', 'coordinates','TIME PRES');
 ncwriteatt(outfile,'TG_EAST', 'long_name','water temperature at eastern boundary 57.1N/-9.6W');
@@ -168,7 +197,7 @@ ncwriteatt(outfile,'TG_EAST', 'valid_max',single(100));  % CHANGE
 nccreate(outfile,'TG_WEST', 'Dimensions',{'PRES',PressureDim, 'TIME',TimeDim}, 'Datatype','single');
 ncwrite(outfile,'TG_WEST', single(TG_WEST));
 ncwriteatt(outfile,'TG_WEST', 'standard_name','sea_water_conservative_temperature');
-ncwriteatt(outfile,'TG_WEST', 'units','^{o} C');
+ncwriteatt(outfile,'TG_WEST', 'units','K');
 ncwriteatt(outfile,'TG_WEST', '_FillValue', single(99999));
 ncwriteatt(outfile,'TG_WEST', 'coordinates','TIME PRES');
 ncwriteatt(outfile,'TG_WEST', 'long_name','water temperature at western boundary 57.5N/-12.3W');
@@ -305,3 +334,4 @@ fprintf('Finish %s\n', datestr(now));
 
 clearvars -except outfile
 finfo2=ncinfo(outfile);
+
