@@ -1,8 +1,8 @@
-% mc_call_2_dy120 is a script that performs stage1 processing
+% mc_call_2_XXXX is a script that performs stage1 processing
 % on microcat data.  It converts microcat data from raw to rodb
 % format for an entire mooring.
 %
-% It calls microcat2rodb_4 (to convert microcat_data), rodbload.m,
+% It calls microcat2rodb (to convert microcat_data), rodbload.m,
 % timeaxis.m, auto_filt.m, julian.m 
 
 % 27/10/09 DR added functionality for .cnv files
@@ -25,13 +25,13 @@ clearvars  -except pathosnap
 % --- different users, directory trees, and moorings --------------
 % -----------------------------------------------------------------
 
-cruise          = 'dy120';
+cruise          = 'jc238';
 
 operator        = 'lad';
 
-moor            = 'rtwb1_05_2018';
+moor            = 'rteb1_06_2020';
 
-dateoffset      = 2018; % year of the first measurement
+dateoffset      = 2020; % year of the first measurement
 
 %------------------------------------------
 
@@ -136,14 +136,7 @@ for i = 1:length(vec),
   else
   
     outfile = [outpath,moor,'_',sprintf('%4.4d',vec(i)),out_ext];
-
-%     % --- convert from raw to rodb format ---
-%     % created by Loic on PE399
-%     microcat2rodb_4(infile,outfile,infofile,fidlog,'y',dateoffset); 
-     % --- convert from raw to rodb format ---
-     % from Darren May 2017
-%     microcat2rodb_3_ODO_test(infile,outfile,infofile,fidlog,'y',dateoffset); 
-     microcat2rodb_6(infile,outfile,infofile,fidlog,'y',dateoffset); 
+    microcat2rodb(infile,outfile,infofile,fidlog,'y',dateoffset); 
  
      disp(['Press any key to continue: ']) 
     %pause
