@@ -363,8 +363,8 @@ if cnv
         else
         end
         
-    end;
-end;
+    end
+end
 
 
 % % unique fix for for ar30 cal dip where jday for 3276 microcat restarted at the end of the first year of deployment 
