@@ -45,6 +45,9 @@
 % Modified for dy120 by S Jones, Oct 2020, using mc_call_ar30_cj.m as
 % reference (see above)
 
+% under verison control (GitHub) so no longer need for comments. ]
+% L. Drysdale 2020
+
 % -----------------------------------------------------------------
 % --- This is the information that needs to be modified for -------
 % --- different users, directory trees, and moorings --------------
@@ -53,7 +56,7 @@
 clearvars -except MEXEC MEXEC_A MEXEC_G pathosnap;
 close all;
 
-do_microcat2rodb_5 = 1; % Does not write rodb format files. Useful for fast rerun of plots
+do_microcat2rodb = 1; % Does not write rodb format files. Useful for fast rerun of plots
 
 if exist('pathosnap','var')
     basedir = [pathosnap filesep 'data' filesep];
@@ -61,14 +64,12 @@ else
     basedir = '/home/mstar/osnap/data/';
 end
 
-cruise = 'dy120';
-%cruise_ctd = 'dy120';
-cruise_ctd = 'dy120';
+cruise = 'jc238';
+cruise_ctd = 'jc238';
 
 ctddir = [basedir cruise_ctd filesep ]; 
 
-cast = '10'; dateoffsetmcdefault = 2020; % origin of the julian day in the matlab cnv files
-%cast = '35'; dateoffsetmc = 2015; % origine of the julian day in the matlab cnv files
+cast = '1'; dateoffsetmcdefault = 2020; % origin of the julian day in the matlab cnv files
 
 doctd = 1;% 1; % whether to load and plot CTD data: 1 if mstar format, 99 if native cnv file (without header)
 jd0 = julian(dateoffsetmcdefault,1,0,0); % set to current year
@@ -76,42 +77,35 @@ YEAR=dateoffsetmcdefault;
 
 ctdnum = sprintf('%03d',str2num(cast));
 
-
-
 % --- set paths for data input and output ---
 
 inpath    = [basedir 'moor/raw/' cruise '/microcat_cal_dip/cast',cast,'/'];
 outpath   = [basedir 'moor/proc_calib/' cruise '/cal_dip/microcat/cast' cast '/'];
 infofile  = [basedir 'moor/proc_calib/' cruise '/cal_dip/cast',cast,'info.dat'];
-ctdinfile = [ctddir 'ctd_dy120_' ctdnum '_psal.nc'];
+ctdinfile = [ctddir 'ctd_jc238_' ctdnum '_psal.nc'];
 %ctdinfile = [ctddir 'ar30-04' ctdnum '_withoutheader.cnv'];
 % ctdinfile = [ctddir 'ctd_' cruise_ctd '_' ctdnum '_1hz.nc'];
 
-
 %addpath('/noc/users/pstar/di359/data/mexec_processing_scripts/',path);
 %jd0 = julian(2014,1,0,0);
-if doctd == 1;
-
+if doctd == 1
     [d h]=mload(ctdinfile,'/');
-    
     HH = h.data_time_origin(4)+h.data_time_origin(5)/60+h.data_time_origin(6)/3600;
     jtime=h.data_time_origin(1:3);
     jtime=[jtime HH];
     d.timeJ=julian(jtime)+d.time/86400-jd0;
-    
     d.oxygen2 = d.oxygen1;  % SJ: REMOVE ONCE PROBLEM RECTIFIED
-elseif   doctd == 99 % using cnv file instead of .nc
-    
-    if ~isempty(strfind(cast,'1'))
+elseif doctd == 99 % using cnv file instead of .nc
+    if contains(cast,'1')
        start_date_cast = datenum(2018,07,02,18,17,06);  
-    elseif ~isempty(strfind(cast,'2'))
+    elseif contains(cast,'2')
        start_date_cast = datenum(2018,07,03,17,17,42);  
-    elseif ~isempty(strfind(cast,'3'))
+    elseif contains(cast,'3')
        start_date_cast = datenum(2018,07,04,17,19,06);         
-    elseif ~isempty(strfind(cast,'5'))
+    elseif contains(cast,'5')
        start_date_cast = datenum(2018,07,07,03,08,39); 
        start_date_cast_9141 = datenum(2016,7,4,16,00,01);
-    elseif ~isempty(strfind(cast,'6'))
+    elseif contains(cast,'6')
        start_date_cast = datenum(2018,07,07,13,13,15);
     end
     
@@ -176,7 +170,6 @@ VarName16 = dataArray{:, 16};
 VarName17 = dataArray{:, 17};
 e00 = dataArray{:, 18};
 
-
 %% Clear temporary variables
 clearvars filename formatSpec fileID dataArray ans;
 %%    
@@ -190,10 +183,7 @@ d.temp  = VarName4;
 d.temp1  = VarName4;
 d.temp2  = VarName5;
 d.press = VarName3;
-d.oxygen2 = VarName9;
-
-else
-    
+d.oxygen2 = VarName9; 
 end
 
 % --- get mooring information from infofile ---
@@ -209,8 +199,11 @@ ii = find(id >= 332 & id <= 337);
 vec = sn(ii);
 id2=id(ii);
 
-
 % --- create log file ---
+if exist(outpath,'dir')==0
+    mkdir(outpath)
+end
+
 fidlog = fopen([outpath,'microcat2rodb.log'],'w');
 
 legend_handle = ['[';'[';'['];
@@ -268,16 +261,16 @@ for i = 1:length(vec)
         valid_sn(i)=1;
         %------------------------------------------------------------
         % specific cases when microcat starting jday is >365
-        if(~isempty(strfind(cruise,'ar30')) & sn(i) == 11327 & ~isempty(strfind(cast,'6')))
+        if(contains(cruise,'ar30') & sn(i) == 11327 & contains(cast,'6'))
             dateoffsetmc = 2017;
-        elseif  (~isempty(strfind(cruise,'ar30')) & sn(i) == 9141 & ~isempty(strfind(cast,'5')))
+        elseif  (contains(cruise,'ar30') & sn(i) == 9141 & contains(cast,'5'))
              dateoffsetmc = 2016;          
         else
             dateoffsetmc = dateoffsetmcdefault;
         end
         %--------------------------------------------------------------
-   if do_microcat2rodb_5
-        microcat2rodb_5(infile,outfile,infofile,fidlog,'y',dateoffsetmc)
+   if do_microcat2rodb
+        microcat2rodb(infile,outfile,infofile,fidlog,'y',dateoffsetmc)
    else
        disp(['*** WARNING **** NOT WRITING RODB FILES']);
    end 
@@ -410,8 +403,8 @@ if doctd==1 | doctd==99
     title(['CAST ' cast  ' Calibration Dip (-k=CTD1,gray=CTD2)'])
 end
 xlim([jdstt-0.01 jdend+0.01]);
-orient tall
-print(gcf,'-depsc',[outfig '_cond.ps'])
+orient tall; grid on;
+print(gcf,'-dpng',[outfig '_cond.png'])
 saveas(gcf,[outfig '_cond.fig'],'fig')
 
 figure(35);hold on; box on;
@@ -431,8 +424,8 @@ if doctd==1 | doctd==99
     title(['CAST ' cast  ' Calibration Dip (-k=CTD1,gray=CTD2)'])
 end
 xlim([jdstt-0.01 jdend+0.01]);
-orient tall
-print(gcf,'-depsc',[outfig '_temp.ps'])
+orient tall; grid on;
+print(gcf,'-dpng',[outfig '_temp.png'])
 saveas(gcf,[outfig '_temp.fig'],'fig')
 
 figure(36);hold on; box on;
@@ -447,10 +440,11 @@ if doctd==1 | doctd==99
     plot(d.timeJ,d.press,'k-'); % bim
     title(['CAST ' cast ' Calibration Dip (-k=CTD)'])
 end
+
 xlim([jdstt-0.01 jdend+0.01]);
-orient tall
-print(gcf,'-depsc',[outfig '_pres.ps'])
-saveas(gcf,[outfig '_pres.fig'],'fig')
+orient tall; grid on
+print(gcf,'-dpng',[outfig '_pres.png'])
+saveas(gcf,[outfig '_temp.fig'],'fig')
 
 if find(id2==335)
     %     figure(37);hold on; box on;
@@ -485,8 +479,8 @@ if find(id2==335)
         title(['CAST ' cast ' Calibration Dip (-k=CTD)'])
     end
     xlim([jdstt-0.01 jdend+0.01]);
-    orient tall
-    print(gcf,'-depsc',[outfig '_oxy.ps'])
+    orient tall; grid on;
+    print(gcf,'-dpng',[outfig '_oxy.png'])
     saveas(gcf,[outfig '_oxy.fig'],'fig')
 end
 
@@ -608,25 +602,25 @@ for j=1:length(vec);
     figure(j);clf;
     subplot(nsubplot,1,1);hold on ; grid on;
     plot(ctdp(j,i),pdiff,'ko');
-  xlim([0 max(ctdp(j,:))]);
-  %ylim([min(pdiff) max(pdiff)]);
-  ylim([-10 10]);
+    xlim([0 max(ctdp(j,:))]);
+    %ylim([min(pdiff) max(pdiff)]);
+    ylim([-10 10]);
     xlabel('press [db]');ylabel('dp [db]');
     title(['s/n : ',num2str(vec(j))]);
     
     subplot(nsubplot,1,2);hold on ; grid on;
     plot(ctdp(j,i),tdiff,'ko');
-   xlim([0 max(ctdp(j,:))]);
-   %ylim([min(tdiff) max(tdiff)]);
-   ylim([-0.01 0.01]);
+    xlim([0 max(ctdp(j,:))]);
+    %ylim([min(tdiff) max(tdiff)]);
+    ylim([-0.01 0.01]);
     xlabel('press [db]');ylabel('dt [C]');
     
     
     subplot(nsubplot,1,3);hold on ; grid on;
     plot(ctdp(j,i),cdiff,'ko');
-  xlim([0 max(ctdp(j,:))]);
-  %ylim([min(cdiff) max(cdiff)]);
-  ylim([-0.02 0.02]);
+    xlim([0 max(ctdp(j,:))]);
+    %ylim([min(cdiff) max(cdiff)]);
+    ylim([-0.02 0.02]);
     xlabel('press [db]');ylabel('dc [mS/cm]');
     
     if id2(j)==335
@@ -637,7 +631,6 @@ for j=1:length(vec);
         ylim([-15 15]) % extra code, Clare Johnson, Nov 2018
     end
     % extra code so saves in right directory, Clare Johnson, Nov 2018
-%eval(['print -djpeg cast',num2str(cast),'_',num2str(vec(j)),'_bottle_stops.jpg'])
     outfig = [outpath, 'cast', cast , '_', num2str(vec(j)),'_bottle_stops_cj'];
     print(gcf,'-dtiff',[outfig '.tiff']) 
 end

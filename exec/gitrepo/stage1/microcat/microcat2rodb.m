@@ -44,7 +44,7 @@
 %          (length of header ~= length of data)
 %                     - Add the possibility to read time as Julian day (timeJV2)  
 %
-function microcat2rodb_6(infile,outfile,infofile,fidlog,graphics,toffset);
+function microcat2rodb(infile,outfile,infofile,fidlog,graphics,toffset)
 
 if nargin < 4
     disp('not enough input arguments')
@@ -80,10 +80,16 @@ if exist(infile) ~= 2
 end
 
 if exist(outfile) == 2
-    disp(['oufile:  ',outfile,' alredy exists!!'])
-    overwrite =  input('Overwrite y/n  ','s');
-    if overwrite ~='y'
-        disp('data conversion stop')
+    
+    answer = questdlg('Overwrite previous output?', ...
+	'Output', ...
+	'Yes','No','No');
+    % Handle response
+    switch answer
+        case 'Yes'
+            disp('Overwriting previous file.')
+        case 'No'
+            disp('Data conversion stopped.')
         return
     end
 end
@@ -125,7 +131,6 @@ if length(retx)< 10
     fprintf(fidlog,'input file does not contain data \n')  ;
     return
 end
-
 
 %---------------------------------------------------------
 % find serial number inheader
@@ -223,14 +228,12 @@ end
 
 if ~isempty(XXX)
     disp('severe deviation from input format')
-    fprintf(fidlog,'coversion stop - severe deviation from input format: %d\n',sede+ii0(1));
+    fprintf(fidlog,'conversion stopped - severe deviation from input format: %d\n',sede+ii0(1));
     msgbox(['MC',sprintf('%4.4d','SerialNumber'),'  ',sprintf('severe deviation from input format: %d\n',sede+ii0(1))],'conversion stopped')
 %    return
 end
 
 % check if there are deviations in data row length
-
-
 data_begin = retx(ii0(bg))+1;
 data_end   = retx(ii0(length(ii0)));
 disp('data begin detected')
@@ -240,10 +243,7 @@ if ~isempty(ii1)
     fprintf(fidlog,'warning: deviation from format \n');
 end
 
-
-
 % define data stream
-
 dt = zeile(data_begin:data_end);
 dret = find(dt == ret);
 comx = findstr(dt(1:dret(1)),',');
@@ -271,19 +271,12 @@ if ~isempty(ii)
     
 end
 
-
 % --- convert data string
-
 disp('Convert datastr into numbers')
 %save tmp.mat dt ;
 
-
 % This next line won't work if there're still ??? (carriage returns are ok) in dt
 dt = str2num(dt);
-
-
-
-
 
 % unique fix for d345 cal dip files for MCs 7347 and 7348 which have C in
 % wrong format
@@ -295,7 +288,6 @@ end
 if check1|(strfind(infile,'d345') & strfind(infile,'7348_cal_dip'));
     dt(:,2)=dt(:,2)/10;
 end
-
 
 sz = size(dt);
 
@@ -458,8 +450,6 @@ end
 %-------------------------------------
 % ---- save to rodb format
 %-------------------------------------
-
-
 disp(['writing data to ',outfile])
 
 TIME = gregorian(jd);
@@ -493,8 +483,7 @@ rodbsave(outfile,...
     sdate,stime,edate,etime,...
     data);
 
-%% 
-% --- New graphics section --- 
+%% % --- New graphics section --- 
 % (because why would you need 400+ lines of code to do what 40 odd will do?)
 sz = size(data); % format saved by rodb, yy:mm:dd:hh:t:c:p(:ot:o2)
 jd = datenum(data(:,1),data(:,2),data(:,3),data(:,4),0,0);
@@ -512,24 +501,23 @@ for k = 1:nplots
     set(gca,'Xgrid','on')
     
     mt = median(data(:,4+k));
-    if k == 1;
+    if k == 1
         ylabel('Temp.')
         fprintf(fidlog,'Median Temperature %5.2f\n',mt);
-    elseif k == 2;
+    elseif k == 2
         ylabel('Cond.')
         fprintf(fidlog,'Median Conductivity %5.2f\n',mt);
-    elseif k == 3;
+    elseif k == 3
         ylabel('Press.')
         fprintf(fidlog,'Median Pressure %5.2f\n',mt);
-    elseif k == 4;
+    elseif k == 4
         ylabel('Oxy Temp.')
         fprintf(fidlog,'Median Oxygen Temperature %5.2f\n',mt);
-    elseif k == 5;
+    elseif k == 5
         ylabel('Oxygen')
         fprintf(fidlog,'Median Oxygen %5.2f\n',mt);
     end
-%     val = find(abs(data(:,4+k))<40);
-%     sdt = std(dt(val(100:end-100),1));
+
     set(gca,'ylim',prctile(data(:,4+k),[1 99])+[-1 1]*std(data(:,4+k))/10)
     
     set(gca,'xlim',[jd(1) jd(dl) ]-jd(1))
@@ -540,12 +528,8 @@ for k = 1:nplots
     xl = get(gca,'xlim');
     tx =text(xl(1) + diff(xl)*.1,yl(1) + diff(yl)*.85,['median: ',sprintf('%3.2f',mt)]) ;
     set(tx,'FontWeight','bold','FontSize',11)
-end;
-  orient tall
-%    print(gcf,'-dpng', '-r300',[outpath moor sn])
-
-
-% more log file chat
+end
+  orient tall; grid on
 
 fprintf(fidlog,'Instrument Target Depth[m]: %d\n',z);
 fprintf(fidlog,'Start date and time: %s \n',datestr(gregorian(jd(1))));
@@ -558,11 +542,10 @@ if toffset ~= 0
     fprintf(fidlog,'Offset of %8.4f days has been subtracted from recored time \n',toffset);
     fprintf(1,'Offset of %8.4f days has been subtracted from recored time \n',toffset);
 end
-% jym 21 april 2005: alert operator to mismatch in number of data cycles
+
 if sz(1) ~= ex_samples
     fprintf('Number of samples: %d; expected: %d \n',sz(1),ex_samples);
-    disp('Press return to continue');
-    pause
+    uiwait(warndlg(['Number of samples: ' num2str(sz(1)) ' expected: ' num2str(ex_samples)],'Warning'));
 end
 
 %tk 24/04/05

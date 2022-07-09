@@ -13,12 +13,10 @@
 clearvars -except pathosnap 
 close all;
 
-
-
-cruise_ctd = 'dy120'; % used for ctd data dir
-cruise = 'dy120'; % used for microcat data
+cruise_ctd = 'jc238'; % used for ctd data dir
+cruise = 'jc238'; % used for microcat data
 % cruise2=cruise_ctd; % used for ctd data name
-%   Time origin for jday
+% Time origin for jday
 jd0 = julian(2020,1,0,0);
 
 basedir = [pathosnap filesep 'data' filesep];
@@ -36,9 +34,7 @@ outpath   = [basedir 'moor/proc_calib/' cruise '/cal_dip/microcat/cast' cast '/'
 infofile  = [basedir 'moor/proc_calib/' cruise '/cal_dip/cast',cast,'info.dat'];
 %ctdinfile = [ctddir  'ctd_' cruise_ctd '_',ctdnum,'_raw.nc'];
  
-ctdinfile = [ctddir  'ctd_' cruise_ctd '_',ctdnum,'_psal.nc'];
-
-
+ctdinfile = [ctddir  'ctd_' cruise_ctd 'TEST' '_',ctdnum,'_psal.nc'];
 
 % ----------------- load CTD DATA   ----------------------------------
 
@@ -85,10 +81,7 @@ ctd2_oxy_mn = nanmean(d.oxygen2(imp2));
 ctd2_oxy_st = nanstd(d.oxygen2(imp2));
 
 % --- get mooring information from infofile ---
-'here'
-infofile
 [zins,id,sn]= rodbload(infofile,'z:instrument:serialnumber');
-'done'
 
 % --- vector of serial numbers ---
 ii = find(id >= 332 & id <= 337);
@@ -415,25 +408,5 @@ ylabel('[dbar]')
 % Finally save plotfile
 set(gcf,'PaperUnits','centimeters','PaperPosition',[-2 0 27 18 ])
 print('-dpng', outplot)
-% Display the results
-eval(['!cat ',outlogf]);
 
-
-
-% --- That's it! ---
-% keyboard
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+type(outlogf)

@@ -101,10 +101,6 @@ for i = 1:length(id)
     disp([z(i),id(i),sn(i)])
 end
 
-
-
-
-
 % find the index number of S4s
 iiS4 = find(id == 302);
 vecS4 = sn(iiS4);
