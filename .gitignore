@@ -1,3 +1,5 @@
+# ignore data
+/data
 
 # ignore oceansites_format folder
 exec/gitrepo/export_Oceansites/oceansites_format/
