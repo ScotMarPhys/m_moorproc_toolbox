@@ -114,8 +114,6 @@ declination correction, data filtering
 
 ## Git
 
-### A word on git
-
 Users of the osnap mooring processing toolbox should request a new
 branch from the latest post cruise updated master from
 <https://github.com/ScotMarPhys/m_moorproc_toolbox>. This should be
@@ -1048,4 +1046,3 @@ Change the filenames in the script
 *osnap\\exec\\\$cruise\\export_THREDDS/Export_moor_to_NetCDF,m* to
 reflect the most recently processed data and run.
 
-The
