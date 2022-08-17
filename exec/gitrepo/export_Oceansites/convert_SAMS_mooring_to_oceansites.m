@@ -17,11 +17,11 @@ procpath = [pathosnap '/data/moor/proc/'];
 outpath = [basedir 'gitrepo/export_Oceansites/oceansites_format'];
 %-------------------------------------
 % Selection of the deployment year
-% depyear ='01_2014';
-% depyear ='02_2015';
-% depyear = '03_2016';
+depyear ='01_2014';
+%depyear ='02_2015';
+%  depyear = '03_2016';
 % depyear = '04_2017';
-depyear='05_2018';
+% depyear='05_2018';
 %-------------------------------------
 %% Selection of the mooring to process
 %moorlist ={'nocm1','nocm2','nocm3','nocm4','nocm5'};

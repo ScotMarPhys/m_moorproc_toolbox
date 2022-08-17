@@ -1,6 +1,15 @@
 # data
 /data
 
+# cruise data
+/cruise_data
+
+# users 
+/users
+
+# diaries
+/matlab_diaries
+
 # ignore oceansites_format folder
 exec/gitrepo/export_Oceansites/oceansites_format/
 
