@@ -7,17 +7,15 @@
 
 [1. Git](##git)
 
-[1.1. A word on git](##a-word-on-git)
+[1.1. Git setup](##git-setup)
 
-[1.2. Git setup](##git-setup)
+[1.2. Check the local and remote branches](##check-the-local-and-remote-branches)
 
-[1.3. Check the local and remote branches](##check-the-local-and-remote-branches)
+[1.3. Making changes](#making-changes)
 
-[1.4. Making changes](#making-changes)
+[1.4. Push changes on the original remote repository](##push-changes-on-the-original-remote-repository)
 
-[1.5. Push changes on the original remote repository](##push-changes-on-the-original-remote-repository)
-
-[1.6. More on Git](##more-on-git)
+[1.5. More on Git](##more-on-git)
 
 [2. Setup and run locally the toolbox](#setup-and-run-locally-the-toolbox)
 
@@ -113,8 +111,6 @@ declination correction, data filtering
 # Setup and version control {#setup-and-version-control .list-paragraph}
 
 ## Git
-
-### A word on git
 
 Users of the osnap mooring processing toolbox should request a new
 branch from the latest post cruise updated master from
@@ -1047,5 +1043,3 @@ similar.
 Change the filenames in the script
 *osnap\\exec\\\$cruise\\export_THREDDS/Export_moor_to_NetCDF,m* to
 reflect the most recently processed data and run.
-
-The
