@@ -6,4 +6,4 @@ For more info on the data, see [website](https://scotmarphys.github.io/ScotMarPh
 
 ### Contact
 
-Contribute using Discussion above or by opening an issue.
+Contribute by opening an issue.
