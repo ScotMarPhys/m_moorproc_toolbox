@@ -115,18 +115,18 @@ s_con = [];
 interp.error = [];
 
 % --- load lookup tables for dt/dp climatology --------
-        disp(['loading ' TSclim])
+disp(['loading ' TSclim])
 eval(['load ',TSclim])
 display([TSclim])
 
 % added sept 2013
 	if strmatch(TS_CLIMATOLOGY_NAME,'hbase')
-%	    change array name to allow us to use gerrards new hydrobase climatology
+%	change array name to allow us to use gerrards new hydrobase climatology
 %	TS_CLIMATOLOGY will be slope, mareast, marwest or wall.
-	['dsdp_' TS_CLIMATOLOGY '_hbase = dsdp_' TS_CLIMATOLOGY '_on_t_hbase;clear dsdp_' TS_CLIMATOLOGY '_on_t_hbase;']
-	['dtdp_' TS_CLIMATOLOGY '_hbase = dtdp_' TS_CLIMATOLOGY '_on_t_hbase;clear dtdp_' TS_CLIMATOLOGY '_on_t_hbase;']
-    eval( ['dsdp_' TS_CLIMATOLOGY '_hbase = dsdp_' TS_CLIMATOLOGY '_on_t_hbase;clear dsdp_' TS_CLIMATOLOGY '_on_t_hbase;'] );
-    eval( ['dtdp_' TS_CLIMATOLOGY '_hbase = dtdp_' TS_CLIMATOLOGY '_on_t_hbase;clear dtdp_' TS_CLIMATOLOGY '_on_t_hbase;'] );
+        ['dsdp_' TS_CLIMATOLOGY '_hbase = dsdp_' TS_CLIMATOLOGY '_on_t_hbase;clear dsdp_' TS_CLIMATOLOGY '_on_t_hbase;']
+        ['dtdp_' TS_CLIMATOLOGY '_hbase = dtdp_' TS_CLIMATOLOGY '_on_t_hbase;clear dtdp_' TS_CLIMATOLOGY '_on_t_hbase;']
+        eval( ['dsdp_' TS_CLIMATOLOGY '_hbase = dsdp_' TS_CLIMATOLOGY '_on_t_hbase;clear dsdp_' TS_CLIMATOLOGY '_on_t_hbase;'] );
+        eval( ['dtdp_' TS_CLIMATOLOGY '_hbase = dtdp_' TS_CLIMATOLOGY '_on_t_hbase;clear dtdp_' TS_CLIMATOLOGY '_on_t_hbase;'] );
 	end
 
 tTg = 0;
@@ -135,13 +135,13 @@ tt = 0;
 
 % ------------- check input --------------------------------
 if isempty(int_step)   % default integration step size [dbar] for dtdp-method
-  display('setting default integration size to 20 dbar');
-  int_step = 20;
+    int_step = 20;
+    disp(['setting default integration size to ' num2str(int_step) ' dbar']);
 end
 
 % why only check the first column ?
 if diff(pg([1:2],1)) < 0 % low pressure must be on top of matrix
-  display('lowest pressure is not on the top of the matrix!')
+  disp('lowest pressure is not on the top of the matrix!')
   tg = flipud(tg);
   pg = flipud(pg);
   sg = flipud(sg);
@@ -155,7 +155,7 @@ end
 % ----- of vertical quasi continuous temperature profiles from the discrete 
 % ----- mooring data -------------------------------------------------------
 
-for ti = 1 : size(tg,2),  % for each time step (time loop)
+for ti = 1 : size(tg,2)  % for each time step (time loop)
 	clear cTg cSg cT
 
 %set climatology based on the month of the measurement
