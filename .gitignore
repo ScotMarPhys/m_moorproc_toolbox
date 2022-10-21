@@ -1,5 +1,23 @@
-# data
-/data
+# data directories
+/data/ar304
+/data/dy053
+/data/dy054
+/data/dy054_beforecalib
+/data/dy078
+/data/dy120
+/data/glider
+/data/jc238
+/data/pe399
+
+
+/data/moor/Mooring Array Diagrams and Instrument Allocations
+/data/moor/oceansites_format
+/data/moor/oceansites_format
+/data/moor/OSNAPmooring_infodat
+/data/moor/proc
+/data/moor/raw
+/data/moor/THREDDS
+
 
 # cruise data
 /cruise_data
