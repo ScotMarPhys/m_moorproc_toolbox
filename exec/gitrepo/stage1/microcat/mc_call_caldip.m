@@ -67,7 +67,11 @@ end
 cruise = 'jc238';
 cruise_ctd = 'jc238';
 
-ctddir = [basedir cruise_ctd filesep ]; 
+if ispc
+    ctddir = [pathosnap filesep 'cruise_data' filesep cruise_ctd filesep 'ctd' filesep];
+else
+    ctddir = [basedir cruise_ctd filesep ];
+end
 
 cast = '1'; dateoffsetmcdefault = 2020; % origin of the julian day in the matlab cnv files
 
