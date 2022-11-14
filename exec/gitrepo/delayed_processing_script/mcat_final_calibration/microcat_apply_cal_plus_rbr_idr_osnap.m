@@ -19,13 +19,13 @@ warning off
 % path of the mooring data define in the startup file under osnap/
 %moor = 'rtwb1_05_2018';
 moor = 'ib5_01_2018';
-moor = 'rteb1_05_2018';
+moor = 'rteb1_06_2020';
 % moor = 'ib3_01_2018';
 
 %=========================================================================
 % Apply calibration coefficients to series, removes bad data. If required, applies
 % constant offsets, and conductivity pressure correction
-p_applycal.operator  = 'LH';
+p_applycal.operator  = 'LD';
 p_applycal.mooring  = moor;   
 p_applycal.sensortyp = 'microcat';   % arg / microcat / rbr / idr
 p_applycal.delim = ',';
@@ -37,12 +37,12 @@ p_applycal.coef_dir            = [pathgit '/data/moor/cal_coef/'];
 p_applycal.external_ctd_dir    = [pathosnap '/cruise_data/'];
 p_applycal.ctd_ref_cruises     = {''};%{'pe400'}; %{'kn221-02';'pe399'}; % references cruises for the QC
 p_applycal.distrangectd        = 100e3; % distance of the reference ctd from the mooring
-p_applycal.strformat.mctemptxt = repmat('%s',1,32);
-p_applycal.strformat.mctempnum = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,7)];
-p_applycal.strformat.mcsaltxt  = repmat('%s',1,32);
-p_applycal.strformat.mcsalnum  = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,7)];
-p_applycal.strformat.mcprestxt = repmat('%s',1,65);
-p_applycal.strformat.mcpresnum = ['%f' repmat('%s%f%s%s',1,16)];
+p_applycal.strformat.mctemptxt = repmat('%s',1,35);
+p_applycal.strformat.mctempnum = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,8)];
+p_applycal.strformat.mcsaltxt  = repmat('%s',1,35);
+p_applycal.strformat.mcsalnum  = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,8)];
+p_applycal.strformat.mcprestxt = repmat('%s',1,77);
+p_applycal.strformat.mcpresnum = ['%f' repmat('%s%f%s%s',1,19)];
 
 loclegend = 'north';
 
