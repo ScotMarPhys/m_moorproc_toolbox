@@ -10,7 +10,7 @@ close all
 % Calculation of calibration coefficient
 % For cruise jc238: cast= [1,3,4,19,33,37,38,43]
 p_insitucal.cruise           =  'jc238' ;
-p_insitucal.cast             = 1;   
+p_insitucal.cast             = 4;   
 p_insitucal.depl_period      = 'osnap6';
 
 % ---- parameters ----------------------------------------------------
