@@ -18,8 +18,8 @@ warning off
 
 % path of the mooring data define in the startup file under osnap/
 moor = 'rteb1_06_2020';
-% moor = 'rtwb1_06_2020';
-% moor = 'rtwb2_06_2020';
+moor = 'rtwb1_06_2020';
+moor = 'rtwb2_06_2020';
 
 %=========================================================================
 % Apply calibration coefficients to series, removes bad data. If required, applies
