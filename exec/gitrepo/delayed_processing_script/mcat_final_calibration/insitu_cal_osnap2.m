@@ -394,6 +394,7 @@ elseif strcmp(ctdformat,'mstar')
  
     end
 end   
+
 % --- CTD Bottle -----------
 fprintf(1,'\n')
 

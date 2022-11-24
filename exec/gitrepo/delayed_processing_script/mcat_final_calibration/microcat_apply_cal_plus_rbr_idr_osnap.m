@@ -18,8 +18,8 @@ warning off
 
 % path of the mooring data define in the startup file under osnap/
 moor = 'rteb1_06_2020';
-moor = 'rtwb1_06_2020';
-moor = 'rtwb2_06_2020';
+%moor = 'rtwb1_06_2020';
+%moor = 'rtwb2_06_2020';
 
 %=========================================================================
 % Apply calibration coefficients to series, removes bad data. If required, applies
@@ -655,7 +655,8 @@ end
   
   % Salinity from cndr, T, P
   sn = sw_salt(cn(ii)/c3515,tn(ii)*t90_68,pn(ii));
- 
+  s = sw_salt(c/c3515,t*t90_68,p);
+
   figure(6);clf; hold on
   
   plot(jd(ii)-jd(1),sn)

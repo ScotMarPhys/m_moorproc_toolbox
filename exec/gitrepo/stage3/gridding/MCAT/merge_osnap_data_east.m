@@ -484,7 +484,7 @@ plot(JG , Tfs2, 'b.')
 plot(JG , Tfs3, 'g.')
 plot(JG , Tfs4, 'r.')
 plot(JG , Tfs5, 'm.')
-plot(JG , Tfs6, 'm.')
+plot(JG , Tfs6, 'k.')
 
 ylabel('C')
 datetick
@@ -497,7 +497,7 @@ plot(JG , Sfs2, 'b.')
 plot(JG , Sfs3, 'g.')  
 plot(JG , Sfs4, 'r.')
 plot(JG , Sfs5, 'm.')
-plot(JG , Sfs6, 'm.')
+plot(JG , Sfs6, 'k.')
 
 ylabel('SAL.')
 datetick
@@ -515,7 +515,7 @@ plot(JG , Pfs2, 'b.')
 plot(JG , Pfs3, 'g.')  
 plot(JG , Pfs4, 'r.')  
 plot(JG , Pfs5, 'm.')  
-plot(JG , Pfs6, 'm.')  
+plot(JG , Pfs6, 'k.')  
 ylabel('dbar')
 datetick
 title('PRES')   
@@ -527,7 +527,7 @@ plot(JG , PDENfs2, 'b.')
 plot(JG , PDENfs3, 'g.')  
 plot(JG , PDENfs4, 'r.')
 plot(JG , PDENfs5, 'm.')
-plot(JG , PDENfs6, 'm.')
+plot(JG , PDENfs6, 'k.')
 ylabel('kg/m3.')
 datetick
 title('POT. DENS')   
@@ -614,7 +614,8 @@ for ijj=1:length(JG)
 end
 end 
 %% Apply correction for 2017 data to EB mooring
-[Tfs,Sfs,Pfs,TGfs,SGfs] = extrap_missing_data(pathosnap,Tfs,Sfs,Pfs,TGfs,SGfs,JG,pgg);
+[wbfile,path] = uigetfile % select the most recent processing of the WB data
+[Tfs,Sfs,Pfs,TGfs,SGfs] = extrap_missing_data(pathosnap,wbfile,Tfs,Sfs,Pfs,TGfs,SGfs,JG,pgg);
 
 %% Save data
 
