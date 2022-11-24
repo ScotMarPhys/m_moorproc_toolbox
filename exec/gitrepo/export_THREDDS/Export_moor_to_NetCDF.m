@@ -2,7 +2,7 @@
 % Lewis Drysdale, SAMS, 2020
 
 close('all')
-last_year = '_2020';
+last_year = '_2022';
 
 % outdir                      = ['W:\common\OSNAP\THREDDS'];
 outdir                      = [pathosnap '/data/moor/THREDDS'];
@@ -11,7 +11,7 @@ vldir                       = [pathosnap '/data/moor/proc/velocity_grid_merged/'
 % T S DATA 
 
 % Load western array data
-ffile                   ='RTWB_merg_linear_interp_2018.mat';
+[ffile,path] = uigetfile % select the most recent processing of the WB data
 load([tsdir ffile]);
 % rename var and make NaN 99999
 TG_WEST                 =RTWB_merg.TGfs2;
@@ -22,7 +22,7 @@ pressure                =RTWB_merg.PGfs(:,1);
 time                    =RTWB_merg.JG; 
     
 %Load eastern array data
-ffile                   ='RTEB_merg_linear_interp_2018.mat';
+[ffile,path] = uigetfile % select the most recent processing of the WB data
 load([tsdir ffile]);
 % rename vars
 TG_EAST                 =RTEB_merg.TGfs2;
