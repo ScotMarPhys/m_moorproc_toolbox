@@ -17,9 +17,9 @@ clearvars  -except pathosnap pathgit
 warning off
 
 % path of the mooring data define in the startup file under osnap/
-moor = 'rteb1_06_2020';
-%moor = 'rtwb1_06_2020';
-%moor = 'rtwb2_06_2020';
+% moor = 'rteb1_06_2020';
+% moor = 'rtwb1_06_2020';
+moor = 'rtwb2_06_2020';
 
 %=========================================================================
 % Apply calibration coefficients to series, removes bad data. If required, applies
@@ -656,19 +656,24 @@ end
   % Salinity from cndr, T, P
   sn = sw_salt(cn(ii)/c3515,tn(ii)*t90_68,pn(ii));
   s = sw_salt(c/c3515,t*t90_68,p);
-
-  figure(6);clf; hold on
   
-  plot(jd(ii)-jd(1),sn)
+  figure(6);clf; hold on
+  plot(jd(ii)-jd(1),s,'b')
+  plot(jd(ii)-jd(1),sn,'r')
+  legend('Pre-cal','post-cal','Location','Best')
   ylabel('Salinity')
-  title(['Salinity at ' num2str(nanmean(p),'%04.0f') 'm'])
+  title(['Post-calibration Salinity at ' num2str(nanmean(p),'%04.0f') ' m'])
+  grid on
   
   figure(6)
   
   print([mcfig_out,'_salinity', '.png'],'-dpng');
-  sss=sw_salt(c/c3515,t*t90_68,p);
+%   sss=sw_salt(c/c3515,t*t90_68,p);
+  
   figure(8);clf; hold on
-  plot(sss,t,'.')
+  plot(s,t,'b.')
+  plot(sn,t,'r.')
+  title('Black = pre-cal, Red = post-cal')
   xlabel('Salinity')
   ylabel('Temperature')
   
