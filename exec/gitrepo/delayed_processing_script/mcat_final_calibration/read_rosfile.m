@@ -21,7 +21,12 @@
 %  a correction if the start_time in the .ros file is bad due to a problem in the NMEA frame (e.g. PE399)
 % modified 19.05.2016 L. Houpert: fix bug when timeJ and timeS are present
 % at the same time
-% 
+% Bug fix: 6th Dec 20220, L. Drysdale Julian function was producing 12 hour offset
+% on start time of .ros file, CTD cast 19, JC238. Replaced with matlabs own function,
+% jukliandate and datetime lines approx 100-120
+%
+%
+%
 
 function bottle = read_rosfile(ros_file) 
  vartime=[];
@@ -95,16 +100,27 @@ varn(ii)   = dummy;
 
 ii         = findstr(zeile,'start_time');
 
+% start_time = zeile(ii+13:ii+32);
+% start_time   = datevec(datenum(start_time));
+% start_time   = [start_time(1:3) hms2h(start_time(4:6))];
+% start_time   = julian(start_time);
+
 start_time = zeile(ii+13:ii+32);
-start_time   = datevec(datenum(start_time));
-start_time   = [start_time(1:3) hms2h(start_time(4:6))];
-start_time   = julian(start_time);
+start_time   = datetime(start_time,'InputFormat','MMM dd yyyy HH:mm:ss');
+start_time   = juliandate(start_time);
+
+
+% jj         = findstr(zeile,'NMEA UTC (Time)');
+% nmea_time  = zeile(jj+18:jj+37);
+% nmea_time   = datevec(datenum(nmea_time));
+% nmea_time   = [nmea_time(1:3) hms2h(nmea_time(4:6))];
+% nmea_time   = julian(nmea_time);
+
 
 jj         = findstr(zeile,'NMEA UTC (Time)');
 nmea_time  = zeile(jj+18:jj+37);
-nmea_time   = datevec(datenum(nmea_time));
-nmea_time   = [nmea_time(1:3) hms2h(nmea_time(4:6))];
-nmea_time   = julian(nmea_time);
+nmea_time   = datetime(nmea_time,'InputFormat','MMM dd yyyy HH:mm:ss');
+nmea_time   = juliandate(nmea_time);
 
 
 % ---- extract data   ---------------- 
