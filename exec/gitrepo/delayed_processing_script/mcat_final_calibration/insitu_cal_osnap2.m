@@ -24,6 +24,14 @@
 %                - add reference to structure p_insitucal in which the parameters
 %                 are defined (see osnap/users/loh/mcatpostcruisecalib/postcalib_process)  
 %               - add a parameter mc_cunit
+% 
+% Lewis Drysdale, - bug fix with Julian date conversion of microcvat data
+%     06.12.2022,     see issues in GitHub https://github.com/ScotMarPhys/m_moorproc_toolbox/issues/17
+%                     
+% 
+% 
+
+
 close all
 clearvars  -except pathgitrepo pathosnap p_insitucal pathgit
 warning off
@@ -388,8 +396,10 @@ elseif strcmp(ctdformat,'mstar')
       month  = dd.data_time_origin(2); %floor((h.iymd - year*10000)/100);
       day    = dd.data_time_origin(3); %h.iymd -year*10000 - month*100;
       hour   = dd.data_time_origin(4) + (dd.data_time_origin(5)+(dd.data_time_origin(6)/60))/60 ; %h.ihms;
-
-      ctd_time_ori = julian(year,month,day,hour); %julian(year+h.icent, month, day,hour);
+      
+      decstr=datestr(hour/24,'HH:MM:SS');
+      [~,~,~,HH,M,SS]=datevec(decstr);
+      ctd_time_ori    = juliandate(year,month,day,HH,M,SS);
       d.time       = d.time/86400 + ctd_time_ori; % ctd time in julian days
  
     end
@@ -437,7 +447,9 @@ end
 
 ii    = find(YY == 0);
 YY(ii)=NaN; MM(ii)=NaN; DD(ii)=NaN; HH(ii)=NaN; T(ii)=NaN; C(ii)=NaN;
-JD    = julian(YY,MM,DD,HH);                    % julian day mc time 
+decstr=datestr(HH/24,'HH:MM:SS');
+[~,~,~,HH,M,SS]=datevec(decstr);
+JD    = juliandate(YY,MM,DD,HH,M,SS);                    % julian day mc time 
 
 % check which variables have been measured by sensor  
 

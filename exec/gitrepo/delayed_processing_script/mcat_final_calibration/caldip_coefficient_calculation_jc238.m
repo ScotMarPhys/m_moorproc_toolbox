@@ -47,6 +47,10 @@ p_insitucal.ctd_latestart_offset = 0; % [s]; time adjustment for ctd in case tha
 p_insitucal.dp_tol           = 200; % if rms(dp) > dp_tol then try to replace MicroCAT by CTD pressure
 
 % --- Graphics parameters (only for display purposes -------
+%%%%%%%%%%%%%%%%%%%%%%%%%%% THIS IS NOT TRUE ^^^^^^ %%%%%%%%%%
+% The parameter average_interval below directly affects the calculation of 
+% calibration coeffecients
+
 if strcmp(p_insitucal.cruise,'jc238') & p_insitucal.cast == 1
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
@@ -66,11 +70,11 @@ elseif strcmp(p_insitucal.cruise,'jc238') & p_insitucal.cast == 4
     p_insitucal.p_interval       = [0  2050];
     p_insitucal.average_interval = [1500 2050];% [1000 2150];  
 elseif strcmp(p_insitucal.cruise,'jc238') & p_insitucal.cast ==19
-    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.c_interval     = [-0.03 0.03]; 
     p_insitucal.t_interval     = [-.02 .02];
     p_insitucal.dp_interval    = [-10 10];   
-    p_insitucal.p_interval       = [0  2050];
-    p_insitucal.average_interval = [1500 2050];% [1000 2150];
+    p_insitucal.p_interval       = [500 1090];
+    p_insitucal.average_interval = [800 1100];% [1000 2150];
 elseif strcmp(p_insitucal.cruise,'jc238') & p_insitucal.cast == 33
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
