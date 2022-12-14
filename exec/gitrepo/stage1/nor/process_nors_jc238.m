@@ -7,10 +7,10 @@
 
 close all, 
 clearvars -except MEXEC MEXEC_A MEXEC_G pathosnap;
-cruise   = 'dy120';
+cruise   = 'jc238';
 operator = 'lad';
-moor='ib3_01_2018';
-plot_interval=[2018 07 06 00, 2020 10 14 00];
+moor='rteb1_06_2020';
+plot_interval=[2020 10 14 00, 2022 07 14 00];
 
 if exist('pathosnap','var')
     basedir = [pathosnap filesep 'data' filesep];
