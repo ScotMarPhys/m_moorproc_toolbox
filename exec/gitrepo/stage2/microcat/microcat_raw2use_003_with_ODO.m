@@ -19,12 +19,12 @@
 % ----- different users, locations, directory trees, and moorings -----
 
 % the location where the processing is done (a cruise name, NOCS, etc)
-cruise = 'dy120';
+cruise = 'jc238';
 operator  = 'lad';
-moor = 'rtwb1_05_2018';
+moor = 'rtwb2_06_2020';
 
 % the start and end times of the time axis for plotting
-plot_interval = [2018 09 07; 2020 14 10];
+plot_interval = [2020 10 20; 2022 07 18];
 
 if exist('pathosnap','var')
     basedir = [pathosnap '/'];
