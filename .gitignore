@@ -14,8 +14,17 @@
 /data/moor/oceansites_format
 /data/moor/oceansites_format
 /data/moor/OSNAPmooring_infodat
-/data/moor/proc
-/data/moor/proc_calib
+# /data/moor/proc
+# data (or plot) file types, but not info file types
+*.raw
+*.use*
+*.png
+*.eps
+*.fig
+*.tiff
+*.ps
+*.log
+# /data/moor/proc_calib
 /data/moor/raw
 /data/moor/THREDDS
 
