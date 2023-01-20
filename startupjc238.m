@@ -7,7 +7,8 @@ global basedir datadir execdir pathgit pathosnap
 % Add to the path osnap mooring functions:
 [s,r] = system('whoami');
 if s==0 && strncmp(r,'yvonng',6)
-    pathosnap = '/Users/yvonng/projects/osnap';
+%    pathosnap = '/Users/yvonng/projects/osnap';
+    pathosnap = '/Users/yvonng/programs/m_moorproc_toolbox';
     pathgit = '/Users/yvonng/programs/m_moorproc_toolbox';
 else
     pathosnap   = 'C:\Users\sa01ld\Desktop\m_moorproc_toolbox';
