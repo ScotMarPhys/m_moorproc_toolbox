@@ -1,5 +1,5 @@
 % Works out depths of microcats from pressure data, allows selection of a
-% modified nominal depth, and writes to 
+% modified nominal depth, and writes to file
 %
 % Required inputs:-
 %      moor - mooring name as string e.g. 'wb_1_200420'
@@ -11,20 +11,22 @@
 % example:
 % ctd_instrdpth2('wb1_1_200420',pathosnap)
 %
-% Outputs:- 
+% Outputs:-
 %      (over)writes rodb format info file for each sensor (if depth changed)
-%      overwrites {moor}info.dat for mooring moor
+%      overwrites {moor}info.dat for mooring moor (if any sensor depths
+%      changed)
 %
 % Uses the following functions:-
-%  rodbload, rodbsave 
+%  rodbload, rodbsave
 %  sw_dpth
 %  (and Matlab built-in juliandate and datetime)
+%
 
 
 function ctd_instrdpth2(moor,pathprocess,varargin)
 
 if nargin>2
-    sensor_id = varargin{1}; 
+    sensor_id = varargin{1};
 else
     sensor_id = 337;
 end
@@ -49,12 +51,13 @@ z_mc = z(jj);
 % --- preprocessing loop -------------------
 % ----------------------------------------
 
+changed = 0;
 for proc = 1 : length(sn_mc)
     infile  = fullfile(datadir, sprintf('%s_%d.use',moor,sn_mc(proc)));
     if exist(infile, 'file')  < 1
         infile = fullfile(datadir, sprintf('%s_0%d.use',moor,sn_mc(proc)));
     end
-    fprintf(1,'infile = %s',infile);
+    fprintf(1,'infile = %s\n',infile);
     if exist(infile,'file')   > 0
         
         [idp,sd,st,ed,et,YY,MM,DD,HH,T,C,P] = rodbload(infile,'InstrDepth:Start_Date:Start_Time:End_Date:End_Time:YY:MM:DD:HH:T:C:P');
@@ -62,17 +65,15 @@ for proc = 1 : length(sn_mc)
         outfile = infile;
         
         dv = [YY MM DD HH zeros(length(HH),2)];
-        jd = juliandate(datetime(dv));
-        jd0 = jd - jd(1);
+        dd = datenum(dv); dd = dd-dd(1);
         
         Pp=P;
         Pp(Pp==0)=NaN;
         clf
-        plot(jd0,Pp)
-        hold on
-        plot(jd0,sw_dpth(Pp,lat),'r')
+        plot(dd,Pp,'b',dd,sw_dpth(Pp,lat),'r')
         grid on
         xlabel('days since start')
+        ylabel('blue: p (dbar); red z (m)')
         
         %***ylf: cutting off first 9 and last 10 values seems arbitrary, should
         %this be customisable?
@@ -89,6 +90,7 @@ for proc = 1 : length(sn_mc)
         
         replace = input('Do you want to change nominal depth of instrument? ','s');
         if strcmp(replace, 'y')
+            changed = 1;
             depth_replace = input('Input new instrument depth: ');
             z_mc(proc) = depth_replace;
             z(jj(proc)) = depth_replace;
@@ -111,16 +113,18 @@ for proc = 1 : length(sn_mc)
 end
 
 
-%overwrite infofile, removing rcmc1 and rcmc2 if NaN
-if ~isnan(rcmc1)
-    fort2 = '%7d %8d %8d %8d %8d';
-    cols2 = 'z:instrument:serialnumber:RCMC1:RCMC2';
-    data2 = [z id sn rcmc1 rcmc2];
-else
-    fort2 = '%7d %8d %8d';
-    cols2 = 'z:instrument:serialnumber';
-    data2 = [z id sn];
+if changed
+    %overwrite infofile
+    if ~isnan(rcmc1)
+        fort2 = '%7d %8d %8d %8d %8d';
+        cols2 = 'z:instrument:serialnumber:RCMC1:RCMC2';
+        data2 = [z id sn rcmc1 rcmc2];
+    else
+        fort2 = '%7d %8d %8d';
+        cols2 = 'z:instrument:serialnumber';
+        data2 = [z id sn];
+    end
+    rodbsave(infofile,'Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:Columns:WaterDepth:Mooring',...
+        fort2,...
+        s_t,s_d,e_t,e_d,lat,lon,cols2,wd,mr,data2);
 end
-rodbsave(infofile,'Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:Columns:WaterDepth:Mooring',...
-    fort2,...
-    s_t,s_d,e_t,e_d,lat,lon,cols2,wd,mr,data2);
