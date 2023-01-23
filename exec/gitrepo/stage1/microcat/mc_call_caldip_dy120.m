@@ -53,7 +53,7 @@
 clearvars -except MEXEC MEXEC_A MEXEC_G pathosnap;
 close all;
 
-do_microcat2rodb_5 = 1; % Does not write rodb format files. Useful for fast rerun of plots
+do_microcat2rodb_5 = 1; % if 0, Does not write rodb format files. Useful for fast rerun of plots
 
 if exist('pathosnap','var')
     basedir = [pathosnap filesep 'data' filesep];

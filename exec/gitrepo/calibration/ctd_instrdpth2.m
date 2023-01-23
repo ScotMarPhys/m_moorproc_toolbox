@@ -1,4 +1,4 @@
-% Works out depths of microcats from pressure data, allows selection of a
+% Works out depths of microcats or aquadops from pressure data, allows selection of a
 % modified nominal depth, and writes to file
 %
 % Required inputs:-
@@ -6,20 +6,21 @@
 %      pathosnap - path of the osnap directory (ex: ~/Data/osnap) that
 %      contains data/moor/proc
 % Optional input:-
-%      sensor_id - 337 for SBE microcat (default) or 330 for RBR
+%      sensor_id - 337 for SBE microcat (default) or 330 for RBR or 370 for
+%      Nortek
 %
 % example:
 % ctd_instrdpth2('wb1_1_200420',pathosnap)
 %
 % Outputs:-
-%      (over)writes rodb format info file for each sensor (if depth changed)
-%      overwrites {moor}info.dat for mooring moor (if any sensor depths
-%      changed)
+%      for microcats, (over)writes rodb format info file for each sensor
+%      (if depth changed)
+%      For microcats or nortek, overwrites {moor}info.dat for mooring moor
+%      (if any sensor depths changed)
 %
 % Uses the following functions:-
 %  rodbload, rodbsave
 %  sw_dpth
-%  (and Matlab built-in juliandate and datetime)
 %
 
 
@@ -36,6 +37,8 @@ if sensor_id == 337
     datadir = fullfile(info_dir, 'microcat');
 elseif sensor_id == 330
     datadir = fullfile(info_dir, 'rbr');
+elseif sensor_id == 370
+    datadir = fullfile(info_dir, 'nor');
 end
 
 % --- get mooring information from infofile
@@ -60,7 +63,11 @@ for proc = 1 : length(sn_mc)
     fprintf(1,'infile = %s\n',infile);
     if exist(infile,'file')   > 0
         
-        [idp,sd,st,ed,et,YY,MM,DD,HH,T,C,P] = rodbload(infile,'InstrDepth:Start_Date:Start_Time:End_Date:End_Time:YY:MM:DD:HH:T:C:P');
+        if sensor_id==370
+            [idp,sd,st,ed,et,YY,MM,DD,HH,T,P] = rodbload(infile,'InstrDepth:Start_Date:Start_Time:End_Date:End_Time:YY:MM:DD:HH:T:P');
+        else
+            [idp,sd,st,ed,et,YY,MM,DD,HH,T,C,P] = rodbload(infile,'InstrDepth:Start_Date:Start_Time:End_Date:End_Time:YY:MM:DD:HH:T:C:P');
+        end
         
         outfile = infile;
         
@@ -99,21 +106,26 @@ for proc = 1 : length(sn_mc)
             %--- write data to rodb format -----
             %-----------------------------------
             
-            disp(['writing data to ',outfile])
             
-            fort = '%4.4d  %3.2d  %3.2d  %9.5f  %8.4f  %8.4f  %4.1f';
-            cols = 'YY:MM:DD:HH:T:C:P';
-            rodbsave(outfile,...
-                'Latitude:Longitude:Columns:Start_Date:Start_Time:SerialNumber:Mooring:WaterDepth:Instrdepth:End_Date:End_Time',...
-                fort,...
-                lat,lon,cols,sd,st,sn_mc(proc),mr,wd,z_mc(proc),ed,et,...
-                [YY MM DD HH T C P]);
+            if sensor_id ~= 370
+                disp(['writing data to ',outfile])
+                fort = '%4.4d  %3.2d  %3.2d  %9.5f  %8.4f  %8.4f  %4.1f';
+                cols = 'YY:MM:DD:HH:T:C:P';
+                data = [YY MM DD HH T C P];
+                rodbsave(outfile,...
+                    'Latitude:Longitude:Columns:Start_Date:Start_Time:SerialNumber:Mooring:WaterDepth:Instrdepth:End_Date:End_Time',...
+                    fort,...
+                    lat,lon,cols,sd,st,sn_mc(proc),mr,wd,z_mc(proc),ed,et,...
+                    data);
+            end
+            
         end
     end
 end
 
 
 if changed
+    disp(['writing data to ' infofile])
     %overwrite infofile
     if ~isnan(rcmc1)
         fort2 = '%7d %8d %8d %8d %8d';

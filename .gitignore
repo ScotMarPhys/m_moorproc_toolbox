@@ -16,6 +16,8 @@
 /data/moor/OSNAPmooring_infodat
 # /data/moor/proc
 # data (or plot) file types, but not info file types
+*.mat.zip
+*.mat
 *.raw
 *.use*
 *.png

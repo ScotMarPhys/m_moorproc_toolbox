@@ -28,7 +28,8 @@
 % Lewis Drysdale, - bug fix with Julian date conversion of microcvat data
 %     06.12.2022,     see issues in GitHub https://github.com/ScotMarPhys/m_moorproc_toolbox/issues/17
 %                     
-% 
+% Yvonne Firing   - updated for same issue 
+%     20.01.2022,     (as well as a Matlab version incompatibility in inputs to juliandate)
 % 
 
 
@@ -36,6 +37,7 @@ close all
 clearvars  -except pathgitrepo pathosnap p_insitucal pathgit
 warning off
 global cruise
+jd_mdn = 1721058.5; %offset from julian (as calculated by matlab's juliandate) and matlab datenum
 
 % ---- parameters specified in the main script ----------------------------------------------------
 
@@ -311,6 +313,7 @@ if strcmp(ctdformat,'aoml')
            d.temp  = cnv_cor_save(i).T;
            d.press = cnv_cor_save(i).P;   
            d.time =  cnv_cor_save(i).JD0 + julian([2015 1 1 0 0 0]) - 1;
+           d.datnum = d.time-jd_mdn; d = rmfield(d,'time');
     	end   
     else  
       if cnv_cor_save(i).station == cast         
@@ -321,7 +324,9 @@ if strcmp(ctdformat,'aoml')
           
           ctd_time_ori = julian([cnv_cor_save(i).gtime(1:3) 0]);
           jul_day_frac = cnv_cor_save(i).timeJ - floor(cnv_cor_save(i).timeJ);
-          d.time = jul_day_frac + ctd_time_ori;                     
+          d.time = jul_day_frac + ctd_time_ori;
+          d.datnum = d.time-jd_mdn; d = rmfield(d,'time');
+          ctd_time_ori = ctd_time_ori-jd_mdn;
           else
            d.cond  = cnv_cor_save(i).conductivity;
           d.temp  = cnv_cor_save(i).temperature;
@@ -329,8 +334,8 @@ if strcmp(ctdformat,'aoml')
           %if strcmp(ctd_cunit,'S/m')
           d.cond = d.cond;%*10;             
           
-          ctd_time_ori = julian([cnv_cor_save(i).gtime(1:3) hms2h(cnv_cor_save(i).gtime(4:6))]);
-          d.time = cnv_cor_save(i).elap_time_sec/86400 + ctd_time_ori;                           
+          ctd_time_ori = datenum(cnv_cor_save(i).gtime(1:6));
+          d.datnum = cnv_cor_save(i).elap_time_sec/86400 + ctd_time_ori;
           end
       end
     end
@@ -347,8 +352,9 @@ elseif strcmp(ctdformat,'pstar')
   day    = h.iymd -year*10000 - month*100;
   hour   = h.ihms;
   
-  ctd_time_ori = julian(year+h.icent, month, day,hour);
-  d.time       = d.time/86400 + ctd_time_ori; % ctd time in julian days
+  ctd_time_ori = datenum(year+h.icent, month, day,hour,0,0);
+  d.datnum       = d.time/86400 + ctd_time_ori; % ctd time in datenum
+  d = rmfield(d,'time');
 elseif strcmp(ctdformat,'mstar')  
     if strcmp(cruise,'d344') || strcmp(cruise,'d359')
         ctd_file
@@ -359,8 +365,9 @@ elseif strcmp(ctdformat,'mstar')
       day    = dd.data_time_origin(3); %h.iymd -year*10000 - month*100;
       hour   = dd.data_time_origin(4) + (dd.data_time_origin(5)+(dd.data_time_origin(6)/60))/60 ; %h.ihms;
 
-      ctd_time_ori = julian(year,month,day,hour); %julian(year+h.icent, month, day,hour);
-      d.time       = d.time/86400 + ctd_time_ori; % ctd time in julian days 
+      ctd_time_ori = datenum(year,month,day,hour,0,0);
+      d.datnum       = d.time/86400 + ctd_time_ori; % ctd time in datenum
+        d = rmfield(d,'time');
     % if strcmp(cruise,'jc064')
     elseif strcmp(cruise,'dy120') | strcmp(cruise,'ar304') | strcmp(cruise,'dy078') | strcmp(cruise,'dy053') | strcmp(cruise,'pe399') 
         ctd_file
@@ -373,10 +380,13 @@ elseif strcmp(ctdformat,'mstar')
             d.cond = d.cond2;
             d.temp = d.temp2;        
         end
-         HH = h.data_time_origin(4)+h.data_time_origin(5)/60+h.data_time_origin(6)/3600;
-         jtime=h.data_time_origin(1:3);
-         jtime=[jtime HH];
-         d.time=julian(jtime)+d.time/86400;
+         d.datnum=datenum(h.data_time_origin)+d.time/86400;
+  d = rmfield(d,'time');
+    elseif strcmp(cruise,'jc238')
+        ctd_file
+        [d, h] = mload(ctd_file,'time','press','temp','cond',' ','q');
+         d.datnum=datenum(h.data_time_origin)+d.time/86400;    
+  d = rmfield(d,'time');
     else
       ctd_file
       dd  = netcdf(ctd_file); %,'press temp cond time','silent');
@@ -399,8 +409,9 @@ elseif strcmp(ctdformat,'mstar')
       
       decstr=datestr(hour/24,'HH:MM:SS');
       [~,~,~,HH,M,SS]=datevec(decstr);
-      ctd_time_ori    = juliandate(year,month,day,HH,M,SS);
-      d.time       = d.time/86400 + ctd_time_ori; % ctd time in julian days
+      ctd_time_ori    = datenum(year,month,day,HH,M,SS);
+      d.datnum       = d.time/86400 + ctd_time_ori; % ctd time in datenum
+  d = rmfield(d,'time');
  
     end
 end   
@@ -413,15 +424,16 @@ if findstr(bottle_file,'.btl')
     for jjj=1:length(bottle)
         bottle(jjj).p=bottle(jjj).pav;
     end
-    bottle.jd = [julian(bottle.yy,bottle.mm,bottle.dd,bottle.hh)]';
+    bottle.datnum = [datenum(bottle.yy,bottle.mm,bottle.dd,bottle.hh)]';
 elseif findstr(bottle_file,'.ros')
     bottle            = read_rosfile(bottle_file);
+    bottle.datnum = bottle.jd - jd_mdn;
 else
     bottle = [];
     disp('PATH TO BOTTLE FILES NOT DEFINED')
 end
 
-    bottle.jd         = bottle.jd - cnv_time_correction;
+    bottle.datnum         = bottle.datnum - cnv_time_correction;
     bottle.start_time = bottle.start_time -cnv_time_correction;
 
 % --- MicroCAT -------
@@ -433,23 +445,17 @@ ninst = length(instr);
 
 for mc = 1 : ninst
 
-  [yy,mm,dd,hh,p,t,c]  = rodbload([mc_file,sprintf('%4.4d',instr(mc)),mc_ext],...
-                                   'YY:MM:DD:HH:P:T:C'); 
+    fname = sprintf('%s%4.4d%s',mc_file,instr(mc),mc_ext);
+  [yy,mm,dd,hh,p,t,c]  = rodbload(fname,'YY:MM:DD:HH:P:T:C'); 
   lyy                = length(yy);
-  YY(1:lyy,mc)       = yy; 
-  MM(1:lyy,mc)       = mm; 
-  DD(1:lyy,mc)       = dd; 
-  HH(1:lyy,mc)       = hh; 
+  datnum(1:lyy,mc) = datenum(yy,mm,dd,hh,0,0);
   T(1:lyy,mc)        = t; 
   C(1:lyy,mc)        = c; 
   P(1:lyy,mc)        = p; 
 end
 
-ii    = find(YY == 0);
-YY(ii)=NaN; MM(ii)=NaN; DD(ii)=NaN; HH(ii)=NaN; T(ii)=NaN; C(ii)=NaN;
-decstr=datestr(HH/24,'HH:MM:SS');
-[~,~,~,HH,M,SS]=datevec(decstr);
-JD    = juliandate(YY,MM,DD,HH,M,SS);                    % julian day mc time 
+datnum(datnum==0) = NaN;
+T(isnan(datnum)) = NaN; C(isnan(datnum)) = NaN; P(isnan(datnum)) = NaN;
 
 % check which variables have been measured by sensor  
 
@@ -479,9 +485,9 @@ end
 wit_ctd(4)         = wit_ctd(4) - cnv_time_correction*24;
 
 if size(wit_ctd,2) == 6
-  wit_ctd_jd = julian([wit_ctd(1:3) hms2h(wit_ctd(4:6))]);
+  wit_ctd_mdn = datenum(wit_ctd(1:6));
 elseif  size(wit_ctd,2) == 4
-  wit_ctd_jd = julian(wit_ctd);
+  wit_ctd_mdn = datenum(wit_ctd,0,0);
 end
 
 % MicroCAT impact
@@ -489,7 +495,7 @@ if strcmp(mc_cunit,'S/m')
     C = C*10;
 end    
 
-wit_mc_jd = nan(1,ninst);
+wit_mc_mdn = nan(1,ninst);
 for inst = 1 : ninst
   if strcmp(impact_var,'c') 
     ii = find(C(:,inst) > cond_threshold);           % water impact mc
@@ -504,29 +510,31 @@ for inst = 1 : ninst
           '/  OR REMOVE THE INSTRUMENT ' num2str(instr(inst))  ' FROM THE FILE ' ....
           'moor/proc_calib/' p_insitucal.cruise '/cal_dip/cast' num2str(p_insitucal.cast) 'info.dat' ]) 
   end
+  if ~isempty(ii)
   ii = ii(1); 
-  wit_mc_jd(inst)  = julian([YY(ii,inst),MM(ii,inst),DD(ii,inst),HH(ii,inst)]);
+  wit_mc_mdn(inst)  = datnum(ii,inst);
+  else
+      warning('no good C or P data for inst %d',instr(inst))
+  end
 end
 
-wit_mc_jd    =  wit_mc_jd'; 
-wit_mc       = gregorian(wit_mc_jd);  % 
-start_mc_jd  = julian([YY(1,:)' MM(1,:)' DD(1,:)' HH(1,:)']); 
+start_mc_mdn  = datnum(1,:);
 
 
 % time difference between start of instrument and ocean surface impact [s]
 
-dwit_mc   = (wit_mc_jd - start_mc_jd)*24*3600;
+dwit_mc   = (wit_mc_mdn - start_mc_mdn)*24*3600;
 
 % time offset  between CTD and MC: needed to compare bottle stop values
 
 ii        = find(dwit_mc > 60);   % only consider mc with impact time > 60 for others
                                   % may have started after surface impact
 
-impact_offset =  wit_ctd_jd - wit_mc_jd; % individual impact time offsets ctd - mc
+impact_offset =  wit_ctd_mdn - wit_mc_mdn; % individual impact time offsets ctd - mc
 
 
 if ~isempty(ii)
-  offset    = wit_ctd_jd -  median(wit_mc_jd(ii));         % odecimal days
+  offset    = wit_ctd_mdn -  median(wit_mc_mdn(ii));         % odecimal days
   [ohms(1),ohms(2),ohms(3)] = s2hms(offset*24*3600);
 else
   offset = 0;
@@ -536,14 +544,14 @@ end
 [oh,om,os] = s2hms(impact_offset*86400);
 fprintf(1,'\n Time offset of MicroCATs rel. to CTD:\n\n') 
 fprintf(1,'  ID    HH    MM   SS\n')
-fprintf(1,'  %d: %d  %d  %d\n',[instr';oh';om';round(os')]);
+fprintf(1,'  %d: %d  %d  %d\n',[instr';oh;om;round(os)]);
 
 %-------------------------------------------------------
 % 3. ---- extract data from bottle stops ---------------
 %-------------------------------------------------------
 
 
-bot_start     = bottle.jd;
+bot_start     = bottle.datnum;
 % % istop = find(diff(bot_start)
 % bot_end       = bot_start + bottlestop_average/3600/24;
 
@@ -557,7 +565,7 @@ elseif  apply_offset == 'n'
   fprintf(1,' O F F S E T   H A S   N O T   B E E N   A P P L I E D  ! ! !\n')
 elseif  apply_offset == 'i'
   fprintf(1,' D A N G E R !!! INDIV.  OFFSETS  HAVE  BEEN   APPLIED  ! ! !\n')
-  JD  = JD + ones(size(JD,1),1)*impact_offset' ;
+  datnum  = datnum + ones(size(datnum,1),1)*impact_offset' ;
 end
 
 bst=1:length(bot_start);
@@ -566,7 +574,7 @@ bst=1:length(bot_start);
 bst2     = find(diff(bottle.p(bst))<-bottlestop_dpmin);
 bst2     = [1; bst2+1];
 bst      = bst(bst2);
-bot_start = bottle.jd(bst);
+bot_start = bottle.datnum(bst);
 
 nstop = length(bot_start);     % number of bottle stops 
 gcnt     = 0;
@@ -585,23 +593,21 @@ for stop = 1 : nstop    % bottle_stops loop
         dcond = gradient(C(:,mc));
             
             % find nearest time in MC record to bottle stop satrt time
-            [~,indstop] = nearest(bot_start(stop),JD(:,mc));
+            [~,indstop] = nearest(bot_start(stop),datnum(:,mc));
             % match that time with a pressure
             presstop = P(indstop,mc);
-            imcatbotok00 = find(P(:,mc)>presstop-3 & P(:,mc)<presstop+3 & JD(:,mc)>bot_start(stop)+interval_move1(1) & JD(:,mc)<bot_start(stop)+interval_move1(2));% & abs(dcond)<0.02 );               
-
+            imcatbotok00 = find(P(:,mc)>presstop-3 & P(:,mc)<presstop+3 & datnum(:,mc)>bot_start(stop)+interval_move1(1) & datnum(:,mc)<bot_start(stop)+interval_move1(2));% & abs(dcond)<0.02 );               
+if ~isempty(imcatbotok00)
             % Add a condition to remove the first  30sec of the bottle stop.
-            jdtime0 = JD(imcatbotok00(1),mc);
-            imcatbotok = imcatbotok00(find(JD(imcatbotok00,mc)>jdtime0 + 0.5/24/60));
+            mdntime0 = datnum(imcatbotok00(1),mc);
+            imcatbotok = imcatbotok00(find(datnum(imcatbotok00,mc)>mdntime0 + 0.5/24/60));
             % And check that the length of the bottlestop is at least == to bottlestop_tmin (in sec)
 
-            if ~isempty(imcatbotok) & ((JD(imcatbotok(end),mc) - JD(imcatbotok(1),mc))*3600*24>bottlestop_tmin)
+            if ~isempty(imcatbotok) & ((datnum(imcatbotok(end),mc) - datnum(imcatbotok(1),mc))*3600*24>bottlestop_tmin)
 
-                mcatbotstart0(stop,mc)=JD(imcatbotok(1),mc); 
-                mcatbotend0(stop,mc)=JD(imcatbotok(end),mc);    
-            else
-                 mcatbotstart0(stop,mc) = nan;
-                 mcatbotend0(stop,mc) = nan;   
+                mcatbotstart0(stop,mc)=datnum(imcatbotok(1),mc); 
+                mcatbotend0(stop,mc)=datnum(imcatbotok(end),mc);    
+            end
             end
    end
    
@@ -619,7 +625,7 @@ for stop = 1 : nstop    % bottle_stops loop
    end
 end
 
-figure; plot((JD(:,:)-JD(1,1))*24*60,P(:,:))
+figure; plot((datnum(:,:)-datnum(1,1))*24*60,P(:,:))
 
 for stop = 1 : nstop    % bottle_stops loop
   
@@ -627,28 +633,28 @@ for stop = 1 : nstop    % bottle_stops loop
 
    for mc = 1 : ninst   
 
-       ii_move = find(JD(:,mc)<=mcatbotend(stop,mc) & ...
-                      JD(:,mc)>=mcatbotstart(stop,mc));
-       ii_move2 = find(JD(:,mc)<=(mcatbotend(stop,mc)+2*ooo) & ...
-                      JD(:,mc)>=(mcatbotstart(stop,mc)-2*ooo));                 
+       ii_move = find(datnum(:,mc)<=mcatbotend(stop,mc) & ...
+                      datnum(:,mc)>=mcatbotstart(stop,mc));
+       ii_move2 = find(datnum(:,mc)<=(mcatbotend(stop,mc)+2*ooo) & ...
+                      datnum(:,mc)>=(mcatbotstart(stop,mc)-2*ooo));                 
        tav(stop,mc) = mean(T(ii_move,mc));
        cav(stop,mc) = mean(C(ii_move,mc));
        pav(stop,mc) = mean(P(ii_move,mc)); 
        if cstat == 1 
-         plot((JD(ii_move2,mc)-JD(1,1))*24*60,C(ii_move2,mc),'k') 
-         plot((JD(ii_move,mc)-JD(1,1))*24*60,C(ii_move,mc),'b') 
+         plot((datnum(ii_move2,mc)-datnum(1,1))*24*60,C(ii_move2,mc),'k') 
+         plot((datnum(ii_move,mc)-datnum(1,1))*24*60,C(ii_move,mc),'b') 
        else
-         plot((JD(ii_move2,mc)-JD(1,1))*24*60,P(ii_move2,mc),'k') 
-         plot((JD(ii_move,mc)-JD(1,1))*24*60,P(ii_move,mc),'b')          
+         plot((datnum(ii_move2,mc)-datnum(1,1))*24*60,P(ii_move2,mc),'k') 
+         plot((datnum(ii_move,mc)-datnum(1,1))*24*60,P(ii_move,mc),'b')          
        end    
    end
    title([cruise,'   cast',num2str(cast),'  depth: ',num2str(round(bottle.p(bst(stop))))])
 end
 
-[llllnn, mmmmnn]=size(JD);
+[llllnn, mmmmnn]=size(datnum);
 if mmmmnn>4
-ii_move=find(JD(:,5)<=mcatbotend(stop,5) & ...
-                      JD(:,5)>=mcatbotstart(stop,5));
+ii_move=find(datnum(:,5)<=mcatbotend(stop,5) & ...
+                      datnum(:,5)>=mcatbotstart(stop,5));
 Ttemp=T(ii_move,5);
 Ctemp=C(ii_move,5);
 else
@@ -660,9 +666,9 @@ end
 
 if rms(interval_move) ~= 0
   if  apply_offset   == 'y'
-    ctd_time =  - offset + d.time; 
+    ctd_time =  - offset + d.datnum; 
   else 
-    ctd_time =  d.time;
+    ctd_time =  d.datnum;
   end
 if ctd_latestart_offset ~=0
     ctd_time = ctd_time + ctd_latestart_offset/86400;
@@ -684,18 +690,18 @@ ctdbotend = nan(nstop,1);
      figure(10+stop)
      if cstat == 1
          if strcmp('d334',cruise)
-            plot((ctd_time(ii_move2)-JD(1,1))*24*60,d.cond(ii_move2)*10,'r') 
-            plot((ctd_time(ii_move)-JD(1,1))*24*60,d.cond(ii_move)*10,'b') 
+            plot((ctd_time(ii_move2)-datnum(1,1))*24*60,d.cond(ii_move2)*10,'r') 
+            plot((ctd_time(ii_move)-datnum(1,1))*24*60,d.cond(ii_move)*10,'b') 
          elseif exist('ctd_1hz')==1 && strcmp(ctd_1hz,'S/m')
-            plot((ctd_time(ii_move2)-JD(1,1))*24*60,d.cond(ii_move2)*10,'r') 
-            plot((ctd_time(ii_move)-JD(1,1))*24*60,d.cond(ii_move)*10,'b')
+            plot((ctd_time(ii_move2)-datnum(1,1))*24*60,d.cond(ii_move2)*10,'r') 
+            plot((ctd_time(ii_move)-datnum(1,1))*24*60,d.cond(ii_move)*10,'b')
          else
-            plot((ctd_time(ii_move2)-JD(1,1))*24*60,d.cond(ii_move2),'r') 
-            plot((ctd_time(ii_move)-JD(1,1))*24*60,d.cond(ii_move),'b') 
+            plot((ctd_time(ii_move2)-datnum(1,1))*24*60,d.cond(ii_move2),'r') 
+            plot((ctd_time(ii_move)-datnum(1,1))*24*60,d.cond(ii_move),'b') 
          end
      else
-       plot((ctd_time(ii_move2)-JD(1,1))*24*60,d.temp(ii_move2),'r') 
-       plot((ctd_time(ii_move)-JD(1,1))*24*60,d.temp(ii_move),'b') 
+       plot((ctd_time(ii_move2)-datnum(1,1))*24*60,d.temp(ii_move2),'r') 
+       plot((ctd_time(ii_move)-datnum(1,1))*24*60,d.temp(ii_move),'b') 
      end    
      ctd_pav(stop) = mean(d.press(ii_move));
      ctd_tav(stop) = mean(d.temp(ii_move));
@@ -748,7 +754,7 @@ average_interval = average_interval(1):20:average_interval(2);
  
   % compute interpolated and averaged versions of dt,dc,dp 
   if max(average_interval) > max(d.press)
-    fprintf(1,'WARNING: average_interval exceeds max. press. of CTD cast, please fix!!!\n')  
+    fprintf(1,'WARNING: average_interval exceeds max. press. of CTD cast (%d), please fix!!!\n',floor(max(d.press)))
   end
   dp_mcdep_ext(1:ninst) = NaN; % dp extrap. beyond  max. cast pressure to deploym. depth
   dc_av_pproblem(1:ninst)= NaN; % dc_av for MicroCATs with problematic pressure records 
@@ -804,8 +810,6 @@ instr_id = ones(nstop,1) * instr';
 col  = ['brgkmcybrgkmcybrgkmcybrgkmcy'];
 mrk  = ['ddddddd+++++++xxxxxxxsssssss'];
 lin  = ['----------------------------'];
-mrkd = [col;mrk];
-mrk  = [col;mrk;lin];
 
 % ----------  Graphics  ----------------------
  
@@ -819,48 +823,40 @@ else
 end
 
 
-for i = 1 : ninst,
-
-  subplot(1,sub,1)
-    plot(bot_p0av(:,i),dt(:,i),mrk(:,i))
-    hold on
-
-  subplot(1,sub,2)
-    plot(bot_p0av(:,i),dc(:,i),mrk(:,i))
-    hold on
-
-  if ~isempty(find(~isnan(dp)))
-      subplot(1,sub,3)
-      plot(bot_p0av(:,i),dp(:,i),mrk(:,i))
-      hold on
-  end 
-end
-
- %plot values at MicroCAT deployment depths
-
+ %plot values at all and highlight those at MicroCAT deployment depths
 for i = 1 : ninst
-    subplot(1,sub,1)
-    plot(mcdep(i),dt_mcdep(i),[mrkd(:,i)],'Linewidth',2,'MarkerSize',11)
-    subplot(1,sub,2)
-    plot(mcdep(i),dc_mcdep(i),[mrkd(:,i)],'Linewidth',2,'MarkerSize',11)
-   if ~isempty(find(~isnan(dp)))
-      subplot(1,sub,3)
-      plot(mcdep(i),dp_mcdep(i),[mrkd(:,i)],'Linewidth',2,'MarkerSize',11)  
-      if isnan(dp_mcdep(i))
-        plot(mcdep(i),dp_mcdep_ext(i),[mrkd(:,i)],'Linewidth',2,'MarkerSize',11)    
-      end    
-   end
-
+  subplot(1,sub,1)
+  plot(bot_p0av(:,i),dt(:,i),'color',col(i),'marker',mrk(i),'linestyle',lin(i)); hold on
+  subplot(1,sub,2)
+  plot(bot_p0av(:,i),dc(:,i),'color',col(i),'marker',mrk(i),'linestyle',lin(i)); hold on
+  subplot(1,sub,3)
+  plot(bot_p0av(:,i),dp(:,i),'color',col(i),'marker',mrk(i),'linestyle',lin(i)); hold on
 end
 
 subplot(1,sub,1)
+   num_legend(instr','''best''',5)  %legend 
+   %num_legend(instr','southeast',5)  %legend
+
+for i = 1:ninst
+    subplot(1,sub,1)
+    plot(mcdep(i),dt_mcdep(i),'linestyle','none','marker',mrk(i),'markersize',11,'color',col(i))
+    subplot(1,sub,2)
+    plot(mcdep(i),dc_mcdep(i),'linestyle','none','marker',mrk(i),'markersize',11,'color',col(i))
+    subplot(1,sub,3)
+    if ~isnan(dp_mcdep)
+        plot(mcdep(i),dp_mcdep(i),'linestyle','none','marker',mrk(i),'markersize',11,'color',col(i))
+    else
+        plot(mcdep(i),dp_mcdep_ext(i),'linestyle','none','marker',mrk(i),'markersize',11,'color',col(i))
+    end
+end
+
+
+    subplot(1,sub,1)
    grid on   
    set(gca,'Fontsize',12,'xlim',p_interval,'ylim',t_interval)
    xlabel('pressure [dbar]')
    ylabel(['temp. diff. [C]'])
    title([sprintf('Deviations %s-CTD //%s',upper(sensor),date) ])
-   num_legend(instr','''best''',5)  %legend 
-   %num_legend(instr','southeast',5)  %legend
 subplot(1,sub,2)
    grid on 
    set(gca,'Fontsize',12,'xlim',p_interval,'ylim',c_interval)
@@ -868,14 +864,12 @@ subplot(1,sub,2)
    ylabel('cond. diff. [mS/cm]') 
    title(['Cruise: ',cruise,'  Cast: ',num2str(cast)]) 
 
-   if ~isempty(find(~isnan(dp)))
    subplot(1,sub,3)
    grid on 
-   set(gca,'Fontsize',12,'xlim',p_interval,'ylim',dp_interval)
+%   set(gca,'Fontsize',12,'xlim',p_interval,'ylim',dp_interval)
+   set(gca,'Fontsize',12,'ylim',dp_interval)
    xlabel('pressure [dbar]')
    ylabel('pres. diff. [dbar]') 
-   end
-  
 
 
 set(figure(2),'Paperunits','centimeters','Paperposition',[0 0 29 21])

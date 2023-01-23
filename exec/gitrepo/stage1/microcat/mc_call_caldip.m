@@ -56,7 +56,7 @@
 clearvars -except MEXEC MEXEC_A MEXEC_G pathosnap;
 close all;
 
-do_microcat2rodb = 1; % Does not write rodb format files. Useful for fast rerun of plots
+do_microcat2rodb = 1; % if 0, Does not write rodb format files. Useful for fast rerun of plots
 
 if exist('pathosnap','var')
     basedir = [pathosnap filesep 'data' filesep];
@@ -68,12 +68,12 @@ cruise = 'jc238';
 cruise_ctd = 'jc238';
 
 if ispc
-    ctddir = [pathosnap filesep 'cruise_data' filesep cruise_ctd filesep 'ctd' filesep];
+    ctddir = fullfile(pathosnap,'cruise_data',cruise_ctd,'ctd');
 else
-    ctddir = [basedir cruise_ctd filesep ];
+    ctddir = fullfile(basedir,cruise_ctd,'ctd');
 end
 
-cast = '1'; dateoffsetmcdefault = 2020; % origin of the julian day in the matlab cnv files
+cast = '4'; dateoffsetmcdefault = 2022; % origin of the julian day in the matlab cnv files
 
 doctd = 1;% 1; % whether to load and plot CTD data: 1 if mstar format, 99 if native cnv file (without header)
 jd0 = julian(dateoffsetmcdefault,1,0,0); % set to current year
@@ -83,10 +83,10 @@ ctdnum = sprintf('%03d',str2num(cast));
 
 % --- set paths for data input and output ---
 
-inpath    = [basedir 'moor/raw/' cruise '/microcat_cal_dip/cast',cast,'/'];
-outpath   = [basedir 'moor/proc_calib/' cruise '/cal_dip/microcat/cast' cast '/'];
-infofile  = [basedir 'moor/proc_calib/' cruise '/cal_dip/cast',cast,'info.dat'];
-ctdinfile = [ctddir 'ctd_jc238_' ctdnum '_psal.nc'];
+inpath    = [basedir '/moor/raw/' cruise '/microcat_cal_dip/cast',cast,'/'];
+outpath   = [basedir '/moor/proc_calib/' cruise '/cal_dip/microcat/cast' cast '/'];
+infofile  = [basedir '/moor/proc_calib/' cruise '/cal_dip/cast',cast,'info.dat'];
+ctdinfile = [ctddir '/ctd_jc238_' ctdnum '_psal.nc'];
 %ctdinfile = [ctddir 'ar30-04' ctdnum '_withoutheader.cnv'];
 % ctdinfile = [ctddir 'ctd_' cruise_ctd '_' ctdnum '_1hz.nc'];
 

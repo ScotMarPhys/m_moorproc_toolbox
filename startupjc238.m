@@ -27,6 +27,7 @@ execdir     = fullfile(pathgit, 'exec');
 this_cruise = 'jc238';
 baselogdir  = basedir;
 addpath(genpath(execdir))
+rmpath(genpath(fullfile(execdir,'gitrepo','stage1','microcat','old_scripts')))
 
 % CD to working directory
 cd(fullfile(execdir,'gitrepo'))
