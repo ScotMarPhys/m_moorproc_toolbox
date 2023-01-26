@@ -572,7 +572,7 @@ if gridding == 2 % using climatological profiles
    
 elseif gridding == 1 % linear interpolation   
     
-    outputfile = ['RTWB_merg_linear_interp' '_'  lastyeardata '_' datestr(now, 30) ];
+    outputfile = ['RTWB_merg_linear_interp' '_'  lastyeardata ];
     TGfs = nan(length(pgg),length(JG));
     SGfs = nan(length(pgg),length(JG)); 
     for ijj=1:length(JG)

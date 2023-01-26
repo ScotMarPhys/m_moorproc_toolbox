@@ -3,7 +3,8 @@
 
 close('all')
 last_year = '_2022';
-
+% filename 
+filename                    ='Rockall-Trough-Mooring-Time-Series-2022';
 % outdir                      = ['W:\common\OSNAP\THREDDS'];
 outdir                      = [pathosnap '/data/moor/THREDDS'];
 tsdir                       = [pathosnap '/data/moor/proc/hydro_grid_merged/'];
@@ -11,8 +12,7 @@ vldir                       = [pathosnap '/data/moor/proc/velocity_grid_merged/'
 % T S DATA 
 
 % Load western array data
-[ffile,path] = uigetfile % select the most recent processing of the WB data
-load([tsdir ffile]);
+load([tsdir 'RTWB_merg_linear_interp_2020.mat']);
 % rename var and make NaN 99999
 TG_WEST                 =RTWB_merg.TGfs2;
 TG_WEST(isnan(TG_WEST)) =99999;
@@ -22,8 +22,7 @@ pressure                =RTWB_merg.PGfs(:,1);
 time                    =RTWB_merg.JG; 
     
 %Load eastern array data
-[ffile,path] = uigetfile % select the most recent processing of the WB data
-load([tsdir ffile]);
+load([tsdir 'RTEB_merg_linear_interp_2020.mat']);
 % rename vars
 TG_EAST                 =RTEB_merg.TGfs2;
 TG_EAST(isnan(TG_EAST)) =99999;
@@ -63,9 +62,6 @@ fprintf('Begin %s\n', datestr(now));
 % Dimensions
 TimeDim                     = length(time);
 PressureDim                 = length(pressure);
-
-% filename 
-filename                    ='Rockall-Trough-Mooring-Time-Series-2020';
 
 % Open the file to write
 outfile                     = fullfile(outdir, [filename '.nc']);

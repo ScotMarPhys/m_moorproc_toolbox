@@ -736,7 +736,7 @@ RTEB_merg.comment{7,1}= 'SGfs -- salinity interpolated onto the pressure grid (P
 RTEB_merg.comment{8,1}= 'TGfs2 -- temperature interpolated onto the time grid (JG) after despiking';  
 RTEB_merg.comment{9,1}= 'SGfs2 -- salinity interpolated onto the time grid (JG) after despiking';  
 
-save([grdatdir outputfile '_' datestr(now, 30)],'RTEB_merg');
+save([grdatdir outputfile],'RTEB_merg');
 %  6. PLOTTING THE GRIDDED AND MERGED PROFILES 
 % 
 

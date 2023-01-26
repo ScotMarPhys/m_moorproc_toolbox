@@ -110,15 +110,15 @@ ncwriteatt(outfile,'/','netcdf_version','4.3')
 
 
 % === PUBLICATION INFO ===
-ncwriteatt(outfile,'/','publisher_name', '');  %CHANGE     
-ncwriteatt(outfile,'/','publisher_email', '');  %CHANGE   
-ncwriteatt(outfile,'/','publisher_url', 'g');  %CHANGE  
-ncwriteatt(outfile,'/','references', '');
-ncwriteatt(outfile,'/','data_assembly_center', '');  %CHANGE    
+ncwriteatt(outfile,'/','publisher_name', 'Yao Fu');  %CHANGE     
+ncwriteatt(outfile,'/','publisher_email', 'yaofu@gatech.edu');  %CHANGE   
+ncwriteatt(outfile,'/','publisher_url', 'http://www.o-snap.org');  %CHANGE  
+ncwriteatt(outfile,'/','references', 'http://www.o-snap.org, http://www.oceansites.org');
+ncwriteatt(outfile,'/','data_assembly_center', 'Georgia Institute of Technology');  %CHANGE    
 ncwriteatt(outfile,'/','update_interval', 'void');
 ncwriteatt(outfile,'/','license', 'Follows CLIVAR (Climate Variability and Predictability) standards, cf. http://www.clivar.org/data/data_policy.php. Data available free of charge. User assumes all risk for use of data. User must display citation in any publication or product using data. User must contact PI prior to any commercial use of data.');
-ncwriteatt(outfile,'/','citation', 'These data were collected and made freely available by the OSNAP project and the national programs that contribute to it.');
-ncwriteatt(outfile,'/','acknowledgement', 'Funding source: the UK Natural Environment Research Council (NERC), UK OSNAP project');  %CHANGE
+ncwriteatt(outfile,'/','citation', 'These data were collected and made freely available by the CLASS project and the national programs that contribute to it.');
+ncwriteatt(outfile,'/','acknowledgement', 'Funding source: the UK Natural Environment Research Council (NERC), CLASS Project NE/R015953/1');  %CHANGE
 
 
 

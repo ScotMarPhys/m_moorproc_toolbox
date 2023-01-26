@@ -527,6 +527,84 @@ for i = 1: length(sn5)
 end
 
 
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %  2d.  OSNAP 4 (dy120 --> djc238)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  Notes:
+%  ------
+%
+disp('---------  OSNAP 6 (dy120 --> djc238) ---------')
+fileID6 = fopen([boundarydir, moor6, '.dat']);
+delimiter = {'\t',' '};
+startRow = 6;
+% % Format string for each line of text:
+%   column1: text (%s)
+%	column2: double (%f)
+%   column3: double (%f)
+%	column4: double (%f)
+%   column5: double (%f)
+% For more information, see the TEXTSCAN documentation.
+formatSpec = '%s%f%f%f%f%*s%*s%[^\n\r]';
+% % Read columns of data according to format string.
+% This call is based on the structure of the file used to generate this
+% code. If an error occurs for a different file, try regenerating the code
+% from the Import Tool.
+file6_data = textscan(fileID6, formatSpec, 'Delimiter', delimiter, 'MultipleDelimsAsOne', true, 'HeaderLines' ,startRow-1, 'ReturnOnError', false);
+% % Close the text file.
+fclose(fileID6);
+mooring6 = file6_data{1};
+sn6      = file6_data{2};
+cm6      = file6_data{3};
+z6       = file6_data{4};
+lon6     = file6_data{5};
+
+U6 = zeros(length(sn6), length(JG));
+V6 = zeros(length(sn6), length(JG));
+W6 = zeros(length(sn6), length(JG));
+P6 = zeros(length(sn6), length(JG));
+
+i = 1; j = 1;
+for i = 1: length(sn6)
+    
+    infile = [hydrodir, mooring6{i,:}, '_velocity_grid.mat'];
+    load(infile,'dnumi','ufi','vfi','wfi','pfi');
+    jdnew = dnumi;    
+    sampling_rate = round(1./median(diff(jdnew))); %nominal sampling rate [per day]
+    uuu    = interp1(jdnew(1:end-1), ufi(cm6(i),1:end-1)', JG)';
+    vvv    = interp1(jdnew(1:end-1), vfi(cm6(i),1:end-1)', JG)';
+    www    = interp1(jdnew(1:end-1), wfi(cm6(i),1:end-1)', JG)';    
+    ppp    = interp1(jdnew(1:end-1), pfi(cm6(i),1:end-1)', JG)';
+    Ufs6(j,:) = uuu;
+    Vfs6(j,:) = vvv;
+    Wfs6(j,:) = www;    
+    Pfs6(j,:) = ppp;
+    
+    j = j + 1;
+    
+    if cm_check_plot
+        figure(60021)
+        hold on; box on;
+        plot(JG, Ufs6(i, :), col{:,i},'LineWidth',2);
+        title('OSNAP 6 - U')
+        
+        figure(60022)
+        hold on; box on;
+        plot(JG, Vfs6(i, :), col{:,i},'LineWidth',2);
+        title('OSNAP 6 - V')
+
+        figure(60023)
+        hold on; box on;
+        plot(JG, Wfs6(i, :), col{:,i},'LineWidth',2);
+        title('OSNAP 6 - W')
+        
+        figure(60025)
+        hold on; box on;
+        plot(JG, Pfs6(i, :), col{:,i},'LineWidth',2);
+        title('OSNAP 6 - P')        
+        
+    end
+    
+end
 
 
 % % If a merge product of RTEB is available for this time period: 
@@ -552,6 +630,7 @@ plot(JG , Ufs2, 'b.')
 plot(JG , Ufs3, 'g.')
 plot(JG , Ufs4, 'r.')
 plot(JG , Ufs5, 'm.')
+plot(JG , Ufs6, 'm.')
 ylabel('U')
 datetick
 title('QUICK CHECK OF DATA')
@@ -563,6 +642,7 @@ plot(JG , Vfs2, 'b.')
 plot(JG , Vfs3, 'g.')
 plot(JG , Vfs4, 'r.')
 plot(JG , Vfs5, 'm.')
+plot(JG , Vfs6, 'm.')
 ylabel('V')
 datetick
 title('QUICK CHECK OF DATA')
@@ -572,10 +652,10 @@ print('-dpng',[grdatdir 'otherfigure' filesep  'RTEBmerged_beforegrid_check'])
 
 
 % all the matrices for the deployments stacked together
-Ufs     = [Ufs1;Ufs2;Ufs3;Ufs4;Ufs5];
-Vfs     = [Vfs1;Vfs2;Vfs3;Vfs4;Vfs5];
-Wfs     = [Wfs1;Wfs2;Wfs3;Wfs4;Wfs5];
-Pfs     = [Pfs1;Pfs2;Pfs3;Pfs4;Pfs5];
+Ufs     = [Ufs1;Ufs2;Ufs3;Ufs4;Ufs5;Ufs6];
+Vfs     = [Vfs1;Vfs2;Vfs3;Vfs4;Vfs5;Vfs6];
+Wfs     = [Wfs1;Wfs2;Wfs3;Wfs4;Wfs5;Wfs6];
+Pfs     = [Pfs1;Pfs2;Pfs3;Pfs4;Pfs5;Pfs6];
 
 % order the matrices at every time step to avoid too many NaNs creeping in
 % 2004 removed....
@@ -608,11 +688,10 @@ for i = 1: length(P_sort(:,1))
 end
 
 
-clear Pfs1 Pfs2 Pfs3 Pfs4 Pfs5
-clear Ufs1 Ufs2 Ufs3 Ufs4 Ufs5
-clear Vfs1 Vfs2 Vfs3 Vfs4 Vfs5
-clear Wfs1 Wfs2 Wfs3 Wfs4 Wfs5
-
+clear Pfs1 Pfs2 Pfs3 Pfs4 Pfs5 Pfs6
+clear Ufs1 Ufs2 Ufs3 Ufs4 Ufs6 Ufs6
+clear Vfs1 Vfs2 Vfs3 Vfs4 Vfs5 Vfs6
+clear Wfs1 Wfs2 Wfs3 Wfs4 Wfs5 Wfs6
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%  4.  GRIDDING
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
