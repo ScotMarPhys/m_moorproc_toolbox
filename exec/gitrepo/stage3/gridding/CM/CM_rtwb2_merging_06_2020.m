@@ -83,14 +83,14 @@
 % Jan 2017 - Adapted for OSNAP moorings (by L. Houpert)
 
 close all
-moor1 = 'rteb_CM_osnap_01_2014';
-moor2 = 'rteb_CM_osnap_02_2015';
-moor3 = 'rteb_CM_osnap_03_2016';
-moor4 = 'rteb_CM_osnap_04_2017';
-moor5 = 'rteb_CM_osnap_05_2018';
-moor6 = 'rteb_CM_osnap_06_2020';
+moor1 = 'CM_rtwb2_osnap_01_2014';
+moor2 = 'CM_rtwb2_osnap_02_2015';
+moor3 = 'CM_rtwb2_osnap_03_2016';
+moor4 = 'CM_rtwb2_osnap_04_2017';
+moor5 = 'CM_rtwb2_osnap_05_2018';
+moor6 = 'CM_rtwb2_osnap_06_2020';
 
-basedir      = pathosnap;
+basedir      = pathosnap
 %basedir      = '/home/sa02lh/Data/Dropbox/Work/Postdoc_OSNAP/OSNAP_mooring/backup_mdrive';
 
 hydrodir    = [basedir '/data/moor/proc/velocity_grid/'];
@@ -196,7 +196,7 @@ for i = 1: length(sn1)
     
 end
 
-% % If a merge product of RTEB is available for this time period: 
+% % If a merge product of RTWB2 is available for this time period: 
 % jd1 = jdnew; SGfs1 = SGfs; TGfs1 = TGfs; PG1 = p_grid;    
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -310,7 +310,7 @@ cm3      = file3_data{3};
 z3       = file3_data{4};
 lon3     = file3_data{5};
 
-U2 = zeros(length(sn3), length(JG));
+U3 = zeros(length(sn3), length(JG));
 V3 = zeros(length(sn3), length(JG));
 W3 = zeros(length(sn3), length(JG));
 P3 = zeros(length(sn3), length(JG));
@@ -359,9 +359,6 @@ for i = 1: length(sn3)
 end
 
 
-
-
-
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %  2d.  OSNAP 4 (DY078 --> AR30)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -393,7 +390,7 @@ cm4      = file4_data{3};
 z4       = file4_data{4};
 lon4     = file4_data{5};
 
-U2 = zeros(length(sn4), length(JG));
+U4 = zeros(length(sn4), length(JG));
 V4 = zeros(length(sn4), length(JG));
 W4 = zeros(length(sn4), length(JG));
 P4 = zeros(length(sn4), length(JG));
@@ -444,17 +441,18 @@ end
 
 
 
-% % If a merge product of RTEB is available for this time period: 
+
+% % If a merge product of RTWB2 is available for this time period: 
 % jd2 = jdnew; SGfs2 = SGfs; TGfs2 = TGfs; PG2 = p_grid; % only keep the grid for the last microcat
 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% %  2d.  OSNAP 4 (ar30 --> dy120)
+% %  2d.  OSNAP 5 (AR30 --> DY120)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %  Notes:
 %  ------
 %
-disp('---------  OSNAP 5 (ar30 --> dy120) ---------')
+disp('---------  OSNAP 5 (AR30 --> DY120) ---------')
 fileID5 = fopen([boundarydir, moor5, '.dat']);
 delimiter = {'\t',' '};
 startRow = 6;
@@ -479,7 +477,7 @@ cm5      = file5_data{3};
 z5       = file5_data{4};
 lon5     = file5_data{5};
 
-U2 = zeros(length(sn5), length(JG));
+U5 = zeros(length(sn5), length(JG));
 V5 = zeros(length(sn5), length(JG));
 W5 = zeros(length(sn5), length(JG));
 P5 = zeros(length(sn5), length(JG));
@@ -529,12 +527,12 @@ end
 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% %  2d.  OSNAP 6 (dy120 --> djc238)
+% %  2d.  OSNAP 6 (DY120 --> JC238)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %  Notes:
 %  ------
 %
-disp('---------  OSNAP 6 (dy120 --> djc238) ---------')
+disp('---------  OSNAP 6 (DY120 --> JC238) ---------')
 fileID6 = fopen([boundarydir, moor6, '.dat']);
 delimiter = {'\t',' '};
 startRow = 6;
@@ -552,7 +550,7 @@ formatSpec = '%s%f%f%f%f%*s%*s%[^\n\r]';
 % from the Import Tool.
 file6_data = textscan(fileID6, formatSpec, 'Delimiter', delimiter, 'MultipleDelimsAsOne', true, 'HeaderLines' ,startRow-1, 'ReturnOnError', false);
 % % Close the text file.
-fclose(fileID6);
+fclose(fileID5);
 mooring6 = file6_data{1};
 sn6      = file6_data{2};
 cm6      = file6_data{3};
@@ -598,7 +596,7 @@ for i = 1: length(sn6)
         plot(JG, Wfs6(i, :), col{:,i},'LineWidth',2);
         title('OSNAP 6 - W')
         
-        figure(60025)
+        figure(60026)
         hold on; box on;
         plot(JG, Pfs6(i, :), col{:,i},'LineWidth',2);
         title('OSNAP 6 - P')        
@@ -607,11 +605,8 @@ for i = 1: length(sn6)
     
 end
 
-
-% % If a merge product of RTEB is available for this time period: 
+% % If a merge product of RTWB2 is available for this time period: 
 % jd2 = jdnew; SGfs2 = SGfs; TGfs2 = TGfs; PG2 = p_grid; % only keep the grid for the last microcat
-
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%  3.  CONCATENATE AND ORDER THE MATRICES
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -649,7 +644,7 @@ datetick
 title('QUICK CHECK OF DATA')
 
 set(aa,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)   
-print('-dpng',[grdatdir 'otherfigure' filesep  'RTEBmerged_beforegrid_check'])
+print('-dpng',[grdatdir 'otherfigure' filesep  'RTWB2merged_beforegrid_check'])
 
 
 % all the matrices for the deployments stacked together
@@ -690,9 +685,10 @@ end
 
 
 clear Pfs1 Pfs2 Pfs3 Pfs4 Pfs5 Pfs6
-clear Ufs1 Ufs2 Ufs3 Ufs4 Ufs6 Ufs6
+clear Ufs1 Ufs2 Ufs3 Ufs4 Ufs5 Ufs6
 clear Vfs1 Vfs2 Vfs3 Vfs4 Vfs5 Vfs6
 clear Wfs1 Wfs2 Wfs3 Wfs4 Wfs5 Wfs6
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%  4.  GRIDDING
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -722,7 +718,7 @@ clear Wfs1 Wfs2 Wfs3 Wfs4 Wfs5 Wfs6
     pmax = floor(max(Pfss)/20) * 20;
     
 if gridding == 2 % using climatological profiles
-    outputfile = ['RTEB_merg_' TS_CLIMATOLOGY_TP ' ' TS_CLIMATOLOGY lastyeardata ];
+    outputfile = ['RTWB2_merg_' TS_CLIMATOLOGY_TP ' ' TS_CLIMATOLOGY lastyeardata ];
     if strcmp(TS_CLIMATOLOGY_TP,'annual')
         display('con_tprof0_annual')
         [TGfs, SGfs] = con_tprof0_annual(Tfss, Sfss, Pfss, pgg', 0*ones(1, size(Tfss, 2)), int_step, TSclim, ...
@@ -747,10 +743,11 @@ if gridding == 2 % using climatological profiles
    
 elseif gridding == 1 % linear interpolation   
     
-        outputfile = ['RTEB_merg_linear_interp' lastyeardata ];
+        outputfile = ['RTWB2_merg_linear_interp' lastyeardata ];
  
+        mindepth = min(nanmean(Pfss,2)); % only for RTWB2 as it is a deep mooring
         maxdepth = max(nanmean(Pfss,2));
-        inodata = find(pgg>maxdepth);
+        inodata = find(pgg>maxdepth | pgg<mindepth);
         
         UGfs = nan(length(pgg),length(JG));
         VGfs = nan(length(pgg),length(JG));
@@ -799,42 +796,41 @@ elseif gridding == 1 % linear interpolation
 end
 
 
-
 %%%%%%%%%%%%%%
 
     
     display(['saving: ' outputfile '.mat'])
     % Alloacte variables into a structure
-    RTEB_merg_CM.JG     = JG;
-    RTEB_merg_CM.Ufs    = Ufs;
-    RTEB_merg_CM.Vfs    = Vfs;
-    RTEB_merg_CM.Wfs    = Wfs;
-    RTEB_merg_CM.Pfs    = Pfs;    
-    RTEB_merg_CM.PGfs   = pgg';    
-    RTEB_merg_CM.UGfs   = UGfs;
-    RTEB_merg_CM.VGfs   = VGfs;
-    RTEB_merg_CM.WGfs   = WGfs;
-    RTEB_merg_CM.UGfs_akima   = UGfs_akima;
-    RTEB_merg_CM.VGfs_akima   = VGfs_akima;
-    RTEB_merg_CM.WGfs_akima   = WGfs_akima;
-    RTEB_merg_CM.UGfs_pchip   = UGfs_pchip;
-    RTEB_merg_CM.VGfs_pchip   = VGfs_pchip;
-    RTEB_merg_CM.WGfs_pchip   = WGfs_pchip;    
+    RTWB2_merg_CM.JG     = JG;
+    RTWB2_merg_CM.Ufs    = Ufs;
+    RTWB2_merg_CM.Vfs    = Vfs;
+    RTWB2_merg_CM.Wfs    = Wfs;
+    RTWB2_merg_CM.Pfs    = Pfs;    
+    RTWB2_merg_CM.PGfs   = pgg';    
+    RTWB2_merg_CM.UGfs   = UGfs;
+    RTWB2_merg_CM.VGfs   = VGfs;
+    RTWB2_merg_CM.WGfs   = WGfs;
+    RTWB2_merg_CM.UGfs_akima   = UGfs_akima;
+    RTWB2_merg_CM.VGfs_akima   = VGfs_akima;
+    RTWB2_merg_CM.WGfs_akima   = WGfs_akima;
+    RTWB2_merg_CM.UGfs_pchip   = UGfs_pchip;
+    RTWB2_merg_CM.VGfs_pchip   = VGfs_pchip;
+    RTWB2_merg_CM.WGfs_pchip   = WGfs_pchip;    
 if gridding == 2 % using climatological profiles    
-    RTEB_merg.TS_CLIMATOLOGY   = TS_CLIMATOLOGY;
-    RTEB_merg.TS_CLIMATOLOGY_TP= TS_CLIMATOLOGY_TP;
-    RTEB_merg.TS_CLIMATOLOGY_NAME= TS_CLIMATOLOGY_NAME;
-    RTEB_merg.clim_file        = TSclim;
+    RTWB2_merg.TS_CLIMATOLOGY   = TS_CLIMATOLOGY;
+    RTWB2_merg.TS_CLIMATOLOGY_TP= TS_CLIMATOLOGY_TP;
+    RTWB2_merg.TS_CLIMATOLOGY_NAME= TS_CLIMATOLOGY_NAME;
+    RTWB2_merg.clim_file        = TSclim;
 end    
-%     RTEB_merg.OUT_FILE         = OUT_FILE;
-%     RTEB_merg.EB_creation_date = datestr(now);
-%     RTEB_merg.MERG_REVISION    = REV(6:8);            % store the revision number of this script
-%     RTEB_merg.MERG_AUTHOR      = REV_AUTHOR(9:end-1); % store the revision author of this script
-%     RTEB_merg.MERG_DATE        = REV_DATE(7:end-1);   % store the revision date of this script
-%     RTEB_merg.EB_path = grdatdir; % path to output file
-%     RTEB_merg.function_name = function_name; % the name and path to this function
-%     RTEB_merg.interpolation_depth=idepth-20;
-%     RTEB_merg.matlab_version = version;
+%     RTWB2_merg.OUT_FILE         = OUT_FILE;
+%     RTWB2_merg.EB_creation_date = datestr(now);
+%     RTWB2_merg.MERG_REVISION    = REV(6:8);            % store the revision number of this script
+%     RTWB2_merg.MERG_AUTHOR      = REV_AUTHOR(9:end-1); % store the revision author of this script
+%     RTWB2_merg.MERG_DATE        = REV_DATE(7:end-1);   % store the revision date of this script
+%     RTWB2_merg.EB_path = grdatdir; % path to output file
+%     RTWB2_merg.function_name = function_name; % the name and path to this function
+%     RTWB2_merg.interpolation_depth=idepth-20;
+%     RTWB2_merg.matlab_version = version;
 %     
 % % bim September 2014
 % % load in climatology to save in the data file
@@ -848,9 +844,9 @@ end
 % 	for kk=1:length(info);
 % 	  eval([ 'clim.' info(kk).name ' = ' info(kk).name])
 % 	end
-%     RTEB_merg.climatology = clim; % structure of the climatology variables used to grid the data
+%     RTWB2_merg.climatology = clim; % structure of the climatology variables used to grid the data
 % 
-%     RTEB_merg
+%     RTWB2_merg
 		
     
     % interpolating over the shorter gaps in the data - but leaving the
@@ -949,6 +945,7 @@ end
         % interpolate in time over the missing data
         WG_2(i,:) = interp1(JG(iw), www(i, iw), JG);
         
+        
         % set NAN for nans gap of more than 10 days             
         ibad = find([diff(iv)]>20); 
         if length(ibad)>=1
@@ -958,12 +955,11 @@ end
                 WG_2(i,iv(ibad(isss)):iv(ibad(isss)+1))=nan;
             end
         end
-        
-        %j = j + 1;
+        % j = j + 1;
     end
     
     
-   contourlimituv = [-40:10:40];
+    contourlimituv = [-40:10:40];
     contourlimitw = [-5:1:5];    
     close all
     figure(1); clf
@@ -1027,43 +1023,39 @@ end
     print('-dpng',[grdatdir outputfile '_www'])
     
     % Alloacte variables into a structure
-    RTEB_merg_CM.UGfs2= UG_2;
-    RTEB_merg_CM.VGfs2= VG_2;
-    RTEB_merg_CM.WGfs2= WG_2;
+    RTWB2_merg_CM.UGfs2= UG_2;
+    RTWB2_merg_CM.VGfs2= VG_2;
+    RTWB2_merg_CM.WGfs2= WG_2;
         
     %    ['save ' grdatdir char(OUT_FILE(3)) ...
     %           ' JG pgg Tfs Sfs Pfs TGfs SGfs TG_2 SG_2 P_sort T_sort S_sort']
     %    eval(['save ' grdatdir char(OUT_FILE(3)) ...
     %           ' JG pgg Tfs Sfs Pfs TGfs SGfs TG_2 SG_2 P_sort T_sort S_sort'])
     
-    RTEB_merg_CM.comment{1,1}= 'JG -- julian day';
-    RTEB_merg_CM.comment{2,1}= 'Ufs -- original stacked zonal velocity data from the deployments';
-    RTEB_merg_CM.comment{3,1}= 'Vfs -- original stacked meridional data from the deployments ';
-    RTEB_merg_CM.comment{4,1}= 'Wfs -- original stacked vertical data from the deployments ';    
-    RTEB_merg_CM.comment{5,1}= 'Pfs -- original stacked Pressure data from the deployments';    
-    RTEB_merg_CM.comment{6,1}= 'PGfs -- pressure grid ';
-    RTEB_merg_CM.comment{7,1}= 'UGfs -- zonal velocity interpolated onto the pressure grid (PGfs) with a linear extrapolation for surface values';
-    RTEB_merg_CM.comment{8,1}= 'VGfs -- meridional velocity interpolated onto the pressure grid (PGfs) with a linear extrapolation for surface values';
-    RTEB_merg_CM.comment{9,1}= 'WGfs -- vertical velocity interpolated onto the pressure grid (PGfs) with a linear extrapolation for surface values';    
-    RTEB_merg_CM.comment{10,1}= 'UGfs_akima -- zonal velocity interpolated onto the pressure grid (PGfs) with akima method';
-    RTEB_merg_CM.comment{11,1}= 'VGfs_akima -- meridional velocity interpolated onto the pressure grid (PGfs) with akima method';
-    RTEB_merg_CM.comment{12,1}= 'WGfs_akima -- vertical velocity interpolated onto the pressure grid (PGfs) with akima method';    
-    RTEB_merg_CM.comment{13,1}= 'UGfs_pchip -- zonal velocity interpolated onto the pressure grid (PGfs) with a pchip extrapolation for surface values';
-    RTEB_merg_CM.comment{14,1}= 'VGfs_pchip -- meridional velocity interpolated onto the pressure grid (PGfs) with a pchip extrapolation for surface values';
-    RTEB_merg_CM.comment{15,1}= 'WGfs_pchip -- vertical velocity interpolated onto the pressure grid (PGfs) with a pchip extrapolation for surface values';    
-    RTEB_merg_CM.comment{16,1}= 'UGfs2 -- zonal velocity interpolated onto the time grid (JG) after despiking with a linear extrapolation for surface values';  
-    RTEB_merg_CM.comment{17,1}= 'VGfs2 -- meridional velocity interpolated onto the time grid (JG) after despiking with a linear extrapolation for surface values';  
-    RTEB_merg_CM.comment{18,1}= 'WGfs2 -- vertical velocity interpolated onto the time grid (JG) after despiking with a linear extrapolation for surface values';  
+    RTWB2_merg_CM.comment{1,1}= 'JG -- julian day';
+    RTWB2_merg_CM.comment{2,1}= 'Ufs -- original stacked zonal velocity data from the deployments';
+    RTWB2_merg_CM.comment{3,1}= 'Vfs -- original stacked meridional data from the deployments ';
+    RTWB2_merg_CM.comment{4,1}= 'Wfs -- original stacked vertical data from the deployments ';    
+    RTWB2_merg_CM.comment{5,1}= 'Pfs -- original stacked Pressure data from the deployments';    
+    RTWB2_merg_CM.comment{6,1}= 'PGfs -- pressure grid ';
+    RTWB2_merg_CM.comment{7,1}= 'UGfs -- zonal velocity interpolated onto the pressure grid (PGfs) with a linear extrapolation for surface values';
+    RTWB2_merg_CM.comment{8,1}= 'VGfs -- meridional velocity interpolated onto the pressure grid (PGfs) with a linear extrapolation for surface values';
+    RTWB2_merg_CM.comment{9,1}= 'WGfs -- vertical velocity interpolated onto the pressure grid (PGfs) with a linear extrapolation for surface values';    
+    RTWB2_merg_CM.comment{10,1}= 'UGfs_akima -- zonal velocity interpolated onto the pressure grid (PGfs) with akima method';
+    RTWB2_merg_CM.comment{11,1}= 'VGfs_akima -- meridional velocity interpolated onto the pressure grid (PGfs) with akima method';
+    RTWB2_merg_CM.comment{12,1}= 'WGfs_akima -- vertical velocity interpolated onto the pressure grid (PGfs) with akima method';    
+    RTWB2_merg_CM.comment{13,1}= 'UGfs_pchip -- zonal velocity interpolated onto the pressure grid (PGfs) with a pchip extrapolation for surface values';
+    RTWB2_merg_CM.comment{14,1}= 'VGfs_pchip -- meridional velocity interpolated onto the pressure grid (PGfs) with a pchip extrapolation for surface values';
+    RTWB2_merg_CM.comment{15,1}= 'WGfs_pchip -- vertical velocity interpolated onto the pressure grid (PGfs) with a pchip extrapolation for surface values';    
+    RTWB2_merg_CM.comment{16,1}= 'UGfs2 -- zonal velocity interpolated onto the time grid (JG) after despiking with a linear extrapolation for surface values';  
+    RTWB2_merg_CM.comment{17,1}= 'VGfs2 -- meridional velocity interpolated onto the time grid (JG) after despiking with a linear extrapolation for surface values';  
+    RTWB2_merg_CM.comment{18,1}= 'WGfs2 -- vertical velocity interpolated onto the time grid (JG) after despiking with a linear extrapolation for surface values';  
     
    
-    RTEB_merg_CM
+    RTWB2_merg_CM
 
-    
-
-%     ['save ' grdatdir outputfile ' RTEB_merg_CM']
-%     eval(['save ' grdatdir outputfile ' RTEB_merg_CM']);   
-    save([grdatdir outputfile],'RTEB_merg_CM');   
-  
+     
+ save([grdatdir outputfile],'RTWB2_merg_CM');   
     
 % 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
