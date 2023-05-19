@@ -2,8 +2,9 @@
 % Lewis Drysdale, SAMS, 2020
 
 close('all')
-last_year = '_2020';
-
+last_year = '_2022';
+% filename 
+filename                    ='Rockall-Trough-Mooring-Time-Series-2022';
 % outdir                      = ['W:\common\OSNAP\THREDDS'];
 outdir                      = [pathosnap '/data/moor/THREDDS'];
 tsdir                       = [pathosnap '/data/moor/proc/hydro_grid_merged/'];
@@ -11,8 +12,7 @@ vldir                       = [pathosnap '/data/moor/proc/velocity_grid_merged/'
 % T S DATA 
 
 % Load western array data
-ffile                   ='RTWB_merg_linear_interp_2018.mat';
-load([tsdir ffile]);
+load([tsdir 'RTWB_merg_linear_interp_2020.mat']);
 % rename var and make NaN 99999
 TG_WEST                 =RTWB_merg.TGfs2;
 TG_WEST(isnan(TG_WEST)) =99999;
@@ -22,18 +22,15 @@ pressure                =RTWB_merg.PGfs(:,1);
 time                    =RTWB_merg.JG; 
     
 %Load eastern array data
-ffile                   ='RTEB_merg_linear_interp_2018.mat';
-load([tsdir ffile]);
+load([tsdir 'RTEB_merg_linear_interp_2020.mat']);
 % rename vars
 TG_EAST                 =RTEB_merg.TGfs2;
 TG_EAST(isnan(TG_EAST)) =99999;
 SG_EAST                 =RTEB_merg.SGfs2; SG_EAST(isnan(SG_EAST))=99999;
 
 %  VELOCITY
-
-
 % western boundary 1
-ffile               ='RTWB1_merg_linear_interp_2020.mat';
+ffile               ='RTWB1_merg_linear_interp_2022.mat';
 load([vldir ffile]);
 % rename vars
 U_WEST_1             =RTWB1_merg_CM.UGfs2; U_WEST_1(isnan(U_WEST_1))=99999;
@@ -41,7 +38,7 @@ V_WEST_1             =RTWB1_merg_CM.VGfs2; V_WEST_1(isnan(V_WEST_1))=99999;
 W_WEST_1             =RTWB1_merg_CM.WGfs2; W_WEST_1(isnan(W_WEST_1))=99999;
 
 % western boundary 2
-ffile               ='RTWB2_merg_linear_interp_2020.mat';
+ffile               ='RTWB2_merg_linear_interp_2022.mat';
 load([vldir ffile]);
 % rename vars
 U_WEST_2             =RTWB2_merg_CM.UGfs2;U_WEST_2(isnan(U_WEST_2))=99999;
@@ -49,7 +46,7 @@ V_WEST_2             =RTWB2_merg_CM.VGfs2;V_WEST_2(isnan(V_WEST_2))=99999;
 W_WEST_2             =RTWB2_merg_CM.WGfs2;W_WEST_2(isnan(W_WEST_2))=99999;
             
 % eastern boundary 
-ffile               ='RTEB_merg_linear_interp_2020.mat';
+ffile               ='RTEB_merg_linear_interp_2022.mat';
 load([vldir ffile]);
 % rename vars
 U_EAST             =RTEB_merg_CM.UGfs2;U_EAST(isnan(U_EAST))=99999;
@@ -63,9 +60,6 @@ fprintf('Begin %s\n', datestr(now));
 % Dimensions
 TimeDim                     = length(time);
 PressureDim                 = length(pressure);
-
-% filename 
-filename                    ='Rockall-Trough-Mooring-Time-Series-2020';
 
 % Open the file to write
 outfile                     = fullfile(outdir, [filename '.nc']);
