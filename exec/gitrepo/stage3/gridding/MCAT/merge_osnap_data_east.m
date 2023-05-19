@@ -672,7 +672,18 @@ TG_east([1:I-1],:)=TGfs([1:I-1],:);
 %     i = 7; j = 7; % PG(7) = 120;
 %     i = 11; j = 11; % PG(11) = 120;
 
-i = I; j = I;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Kristin edit (implemented by Lewis 19th May 2023)
+% The error occurs when interpolating after despiking. 
+% I cannot see what “depthminforhoriz_interp” and “pgg” is. 
+% Looks like depthminforhoriz_interp is set manually(?), 
+% which I would try to avoid. I would add a simple control to interpolate
+% only over the data gaps it they are not too long (less than one month I guess?) 
+% as e.g. described here: https://de.mathworks.com/matlabcentral/answers/87165-how-to-i-interpolate-only-if-5-or-less-missing-data-next-to-each-other
+
+dt = 0.5 ;  %resolution, e.g. 0.5 for 12-hourly data
+threshold = 30/dt; % (max length for data gap = 30 days) can be shorter or longer
+
 for i = I: length(pgg) % for each depth
 
     % locate all non nan values in the despiked temperature
@@ -680,15 +691,48 @@ for i = I: length(pgg) % for each depth
     if length(it) < 2
         continue
     end
+
     % locate all non nan values in the despiked salinity
     is = find(~isnan(salinity(i,:)));
     % interpolate in time over the missing data
     SG_east(i,:) = interp1(JG(is), salinity(i, is), JG);
     % interpolate in time over the missing data
     TG_east(i,:) = interp1(JG(it), temp(i, it), JG);
+    
+    % set gaps longer then the threshold value to NaN again
+    index = isnan(temp(i,:));
+    [b,n]=RunLength(index)
+    longRun = RunLength(b & (n>threshold), n);
+    TG_east(I,longRun) = NaN;
+
+    index = isnan(salinity (i,:));
+    [b,n]=RunLength(index)
+    longRun = RunLength(b & (n>threshold), n);
+    SG_east (I,longRun) = NaN;
 
     %j = j + 1;
 end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+% i = I; j = I;
+% for i = I: length(pgg) % for each depth
+% 
+%     % locate all non nan values in the despiked temperature
+%     it = find(~isnan(temp(i,:)));
+%     if length(it) < 2
+%         continue
+%     end
+%     % locate all non nan values in the despiked salinity
+%     is = find(~isnan(salinity(i,:)));
+%     % interpolate in time over the missing data
+%     SG_east(i,:) = interp1(JG(is), salinity(i, is), JG);
+%     % interpolate in time over the missing data
+%     TG_east(i,:) = interp1(JG(it), temp(i, it), JG);
+% 
+%     %j = j + 1;
+% end
     
 figure;
 % spurious values created in the interpolation?
