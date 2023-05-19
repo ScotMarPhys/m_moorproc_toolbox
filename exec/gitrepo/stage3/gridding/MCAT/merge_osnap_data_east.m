@@ -724,6 +724,7 @@ for n = 1:NT
     RTEB_merg.TGfs2(1:k_RTEB-1,n) = RTEB_merg.TGfs2(k_RTEB,n);
     RTEB_merg.SGfs2(1:k_RTEB-1,n) = RTEB_merg.SGfs2(k_RTEB,n);
 end
+
 % ALLOCATE VARIABLES AND SAVE
 
 RTEB_merg.comment{1,1}= 'JG -- julian day';
