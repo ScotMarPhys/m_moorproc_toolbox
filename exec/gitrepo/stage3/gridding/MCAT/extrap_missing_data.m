@@ -1,4 +1,4 @@
-function [Tfs,Sfs,Pfs,TGfs,SGfs] = extrap_missing_data(pathosnap,Tfs,Sfs,Pfs,TGfs,SGfs,JG,pgg)
+function [Tfs,Sfs,Pfs,TGfs,SGfs] = extrap_missing_data(pathosnap,wbfile,Tfs,Sfs,Pfs,TGfs,SGfs,JG,pgg)
 %% EXTRAP_MISSING_DATA extrap_missing_data
 % *Script performing additonal editing to the gridded mooring data particularly 
 % in regards to the data loss at RTEB1 between Dec 2016 and May 2017*
@@ -10,7 +10,7 @@ function [Tfs,Sfs,Pfs,TGfs,SGfs] = extrap_missing_data(pathosnap,Tfs,Sfs,Pfs,TGf
 % from the RTWB microcat 
     
 % load western boundary data
-wbfile=fullfile(pathosnap, '\data\moor\proc','hydro_grid_merged','RTWB_merg_linear_interp_2018.mat');
+wbfile=fullfile(pathosnap, '\data\moor\proc','hydro_grid_merged',wbfile);
 load(wbfile)
 S_RTWB = RTWB_merg.SGfs;
 T_RTWB = RTWB_merg.TGfs;

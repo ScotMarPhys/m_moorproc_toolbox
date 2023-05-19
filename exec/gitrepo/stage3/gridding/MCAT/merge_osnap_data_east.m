@@ -484,7 +484,7 @@ plot(JG , Tfs2, 'b.')
 plot(JG , Tfs3, 'g.')
 plot(JG , Tfs4, 'r.')
 plot(JG , Tfs5, 'm.')
-plot(JG , Tfs6, 'm.')
+plot(JG , Tfs6, 'k.')
 
 ylabel('C')
 datetick
@@ -497,7 +497,7 @@ plot(JG , Sfs2, 'b.')
 plot(JG , Sfs3, 'g.')  
 plot(JG , Sfs4, 'r.')
 plot(JG , Sfs5, 'm.')
-plot(JG , Sfs6, 'm.')
+plot(JG , Sfs6, 'k.')
 
 ylabel('SAL.')
 datetick
@@ -515,7 +515,7 @@ plot(JG , Pfs2, 'b.')
 plot(JG , Pfs3, 'g.')  
 plot(JG , Pfs4, 'r.')  
 plot(JG , Pfs5, 'm.')  
-plot(JG , Pfs6, 'm.')  
+plot(JG , Pfs6, 'k.')  
 ylabel('dbar')
 datetick
 title('PRES')   
@@ -527,7 +527,7 @@ plot(JG , PDENfs2, 'b.')
 plot(JG , PDENfs3, 'g.')  
 plot(JG , PDENfs4, 'r.')
 plot(JG , PDENfs5, 'm.')
-plot(JG , PDENfs6, 'm.')
+plot(JG , PDENfs6, 'k.')
 ylabel('kg/m3.')
 datetick
 title('POT. DENS')   
@@ -614,7 +614,8 @@ for ijj=1:length(JG)
 end
 end 
 %% Apply correction for 2017 data to EB mooring
-[Tfs,Sfs,Pfs,TGfs,SGfs] = extrap_missing_data(pathosnap,Tfs,Sfs,Pfs,TGfs,SGfs,JG,pgg);
+[wbfile,path] = uigetfile(grdatdir,'Select most recent version of WB merged') % select the most recent processing of the WB data
+[Tfs,Sfs,Pfs,TGfs,SGfs] = extrap_missing_data(pathosnap,wbfile,Tfs,Sfs,Pfs,TGfs,SGfs,JG,pgg);
 
 %% Save data
 
@@ -723,6 +724,7 @@ for n = 1:NT
     RTEB_merg.TGfs2(1:k_RTEB-1,n) = RTEB_merg.TGfs2(k_RTEB,n);
     RTEB_merg.SGfs2(1:k_RTEB-1,n) = RTEB_merg.SGfs2(k_RTEB,n);
 end
+
 % ALLOCATE VARIABLES AND SAVE
 
 RTEB_merg.comment{1,1}= 'JG -- julian day';
@@ -735,7 +737,7 @@ RTEB_merg.comment{7,1}= 'SGfs -- salinity interpolated onto the pressure grid (P
 RTEB_merg.comment{8,1}= 'TGfs2 -- temperature interpolated onto the time grid (JG) after despiking';  
 RTEB_merg.comment{9,1}= 'SGfs2 -- salinity interpolated onto the time grid (JG) after despiking';  
 
-save([grdatdir outputfile '_' datestr(now, 30)],'RTEB_merg');
+save([grdatdir outputfile],'RTEB_merg');
 %  6. PLOTTING THE GRIDDED AND MERGED PROFILES 
 % 
 

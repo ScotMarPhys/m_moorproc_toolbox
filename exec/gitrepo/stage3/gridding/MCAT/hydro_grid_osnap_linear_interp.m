@@ -27,15 +27,15 @@ stop  = [end_date' end_time(1)+end_time(2)/60];
 % Read microcat data
 % Loop option to bypass the calibration stage for shipboard processsing to look 
 % at data
-if ~isempty(mc_int)
-    mc_path = [mooringpath,':',moor,':microcat:[',num2str(mc_int),']'];  
-    [yy_mc,mm,dd,hh,t,c,p,sn_mc,depth_mc] = ...
-        rodbload(mc_path,'yy:mm:dd:hh:t:c:p:SerialNumber:Instrdepth');
-    jd_mc     = julian(yy_mc,mm,dd,hh);
-    t_mc      = dum2nan(t,dum);
-    c_mc      = dum2nan(c,dum);
-    p_mc      = dum2nan(p,dum);
-else
+% if ~isempty(mc_int)
+%     mc_path = [mooringpath,':',moor,':microcat:[',num2str(mc_int),']'];  
+%     [yy_mc,mm,dd,hh,t,c,p,sn_mc,depth_mc] = ...
+%         rodbload(mc_path,'yy:mm:dd:hh:t:c:p:SerialNumber:Instrdepth');
+%     jd_mc     = julian(yy_mc,mm,dd,hh);
+%     t_mc      = dum2nan(t,dum);
+%     c_mc      = dum2nan(c,dum);
+%     p_mc      = dum2nan(p,dum);
+% else
     mc_path = [mooringpath,':',moor,':microcat:[',num2str(mc_ind),']'];  
     [yy_mc,mm,dd,hh,t,c,p,sn_mc,depth_mc] = ...
         rodbload(mc_path,'yy:mm:dd:hh:t:c:p:SerialNumber:Instrdepth');
@@ -43,7 +43,7 @@ else
     t_mc      = dum2nan(t,dum);
     c_mc      = dum2nan(c,dum);
     p_mc      = dum2nan(p,dum);    
-end
+% end
 % Interpolate T and C onto pressure time grid
 jd_grid = ceil(julian(start)):1/iss:floor(julian(stop));
 tres    = diff(jd_grid(1:2)); % get temporal resolution of new grid

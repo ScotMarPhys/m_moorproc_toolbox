@@ -11,14 +11,15 @@
 
 
 clearvars; close('all');
-datafile = 'C:\Users\sa01ld\OneDrive - SAMS\OSNAP_mooring_processing_DY120\osnap\data/moor/THREDDS/T_S_gridded.nc';
+indir   = 'C:\Users\sa01ld\m_moorproc_toolbox';
+
+datafile = fullfile(indir,'data/moor/THREDDS/Rockall-Trough-Mooring-Time-Series-2022.nc');
 finfo=ncinfo(datafile);
 
 mooring='EAST';
 % mooring='WEST';
 
 % index of west mooring for current meter plots, either 1 or 2
-% w_nm='1'; 
  w_nm='2';
 
 % cruise dates
@@ -28,6 +29,7 @@ DY053=datenum(2016,7,01,00,00,00);
 dy078=datenum(2017,5,12,00,00,00);
 ar30=datenum(2018,7,10,00,00,00);
 dy120=datenum(2020,10,18,00,00,00);
+jc238=datenum(2022,07,25,00,00,00);
 
 
 %% 1. produce merged plot with cruise occupations
@@ -171,6 +173,7 @@ text(DY053,0,'DY053','Rotation',45,'fontsize', 16, 'FontName','Helvetica');
 text(dy078,0,'DY078','Rotation',45,'fontsize', 16, 'FontName','Helvetica');
 text(dy120,0,'DY120','Rotation',45,'fontsize', 16, 'FontName','Helvetica');
 text(ar30,0,'AR30','Rotation',45,'fontsize', 16, 'FontName','Helvetica');
+text(jc238,0,'JC238','Rotation',45,'fontsize', 16, 'FontName','Helvetica');
 hold on
 plot([KN221 KN221],[0 1800],'--k','LineWidth',2);
 plot([PE399 PE399],[0 1800],'--k','LineWidth',2);
@@ -178,6 +181,7 @@ plot([DY053 DY053],[0 1800],'--k','LineWidth',2);
 plot([dy078 dy078],[0 1800],'--k','LineWidth',2);
 plot([dy120 dy120],[0 1800],'--k','LineWidth',2);
 plot([ar30 ar30],[0 1800],'--k','LineWidth',2);
+plot([jc238 jc238],[0 1800],'--k','LineWidth',2);
 
 
 %%%%%%%%%%%%%%%%%%% SALINITY %%%%%%%%%%%%%%%%%%%

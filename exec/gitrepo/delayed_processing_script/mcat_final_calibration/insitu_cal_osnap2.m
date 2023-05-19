@@ -24,6 +24,14 @@
 %                - add reference to structure p_insitucal in which the parameters
 %                 are defined (see osnap/users/loh/mcatpostcruisecalib/postcalib_process)  
 %               - add a parameter mc_cunit
+% 
+% Lewis Drysdale, - bug fix with Julian date conversion of microcvat data
+%     06.12.2022,     see issues in GitHub https://github.com/ScotMarPhys/m_moorproc_toolbox/issues/17
+%                     
+% 
+% 
+
+
 close all
 clearvars  -except pathgitrepo pathosnap p_insitucal pathgit
 warning off
@@ -177,6 +185,17 @@ elseif strcmp('dy120',cruise)
   ctd_cunit   = 'S/m'; % cond. unit in .cnv file
   ctd_1hz     = 'mS/cm'; % cond. unit in 1 hz file
   mc_cunit    = 'mS/cm';  
+elseif strcmp('jc238',cruise)
+  mc_ext      = '.raw';  
+  mc_dir      = [basedir,'/data/moor/proc_calib/',cruise,'/cal_dip/',sensor,'/'];
+  info_dir    = [basedir,'/data/moor/proc_calib/',cruise,'/cal_dip/'];
+  ctd_dir     = [basedir '/cruise_data/',cruise,'/ctd/'];
+  ctdraw_dir  = [basedir '/cruise_data/',cruise,'/ctd/ASCII_FILES/'];
+  btldir      = [basedir '/cruise_data/',cruise,'/ctd/ASCII_FILES/'];  
+  ctdformat   = 'mstar'; % NOC format
+  ctd_cunit   = 'S/m'; % cond. unit in .cnv file
+  ctd_1hz     = 'mS/cm'; % cond. unit in 1 hz file
+  mc_cunit    = 'mS/cm';  
 else
   error('Cruise unknown')  
 end
@@ -235,6 +254,12 @@ elseif strcmp('dy120',cruise)
   ctd_cnvfile = ['DY120_',sprintf('%3.3d',cast),'.cnv'];
   mc_file     = ['cast',num2str(cast),'/cast',num2str(cast),'_'];
   info_file   = ['cast',num2str(cast),'info.dat'];   
+ elseif strcmp('jc238',cruise)
+  ctd_file    = ['ctd_jc238_',sprintf('%3.3d',cast),'_psal.nc']; % post-calibrated data from crusie dy120, processed by Yvonne Firing
+  bottle_file = ['JC238_CTD_',sprintf('%3.3d',cast),'.ros']; % .ros
+  ctd_cnvfile = ['JC238_CTD_',sprintf('%3.3d',cast),'.cnv']; 
+  mc_file     = ['cast',num2str(cast),'/cast',num2str(cast),'_'];
+  info_file   = ['cast',num2str(cast),'info.dat'];
 end  
 
 ctd_file    = [ctd_dir,ctd_file];
@@ -269,10 +294,12 @@ fprintf(1,'\n Loading CTD data ...\n')
 if strcmp(ctdformat,'aoml')
   eval(['load ',ctd_file])
   disp('aoml')
+  
   if  strcmp('kn221-02',cruise) | strcmp('kn221-03',cruise)
     cnv_cor_save=sbe;
   end
-   if  strcmp('pe400',cruise)
+  
+  if  strcmp('pe400',cruise)
     cnv_cor_save=ctd_cal;
   end 
   
@@ -312,7 +339,7 @@ if strcmp(ctdformat,'aoml')
   clear cnv_cor_save
   pack
 elseif strcmp(ctdformat,'pstar')  
-    ctd_file
+  ctd_file
   [d h]  = pload(ctd_file,'press temp cond time','silent');
 
   year   = floor(h.iymd/10000);
@@ -325,45 +352,59 @@ elseif strcmp(ctdformat,'pstar')
 elseif strcmp(ctdformat,'mstar')  
     if strcmp(cruise,'d344') || strcmp(cruise,'d359')
         ctd_file
-  dd  = netcdf(ctd_file); %,'press temp cond time','silent');
-  d = struct('press',dd{'press'}(:),'temp',dd{'temp'}(:),'cond',dd{'cond'}(:),'time',dd{'time'}(:));
-  year   = dd.data_time_origin(1); %floor(h.iymd/10000);
-  month  = dd.data_time_origin(2); %floor((h.iymd - year*10000)/100);
-  day    = dd.data_time_origin(3); %h.iymd -year*10000 - month*100;
-  hour   = dd.data_time_origin(4) + (dd.data_time_origin(5)+(dd.data_time_origin(6)/60))/60 ; %h.ihms;
-  
-  ctd_time_ori = julian(year,month,day,hour); %julian(year+h.icent, month, day,hour);
-  d.time       = d.time/86400 + ctd_time_ori; % ctd time in julian days 
-% if strcmp(cruise,'jc064')
-elseif strcmp(cruise,'dy120') | strcmp(cruise,'ar304') | strcmp(cruise,'dy078') | strcmp(cruise,'dy053') | strcmp(cruise,'pe399') 
-    ctd_file
-    if sensorselec==1    
-        [d h]=mload(ctd_file,'time','press','temp1','cond1',' ','q');
-        d.cond = d.cond1;
-        d.temp = d.temp1;
-    elseif sensorselec == 2
-        [d h]=mload(ctd_file,'time','press','temp2','cond2',' ','q');
-        d.cond = d.cond2;
-        d.temp = d.temp2;        
-    end
- HH = h.data_time_origin(4)+h.data_time_origin(5)/60+h.data_time_origin(6)/3600;
- jtime=h.data_time_origin(1:3);
- jtime=[jtime HH];
- d.time=julian(jtime)+d.time/86400;
-else
-    ctd_file
-  dd  = netcdf(ctd_file); %,'press temp cond time','silent');
-  d = struct('press',dd{'press'}(:),'temp',dd{'temp1'}(:),'cond',dd{'cond1'}(:),'time',dd{'time'}(:));
-  year   = dd.data_time_origin(1); %floor(h.iymd/10000);
-  month  = dd.data_time_origin(2); %floor((h.iymd - year*10000)/100);
-  day    = dd.data_time_origin(3); %h.iymd -year*10000 - month*100;
-  hour   = dd.data_time_origin(4) + (dd.data_time_origin(5)+(dd.data_time_origin(6)/60))/60 ; %h.ihms;
-  
-  ctd_time_ori = julian(year,month,day,hour); %julian(year+h.icent, month, day,hour);
-  d.time       = d.time/86400 + ctd_time_ori; % ctd time in julian days
+      dd  = netcdf(ctd_file); %,'press temp cond time','silent');
+      d = struct('press',dd{'press'}(:),'temp',dd{'temp'}(:),'cond',dd{'cond'}(:),'time',dd{'time'}(:));
+      year   = dd.data_time_origin(1); %floor(h.iymd/10000);
+      month  = dd.data_time_origin(2); %floor((h.iymd - year*10000)/100);
+      day    = dd.data_time_origin(3); %h.iymd -year*10000 - month*100;
+      hour   = dd.data_time_origin(4) + (dd.data_time_origin(5)+(dd.data_time_origin(6)/60))/60 ; %h.ihms;
+
+      ctd_time_ori = julian(year,month,day,hour); %julian(year+h.icent, month, day,hour);
+      d.time       = d.time/86400 + ctd_time_ori; % ctd time in julian days 
+    % if strcmp(cruise,'jc064')
+    elseif strcmp(cruise,'dy120') | strcmp(cruise,'ar304') | strcmp(cruise,'dy078') | strcmp(cruise,'dy053') | strcmp(cruise,'pe399') 
+        ctd_file
+        if sensorselec==1    
+            [d h]=mload(ctd_file,'time','press','temp1','cond1',' ','q');
+            d.cond = d.cond1;
+            d.temp = d.temp1;
+        elseif sensorselec == 2
+            [d h]=mload(ctd_file,'time','press','temp2','cond2',' ','q');
+            d.cond = d.cond2;
+            d.temp = d.temp2;        
+        end
+         HH = h.data_time_origin(4)+h.data_time_origin(5)/60+h.data_time_origin(6)/3600;
+         jtime=h.data_time_origin(1:3);
+         jtime=[jtime HH];
+         d.time=julian(jtime)+d.time/86400;
+    else
+      ctd_file
+      dd  = netcdf(ctd_file); %,'press temp cond time','silent');
+%       d = struct('press',dd{'press'}(:),'temp',dd{'temp1'}(:),'cond',dd{'cond1'}(:),'time',dd{'time'}(:));
+%       
+      
+      d = struct('press',ncread(ctd_file,'press'),...
+             'temp',ncread(ctd_file,'temp'),...
+             'cond',ncread(ctd_file,'cond'),...
+             'time',ncread(ctd_file,'time'));
+      d.temp=d.temp(:);
+      d.cond=d.cond(:);
+      d.press=d.press(:);
+      d.time=d.time(:);
+      
+      year   = dd.data_time_origin(1); %floor(h.iymd/10000);
+      month  = dd.data_time_origin(2); %floor((h.iymd - year*10000)/100);
+      day    = dd.data_time_origin(3); %h.iymd -year*10000 - month*100;
+      hour   = dd.data_time_origin(4) + (dd.data_time_origin(5)+(dd.data_time_origin(6)/60))/60 ; %h.ihms;
+      
+      decstr=datestr(hour/24,'HH:MM:SS');
+      [~,~,~,HH,M,SS]=datevec(decstr);
+      ctd_time_ori    = juliandate(year,month,day,HH,M,SS);
+      d.time       = d.time/86400 + ctd_time_ori; % ctd time in julian days
  
-  end
+    end
 end   
+
 % --- CTD Bottle -----------
 fprintf(1,'\n')
 
@@ -406,7 +447,9 @@ end
 
 ii    = find(YY == 0);
 YY(ii)=NaN; MM(ii)=NaN; DD(ii)=NaN; HH(ii)=NaN; T(ii)=NaN; C(ii)=NaN;
-JD    = julian(YY,MM,DD,HH);                    % julian day mc time 
+decstr=datestr(HH/24,'HH:MM:SS');
+[~,~,~,HH,M,SS]=datevec(decstr);
+JD    = juliandate(YY,MM,DD,HH,M,SS);                    % julian day mc time 
 
 % check which variables have been measured by sensor  
 
@@ -541,7 +584,9 @@ for stop = 1 : nstop    % bottle_stops loop
         dp=gradient(P(:,mc));
         dcond = gradient(C(:,mc));
             
+            % find nearest time in MC record to bottle stop satrt time
             [~,indstop] = nearest(bot_start(stop),JD(:,mc));
+            % match that time with a pressure
             presstop = P(indstop,mc);
             imcatbotok00 = find(P(:,mc)>presstop-3 & P(:,mc)<presstop+3 & JD(:,mc)>bot_start(stop)+interval_move1(1) & JD(:,mc)<bot_start(stop)+interval_move1(2));% & abs(dcond)<0.02 );               
 

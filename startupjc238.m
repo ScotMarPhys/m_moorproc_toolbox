@@ -5,8 +5,8 @@
 global basedir datadir execdir pathgit pathosnap
 
 % Add to the path osnap mooring functions:
-pathosnap   = 'C:\Users\sa01ld\Desktop\m_moorproc_toolbox';
-pathgit     = 'C:\Users\sa01ld\Desktop\m_moorproc_toolbox';   
+pathosnap   = 'C:\Users\sa01ld\m_moorproc_toolbox';
+pathgit     = 'C:\Users\sa01ld\m_moorproc_toolbox';   
 
 disp ('JC238, 2022')
 disp ('-----------------------------------------------------------------------------------------------')

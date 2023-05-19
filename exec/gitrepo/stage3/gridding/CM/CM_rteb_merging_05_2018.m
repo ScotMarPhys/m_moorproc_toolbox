@@ -88,6 +88,7 @@ moor2 = 'rteb_CM_osnap_02_2015';
 moor3 = 'rteb_CM_osnap_03_2016';
 moor4 = 'rteb_CM_osnap_04_2017';
 moor5 = 'rteb_CM_osnap_05_2018';
+moor6 = 'rteb_CM_osnap_06_2020';
 
 basedir      = pathosnap;
 %basedir      = '/home/sa02lh/Data/Dropbox/Work/Postdoc_OSNAP/OSNAP_mooring/backup_mdrive';

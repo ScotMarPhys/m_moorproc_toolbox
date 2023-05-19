@@ -572,7 +572,7 @@ if gridding == 2 % using climatological profiles
    
 elseif gridding == 1 % linear interpolation   
     
-    outputfile = ['RTWB_merg_linear_interp' '_'  lastyeardata '_' datestr(now, 30) ];
+    outputfile = ['RTWB_merg_linear_interp' '_'  lastyeardata ];
     TGfs = nan(length(pgg),length(JG));
     SGfs = nan(length(pgg),length(JG)); 
     for ijj=1:length(JG)
@@ -767,8 +767,8 @@ date2=datenum(max(Y),1,1);
 datetick('x','Keeplimits');
 axis ij
 title('Rockall Trough Western Boundary Gridded Temperature')
-cmap=cmocean('Thermal')
-colormap(ax(1),cmap)
+cmap=cmocean('Thermal');
+colormap(ax(1),cmap);
 
 % SALINITY
 ax(2)=subplot(2,1,2)
@@ -777,7 +777,7 @@ y=pgg;
 z=SG_west;
 [cc,hh]=contourf(x,y,z,[35:0.1:35.8],'LineColor','none');
 C = colorbar;
-cmap=cmocean('Haline')
+cmap=cmocean('Haline');
 colormap(ax(2),cmap);
 C.Label.String = 'Absolute Salinity (g kg^{-1})';
 caxis([35 35.8]);
