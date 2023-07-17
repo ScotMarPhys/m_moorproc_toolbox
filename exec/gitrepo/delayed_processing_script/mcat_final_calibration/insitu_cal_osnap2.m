@@ -857,12 +857,14 @@ end
    xlabel('pressure [dbar]')
    ylabel(['temp. diff. [C]'])
    title([sprintf('Deviations %s-CTD //%s',upper(sensor),date) ])
+   set(gca,'color',[.7 .7 .7])
 subplot(1,sub,2)
    grid on 
    set(gca,'Fontsize',12,'xlim',p_interval,'ylim',c_interval)
    xlabel('pressure [dbar]')
    ylabel('cond. diff. [mS/cm]') 
    title(['Cruise: ',cruise,'  Cast: ',num2str(cast)]) 
+   set(gca,'color',[.7 .7 .7])
 
    subplot(1,sub,3)
    grid on 
@@ -870,6 +872,7 @@ subplot(1,sub,2)
    set(gca,'Fontsize',12,'ylim',dp_interval)
    xlabel('pressure [dbar]')
    ylabel('pres. diff. [dbar]') 
+   set(gca,'color',[.7 .7 .7])
 
 
 set(figure(2),'Paperunits','centimeters','Paperposition',[0 0 29 21])

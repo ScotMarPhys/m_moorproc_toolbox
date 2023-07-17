@@ -2,7 +2,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % define GLOBAL variables
-global basedir datadir execdir pathgit pathosnap
+global basedir datadir execdir pathgit pathosnap jd_mdn
+jd_mdn = 1721058.5; %offset from julian (as calculated by matlab's juliandate) and matlab datenum
 
 % Add to the path osnap mooring functions:
 [s,r] = system('whoami');
