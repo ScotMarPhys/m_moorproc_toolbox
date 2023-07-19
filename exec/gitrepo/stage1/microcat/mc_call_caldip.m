@@ -53,26 +53,27 @@
 % --- different users, directory trees, and moorings --------------
 % ----------------------------------------------------------------
 
-clearvars -except MEXEC MEXEC_A MEXEC_G moordatadir ctddir YEAR this_cruise cruise_ctd;
+clearvars -except MEXEC_G MOORPROC_G
+global MEXEC_G MOORPROC_G
 close all;
 
 do_microcat2rodb = 1; % if 0, Does not write rodb format files. Useful for fast rerun of plots
 
-cruise = this_cruise;
+cruise = MOORPROC_G.cruise;
 
-cast = '36'; 
+cast = '1'; 
 
 doctd = 1;% 1; % whether to load and plot CTD data: 1 if mstar format, 99 if native cnv file (without header)
-jd0 = julian(YEAR,1,0,0); % set to current year
+jd0 = julian(MOORPROC_G.YEAR,1,0,0); % set to current year
 
 ctdnum = sprintf('%03d',str2num(cast));
 
 % --- set paths for data input and output ---
  
-inpath    = [moordatadir '/raw/' cruise '/microcat_cal_dip/cast',cast,'/'];
-outpath   = [moordatadir '/proc_calib/' cruise '/cal_dip/microcat/cast' cast '/'];
-infofile  = [moordatadir '/proc_calib/' cruise '/cal_dip/cast',cast,'info.dat'];
-ctdinfile = [ctddir '/ctd_' cruise '_' ctdnum '_psal.nc'];
+inpath    = [MOORPROC_G.moordatadir '/raw/' cruise '/microcat_cal_dip/cast',cast,'/'];
+outpath   = [MOORPROC_G.moordatadir '/proc_calib/' cruise '/cal_dip/microcat/cast' cast '/'];
+infofile  = [MOORPROC_G.moordatadir '/proc_calib/' cruise '/cal_dip/cast',cast,'info.dat'];
+ctdinfile = [MOORPROC_G.ctddir '/ctd_' MOORPROC_G.cruise_ctd '_' ctdnum '_psal.nc'];
 
 %addpath('/noc/users/pstar/di359/data/mexec_processing_scripts/',path);
 %jd0 = julian(2014,1,0,0);
@@ -288,7 +289,7 @@ for i=1:a(1)
 end
 legend(snl,'location','eastoutside')
 ylabel('conductivity')
-xlabel(['yearday (relative to ' num2str(YEAR) '/1/0 00:00)'])
+xlabel(['yearday (relative to ' num2str(MOORPROC_G.YEAR) '/1/0 00:00)'])
 title(['CAST ' cast ' Calibration Dip'])
 if doctd
     hl = plot(d.timeJ,d.cond1-.02,d.timeJ,d.cond1+.02,d.timeJ,d.cond1,d.timeJ,d.cond2); 
@@ -307,7 +308,7 @@ for i=1:a(1)
 end
 legend(snl,'location','eastoutside')
 ylabel('temperature')
-xlabel(['yearday (relative to ' num2str(YEAR) '/1/0 00:00)'])
+xlabel(['yearday (relative to ' num2str(MOORPROC_G.YEAR) '/1/0 00:00)'])
 title(['CAST ' cast ' Calibration Dip'])
 if doctd
     hl = plot(d.timeJ,d.temp1+.005,d.timeJ,d.temp1-.005,d.timeJ,d.temp1,d.timeJ,d.temp2); 
@@ -330,7 +331,7 @@ for i=1:a(1)
 end
 legend(snl,'location','eastoutside')
 ylabel('pressure')
-xlabel(['yearday (relative to ' num2str(YEAR) '/1/0 00:00)'])
+xlabel(['yearday (relative to ' num2str(MOORPROC_G.YEAR) '/1/0 00:00)'])
 title(['CAST ' cast ' Calibration Dip'])
 if doctd
     hl = plot(d.timeJ,d.press+5,d.timeJ,d.press-5,d.timeJ,d.press,'k-'); % bim
@@ -351,7 +352,7 @@ if find(id2==335)
     end
     legend(snl,'location','eastoutside')
     ylabel('oxygen')
-    xlabel(['yearday (relative to ' num2str(YEAR) '/1/0 00:00)'])
+    xlabel(['yearday (relative to ' num2str(MOORPROC_G.YEAR) '/1/0 00:00)'])
     title(['CAST ' cast ' Calibration Dip'])
     if doctd
         hl = plot(d.timeJ,d.oxygen1-20,d.timeJ,d.oxygen1+20,d.timeJ,d.oxygen1,d.timeJ,d.oxygen2); 

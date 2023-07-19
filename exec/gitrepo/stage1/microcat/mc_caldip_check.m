@@ -10,10 +10,12 @@
 % --- This is the information that needs to be modified for -------
 % --- different users, directory trees, and moorings --------------
 % ----------------------------------------------------------------
-clearvars -except moordatadir ctddir YEAR cruise_ctd this_cruise 
+clearvars -except MEXEC_G MOORPROC_G
 close all;
+global MEXEC_G MOORPROC_G
 
-cruise = this_cruise; % used for microcat data
+cruise = MOORPROC_G.cruise; % used for microcat data
+YEAR = MOORPROC_G.YEAR;
 % cruise2=cruise_ctd; % used for ctd data name
 % Time origin for jday
 jd0 = julian(YEAR,1,0,0);
@@ -26,9 +28,9 @@ ctdsen = input('Which CTD sensors (1 or 2?) ','s');
 ctdnum = sprintf('%03d',str2num(cast));
 
 % --- set paths for data input and output ---
-outpath   = [moordatadir '/proc_calib/' cruise '/cal_dip/microcat/cast' cast '/'];
-infofile  = [moordatadir '/proc_calib/' cruise '/cal_dip/cast',cast,'info.dat']; 
-ctdinfile = [ctddir  '/ctd_' cruise_ctd '_' ctdnum '_psal.nc'];
+outpath   = [MOORPROC_G.moordatadir '/proc_calib/' cruise '/cal_dip/microcat/cast' cast '/'];
+infofile  = [MOORPROC_G.moordatadir '/proc_calib/' cruise '/cal_dip/cast',cast,'info.dat']; 
+ctdinfile = [MOORPROC_G.ctddir  '/ctd_' MOORPROC_G.cruise_ctd '_' ctdnum '_psal.nc'];
 
 % ----------------- load CTD DATA   ----------------------------------
 
