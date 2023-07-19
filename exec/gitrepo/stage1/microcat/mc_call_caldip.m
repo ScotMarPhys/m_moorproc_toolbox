@@ -53,53 +53,40 @@
 % --- different users, directory trees, and moorings --------------
 % ----------------------------------------------------------------
 
-clearvars -except MEXEC MEXEC_A MEXEC_G pathosnap;
+clearvars -except MEXEC MEXEC_A MEXEC_G moordatadir ctddir YEAR this_cruise cruise_ctd;
 close all;
 
 do_microcat2rodb = 1; % if 0, Does not write rodb format files. Useful for fast rerun of plots
 
-if exist('pathosnap','var')
-    basedir = [pathosnap filesep 'data' filesep];
-else
-    basedir = '/home/mstar/osnap/data/';
-end
+cruise = this_cruise;
 
-cruise = 'jc238';
-cruise_ctd = 'jc238';
-
-if ispc
-    ctddir = fullfile(pathosnap,'cruise_data',cruise_ctd,'ctd');
-else
-    ctddir = fullfile(basedir,cruise_ctd,'ctd');
-end
-
-cast = '4'; dateoffsetmcdefault = 2022; % origin of the julian day in the matlab cnv files
+cast = '36'; 
 
 doctd = 1;% 1; % whether to load and plot CTD data: 1 if mstar format, 99 if native cnv file (without header)
-jd0 = julian(dateoffsetmcdefault,1,0,0); % set to current year
-YEAR=dateoffsetmcdefault;
+jd0 = julian(YEAR,1,0,0); % set to current year
 
 ctdnum = sprintf('%03d',str2num(cast));
 
 % --- set paths for data input and output ---
-
-inpath    = [basedir '/moor/raw/' cruise '/microcat_cal_dip/cast',cast,'/'];
-outpath   = [basedir '/moor/proc_calib/' cruise '/cal_dip/microcat/cast' cast '/'];
-infofile  = [basedir '/moor/proc_calib/' cruise '/cal_dip/cast',cast,'info.dat'];
-ctdinfile = [ctddir '/ctd_jc238_' ctdnum '_psal.nc'];
-%ctdinfile = [ctddir 'ar30-04' ctdnum '_withoutheader.cnv'];
-% ctdinfile = [ctddir 'ctd_' cruise_ctd '_' ctdnum '_1hz.nc'];
+ 
+inpath    = [moordatadir '/raw/' cruise '/microcat_cal_dip/cast',cast,'/'];
+outpath   = [moordatadir '/proc_calib/' cruise '/cal_dip/microcat/cast' cast '/'];
+infofile  = [moordatadir '/proc_calib/' cruise '/cal_dip/cast',cast,'info.dat'];
+ctdinfile = [ctddir '/ctd_' cruise '_' ctdnum '_psal.nc'];
 
 %addpath('/noc/users/pstar/di359/data/mexec_processing_scripts/',path);
 %jd0 = julian(2014,1,0,0);
 if doctd == 1
-    [d h]=mload(ctdinfile,'/');
+    [d, h]=mload(ctdinfile,'/');
     HH = h.data_time_origin(4)+h.data_time_origin(5)/60+h.data_time_origin(6)/3600;
     jtime=h.data_time_origin(1:3);
     jtime=[jtime HH];
     d.timeJ=julian(jtime)+d.time/86400-jd0;
-    d.oxygen2 = d.oxygen1;  % SJ: REMOVE ONCE PROBLEM RECTIFIED
+    if ~isfield(d,'oxygen2')
+        d.oxygen2 = d.oxygen1;
+    end
 elseif doctd == 99 % using cnv file instead of .nc
+    warning('hardwired cast numbers/times')
     if contains(cast,'1')
        start_date_cast = datenum(2018,07,02,18,17,06);  
     elseif contains(cast,'2')
@@ -112,86 +99,11 @@ elseif doctd == 99 % using cnv file instead of .nc
     elseif contains(cast,'6')
        start_date_cast = datenum(2018,07,07,13,13,15);
     end
-    
-    filename = ctdinfile;
-%% Format string for each line of text:
-%   column1: double (%f)
-%	column2: double (%f)
-%   column3: double (%f)
-%	column4: double (%f)
-%   column5: double (%f)
-%	column6: double (%f)
-%   column7: double (%f)
-%	column8: double (%f)
-%   column9: double (%f)
-%	column10: double (%f)
-%   column11: double (%f)
-%	column12: double (%f)
-%   column13: double (%f)
-%	column14: double (%f)
-%   column15: double (%f)
-%	column16: double (%f)
-%   column17: double (%f)
-%	column18: double (%f)
-% For more information, see the TEXTSCAN documentation.
-formatSpec = '%11f%11f%11f%11f%11f%11f%11f%11f%11f%11f%11f%11f%11f%11f%11f%11f%11f%f%[^\n\r]';
-
-%% Open the text file.
-fileID = fopen(filename,'r');
-
-%% Read columns of data according to format string.
-% This call is based on the structure of the file used to generate this
-% code. If an error occurs for a different file, try regenerating the code
-% from the Import Tool.
-dataArray = textscan(fileID, formatSpec, 'Delimiter', '', 'WhiteSpace', '', 'EmptyValue' ,NaN, 'ReturnOnError', false);
-
-%% Close the text file.
-fclose(fileID);
-
-%% Post processing for unimportable data.
-% No unimportable data rules were applied during the import, so no post
-% processing code is included. To generate code which works for
-% unimportable data, select unimportable cells in a file and regenerate the
-% script.
-
-%% Allocate imported array to column variable names
-VarName1 = dataArray{:, 1};
-VarName2 = dataArray{:, 2};
-VarName3 = dataArray{:, 3};
-VarName4 = dataArray{:, 4};
-VarName5 = dataArray{:, 5};
-VarName6 = dataArray{:, 6};
-VarName7 = dataArray{:, 7};
-VarName8 = dataArray{:, 8};
-VarName9 = dataArray{:, 9};
-VarName10 = dataArray{:, 10};
-VarName11 = dataArray{:, 11};
-VarName12 = dataArray{:, 12};
-VarName13 = dataArray{:, 13};
-VarName14 = dataArray{:, 14};
-VarName15 = dataArray{:, 15};
-VarName16 = dataArray{:, 16};
-VarName17 = dataArray{:, 17};
-e00 = dataArray{:, 18};
-
-%% Clear temporary variables
-clearvars filename formatSpec fileID dataArray ans;
-%%    
-start_date_castnum = datevec(start_date_cast);
-HH = start_date_castnum(4) + start_date_castnum(5)/60 + start_date_castnum(6)/3600;
-d.timeJ = julian([start_date_castnum(1:3) HH])  + VarName2/86400 -jd0;
-d.cond  = VarName6*10;
-d.cond1  = VarName6*10;
-d.cond2  = VarName7*10;
-d.temp  = VarName4;
-d.temp1  = VarName4;
-d.temp2  = VarName5;
-d.press = VarName3;
-d.oxygen2 = VarName9; 
+    read_ctd_cnv(ctdinfile,start_date_cast)
 end
 
 % --- get mooring information from infofile ---
-[id,sn]= rodbload(infofile,'instrument:serialnumber');
+[zp,id,sn]= rodbload(infofile,'z:instrument:serialnumber');
 
 % --  Start and end times
 [stdt,stti,endt,enti]= rodbload(infofile,'StartDate:StartTime:EndDate:EndTime');
@@ -200,127 +112,107 @@ jdend = julian([endt;enti(1)+enti(2)/60]')-jd0;
 
 % --- vector of serial numbers ---
 ii = find(id >= 332 & id <= 337);
-vec = sn(ii);
-id2=id(ii);
+invalid_sn = sn(setdiff(1:length(sn),ii));
+%ylf dy146 replace vec with sn as they are identical
+id2 = id(ii);
+zp = zp(ii);
+sn = sn(ii);
 
 % --- create log file ---
 if exist(outpath,'dir')==0
     mkdir(outpath)
 end
-
 fidlog = fopen([outpath,'microcat2rodb.log'],'w');
 
 legend_handle = ['[';'[';'['];
 legend_string = [];
 
 mx_length = 0;
-mx_length_o2 = 0;
+valid_sn = false(1,length(sn));
 % --- read data loop --
-for i = 1:length(vec)
-    % display( [,num2str(vec(i)),])
+for i = 1:length(sn)
+    % display( [,num2str(sn(i)),])
     
     fprintf(fidlog,'\n\n');
     
-    infile = [inpath,sprintf('%4.4d',vec(i)),'cal2.asc'];
-    
-    if exist(infile) ~= 2
-        infile = [inpath,sprintf('%4.4d',vec(i)),'cal.asc'];
+    %ylf dy146 condensed this part
+    % try to find infile in list of possibilities
+    infiles = {[inpath,sprintf('%4.4d',sn(i)),'cal2.asc'];
+        [inpath,sprintf('%4.4d',sn(i)),'cal.asc'];
+        [inpath,sprintf('%3.3d',sn(i)),'cal.asc'];
+        [inpath,sprintf('%4.4d',sn(i)),'CAL.asc'];
+        [inpath,sprintf('%3.3d',sn(i)),'CAL.asc'];
+        [inpath,'cal',sprintf('%4.4d',sn(i)),'.asc'];
+        [inpath,sprintf('%4.4d',sn(i)),'_cal_dip2.asc'];
+        [inpath,sprintf('%4.4d',sn(i)),'_cal_dip_data2.asc'];
+        [inpath,sprintf('%4.4d',sn(i)),'_test.asc'];
+        [inpath,sprintf('%4.4d',sn(i)),'_data.asc'];
+        [inpath,sprintf('%4.4d',sn(i)),'_cal_dip.asc'];
+        [inpath,sprintf('%4.4d',sn(i)),'_cal_dip_data.asc'];
+        [inpath,sprintf('%4.4d',sn(i)),'_cal_dip_data.cnv'];
+        [inpath,sprintf('%4.4d',sn(i)),'_Cal_Dip_Data.cnv']};
+    while ~isempty(infiles)
+        infile = infiles{1};
+        if exist(infile,'file')==2
+            break
+        else
+            infiles(1) = [];
+        end
     end
-    if exist(infile) ~= 2
-        infile = [inpath,sprintf('%3.3d',vec(i)),'cal.asc'];
-    end
-    if exist(infile) ~= 2
-        infile = [inpath,sprintf('%4.4d',vec(i)),'CAL.asc'];
-    end
-    if exist(infile) ~= 2
-        infile = [inpath,sprintf('%3.3d',vec(i)),'CAL.asc'];
-    end
-    if exist(infile) ~= 2
-        infile = [inpath,'cal',sprintf('%4.4d',vec(i)),'.asc'];
-    end
-    if exist(infile) ~= 2
-        infile = [inpath,sprintf('%4.4d',vec(i)),'_cal_dip2.asc'];
-    end
-    if exist(infile) ~= 2
-        infile = [inpath,sprintf('%4.4d',vec(i)),'_cal_dip_data2.asc'];
-    end
-    if exist(infile) ~= 2
-        infile = [inpath,sprintf('%4.4d',vec(i)),'_test.asc'];
-    end
-    if exist(infile) ~= 2
-        infile = [inpath,sprintf('%4.4d',vec(i)),'_cal_dip.asc'];
-    end
-    if exist(infile) ~= 2
-        infile = [inpath,sprintf('%4.4d',vec(i)),'_cal_dip_data.cnv'];
-    end
-     if exist(infile) ~= 2
-        infile = [inpath,sprintf('%4.4d',vec(i)),'_cal_dip_data.asc'];
-    end   
-    outfile = [outpath, 'cast', cast ,'_',sprintf('%4.4d',vec(i)),'.raw'];
-  
+    outfile = [outpath, 'cast', cast ,'_',sprintf('%4.4d',sn(i)),'.raw'];
 
     % --- convert from raw to rodb format ---
     
-    if exist(infile)
-        valid_sn(i)=1;
+    if exist(infile,'file')
+        valid_sn(i)=true;
         %------------------------------------------------------------
         % specific cases when microcat starting jday is >365
         if(contains(cruise,'ar30') & sn(i) == 11327 & contains(cast,'6'))
             dateoffsetmc = 2017;
         elseif  (contains(cruise,'ar30') & sn(i) == 9141 & contains(cast,'5'))
              dateoffsetmc = 2016;          
+        elseif sn(i)==6322
+            disp('ADDING AN OFFSET')
+            dateoffsetmc=60/86400;
         else
-            dateoffsetmc = dateoffsetmcdefault;
+            dateoffsetmc = 0;
         end
         %--------------------------------------------------------------
-   if do_microcat2rodb
-        microcat2rodb(infile,outfile,infofile,fidlog,'y',dateoffsetmc)
-   else
-       disp(['*** WARNING **** NOT WRITING RODB FILES']);
-   end 
-       
+        if do_microcat2rodb
+            microcat2rodb(infile,outfile,infofile,fidlog,'y',dateoffsetmc)
+        else
+            disp(['*** WARNING **** NOT WRITING RODB FILES']);
+        end
+
         % --- load rodb data ---
+        %ylf dy146 split conditional part into two to not repeat common
+        %part
         if id2(i)~=335 % checks if not ODO microcat
             [yy,mm,dd,hh,c,t,p] = rodbload(outfile,'yy:mm:dd:hh:c:t:p');
-            jd = julian(yy,mm,dd,hh)-jd0;
-            ixjd = jd >jdstt & jd < jdend;
-            c(~ixjd) = NaN;
-            t(~ixjd) = NaN;
-            p(~ixjd) = NaN;
-            % assign data to array called jd[s/n]
-            eval(['jd' sprintf('%d',sn(i)) '= jd;']);
-            eval(['c' sprintf('%d',sn(i)) '= c;']);
-            eval(['t' sprintf('%d',sn(i)) '= t;']);
-            eval(['p' sprintf('%d',sn(i)) '= p;']);
-            if length(jd)>mx_length;mx_length=length(jd);end;
         else % treats as ODO
             [yy,mm,dd,hh,c,t,p,ot,o2] = rodbload(outfile,'yy:mm:dd:hh:c:t:p:ot:o2');
-            jd = julian(yy,mm,dd,hh)-jd0;
-            ixjd = jd >jdstt & jd < jdend;
-            c(~ixjd) = NaN;
-            t(~ixjd) = NaN;
-            p(~ixjd) = NaN;
-            o2(~ixjd) = NaN;
-            ot(~ixjd) = NaN;
-            eval(['jd' sprintf('%d',sn(i)) '= jd;']);
-            eval(['c' sprintf('%d',sn(i)) '= c;']);
-            eval(['t' sprintf('%d',sn(i)) '= t;']);
-            eval(['p' sprintf('%d',sn(i)) '= p;']);
-            eval(['ot' sprintf('%d',sn(i)) '= ot;']);
-            eval(['o2' sprintf('%d',sn(i)) '= o2;']);
-            
-            if length(jd)>mx_length_o2;mx_length_o2=length(jd);end;
-            
         end
-    else
-        valid_sn(i)=0;
+        jd = julian(yy,mm,dd,hh)-jd0;
+        %ylf dy146 files can be different sizes anyway, so no need to keep
+        %all the NaNs we would put at the ends (~ixjd), right?
+        ixjd = jd >jdstt & jd < jdend;
+        mx_length = max(mx_length,length(ixjd));
+        data(i).jd = jd(ixjd);
+        data(i).c = c(ixjd);
+        data(i).t = t(ixjd);
+        data(i).p = p(ixjd);
+        if id2(i)==335
+            data(i).ot = ot(ixjd);
+            data(i).os = o2(ixjd);
+        end
     end
-end
-invalid_sn=sn(~valid_sn);
-sn=sn(find(valid_sn));
-vec=vec(find(valid_sn));
 
-if mx_length_o2>mx_length; mx_length = mx_length_o2; end;
+end
+invalid_sn=[invalid_sn; sn(~valid_sn)]; %combine with the ones we saved earlier that don't have MC or ODO id
+sn=sn(valid_sn);
+zp = zp(valid_sn);
+data = data(valid_sn);
+snl = [num2str(sn) repmat(' (',length(sn),1) num2str(zp) repmat(')',length(sn),1)];
 
 jd = ones(length(sn),mx_length)+nan;
 c = ones(length(sn),mx_length)+nan;
@@ -329,45 +221,47 @@ p = ones(length(sn),mx_length)+nan;
 ot = ones(length(sn),mx_length)+nan;
 o2 = ones(length(sn),mx_length)+nan;
 
+ctdc = ones(length(sn),mx_length)+nan;
+ctdt = ones(length(sn),mx_length)+nan;
 ctdc2 = ones(length(sn),mx_length)+nan;
 ctdt2 = ones(length(sn),mx_length)+nan;
 ctdp = ones(length(sn),mx_length)+nan;
 ctdot = ones(length(sn),mx_length)+nan;
 ctdo2 = ones(length(sn),mx_length)+nan;
 
-for i = 1:length(vec)
-    ll = eval(['length(jd' sprintf('%d',sn(i)) ')']);
-    jd(i,1:ll)=eval(['jd' sprintf('%d',sn(i)) ';']);
-    t(i,1:ll)=eval(['t' sprintf('%d',sn(i)) ';']);
-    c(i,1:ll)=eval(['c' sprintf('%d',sn(i)) ';']);
-    p(i,1:ll)=eval(['p' sprintf('%d',sn(i)) ';']);
-    if exist(['o2' sprintf('%d',sn(i))])
-        ot(i,1:ll)=eval(['ot' sprintf('%d',sn(i)) ';']);
-        o2(i,1:ll)=eval(['o2' sprintf('%d',sn(i)) ';']);
+for i = 1:length(sn)
+    ll = length(data(i).jd);
+    jd(i,1:ll) = data(i).jd;
+    t(i,1:ll) = data(i).t;
+    c(i,1:ll) = data(i).c;
+    p(i,1:ll) = data(i).p;
+    if isfield(data(i),'o2')
+        o2(i,1:ll) = data(i).o2;
+        ot(i,1:ll) = data(i).ot;
     end
     % interp here if doctd
-    if doctd==1 | doctd==99 
-        ni = ~isnan(c(i,:)); ctdc2(i,ni)=interp1(d.timeJ, d.cond, jd(i,ni));
-        ni = ~isnan(t(i,:)); ctdt2(i,ni)=interp1(d.timeJ, d.temp, jd(i,ni));
-        ni = ~isnan(p(i,:)); ctdp(i,ni)=interp1(d.timeJ, d.press, jd(i,ni));
-        ni = ~isnan(ot(i,:)); ctdot(i,ni)=interp1(d.timeJ, d.temp, jd(i,ni));
-        ni = ~isnan(o2(i,:)); ctdo2(i,ni)=interp1(d.timeJ, d.oxygen2, jd(i,ni));
+    if doctd==1 || doctd==99
+        ni = ~isnan(jd(i,:));
+        ctdc2(i,ni)=interp1(d.timeJ, d.cond, jd(i,ni));
+        ctdt2(i,ni)=interp1(d.timeJ, d.temp, jd(i,ni));
+        ctdp(i,ni)=interp1(d.timeJ, d.press, jd(i,ni));
+        ctdot(i,ni)=interp1(d.timeJ, d.temp, jd(i,ni));
+        ctdo2(i,ni)=interp1(d.timeJ, d.oxygen, jd(i,ni));
     end
 end
-
 
 pdiff = ['mean p diff = ' num2str(nanmedian(p'-ctdp'))];
 cdiff = ['mean c diff = ' num2str(nanmedian(c'-ctdc2'))];
 tdiff = ['mean t diff = ' num2str(nanmedian(t'-ctdt2'))];
-if ~isempty(find(id2==335))
+if sum(id2==335)>0
     odiff = ['mean o2 diff = ' num2str(nanmedian(o2'-ctdo2'))];
 end
 
-disp(['instrument SN = ' num2str(vec')]);
+disp(['instrument SN = ' num2str(sn')]);
 disp(pdiff)
 disp(cdiff)
 disp(tdiff)
-if  ~isempty(find(id2==335))
+if sum(id2==335)>0
     disp(odiff)
 end
 
@@ -386,257 +280,94 @@ end
 
 outfig = [outpath, 'cast', cast ,'_all'];
 figure(34); hold on; box on;
-% line below is not working correctly so setting up a loop for plotting instead
-%set(gcf,'DefaultAxesLineStyleOrder','-|-|-|-|-|-|-|-.|-.|-.|-.|-.|-.|-.|--|--|--|--|--|--|--|:|:|:|:|:|:|:')
 a=size(jd);
-%colours=['bgrcmykbgrcmykbgrcmykbgrcmyk']';
-colours = repmat([0 0 .8; 0 1 0; 1 0 0; 0 1 1; 1 .2 .9; .7 .5 0; 0 0 0],4,1);
-linestyles={'-','-','-','-','-','-','-','-.','-.','-.','-.','-.','-.','-.','--','--','--','--','--','--','--',':',':',':',':',':',':',':'};
+colours = repmat([0 0 .8; 0 1 0; 1 0 0; 0 1 1; 1 .2 .9; .7 .5 0; 0 .4 0; 0 0 0],4,1);
+linestyles={'-','-','-','-','-','-','-','-','-.','-.','-.','-.','-.','-.','-.','-.','--','--','--','--','--','--','--','--',':',':',':',':',':',':',':',':'};
 for i=1:a(1)
     plot(jd(i,:),c(i,:),'color',colours(i,:),'linestyle',linestyles{i});
 end
-legend(num2str(sn),'location','eastoutside')
+legend(snl,'location','eastoutside')
 ylabel('conductivity')
 xlabel(['yearday (relative to ' num2str(YEAR) '/1/0 00:00)'])
 title(['CAST ' cast ' Calibration Dip'])
-if doctd==1 | doctd==99
-    %plot(d.timeJ,d.cond1,'color',[.3 .3 .3]); % testing for sensor drift
-    %plot(d.timeJ,d.cond2,'k-') % bim
-    %plot(d.timeJ,d.cond,'k-') % gdm, calibrated variable dy039
-    hl = plot(d.timeJ,d.cond1,d.timeJ,d.cond2); set(hl(1),'color',[0 0 0]);set(hl(2),'color',[.4 .4 .4]); % ylf jc145 plot both
+if doctd
+    hl = plot(d.timeJ,d.cond1-.02,d.timeJ,d.cond1+.02,d.timeJ,d.cond1,d.timeJ,d.cond2); 
+    set(hl(1:2),'color',[.8 .8 .8],'linestyle','--');
+    set(hl(3),'color',[0 0 0]);set(hl(4),'color',[.4 .4 .4]); % ylf jc145 plot both
     title(['CAST ' cast  ' Calibration Dip (-k=CTD1,gray=CTD2)'])
 end
-xlim([jdstt-0.01 jdend+0.01]);
-orient tall; grid on;
-print(gcf,'-dpng',[outfig '_cond.png'])
+xlim(sort([jdstt-.01 jdend+.01])); grid
+orient tall
+print(gcf,'-depsc',[outfig '_cond.ps'])
 saveas(gcf,[outfig '_cond.fig'],'fig')
 
 figure(35);hold on; box on;
 for i=1:a(1)
     plot(jd(i,:),t(i,:),'color',colours(i,:),'linestyle',linestyles{i});
 end
-legend(num2str(sn),'location','eastoutside')
+legend(snl,'location','eastoutside')
 ylabel('temperature')
 xlabel(['yearday (relative to ' num2str(YEAR) '/1/0 00:00)'])
 title(['CAST ' cast ' Calibration Dip'])
-if doctd==1 | doctd==99
-    %plot(d.timeJ,d.temp1,'color',[.3 .3 .3]); % testing for sensor drift
-    %plot(d.timeJ,d.temp2,'color',[0 0 0]);    % testing for sensor drift
-    %plot(d.timeJ,d.temp,'color',[0 0 0]);    % gdm, preferred temp variable, dy039
-    %title(['CAST ' cast ' Calibration Dip (-k=CTD)'])
-    hl = plot(d.timeJ,d.temp1,d.timeJ,d.temp2); set(hl(1),'color',[0 0 0]);set(hl(2),'color',[.4 .4 .4]); % ylf jc145 plot both
+if doctd
+    hl = plot(d.timeJ,d.temp1+.005,d.timeJ,d.temp1-.005,d.timeJ,d.temp1,d.timeJ,d.temp2); 
+    set(hl(1:2),'color',[.8 .8 .8],'linestyle','--')
+    set(hl(3),'color',[0 0 0]);set(hl(4),'color',[.4 .4 .4]); % ylf jc145 plot both
     title(['CAST ' cast  ' Calibration Dip (-k=CTD1,gray=CTD2)'])
 end
-xlim([jdstt-0.01 jdend+0.01]);
-orient tall; grid on;
-print(gcf,'-dpng',[outfig '_temp.png'])
-saveas(gcf,[outfig '_temp.fig'],'fig')
-
+jdstt
+jdend
+xlim([jdstt-0.01 jdend+0.01]); grid
+orient tall
+figname=[outfig,'_temp'];
+print(gcf,'-depsc',[figname,'.ps'])
+figname=[figname,'.fig'];
+saveas(gcf,figname,'fig')
+%%
 figure(36);hold on; box on;
 for i=1:a(1)
     plot(jd(i,:),p(i,:),'color',colours(i,:),'linestyle',linestyles{i});
 end
-legend(num2str(sn),'location','eastoutside')
+legend(snl,'location','eastoutside')
 ylabel('pressure')
 xlabel(['yearday (relative to ' num2str(YEAR) '/1/0 00:00)'])
 title(['CAST ' cast ' Calibration Dip'])
-if doctd==1 | doctd==99
-    plot(d.timeJ,d.press,'k-'); % bim
+if doctd
+    hl = plot(d.timeJ,d.press+5,d.timeJ,d.press-5,d.timeJ,d.press,'k-'); % bim
+    set(hl(1:2),'color',[.8 .8 .8],'linestyle','--')
+    set(hl(3),'color',[0 0 0])
     title(['CAST ' cast ' Calibration Dip (-k=CTD)'])
 end
-
-xlim([jdstt-0.01 jdend+0.01]);
-orient tall; grid on
-print(gcf,'-dpng',[outfig '_pres.png'])
-saveas(gcf,[outfig '_temp.fig'],'fig')
+xlim([jdstt-0.01 jdend+0.01]); grid
+orient tall
+print(gcf,'-depsc',[outfig '_pres.ps'])
+saveas(gcf,[outfig '_pres.fig'],'fig')
 
 if find(id2==335)
-    %     figure(37);hold on; box on;
-    %     plot(jd',ot');legend(num2str(sn),'location','eastoutside')
-    %     ylabel('oxygen temp.')
-    %     xlabel('yearday (relative to 2012/1/0 00:00)')
-    %     title(['CAST ' cast ' Calibration Dip'])
-    %     if doctd
-    %         plot(d.timeJ,d.temp1,'k-'); % bim
-    %         title(['CAST ' cast ' Calibration Dip (-k=CTD)'])
-    %     end
-    %     xlim([jdstt-0.01 jdend+0.01]);
-    %     orient tall
-    %     print(gcf,'-depsc',[outfig '_oxy_temp.ps'])
-    %     saveas(gcf,[outfig '_oxy_temp.fig'],'fig')
-    %
+
     figure(38);hold on; box on;
     for i=1:a(1)
         plot(jd(i,:),o2(i,:),'color',colours(i,:),'linestyle',linestyles{i});
     end
-    legend(num2str(sn),'location','eastoutside')
+    legend(snl,'location','eastoutside')
     ylabel('oxygen')
     xlabel(['yearday (relative to ' num2str(YEAR) '/1/0 00:00)'])
     title(['CAST ' cast ' Calibration Dip'])
-    if doctd==1 | doctd==99
-        %plot(d.timeJ,d.oxygen1,'color',[.3 .3 .3]); % bim
-        %plot(d.timeJ,d.oxygen2,'k-'); % bim
-        %plot(d.timeJ,d.oxygen,'k-'); % gdm, calibrated variable dy039
-%         hl = plot(d.timeJ,d.oxygen1,d.timeJ,d.oxygen2); set(hl(1),'color',[0 0 0]);set(hl(2),'color',[.4 .4 .4]); % ylf jc145 plot both
-        hl = plot(d.timeJ,d.oxygen2); 
-        set(hl(1),'color',[0 0 0]);
+    if doctd
+        hl = plot(d.timeJ,d.oxygen1-20,d.timeJ,d.oxygen1+20,d.timeJ,d.oxygen1,d.timeJ,d.oxygen2); 
+        set(hl(1:2),'color',[.8 .8 .8],'linestyle','--')
+        set(hl(3),'color',[0 0 0]); set(hl(4),'color',[.4 .4 .4]); % ylf jc145 plot both
         title(['CAST ' cast ' Calibration Dip (-k=CTD)'])
     end
-    xlim([jdstt-0.01 jdend+0.01]);
-    orient tall; grid on;
-    print(gcf,'-dpng',[outfig '_oxy.png'])
+    xlim([jdstt-0.01 jdend+0.01]); grid
+    orient tall
+    print(gcf,'-depsc',[outfig '_oxy.ps'])
     saveas(gcf,[outfig '_oxy.fig'],'fig')
 end
 
-disp(['number of MicroCATs processed = ' num2str(length(vec))])
-if length(invalid_sn)>0
+disp(['number of MicroCATs processed = ' num2str(length(sn))])
+if ~isempty(invalid_sn)
     disp('WARNING: Some MicroCATs listed in info.dat file were not processed')
     disp('Serial numbers:')
-    for i=1:length(invalid_sn)
-        disp(num2str(invalid_sn(i)))
-    end
+    sprintf('%d\n',invalid_sn)
 end
-% 
-% % Additional figure
-% if exist(['o2' sprintf('%d',sn(i))])
-%     % figure with sampling
-%     figure
-% %     sp1=subplot(4,1,1)
-% %     plot(jd(1:end-1,:),diff(jd)*24*3600,'+-')
-% %     ylabel('Time diff (s)')
-% %     xlim([jdstt-0.01 jdend+0.01]);
-%     sp2=subplot(4,1,2)
-%     plot(jd,o2)
-%     xlim([jdstt-0.01 jdend+0.01]);
-%     sp3=subplot(4,1,3)
-%     p1=plot(jd,t,'k');
-%     hold on
-%     p2=plot(jd,ot,'-+');
-%     legend([p1 p2],{'SBE37 temp','O2 temp'},'location','best')
-%     xlim([jdstt-0.01 jdend+0.01]);
-%     sp4=subplot(4,1,4)
-%     plot(jd,p)
-%     xlim([jdstt-0.01 jdend+0.01]);
-%     orient tall
-%     print(gcf,'-depsc',[outfig '_difftime.ps'])      
-% linkaxes([sp1 sp2 sp3 sp4],'x')
-% end
-% 
-% 
-% 
-% % Additional figure
-% if exist(['o2' sprintf('%d',sn(i))])
-%     % figure with sampling
-%     figure
-%     sp1=subplot(4,1,1)
-%     hold on
-%     hl = plot(d.timeJ,d.press); set(hl(1),'color',[0 0 0])
-%     plot(jd,p,'-b'):q
-
-%     xlim([jdstt-0.01 jdend+0.01]);
-%     
-%     sp2=subplot(4,1,2)   
-%     hl = plot(d.timeJ,d.temp1,d.timeJ,d.temp2); set(hl(1),'color',[0 0 0]);set(hl(2),'color',[.6 .6 .6]);
-%     hold on
-%     p1=plot(jd,t,'g');    
-%     p2=plot(jd,ot,'-+b');
-%     legend([hl' p1 p2],{'temp1','temp2','SBE37 temp','O2 temp'},'location','best')
-%     xlim([jdstt-0.01 jdend+0.01]);
-%     
-%     sp3=subplot(4,1,3)    
-%     hl = plot(d.timeJ,d.cond1,d.timeJ,d.cond2); set(hl(1),'color',[0 0 0]);set(hl(2),'color',[.6 .6 .6]);
-%     hold on
-%     p1=plot(jd,c,'g');    
-%     legend([hl' p1],{'cond1','cond2','SBE37 cond'},'location','best')
-%     xlim([jdstt-0.01 jdend+0.01]);
-%     
-%     sp4=subplot(4,1,4)
-%     hl = plot(d.timeJ,d.oxygen1,d.timeJ,d.oxygen2); set(hl(1),'color',[0 0 0]);set(hl(2),'color',[.6 .6 .6]);    
-%     hold on
-%     plot(jd,o2,'b')
-%     xlim([jdstt-0.01 jdend+0.01]);
-%     
-%     orient tall
-%     print(gcf,'-depsc',[outfig '_all.ps'])   
-% linkaxes([sp1 sp2 sp3 sp4],'x')
-% 
-% saveas(gcf,[outfig '_all.fig'],'fig')
-%     
-% end
-
-
-
-
-%% Identify data at bottle stops
-
-% dp=gradient(p(1,:));
-% i=find(dp<0.2 & dp>-0.2);
-% 
-% tmp=ctdp(1,:);tmp(1,i)=NaN;
-% 
-% figure(99);clf;hold on;grid on;
-% plot(jd(1,i),ctdp(1,i),'ko');
-% plot(jd(1,i),p(1,i),'g+');
-%% PLOT DATA AT BOTTLE STOPS
-
-% apply oxygen calibration (extra code Clare Johnson, Nov 2018)
-for i=1:length(vec)
-    corro2 = ctdo2(i,:) * 1.0782;
-    corr = -2.29 + 0.00160 * ctdp(i,:);
-    cctdo2(i,:) = corro2 + corr;
-end
-
-for j=1:length(vec);
-    
-    dp=gradient(p(j,:));
-    
-    % i=find(dp<0.02 & dp>-0.02 & abs(ctdp(1,j)-p(1,j)) < 10);
-    if id2(j)==337
-        i=find(dp<0.2 & dp>-0.2);
-        nsubplot =3;
-    elseif id2(j)==335
-        i=find(dp<1 & dp>-1);
-        nsubplot =4;
-    end
-    
-    
-    pdiff=(ctdp(j,i)-p(j,i));tdiff=(ctdt2(j,i)-t(j,i));cdiff=(ctdc2(j,i)-c(j,i));
-    %o2diff=(ctdo2(j,i)-o2(j,i)); 
-    o2diff=(cctdo2(j,i)-o2(j,i)); % extra code, Clare Johnson, Nov 2018
-    figure(j);clf;
-    subplot(nsubplot,1,1);hold on ; grid on;
-    plot(ctdp(j,i),pdiff,'ko');
-    xlim([0 max(ctdp(j,:))]);
-    %ylim([min(pdiff) max(pdiff)]);
-    ylim([-10 10]);
-    xlabel('press [db]');ylabel('dp [db]');
-    title(['s/n : ',num2str(vec(j))]);
-    
-    subplot(nsubplot,1,2);hold on ; grid on;
-    plot(ctdp(j,i),tdiff,'ko');
-    xlim([0 max(ctdp(j,:))]);
-    %ylim([min(tdiff) max(tdiff)]);
-    ylim([-0.01 0.01]);
-    xlabel('press [db]');ylabel('dt [C]');
-    
-    
-    subplot(nsubplot,1,3);hold on ; grid on;
-    plot(ctdp(j,i),cdiff,'ko');
-    xlim([0 max(ctdp(j,:))]);
-    %ylim([min(cdiff) max(cdiff)]);
-    ylim([-0.02 0.02]);
-    xlabel('press [db]');ylabel('dc [mS/cm]');
-    
-    if id2(j)==335
-        subplot(nsubplot,1,4);hold on ; grid on;
-        plot(ctdp(j,i),o2diff,'ko');
-       xlim([0 max(ctdp(j,:))]);ylim([min(o2diff) max(o2diff)]);% ylim([-20 0]);
-        xlabel('press [db]');ylabel('do2 [umol/l]');
-        ylim([-15 15]) % extra code, Clare Johnson, Nov 2018
-    end
-    % extra code so saves in right directory, Clare Johnson, Nov 2018
-    outfig = [outpath, 'cast', cast , '_', num2str(vec(j)),'_bottle_stops_cj'];
-    print(gcf,'-dtiff',[outfig '.tiff']) 
-end
-
-
