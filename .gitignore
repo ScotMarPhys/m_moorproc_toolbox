@@ -1,5 +1,6 @@
 # all data directories (cruise data and mooring data)
 /data
+/exports
 
 # data (or plot) file types, but not info file types
 *.mat.zip
