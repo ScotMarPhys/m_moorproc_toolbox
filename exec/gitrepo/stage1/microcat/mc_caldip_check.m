@@ -10,9 +10,9 @@
 % --- This is the information that needs to be modified for -------
 % --- different users, directory trees, and moorings --------------
 % ----------------------------------------------------------------
-clearvars -except MEXEC_G MOORPROC_G
+global MOORPROC_G
+clearvars -except MOORPROC_G
 close all;
-global MEXEC_G MOORPROC_G
 
 cruise = MOORPROC_G.cruise; % used for microcat data
 YEAR = MOORPROC_G.YEAR;

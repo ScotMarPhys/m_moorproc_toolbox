@@ -53,8 +53,8 @@
 % --- different users, directory trees, and moorings --------------
 % ----------------------------------------------------------------
 
-clearvars -except MEXEC_G MOORPROC_G
-global MEXEC_G MOORPROC_G
+global MOORPROC_G
+clearvars -except MOORPROC_G
 close all;
 
 do_microcat2rodb = 1; % if 0, Does not write rodb format files. Useful for fast rerun of plots

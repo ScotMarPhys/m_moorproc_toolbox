@@ -12,42 +12,25 @@
 % 22.03.2010 ZB Szuts: modified for Oceanus 459
 % 22/Nov/2015 : bim: DY039, updated to accept ODO oxygen temp and O2     
 
+global MOORPROC_G
+clearvars -except MOORPROC_G
 
-%startup
+% only mooring name and dates need to be modified, rest set in MOORPROC_G by
+% startup{cruise}.m
 
-% ----- This is the information that needs to be modified for ---------
-% ----- different users, locations, directory trees, and moorings -----
-
-% the location where the processing is done (a cruise name, NOCS, etc)
-cruise = 'jc238';
-operator  = 'lad';
 moor = 'rtwb2_06_2020';
-
 % the start and end times of the time axis for plotting
 plot_interval = [2020 10 20; 2022 07 18];
 
-if exist('pathosnap','var')
-    basedir = [pathosnap '/'];
-else
-    basedir = '/home/mstar/osnap/';
-end
+cruise = MOORPROC_G.cruise;
+operator = MOORPROC_G.operator;
 
-
-
-% ----------------- set path for data input and output --------------
-%inpath   = [basedir,'moor/raw/',cruise,'/microcat/'];
-inpath  = [basedir,'data/moor/proc/',moor,'/microcat/'];
-outpath  = [basedir 'data/moor/proc/' moor '/microcat/'];
-infofile = [basedir 'data/moor/proc/' moor '/' moor 'info.dat'];
-
-%inpath    = [basedir 'moor/raw/' cruise '/microcat_cal_dip/cast',cast,'/'];  
-%outpath   = [basedir 'moor/proc_calib/' cruise '/cal_dip/microcat/cast' cast '/'];
-%infofile  = [basedir 'moor/proc_calib/' cruise '/cal_dip/cast',cast,'info.dat'];
-%ctdinfile = [ctddir  'ctd_di359_',ctdnum,'_psal.nc'];
-%ctdinfile = [ctddir  'ctd_di359_',ctdnum,'_raw.nc'];
+basedir = MOORPROC_G.moordatadir;
+inpath  = fullfile(basedir, 'proc', moor, 'microcat');
+outpath  = fullfile(basedir, 'proc', moor, 'microcat');
+infofile = fullfile(basedir, 'proc', moor, [moor 'info.dat']);
 
 % -------------------------------------------------------------------
-
 
 mc_id    = [333 335 337] ;             % microcat id numbers
 

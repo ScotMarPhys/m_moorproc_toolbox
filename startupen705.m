@@ -4,6 +4,9 @@
 % define GLOBAL variables
 global MEXEC_G
 global MOORPROC_G
+
+MOORPROC_G.operator = 'ylf';
+
 if isstruct(MEXEC_G) && 1 %can change this flag if you have m_setup for a different cruise
     mcruise = MEXEC_G.MSCRIPT_CRUISE_STRING;
     YEAR = MEXEC_G.MDEFAULT_DATA_TIME_ORIGIN(1);
@@ -51,3 +54,6 @@ if ~exist(baselogdir,'dir')
     mkdir(baselogdir)
 end
 addpath(genpath(fullfile(pathgit,'exec','gitrepo')))
+
+MOORPROC_G
+disp('if necessary, MOORPROC_G fields (e.g. operator) can be changed in workspace for this session')

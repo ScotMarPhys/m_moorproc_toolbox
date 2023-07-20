@@ -1,0 +1,118 @@
+% mc_call_2_XXXX is a script that performs stage1 processing
+% on microcat data.  It converts microcat data from raw to rodb
+% format for an entire mooring.
+%
+% It calls microcat2rodb (to convert microcat_data), rodbload.m,
+% timeaxis.m, auto_filt.m, julian.m 
+
+% 27/10/09 DR added functionality for .cnv files
+% 21/03/10 ZBS made all paths rely on a basedir variable,
+%          added a descriptive header, and modified for oceanus 459
+% 08/11/12 DR changed write mode of log file so appends instead of
+%          overwriting
+% 12/11/12 DR added check on whether infile exists and clearly highlights
+%          it for the operator with the option of stopping the routine.
+% This will need functionality for oxygen MicroCATs added prior to the
+% recovery of instruments on Autumn 2015 cruise. microcat2rodb_3.m already
+% has the functionality and mc_call_caldip_jc103 too so use them as a
+% template.
+
+close all
+global MOORPROC_G
+clearvars -except MOORPROC_G 
+
+% only mooring name needs to be modified, rest set in MOORPROC_G by
+% startup{cruise}.m
+
+moor            = 'rteb1_06_2020';
+ii = strfind(moor,'_');
+dateoffset = str2double(moor(ii(end)+1:ii(end)+4)); % year of the first measurement
+
+cruise          = MOORPROC_G.cruise;
+operator        = MOORPROC_G.operator;
+
+basedir = MOORPROC_G.moordatadir;
+inpath   = fullfile(basedir, 'raw', cruise, 'microcat');
+outpath  = fullfile(basedir, 'proc', moor, 'microcat');
+infofile = fullfile(basedir, 'proc', moor, [moor 'info.dat']);
+
+out_ext  = '.raw';
+
+% --- get mooring information from infofile ---
+
+[id,sn,lat,lon] = rodbload(infofile,'id:sn:latitude:longitude');
+if isempty(id) || isnan(id)
+  [id,sn,lat,lon] = ...
+      rodbload(infofile,'instrument:serialnumber:latitude:longitude');
+end
+
+% --- vector of serial numbers ---
+ii = find(id >= 335 & id <=337);
+vec = sn(ii);
+
+% --- write header info to log file ---
+fidlog = fopen([outpath,'stage1_log'],'a');
+fprintf(fidlog,'Transformation of ascii data to rodb format \n');
+fprintf(fidlog,'Processing carried out by %s at %s\n\n\n',operator,datestr(clock));
+
+fprintf(fidlog,'Mooring   %s \n',moor);
+fprintf(fidlog,'Latitude  %6.3f \n',lat);
+fprintf(fidlog,'Longitude %6.3f \n',lon);
+
+
+% --- loop through each instrument on the mooring ---
+for i = 1:length(vec)
+    fprintf(fidlog,'\n\n');
+    disp(['processing microcat serial number ' num2str(vec(i)) ])
+
+    infiles = {sprintf('%4.4d%s',vec(i),'rec2.asc')
+        sprintf('%4.4d%s',vec(i),'rec.asc')
+        sprintf('%3.3d%s',vec(i),'rec.asc')
+        sprintf('%4.4d%s',vec(i),'REC.asc')
+        sprintf('%3.3d%s',vec(i),'REC.asc')
+        fullfile('data',sprintf('%4.4d%s',vec(i),'_2.asc'))
+        fullfile('data',sprintf('%4.4d%s',vec(i),'.asc'))
+        sprintf('%4.4d%s',vec(i),'.asc')
+        sprintf('%4.4d%s',vec(i),'_data.cnv')
+        sprintf('%4.4d%s',vec(i),'_Data.cnv')
+        sprintf('%4.4d%s',vec(i),'_data.asc')
+        };
+    n = 1;
+    while ~exist(fullfile(inpath,infiles{n}),'file') && n<=length(infiles)
+        n = n+1;
+    end
+    infile = fullfile(inpath,infiles{n});
+    if ~exist(infile,'file')
+        ssname = regexp(moor,'_','split');
+        mcatfname = [ssname{1} '_' sprintf('%4.4d',vec(i)) '_' ...
+            num2str(dateoffset+1,'%4.0f') '.cnv'];
+        infile = [inpath,mcatfname];
+    end
+    stopped=0;
+    % if still doesn't exist, flag to operator
+    if ~exist(infile,'file')
+        disp(' ')
+        disp(['WARNING: No data file found for serial number ' num2str(vec(i))])
+        want_to_continue=input('Do you wish to continue processing the rest of the mooring? (y/n):- ','s');
+        if isempty(strmatch(upper(want_to_continue),'Y'))
+            disp('Stopping!')
+            stopped=1;
+            fprintf(fidlog,['\n Routine stopped due to missing datafile for serial number: ' num2str(vec(i))]);
+            break
+        end
+    else
+
+        outfile = [outpath,moor,'_',sprintf('%4.4d',vec(i)),out_ext];
+        microcat2rodb(infile,outfile,infofile,fidlog,'y',dateoffset);
+        disp('Press any key to continue: ')
+        pause
+    end
+end
+
+if stopped==0
+    comment = input('Enter additional comment to be save in Log file: ','s'); 
+    if ~isempty(comment)
+        fprintf(fidlog,'\n COMMENT:\n %s',comment);
+    end
+end
+fclose(fidlog);
