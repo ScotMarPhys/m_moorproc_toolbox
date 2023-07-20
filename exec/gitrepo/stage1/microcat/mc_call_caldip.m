@@ -61,7 +61,7 @@ do_microcat2rodb = 1; % if 0, Does not write rodb format files. Useful for fast 
 
 cruise = MOORPROC_G.cruise;
 
-cast = '1'; 
+cast = '2'; 
 
 doctd = 1;% 1; % whether to load and plot CTD data: 1 if mstar format, 99 if native cnv file (without header)
 jd0 = julian(MOORPROC_G.YEAR,1,0,0); % set to current year
@@ -168,13 +168,17 @@ for i = 1:length(sn)
         valid_sn(i)=true;
         %------------------------------------------------------------
         % specific cases when microcat starting jday is >365
-        if(contains(cruise,'ar30') & sn(i) == 11327 & contains(cast,'6'))
+        if(contains(cruise,'ar30') && sn(i) == 11327 && contains(cast,'6'))
             dateoffsetmc = 2017;
-        elseif  (contains(cruise,'ar30') & sn(i) == 9141 & contains(cast,'5'))
+        elseif  (contains(cruise,'ar30') && sn(i) == 9141 && contains(cast,'5'))
              dateoffsetmc = 2016;          
         elseif sn(i)==6322
             disp('ADDING AN OFFSET')
             dateoffsetmc=60/86400;
+        elseif strcmp(cruise,'dy146') && sn(i)==6322
+            dateoffsetmc=60/86400;
+        elseif strcmp(cruise,'en705') && strcmp(cast,'2')
+            dateoffsetmc=-1/24; %note: this is subtracted from mc times
         else
             dateoffsetmc = 0;
         end
@@ -182,7 +186,7 @@ for i = 1:length(sn)
         if do_microcat2rodb
             microcat2rodb(infile,outfile,infofile,fidlog,'y',dateoffsetmc)
         else
-            disp(['*** WARNING **** NOT WRITING RODB FILES']);
+            disp('*** WARNING **** NOT WRITING RODB FILES');
         end
 
         % --- load rodb data ---
@@ -204,7 +208,7 @@ for i = 1:length(sn)
         data(i).p = p(ixjd);
         if id2(i)==335
             data(i).ot = ot(ixjd);
-            data(i).os = o2(ixjd);
+            data(i).o2 = o2(ixjd);
         end
     end
 
@@ -236,7 +240,7 @@ for i = 1:length(sn)
     t(i,1:ll) = data(i).t;
     c(i,1:ll) = data(i).c;
     p(i,1:ll) = data(i).p;
-    if isfield(data(i),'o2')
+    if isfield(data(i),'o2') && ~isempty(data(i).o2)
         o2(i,1:ll) = data(i).o2;
         ot(i,1:ll) = data(i).ot;
     end
@@ -284,8 +288,9 @@ figure(34); hold on; box on;
 a=size(jd);
 colours = repmat([0 0 .8; 0 1 0; 1 0 0; 0 1 1; 1 .2 .9; .7 .5 0; 0 .4 0; 0 0 0],4,1);
 linestyles={'-','-','-','-','-','-','-','-','-.','-.','-.','-.','-.','-.','-.','-.','--','--','--','--','--','--','--','--',':',':',':',':',':',':',':',':'};
+lwmc = 2;
 for i=1:a(1)
-    plot(jd(i,:),c(i,:),'color',colours(i,:),'linestyle',linestyles{i});
+    plot(jd(i,:),c(i,:),'color',colours(i,:),'linestyle',linestyles{i},'linewidth',lwmc);
 end
 legend(snl,'location','eastoutside')
 ylabel('conductivity')
@@ -304,7 +309,7 @@ saveas(gcf,[outfig '_cond.fig'],'fig')
 
 figure(35);hold on; box on;
 for i=1:a(1)
-    plot(jd(i,:),t(i,:),'color',colours(i,:),'linestyle',linestyles{i});
+    plot(jd(i,:),t(i,:),'color',colours(i,:),'linestyle',linestyles{i},'linewidth',lwmc);
 end
 legend(snl,'location','eastoutside')
 ylabel('temperature')
@@ -316,8 +321,6 @@ if doctd
     set(hl(3),'color',[0 0 0]);set(hl(4),'color',[.4 .4 .4]); % ylf jc145 plot both
     title(['CAST ' cast  ' Calibration Dip (-k=CTD1,gray=CTD2)'])
 end
-jdstt
-jdend
 xlim([jdstt-0.01 jdend+0.01]); grid
 orient tall
 figname=[outfig,'_temp'];
@@ -327,7 +330,7 @@ saveas(gcf,figname,'fig')
 %%
 figure(36);hold on; box on;
 for i=1:a(1)
-    plot(jd(i,:),p(i,:),'color',colours(i,:),'linestyle',linestyles{i});
+    plot(jd(i,:),p(i,:),'color',colours(i,:),'linestyle',linestyles{i},'linewidth',lwmc);
 end
 legend(snl,'location','eastoutside')
 ylabel('pressure')
@@ -348,7 +351,7 @@ if find(id2==335)
 
     figure(38);hold on; box on;
     for i=1:a(1)
-        plot(jd(i,:),o2(i,:),'color',colours(i,:),'linestyle',linestyles{i});
+        plot(jd(i,:),o2(i,:),'color',colours(i,:),'linestyle',linestyles{i},'linewidth',lwmc);
     end
     legend(snl,'location','eastoutside')
     ylabel('oxygen')
