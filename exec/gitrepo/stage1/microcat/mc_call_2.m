@@ -24,9 +24,10 @@ clearvars -except MOORPROC_G
 % only mooring name needs to be modified, rest set in MOORPROC_G by
 % startup{cruise}.m
 
-moor            = 'rteb1_06_2020';
+moor            = 'wb1_16_2023';
 ii = strfind(moor,'_');
-dateoffset = str2double(moor(ii(end)+1:ii(end)+4)); % year of the first measurement
+YEAR = str2double(moor(ii(end)+1:ii(end)+4)); % year of the first measurement
+dateoffset = 0;
 
 cruise          = MOORPROC_G.cruise;
 operator        = MOORPROC_G.operator;
@@ -34,6 +35,9 @@ operator        = MOORPROC_G.operator;
 basedir = MOORPROC_G.moordatadir;
 inpath   = fullfile(basedir, 'raw', cruise, 'microcat');
 outpath  = fullfile(basedir, 'proc', moor, 'microcat');
+if ~exist(outpath,'dir')
+    mkdir(outpath)
+end
 infofile = fullfile(basedir, 'proc', moor, [moor 'info.dat']);
 
 out_ext  = '.raw';
@@ -85,7 +89,7 @@ for i = 1:length(vec)
     if ~exist(infile,'file')
         ssname = regexp(moor,'_','split');
         mcatfname = [ssname{1} '_' sprintf('%4.4d',vec(i)) '_' ...
-            num2str(dateoffset+1,'%4.0f') '.cnv'];
+            num2str(YEAR+1,'%4.0f') '.cnv'];
         infile = [inpath,mcatfname];
     end
     stopped=0;
@@ -102,7 +106,7 @@ for i = 1:length(vec)
         end
     else
 
-        outfile = [outpath,moor,'_',sprintf('%4.4d',vec(i)),out_ext];
+        outfile = fullfile(outpath,[moor,'_',sprintf('%4.4d',vec(i)),out_ext]);
         microcat2rodb(infile,outfile,infofile,fidlog,'y',dateoffset);
         disp('Press any key to continue: ')
         pause

@@ -26,7 +26,9 @@
 %            - Loic Houpert, add png export for the saved plots
 
 function nortek_raw2use_02(moor,varargin)
-  
+
+global MOORPROC_G
+
 if nargin==0
     help nortek_raw2use_02;
     return
@@ -37,17 +39,13 @@ a = find(strcmp('procpath', varargin));
 if a>0
     procpath=char(varargin(a+1));
 else
-   % procpath='/noc/ooc/rpdmoc/rapid/data/moor/proc/';
-     %procpath='/Volumes/RB1201/rapid/data/moor/proc/';
-     %procpath='/Users/hydrosea5/Desktop/RB1201/rapid/data/moor/proc';
-     
-     procpath='/noc/users/pstar/rpdmoc/rapid/data/moor/proc/'; % path on D382 using oceanus workstation
+    procpath=fullfile(MOORPROC_G.moordatadir,'proc'); % path on D382 using oceanus workstation
 end
 a = find(strcmp('outpath', varargin));
 if a>0
     outpath=char(varargin(a+1));
 else
-    outpath = [procpath '/' moor '/nor/'];
+    outpath = fullfile(procpath,moor,'nor');
 end
 a = find(strcmp('plot_interval', varargin));
 if a>0
@@ -60,18 +58,13 @@ else
     plot_interval=0;
 end
 
-operator = ' ';
-% [gash, operator]=system('whoami');  % This line will not work if run from a PC. May need to edit it out.
+operator = MOORPROC_G.operator;
 
 % -- set path for data input
-%inpath  = [procpath '/' moor '/'];
-inpath  = [procpath moor '/'];
+inpath  = fullfile(procpath,moor);
 
 % --- get moring information from infofile 
-infofile =[procpath moor '/' moor 'info.dat'];
-%infofile=['/Users/hydrosea5/Desktop/RB1201/rapid/data/moor/proc/wb1_8_201113/wb1_8_201113info.dat']
-%infofile =[procpath '/' moor '/' moor 'info.dat']; % aurelie
-
+infofile = fullfile(procpath,moor,[moor 'info.dat']);
 
 [id,sn,z,s_t,s_d,e_t,e_d,lat,lon,wd,mr]  =  rodbload(infofile,'instrument:serialnumber:z:Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:WaterDepth:Mooring');
 
@@ -116,14 +109,14 @@ jd_e  = julian(e_d(1),e_d(2),e_d(3),e_t(1)+e_t(2)/60);  % end time
 for proc = 1 : length(vec)
     columns = 'YY:MM:DD:HH:T:P:U:V:W:HDG:PIT:ROL:USS:VSS:WSS:IPOW:CS:CD';
     indep  = z(proc);
-    infile  = [inpath,'nor/',moor,'_',num2str(sn(proc)),'.raw'];
+    infile  = fullfile(inpath,'nor',[moor,'_',num2str(sn(proc)),'.raw']);
   
     if exist(infile)==0
         disp(['infile: ' infile ' does not exist.'])
       
     elseif exist(infile)   > 0 
         rodbfile= [moor,'_',num2str(sn(proc)),'.use']; 
-        outfile = [outpath,rodbfile];
+        outfile = fullfile(outpath,rodbfile);
         fprintf(fid_stat,'Serialnumber %d \n',sn(proc));
         fprintf(fid_stat,'Infile %s \n',infile);
         fprintf(fid_stat,'Outfile %s \n',outfile);
@@ -167,7 +160,7 @@ for proc = 1 : length(vec)
 
         djd = diff(jd);           % time step  
         sr  = median(djd);        % sampling interval
-        ii  = find(djd > 1.5*sr);  % find gaps
+        ii  = djd > 1.5*sr;  % find gaps
         gap = round(djd(ii)/sr)-1;
         addt= []; 
 
@@ -322,7 +315,7 @@ end % function
   end
   
   subplot(panels,1,sub);
-         
+  
   plot(jd(i1)-jd0,var1)
   hold on
 

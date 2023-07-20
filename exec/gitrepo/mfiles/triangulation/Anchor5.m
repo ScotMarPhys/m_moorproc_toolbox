@@ -56,6 +56,7 @@ mcruise = MOORPROC_G.cruise;
 opt1 = 'ship'; opt2 = 'datasys_best'; get_cropt %default_navstream
 nav_stream = default_navstream;
 dirout = fullfile(MOORPROC_G.moordatadir,'raw',mcruise,'moor_positions');
+iscor = 0;
 
 % User input
 fprintf(1,'\n Enter mooring name (e.g. ebh3)). Times will then be read from <name>_times.txt: \n');
@@ -175,6 +176,7 @@ else
     corr_struct = 	mcarter(lat(1),lon(1),wd0);
     wd_corr = corr_struct.cordep;
     wd = 2*wd0-wd_corr;
+    if iscor; wd_corr = wd0; end %***
 end
 
 
@@ -350,7 +352,7 @@ ylim([south north]);
 if strmatch(loc_name, '')
     return
 else
-    plotout = [dirout loc_name '_triangle'];
+    plotout = fullfile(dirout, [loc_name '_triangle']);
     print('-depsc', plotout)
     eval(['!cat ' fileout])
 end

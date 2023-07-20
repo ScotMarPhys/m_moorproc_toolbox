@@ -25,15 +25,10 @@
 
 function nortek2rodb_01(moor, varargin)
 
-%basedir='/noc/users/pstar/rpdmoc/';
-if exist('/Volumes/rpdmoc/rapid/data/exec/jc103/stage1/microcat/mc_call_caldip_jc103_v3.m','file')
-    % using DR Mac with mount to banba on JC103
-    basedir = '/Volumes/rpdmoc/rapid/data/';
-else
-    basedir = '/noc/mpoc/rpdmoc/users/dr400/osnap/data/';
-end
-cruise='pelagia2015';
+global MOORPROC_G
 
+basedir = MOORPROC_G.moordatadir;
+cruise= MOORPROC_G.cruise;
 
 if nargin==0
     help nortek2rodb_01
@@ -45,34 +40,27 @@ a=strmatch('procpath',varargin,'exact');
 if a>0
     procpath=char(varargin(a+1));
 else
-    %procpath='/Volumes/RB1201/rapid/data/moor/proc';
-    procpath=[basedir '/rapid/data/moor/proc'];
+    procpath = fullfile(MOORPROC_G.moordatadir,'proc');
 end
 
 a=strmatch('inpath',varargin,'exact');
 if a>0
     inpath=char(varargin(a+1));
 else
-    %inpath=['/Volumes/RB1201/rapid/data/moor/raw/' moor '/'];
-    inpath=[basedir '/rapid/data/moor/raw/' cruise '/nor/'];
-end
+    inpath = fullfile(MOORPROC_G.moordadtadir,'raw',cruise,'nor');end
 
 a=strmatch('outpath',varargin,'exact');
 if a>0
     outpath=char(varargin(a+1));
 else
-    %outpath = './';
-    outpath=[procpath '/' moor '/nor/'];
+    outpath = fullfile(procpath,moor,'nor');
 end
 
 
 % --- get moring information from infofile 
-infofile =[procpath '/' moor '/' moor 'info.dat'];
+infofile = fullfile(procpath,moor,[moor 'info.dat']);
 
-
-[gash, operator]=system('whoami'); % This line will not work if run from a PC. May need to edit it out.
-% % gash is not used, but a second variable needs to be specified for the system command
-
+operator = MOORPROC_G.operator;
 
 % ----- read infofile / open logfile  ------------------------------------
 
@@ -98,7 +86,7 @@ serial_nums=sn(vec)
 % should be filename. This is necessary as there is currently no standard
 % naming convention for Argonaut files. Do not include path though.
 
-textfile=[inpath moor '_filenames.txt'];
+textfile=fullfile(inpath,[moor '_filenames.txt']);
 %check if file exists
 if ~exist(textfile)
     disp(textfile)
@@ -109,9 +97,9 @@ end
 
 % -------- load data --------------
 for i = 1:length(filenames)
-    infile=[inpath char(filenames(i))]
+    infile=fullfile(inpath,filenames{i});
     outfile=[moor '_' num2str(input_ser_nums(i)) '.raw'];
-    indep=find(sn==input_ser_nums(i));
+    indep=sn==input_ser_nums(i);
     indep=z(indep);
     if length(indep)>1
         indep=indep(1);
@@ -120,7 +108,7 @@ for i = 1:length(filenames)
     fprintf(fidlog,'outfile: %s\n',outfile);
     fprintf(fidlog,'Nortek serial number  : %d\n',input_ser_nums(i));
 
-    if ~exist(infile,'file')==2;
+    if ~exist(infile,'file')
         checkans = input(['File for serial number ' serial_nums(i) 'not found. Do you want to continue? y/n [y]:'],'s');
        if isempty(checkans)
           reply = 'Y';
@@ -168,9 +156,9 @@ for i = 1:length(filenames)
         fort =['%4.4d %2.2d %2.2d  %6.4f  %4.2f %7.3f  %4.1f %4.1f %4.1f  %4.1f %4.1f %4.1f  %2d %2d %2d  %2.1f  %4.1f %5.2f'];
         infovar = ['Mooring:Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:WaterDepth:' ...
                    'Columns:SerialNumber:InstrDepth']; 
-        rodbsave([outpath outfile],infovar,fort,moor,s_t,s_d,e_t,e_d,lat,lon,wd,columns,...
+        rodbsave(fullfile(outpath,outfile),infovar,fort,moor,s_t,s_d,e_t,e_d,lat,lon,wd,columns,...
                  input_ser_nums(i),indep,data);
-        eval(['disp(''Data written to ' outpath outfile ''')']);
+        eval(['disp(''Data written to ' fullfile(outpath,outfile) ''')']);
 
     else
         disp(['Serial number does not match those in info.dat file - sn: ' num2str(input_ser_nums(i))])

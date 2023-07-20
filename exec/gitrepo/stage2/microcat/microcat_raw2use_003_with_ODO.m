@@ -18,9 +18,9 @@ clearvars -except MOORPROC_G
 % only mooring name and dates need to be modified, rest set in MOORPROC_G by
 % startup{cruise}.m
 
-moor = 'rtwb2_06_2020';
+moor = 'wb1_16_2023';
 % the start and end times of the time axis for plotting
-plot_interval = [2020 10 20; 2022 07 18];
+plot_interval = [2023 03 05; 2023 07 21];
 
 cruise = MOORPROC_G.cruise;
 operator = MOORPROC_G.operator;
@@ -55,8 +55,8 @@ id     = id(zx);
 
 
 
-fid_stat = fopen([outpath,'stage2_log'],'w');
-fprintf(fid_stat,'Processing steps taken by microcat_rdb2use.m:\n');
+fid_stat = fopen(fullfile(outpath,'stage2_log'),'w');
+fprintf(fid_stat,'Processing steps taken by %s:\n',mfilename);
 fprintf(fid_stat,'  1. eliminate lauching and recovery period\n');
 fprintf(fid_stat,'  2. save data to rdb file\n');
 fprintf(fid_stat,'\n Operated by:%s on %s\n',operator,datestr(clock)); 
