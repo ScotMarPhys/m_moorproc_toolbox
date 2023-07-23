@@ -61,7 +61,7 @@ do_microcat2rodb = 1; % if 0, Does not write rodb format files. Useful for fast 
 
 cruise = MOORPROC_G.cruise;
 
-cast = '2'; 
+cast = '7';
 
 doctd = 1;% 1; % whether to load and plot CTD data: 1 if mstar format, 99 if native cnv file (without header)
 jd0 = julian(MOORPROC_G.YEAR,1,0,0); % set to current year

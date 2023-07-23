@@ -24,8 +24,9 @@ jd0 = julian(YEAR,1,0,0);
 % User supplied information
 % Select cast number and choose which set of instruments from CTD
 cast = input('Which cast number? ','s');
-ctdsen = input('Which CTD sensors (1 or 2?) ','s');
-ctdnum = sprintf('%03d',str2num(cast));
+ctdnum = sprintf('%03d',str2double(cast));
+ctdsen = input('Which CTD sensors (1 or 2 [or blank to use already-selected primary])?) ','s');
+oxysen = input('Which CTD oxygen (1 or 2 [or blank to use already-selected primary])?' , 's');
 
 % --- set paths for data input and output ---
 outpath   = [MOORPROC_G.moordatadir '/proc_calib/' cruise '/cal_dip/microcat/cast' cast '/'];
@@ -33,15 +34,18 @@ infofile  = [MOORPROC_G.moordatadir '/proc_calib/' cruise '/cal_dip/cast',cast,'
 ctdinfile = [MOORPROC_G.ctddir  '/ctd_' MOORPROC_G.cruise_ctd '_' ctdnum '_psal.nc'];
 
 % ----------------- load CTD DATA   ----------------------------------
-
-h = m_read_header(ctdinfile);
-if sum(strcmp(h.fldnam,'oxygen2'))
-    [d, h]=mload(ctdinfile,'time','press','temp1','cond1','temp2','cond2','oxygen1','oxygen2',' ','q');
-else
-    [d, h]=mload(ctdinfile,'time','press','temp1','cond1','temp2','cond2','oxygen1',' ','q');
-    d.oxygen2 = d.oxygen1;
+cvars = 'time press temp1 cond1 oxygen1 temp2 cond2 ';
+h = m_read_header(ctdinfile); if sum(strcmp(h.fldnam,'oxygen2')); cvars = [cvars 'oxygen2 ']; end
+d = mload(ctdinfile,[cvars ' ']);
+if strcmp(cruise,'d382')
+    % Correction for Di382
+    d.cond1=d.cond1*10;  
+    d.cond2=d.cond2*10;  
 end
-
+%and rename primary(s)
+d.temp = d.(['temp' ctdsen]);
+d.cond = d.(['cond' ctdsen]);
+d.oxygen = d.(['oxygen' oxysen]);
  
  HH = h.data_time_origin(4)+h.data_time_origin(5)/60+h.data_time_origin(6)/3600;
  jtime=h.data_time_origin(1:3);
@@ -50,11 +54,6 @@ end
  ctdtimetx = datestr(h.data_time_origin);
  ptittxt = sprintf('Cast %s start %s SBE-CTD sensor set %s',cast,ctdtimetx,ctdsen);
 
-if strcmp(cruise,'d382')
-    % Correction for Di382
-    d.cond1=d.cond1*10;  
-    d.cond2=d.cond2*10; 
-end
 
 % Selecttime period that we will analyse
 mxpi = max(d.press);
@@ -67,18 +66,24 @@ meanctdpr = nanmean(d.press(imp2));
 % CTD stats during period
 meanctdpr = nanmean(d.press(imp2));
 stdctdpr = nanstd(d.press(imp2));
-ctd1_cond_mn = nanmean(d.cond1(imp2));
-ctd1_cond_st = nanstd(d.cond1(imp2));
-ctd2_cond_mn = nanmean(d.cond2(imp2));
-ctd2_cond_st = nanstd(d.cond2(imp2));
-ctd1_temp_mn = nanmean(d.temp1(imp2));
-ctd1_temp_st = nanstd(d.temp1(imp2));
-ctd2_temp_mn = nanmean(d.temp2(imp2));
-ctd2_temp_st = nanstd(d.temp2(imp2));
-ctd1_oxy_mn = nanmean(d.oxygen1(imp2));
-ctd1_oxy_st = nanstd(d.oxygen1(imp2));
-ctd2_oxy_mn = nanmean(d.oxygen2(imp2));
-ctd2_oxy_st = nanstd(d.oxygen2(imp2));
+ctd_cond1_mn = nanmean(d.cond1(imp2));
+ctd_cond1_st = nanstd(d.cond1(imp2));
+ctd_temp1_mn = nanmean(d.temp1(imp2));
+ctd_temp1_st = nanstd(d.temp1(imp2));
+ctd_oxy1_mn = nanmean(d.oxygen1(imp2));
+ctd_oxy1_st = nanstd(d.oxygen1(imp2));
+ctd_cond2_mn = nanmean(d.cond2(imp2));
+ctd_cond2_st = nanstd(d.cond2(imp2));
+ctd_temp2_mn = nanmean(d.temp2(imp2));
+ctd_temp2_st = nanstd(d.temp2(imp2));
+ctd_oxy2_mn = nanmean(d.oxygen2(imp2));
+ctd_oxy2_st = nanstd(d.oxygen2(imp2));
+ctd_cond_mn = nanmean(d.cond(imp2));
+ctd_cond_st = nanstd(d.cond(imp2));
+ctd_temp_mn = nanmean(d.temp(imp2));
+ctd_temp_st = nanstd(d.temp(imp2));
+ctd_oxy_mn = nanmean(d.oxygen(imp2));
+ctd_oxy_st = nanstd(d.oxygen(imp2));
 
 % --- get mooring information from infofile ---
 [zins,id,sn]= rodbload(infofile,'z:instrument:serialnumber');
@@ -106,24 +111,14 @@ for i = 1:nvec
    else
             [yy,mm,dd,hh,c,t,p,o] = rodbload(outfile,'yy:mm:dd:hh:c:t:p:o2');
    end
-%  if (i > 6 & i<=12)  lstr='--'; elseif i>12  lstr ='-.'; else lstr = '-'; end 
    if (i > 7 & i<=14)  lstr='--'; elseif i>14  lstr ='-.'; else lstr = '-'; end 
-%   disp(['Checking ',num2str(i),': s/n:',num2str(sn(i))])
-%    pause
 % Time variable
    jd = julian(yy,mm,dd,hh)-jd0;
 % interpolate CTD onto microcat for a rough and ready mean diff
-     if ctdsen == '1'
        pi = interp1(d.timeJ, d.press, jd);
-       ti = interp1(d.timeJ, d.temp1, jd);
-       ci = interp1(d.timeJ, d.cond1, jd);
-       oi = interp1(d.timeJ, d.oxygen1, jd);       
-     elseif ctdsen == '2'
-       pi = interp1(d.timeJ, d.press, jd);
-       ti = interp1(d.timeJ, d.temp2, jd);
-       ci = interp1(d.timeJ, d.cond2, jd);
-       oi = interp1(d.timeJ, d.oxygen2, jd);        
-     end
+       ti = interp1(d.timeJ, d.temp, jd);
+       ci = interp1(d.timeJ, d.cond, jd);
+       oi = interp1(d.timeJ, d.oxygen, jd);       
 
 % Select data from period when CTD kept at maximum depth
      impt = jd>tm1p & jd < tm2p;
@@ -153,7 +148,7 @@ for i = 1:nvec
 % Select data close to microcats nominal deployment depth  
      pbin = 2;
      pbstep = 200;
-     ipx = find(pi >zmic(i)-(pbstep/pbin) & pi < zmic(i)+pbstep/pbin);
+     ictdsenpx = find(pi >zmic(i)-(pbstep/pbin) & pi < zmic(i)+pbstep/pbin);
      [nh,px] = hist(pi(ipx),floor(pbstep/pbin));
      nmhx = find(nh == max(nh));
      ptest(i) = px(nmhx(1));
@@ -171,10 +166,10 @@ for i = 1:nvec
 %     disp(['proceeding to next file ']) 
 end % for i = 1:length(vec)
 
-'end'
+disp('end')
 % Quick look all data and search for outliers
 toutlie(1:nvec) = {' '};
-if nvec~=1;
+if nvec~=1
 for kk = 1:3
     if kk == 1 
         xxv = cdifx(:,1); % microcat - ctd
@@ -184,7 +179,7 @@ for kk = 1:3
     elseif kk == 2 
         xxv = tdifx(:,1);
         sxv = tstd(:,1);
-        txv = 'Temperateure';
+        txv = 'Temperature';
         t2xv = 'T';t3xv = 't';
     elseif kk == 3 
         xxv = pdifx(:,1);
@@ -236,7 +231,7 @@ for i = 1:nvec
 end
 
   fprintf(1,'\n%s \n',txv)
-  fprintf(1,'Mean of all differences %8.5f std %8.5f Std err %8.5f No of outlliers %i \n', ...
+  fprintf(1,'Mean of all differences %8.5f std %8.5f Std err %8.5f No of outliers %i \n', ...
     xxmean,xxstd,xxerr,nvec-sum(itok))
  if sum(~itok >= 1)
     fprintf(1,' %i  ',vec(~itok))

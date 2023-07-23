@@ -492,13 +492,13 @@ nplots = sz(2) - 4; % variables other than the four time vars
 
 for k = 1:nplots
     subplot(nplots,1,k);
-    if k==1
-          title(['Microcat:  ',num2str(SerialNumber),'   Depth:  ',num2str(z),' m']) 
-    end
     hold off;
     plot(jd-jd(1),data(:,4+k));
     set(gca,'Ygrid','on')
     set(gca,'Xgrid','on')
+    if k==1
+          title(['Microcat:  ',num2str(SerialNumber),'   Depth:  ',num2str(z),' m']) 
+    end
     
     mt = median(data(:,4+k));
     if k == 1
