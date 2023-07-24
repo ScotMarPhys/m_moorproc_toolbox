@@ -6,7 +6,7 @@
 % rteb1_01_2014_filenames.txt must also exist in EB1_recovery directory
 
 close all
-global MEXEC_G MOORPROC_G
+global MOORPROC_G
 clearvars -except MEXEC_G MOORPROC_G
 cruise   = MOORPROC_G.cruise;
 operator = MOORPROC_G.operator;

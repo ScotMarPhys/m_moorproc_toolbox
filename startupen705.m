@@ -20,7 +20,6 @@ MOORPROC_G.cruise = mcruise;
 MOORPROC_G.cruise_ctd = mcruise;
 MOORPROC_G.YEAR = YEAR;
 
-
 % Add to the path osnap mooring functions:
 %pathgit     = 'C:\Users\sa01ld\Desktop\OSNAP\m_moorproc_toolbox';   
 % pathgit     = 'C:\Users\SA01LD\m_moorproc_toolbox';   
@@ -33,11 +32,16 @@ cd(d)
 % Define where to find the mooring and other data
 % pathdata   = 'C:\Users\sa01ld\OneDrive - SAMS\OSNAP_mooring_processing\osnap';
 % pathdata   = 'D:\osnap';
-basedir = '/local/users/pstar/projects/';
-pathdata = fullfile(basedir,'rpdmoc','rapid','data','moor');
-%pathdata = '/local/users/pstar/projects/osnap/data/moor';
+MOORPROC_G.project = 'RAPID';
+basedir = '/local/users/pstar/projects/rpdmoc';
+pathdata = fullfile(basedir,'rapid','data','moor');
+MOORPROC_G.reportdir = fullfile(basedir,'rapid','documents','datareports',mcruise);
+%MOORPROC_G.project = 'OSNAP';
+%basedir = '/local/users/pstar/projects/osnap/data/moor';
+%pathdata = fullfile(basedir,'data','moor');
+%MOORPROC_G.reportdir = fullfile(basedir,'Documents','datareports',mcruise);
 if ~exist(pathdata,'dir'); pathdata = pwd; end
-pathctd = fullfile(basedir,'rpdmoc',mcruise,'mcruise','data','ctd');
+pathctd = fullfile(basedir,mcruise,'mcruise','data','ctd');
 
 disp ([upper(mcruise) ', ' num2str(YEAR)]) 
 disp ('-----------------------------------------------------------------------------------------------')
@@ -46,13 +50,12 @@ fprintf(1,'%s\n',['this is the ' mcruise ' startup file to open the paths to'], 
 
 MOORPROC_G.moordatadir = pathdata;
 MOORPROC_G.ctddir = pathctd;
-MOORPROC_G.execdir = fullfile(pathgit,'exec');
-MOORPROC_G.logdir = basedir;
-
-baselogdir  = fullfile(pathdata,'logs');
-if ~exist(baselogdir,'dir')
-    mkdir(baselogdir)
+%MOORPROC_G.execdir = fullfile(pathgit,'exec');
+MOORPROC_G.logdir  = fullfile(pathdata,'logs');
+if ~exist(MOORPROC_G.logdir,'dir')
+    mkdir(MOORPROC_G.logdir)
 end
+
 addpath(genpath(fullfile(pathgit,'exec','gitrepo')))
 
 MOORPROC_G

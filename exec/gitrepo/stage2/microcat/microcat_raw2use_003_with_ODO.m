@@ -86,15 +86,14 @@ inst = 1;
 jd_s  = julian(s_d(1),s_d(2),s_d(3),s_t(1)+s_t(2)/60);  % start time
 jd_e  = julian(e_d(1),e_d(2),e_d(3),e_t(1)+e_t(2)/60);  % end time
 
-for proc = 1 : length(sn),
+for proc = 1 : length(sn)
     disp('plotting')
     
-  infile  = [inpath,moor,'_',sprintf('%4.4d',sn(proc)),'.raw'];
-  if exist(infile)
+  infile  = fullfile(inpath,[moor,'_',sprintf('%4.4d',sn(proc)),'.raw']);
+  if exist(infile,'file')
  
     rodbfile= [moor,'_',sprintf('%4.4d',sn(proc)),'.use']; % MPC: change 'inst' to 'sn' in filename 
-    % infile  = [inpath,moor,'_',sprintf('%4.4d',sn(proc)),'.mc'];
-    outfile = [outpath,rodbfile];
+    outfile = fullfile(outpath,rodbfile);
 
     inst = inst +1;
 

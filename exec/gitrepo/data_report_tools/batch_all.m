@@ -1,45 +1,17 @@
+% script to run data report scripts and output 
+global MOORPROC_G %in case cleared
 
-close all
-clearvars  -except pathosnap 
-currentdir = pwd;
-
-
-%-------------------------------------
-% Definition of the different path
-basedir  = [pathosnap '/data/moor/'];%'/home/sa02lh/Data/Dropbox/testmoorOSNAP/'; %
-procpath = [basedir 'proc/'];
-reportdir = [pathosnap '/Documents/datareports/'];%'/home/sa02lh/Data/Dropbox/testmoorOSNAP/proc/datareports/'; % /media/SAMS/m/Mar_Phys/OSNAP_mooring_data_processing/osnap/Documents/datareports/
-outpathstats  = [reportdir 'stats/'];		
-outpathfigs = [reportdir 'figs/'];
-%outpathfigszoom = '/Users/locupe/Dropbox/Work/Dataproc/OSNAP_mooring/moorOSNAP_quick_analyses/proc_plot/datareports/figszoom/'; 
-outpathfigszoom = [reportdir 'figs/'];
-%-------------------------------------
 % Selection of the deployment year
-% depyear ='01_2014';
-% depyear ='02_2015';
-%depyear ='03_2016';
-%depyear ='04_2017';
-
-%depyear ='05_2018';
-
 depyear ='01_2018';
-
-%-------------------------------------
-% Selection of the mooring to process
-% moorlist ={'nocm1'};
-% moorlist ={'nocm1','nocm2','nocm3','nocm4','nocm5'};
-% moorlist = {'rteb1','rtwb1','rtwb2'};
-% moorlist = {'rtwb1','rtwb2'};
-%moorlist = {'rtadcp1'};%
-%moorlist = {'ib4','ib3','ib5'};
+%and the mooring to process
 moorlist = {'ib5'};
- 
-proclvl = '2';%  If proclvl = '2': processing is using the .use files; proclvl = '3' : processing is using the .microcat and .edt files
-%  
-% %----------------------------------------------------------------------------------------------------
+
+%  If proclvl = '2': processing is using the .use files; proclvl = '3' : processing is using the .microcat and .edt files
+proclvl = '2';
+
 % Stats table on .use files
 for ijk= 1:length(moorlist)
- 	stats_table([moorlist{ijk} '_' depyear],'procpath',procpath,'outpath',outpathstats)					
+ 	stats_table([moorlist{ijk} '_' depyear],'procpath',fullfile(MOORPROC_G.moordatadir,'proc'),'outpath',fullfile(MOORPROC_G.reportdir,'stats'))
 end
 
 %----------------------------------------------------------------------------------------------------		
@@ -49,7 +21,7 @@ for ijk= 1:length(moorlist)
   eval(['cd ' outpathfigs])	  
     close all
     moor=[moorlist{ijk} '_' depyear];
-	if exist([outpathfigs moor])~=7
+	if ~exist([outpathfigs moor],'dir')
         eval(['mkdir ' moor]);
         cd(moor);
     else

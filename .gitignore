@@ -1,6 +1,9 @@
-# all data directories (cruise data and mooring data)
-/data
-/exports
+# all data directories
+/data #cruise data and mooring data may be linked here
+# working directory for plots and temporary output
+/working
+# diaries
+/matlab_diaries
 
 # data (or plot) file types, but not info file types
 *.mat.zip
@@ -14,9 +17,6 @@
 *.ps
 *.log
 *.nc
-
-# diaries
-/matlab_diaries
 
 # temporary files and Mac things
 *~

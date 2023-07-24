@@ -37,78 +37,49 @@ function currents_overlay(moor,varargin)
 % 15/4/11 - onboard KN200-4: added Seaguard capability
 % 05/10/16 - Loic Houpert: added option to process lvl 3 data (.microcat and .edt files for nortek) and save plot
 %
+
+global MOORPROC_G
+
 if nargin <1
     help currents_overlay
     return
 end
 
-varargin_string=varargin;
-for i=1:length(varargin) % need to change numeric values in varargin to string so can search with strmatch below
-    if isnumeric(varargin{i})
-        varargin_string{i}=num2str(varargin{i});
+%defaults
+layout = 'portrait';
+procpath = fullfile(MOORPROC_G.moordatadir,'proc');
+outpath = fullfile(MOORPROC_G.reportdir,'stats');
+plot_interval = 0;
+width=26; height=17;
+num_to_plot = 2;
+unfilt = 0;
+%and optional inputs overwrite them
+n = 1;
+while n<=nargin-1
+    if ischar(varargin{n})
+        if strcmp('unfiltered',varargin{n})
+            unfilt = 1;
+            n = n+1;
+        else
+            eval([varargin{n} ' = varargin{n+1};'])
+            n = n+2;
+        end
     end
 end
 
-% check for optional arguments
-a=strmatch('plot_interval',varargin,'exact');
-if a>0
-    plot_interval=eval(varargin{a+1});
+if ~exist('proclvl','var')
+    proclvl = 2;
+elseif ischar(proclvl)
+    proclvl = str2double(proclvl);
+end
+proclvlstr0 = num2str(proclvl);
+if unfilt
+    proclvlstr = [proclvlstr0 '_unfilt'];
 else
-    plot_interval=0;
+    proclvlstr = [proclvlstr0 '_lpfilt'];
 end
 
-a=strmatch('layout',varargin_string,'exact');
-if a>0
-    %layout=char(varargin{a+1});
-    width=26; height=17;
-    layout='portrait';    
-else
-    layout='portrait';
-    width=17; height=26;
-end
-
-a=strmatch('procpath',varargin_string,'exact');
-if a>0
-    procpath=char(varargin{a+1});
-else
-    data_report_tools_dir=which('data_report_tools');
-    b=strfind(data_report_tools_dir,'/');
-    data_report_tools_dir=data_report_tools_dir(1:b(end));
-    procpath=[data_report_tools_dir '../../../moor/proc/']; %DR changed to be relative paths now that data_report_tools are on the network 19/2/12
-end
-
-a=strmatch('proclvl',varargin,'exact');
-if a>0
-    proclvlstr0=char(varargin(a+1));
-    proclvl   = str2num(proclvlstr0);
-else
-    proclvl=2;
-    proclvlstr0 = num2str(proclvl);
-end
-
-
-a=strmatch('num_to_plot',varargin_string,'exact');
-if a>0
-    num_to_plot=varargin{a+1};
-else
-    num_to_plot=2; 
-end
-
-a=strmatch('unfiltered',varargin_string,'exact');
-if a>0
-    filt_or_unfilt=1;
-    proclvlstr = [proclvlstr0 '_unfilt'];    
-else
-    filt_or_unfilt=0; 
-    proclvlstr = [proclvlstr0 '_lpfilt'];      
-end
-
-if isunix
-    infofile=[procpath,moor,'/',moor,'info.dat'];
-elseif ispc
-    infofile=[procpath,moor,'\',moor,'info.dat'];
-end
-
+infofile = fullfile(procpath,moor,[moor 'info.dat']);
 
 % Load vectors of mooring information
 % id instrument id, sn serial number, z nominal depth of each instrument
@@ -202,35 +173,7 @@ if plot_x_labels>0
 end
 
 jd1 = julian(plot_interval(1,:));
-jd2 = julian(plot_interval(2,:)); 
-
-
-
-% find the index number of S4s
-iiS4 = find(id == 302);
-vecS4 = sn(iiS4);
-% and find index number of RCM11s
-iiRCM11 = find(id == 310);
-vecRCM11 = sn(iiRCM11);
-% and find index number of Sontek Argonauts
-iiARG = find(id == 366);
-vecARG = sn(iiARG);
-% and find index number of Norteks
-iiNOR = find((id == 368|id==370));
-vecNOR = sn(iiNOR);
-% and find index number of Seaguard RCMs
-iiSG = find(id == 301);
-vecSG = sn(iiSG);
-
-depths(:,1) = id([iiS4;iiRCM11;iiARG;iiNOR;iiSG]);
-depths(:,2) = z([iiS4;iiRCM11;iiARG;iiNOR;iiSG]);
-depths=sortrows(depths,2);
-iiiS4=find(depths(:,1)==302);  
-iiiRCM11=find(depths(:,1)==310);  
-iiiARG=find(depths(:,1)==366 | depths(:,1)==366337);  
-iiiNOR=find(depths(:,1)==368|depths(:,1)==370);
-iiiSG=find(depths(:,1)==301);
-iii=[iiiS4;iiiRCM11;iiiARG;iiiNOR;iiiSG];
+jd2 = julian(plot_interval(2,:));
 
 %set figure size on screen for better viewing
 bdwidth = 5;
@@ -261,493 +204,99 @@ set(direction_plot, 'PaperPosition', figuresize);
 set(speed_plot, 'PaperPosition', figuresize);
 set(www_plot, 'PaperPosition', figuresize);
 
-%set print area of figure
-pos1  = [1/8*scnsize(3),8*bdwidth,1/2*scnsize(3),(scnsize(4) - 30*bdwidth)];
-pressure_plot=figure('Position',pos1);
-set(pressure_plot,'PaperUnits','centimeters');
-set(pressure_plot, 'PaperType', 'A4');
-set(pressure_plot, 'PaperOrientation',layout);
-papersize = get(pressure_plot,'PaperSize');
-left = (papersize(1)- width)/2; bottom = (papersize(2)- height)/2;
-figuresize = [left, bottom, width, height];
-set(pressure_plot, 'PaperPosition', figuresize);
-
-plot_string={};
-
 MAX_spd=0;
 MAX_www=0;
-plot_string={};
 
-% --------------------
-% Read in S4 data if required.
-% --------------------
-if iiS4>0 
-    
-    % loop to read one file at a time
-    j=1;
-    for i=1:length(vecS4);
-       serialno = vecS4(i);
-       disp('*************************************************************')
-       disp(['Reading S4 - ',num2str(serialno)])
-       disp('*************************************************************')
 
-       if isunix
-           infile = [procpath,moor,'/s4/',moor,'_',sprintf('%4.4d',vecS4(i)),'.use'];
-       elseif ispc
-           infile = [procpath,moor,'\s4\',moor,'_',sprintf('%4.4d',vecS4(i)),'.use'];
-       end
+%get information about all the instruments including prefixes and filenames/paths, in a table we can loop through
+id_z_sn = all_inst_table(id, z, sn);
+id_z_sn.data_loaded = false(length(id),1);
 
-       % read data into vectors and then into structure array
+for iid=1:length(id_z_sn.id)
+    if ~isempty(id_z_sn.dirs{iid}) && contains(id_z_sn.vars{iid},'u')
+        disp('*************************************************************')
+        disp(['Reading ' id_z_sn.inst{iid} ' - ',num2str(id_z_sn.sn(iid))])
+        disp('*************************************************************')
+        iname = sprintf('%s_%d', id_z_sn.inst{iid}, id_z_sn.sn(iid));
+        infile = fullfile(procpath,moor,id_z_sn.dirs{iid},sprintf('%s_%0.4d%s.use',moor,id_z_sn.sn(iid),id_z_sn.suf{iid}));
+        if ~exist(infile,'file')
+            infile = fullfile(procpath,moor,id_z_sn.dirs{iid},sprintf('%s_%3.3d%s.use',moor,id_z_sn.sn(iid),id_z_sn.suf{iid}));
+        end
+        %read data into structure array
+        fileopen=fopen(infile,'r');
+        if fileopen>0
+                        varstr = ['yy:mm:dd:hh:' id_z_sn.vars{iid}];
+            clear a; a(1).a = [];
+            [yy,mm,dd,hh,a(1).a,a(2).a,a(3).a,a(4).a,a(5).a,a(6).a,a(7).a,a(8).a,a(9).a] = rodbload(infile,varstr);
+            vars = split(id_z_sn.vars{iid},':');
+            for no = 1:length(vars)
+                data.(vars{no}) = a(no).a;
+                data.(vars{no})(data.(vars{no})==-9999) = NaN;
+            end
+            data.jd=julian(yy,mm,dd,hh);
 
-       [yy,mm,dd,hh,u,v,t,c,p,hdg] = rodbload(infile,'yy:mm:dd:hh:u:v:t:c:p:hdg');
-       jd=julian(yy,mm,dd,hh);
+        else
+            disp('File does not exist!')
+            disp(['infile = ' infile])
+            data = [];
+        end
 
-       bad_data=find(u==-9999); u(bad_data)=NaN;
-       bad_data=find(v==-9999); v(bad_data)=NaN;
-       bad_data=find(t==-9999); t(bad_data)=NaN;
-       bad_data=find(c==-9999); c(bad_data)=NaN;
-       bad_data=find(p==-9999); p(bad_data)=NaN;
-       bad_data=find(hdg==-9999); hdg(bad_data)=NaN;
+        if ~isempty(data)
+            if unfilt==0
+                sampling_rate = 1/median(diff(data.jd));
+                ii = find(~isnan(data.u));
+                data.u(ii) = auto_filt(data.u(ii),sampling_rate,1/2,'low',4);
+                ii = find(~isnan(data.v));
+                data.v(ii) = auto_filt(data.v(ii),sampling_rate,1/2,'low',4);
+                if isfield(data,'w')
+                    ii = find(~isnan(data.w));
+                    data.w(ii) = auto_filt(data.w(ii),sampling_rate,1/2,'low',4);
+                end
+            end
+            data.spd = sqrt(data.u.^2+data.v.^2);
+            data.dir = atan2(data.v,data.u)*180/pi;
+            data.dir(data.dir<0) = data.dir(data.dir<0)+360;
+            %current_speed for setting y-axis after plotting
+            MAX_spd=max(max(data.spd),MAX_spd);
+            if isfield(data,'w')
+                data.www = data.w;
+                MAX_www = max(max(data.www),MAX_www);
+            end
 
-       eval_string(iiiS4(j))={['S4_' num2str(serialno)]};
-       
-       eval([char(eval_string(iiiS4(j))) '.jd=jd;']);
-       eval([char(eval_string(iiiS4(j))) '.u=u;']);
-       eval([char(eval_string(iiiS4(j))) '.v=v;']);
-       eval([char(eval_string(iiiS4(j))) '.t=t;']);
-       eval([char(eval_string(iiiS4(j))) '.c=c;']);
-       eval([char(eval_string(iiiS4(j))) '.p=p;']);
-       eval([char(eval_string(iiiS4(j))) '.hdg=hdg;']);
-
-       sampling_rate = 1/median(diff(jd));
-
-       if filt_or_unfilt==0 % i.e. want to filter the data prior to plotting
-           % Apply a butterworth filter to the data using auto_filt and use for
-           % plots
-           
-           ii = eval(['find(~isnan(' char(eval_string(iiiS4(j))) '.u));']); 
-           eval([char(eval_string(iiiS4(j))) '.u(ii)=auto_filt(' char(eval_string(iiiS4(j)))...
-                 '.u(ii), sampling_rate, 1/2,''low'',4);']);
-           ii = eval(['find(~isnan(' char(eval_string(iiiS4(j))) '.v));']); 
-           eval([char(eval_string(iiiS4(j))) '.v(ii)=auto_filt(' char(eval_string(iiiS4(j)))...
-                 '.v(ii), sampling_rate, 1/2,''low'',4);']);
-       end
-       
-       current_speed = eval(['sqrt((' char(eval_string(iiiS4(j))) '.u).^2 + (' char(eval_string(iiiS4(j))) '.v) .^2);']);
-       eval([char(eval_string(iiiS4(j))) '.spd=current_speed;']);
-       current_direction=eval(['atan(' char(eval_string(iiiS4(j))) '.u ./' char(eval_string(iiiS4(j))) '.v)*180/pi;']);
-       d = eval(['find(' char(eval_string(iiiS4(j))) '.v<0);']);
-       current_direction(d)=current_direction(d)+180;
-       d = eval(['find(' char(eval_string(iiiS4(j))) '.v>=0 & ' char(eval_string(iiiS4(j))) '.u<0);']);
-       current_direction(d)=current_direction(d)+360;
-       eval([char(eval_string(iiiS4(j))) '.dir=current_direction;']);
-
-       
-       % determine current_speed for setting y-axis after plotting
-       max_spd=max(current_speed);
-       if max_spd > MAX_spd
-           MAX_spd = max_spd;
-       end
-       
-       j=j+1;
-       
+            alldata.(iname) = data;
+            id_z_sn.data_loaded(iid) = true;
+        end
     end
+
 end
-
-%-----------------------------------
-% Now read in RCM11 data if required
-%-----------------------------------
-if iiRCM11>0
-    j=1;
-    
-    % loop to read one file at a time
-
-    for i=1:length(vecRCM11);
-       serialno = vecRCM11(i);
-       disp('*************************************************************')
-       disp(['Reading RCM11 - ',num2str(serialno)])
-       disp('*************************************************************')
-
-       if isunix
-           infile = [procpath,moor,'/rcm/',moor,'_',sprintf('%3.3d',vecRCM11(i)),'.use'];
-       elseif ispc
-           infile = [procpath,moor,'\rcm\',moor,'_',sprintf('%3.3d',vecRCM11(i)),'.use'];
-       end
-       
-
-       % read data into vectors and then into structure array
-
-       [yy,mm,dd,hh,ref,u,v,t,c,p,tlt,mss] = rodbload(infile,'yy:mm:dd:hh:ref:u:v:t:c:p:tlt:mss');
-       jd=julian(yy,mm,dd,hh);
-
-       bad_data=find(t==-9999); t(bad_data)=NaN;
-       bad_data=find(p==-9999); p(bad_data)=NaN;
-       bad_data=find(u==-9999); u(bad_data)=NaN;
-       bad_data=find(v==-9999); v(bad_data)=NaN;
-       bad_data=find(c==-9999); c(bad_data)=NaN;
-       bad_data=find(tlt==-9999); tlt(bad_data)=NaN;
-       bad_data=find(mss==-9999); mss(bad_data)=NaN;
-
-       eval_string(iiiRCM11(j))={['RCM11_' num2str(serialno)]};
-       
-       eval([char(eval_string(iiiRCM11(j))) '.jd=jd;']);
-       eval([char(eval_string(iiiRCM11(j))) '.t=t;']);
-       eval([char(eval_string(iiiRCM11(j))) '.p=p;']);
-       eval([char(eval_string(iiiRCM11(j))) '.u=u;']);
-       eval([char(eval_string(iiiRCM11(j))) '.v=v;']);
-       eval([char(eval_string(iiiRCM11(j))) '.c=c;']);
-       eval([char(eval_string(iiiRCM11(j))) '.tlt=tlt;']);
-       eval([char(eval_string(iiiRCM11(j))) '.mss=mss;']);
-
-       sampling_rate = 1/median(diff(jd));
-
-       if filt_or_unfilt==0 % i.e. want to filter the data prior to plotting
-           % Apply a butterworth filter to the data using auto_filt and use for
-           % plots
-           
-           ii = eval(['find(~isnan(' char(eval_string(iiiRCM11(j))) '.u));']);
-           eval([char(eval_string(iiiRCM11(j))) '.u(ii)=auto_filt(' char(eval_string(iiiRCM11(j)))...
-                 '.u(ii), sampling_rate, 1/2,''low'',4);']);
-           ii = eval(['find(~isnan(' char(eval_string(iiiRCM11(j))) '.v));']); 
-           eval([char(eval_string(iiiRCM11(j))) '.v(ii)=auto_filt(' char(eval_string(iiiRCM11(j)))...
-                 '.v(ii), sampling_rate, 1/2,''low'',4);']);
-       end
-       
-       current_speed = eval(['sqrt((' char(eval_string(iiiRCM11(j))) '.u).^2 + (' char(eval_string(iiiRCM11(j))) '.v).^2);']);
-       eval([char(eval_string(iiiRCM11(j))) '.spd=current_speed;']);
-       current_direction=eval(['atan(' char(eval_string(iiiRCM11(j))) '.u ./' char(eval_string(iiiRCM11(j))) '.v)*180/pi;']);
-       d = eval(['find(' char(eval_string(iiiRCM11(j))) '.v<0);']);
-       current_direction(d)=current_direction(d)+180;
-       d = eval(['find(' char(eval_string(iiiRCM11(j))) '.v>=0 & ' char(eval_string(iiiRCM11(j))) '.u<0);']);
-       current_direction(d)=current_direction(d)+360;
-       eval([char(eval_string(iiiRCM11(j))) '.dir=current_direction;']);
-       
-       % determine current_speed for setting y-axis after plotting
-       max_spd=max(current_speed);
-       if max_spd > MAX_spd
-           MAX_spd = max_spd;
-       end
-       
-       j=j+1;
-    end
-end
-
-%--------------------------------------
-% Now read in Argonaut data if required
-%--------------------------------------
-if iiARG>0
-    j=1;
-    
-    % loop to read one file at a time
-
-    for i=1:length(vecARG);
-       serialno = vecARG(i);
-       disp('*************************************************************')
-       disp(['Reading ARGONAUT - ',num2str(serialno)])
-       disp('*************************************************************')
-
-       if isunix
-           infile = [procpath,moor,'/arg/',moor,'_',num2str(vecARG(i)),'.use'];
-           if exist(infile)==0  % older Arg files had 4 digit serial number starting with zero in filename
-               infile = [procpath,moor,'/arg/',moor,'_0',num2str(vecARG(i)),'.use'];
-           end
-       elseif ispc
-           infile = [procpath,moor,'\arg\',moor,'_',num2str(vecARG(i)),'.use'];
-           if exist(infile)==0  % older Arg files had 4 digit serial number starting with zero in filename
-               infile = [procpath,moor,'\arg\',moor,'_0',num2str(vecARG(i)),'.use'];
-           end
-       end
-
-       % read data into vectors and then into structure array
-
-       [yy,mm,dd,hh,t,tcat,p,pcat,c,u,v,w,hdg,pit,rol,usd,vsd,wsd,uss,vss,wss,hdgsd,pitsd,rolsd,ipow] = ...
-           rodbload(infile,'yy:mm:dd:hh:t:tcat:p:pcat:c:u:v:w:hdg:pit:rol:usd:vsd:wsd:uss:vss:wss:hdgsd:pitsd:rolsd:ipow');
-       jd=julian(yy,mm,dd,hh);
-
-       bad_data=find(t==-9999); t(bad_data)=NaN;
-       bad_data=find(p==-9999); p(bad_data)=NaN;
-       bad_data=find(u==-9999); u(bad_data)=NaN;
-       bad_data=find(v==-9999); v(bad_data)=NaN;
-       bad_data=find(w==-9999); w(bad_data)=NaN;
-       bad_data=find(hdg==-9999); hdg(bad_data)=NaN;
-       bad_data=find(pit==-9999); pit(bad_data)=NaN;
-       bad_data=find(rol==-9999); rol(bad_data)=NaN;
-       bad_data=find(usd==-9999); usd(bad_data)=NaN;
-       bad_data=find(vsd==-9999); vsd(bad_data)=NaN;
-       bad_data=find(wsd==-9999); wsd(bad_data)=NaN;
-       bad_data=find(uss==-9999); uss(bad_data)=NaN;
-       bad_data=find(vss==-9999); vss(bad_data)=NaN;
-       bad_data=find(wss==-9999); wss(bad_data)=NaN;
-       bad_data=find(hdgsd==-9999); hdgsd(bad_data)=NaN;
-       bad_data=find(pitsd==-9999); pitsd(bad_data)=NaN;
-       bad_data=find(rolsd==-9999); rolsd(bad_data)=NaN;
-       bad_data=find(ipow==-9999); ipow(bad_data)=NaN;
-       
-       eval_string(iiiARG(j))={['ARG_' num2str(serialno)]};
-       
-       eval([char(eval_string(iiiARG(j))) '.jd=jd;']);
-       eval([char(eval_string(iiiARG(j))) '.t=t;']);
-       eval([char(eval_string(iiiARG(j))) '.p=p;']);
-       eval([char(eval_string(iiiARG(j))) '.u=u;']);
-       eval([char(eval_string(iiiARG(j))) '.v=v;']);
-       eval([char(eval_string(iiiARG(j))) '.w=w;']);
-       eval([char(eval_string(iiiARG(j))) '.hdg=hdg;']);
-       eval([char(eval_string(iiiARG(j))) '.pit=pit;']);
-       eval([char(eval_string(iiiARG(j))) '.rol=rol;']);
-       eval([char(eval_string(iiiARG(j))) '.usd=usd;']);
-       eval([char(eval_string(iiiARG(j))) '.vsd=vsd;']);
-       eval([char(eval_string(iiiARG(j))) '.wsd=wsd;']);
-       eval([char(eval_string(iiiARG(j))) '.uss=uss;']);
-       eval([char(eval_string(iiiARG(j))) '.vss=vss;']);
-       eval([char(eval_string(iiiARG(j))) '.wss=wss;']);
-       eval([char(eval_string(iiiARG(j))) '.hdgsd=hdgsd;']);
-       eval([char(eval_string(iiiARG(j))) '.pitsd=pitsd;']);
-       eval([char(eval_string(iiiARG(j))) '.rolsd=rolsd;']);
-       eval([char(eval_string(iiiARG(j))) '.ipow=ipow;']);
-       
-       sampling_rate = 1/median(diff(jd));
-
-       if filt_or_unfilt==0 % i.e. want to filter the data prior to plotting
-           % Apply a butterworth filter to the data using auto_filt and use for
-           % plots
-           
-           ii = eval(['find(~isnan(' char(eval_string(iiiARG(j))) '.u));']); 
-           eval([char(eval_string(iiiARG(j))) '.u(ii)=auto_filt(' char(eval_string(iiiARG(j)))...
-                 '.u(ii), sampling_rate, 1/2,''low'',4);']);
-           ii = eval(['find(~isnan(' char(eval_string(iiiARG(j))) '.v));']); 
-           eval([char(eval_string(iiiARG(j))) '.v(ii)=auto_filt(' char(eval_string(iiiARG(j)))...
-                 '.v(ii), sampling_rate, 1/2,''low'',4);']);
-       end
-       
-       current_speed = eval(['sqrt((' char(eval_string(iiiARG(j))) '.u).^2 + (' char(eval_string(iiiARG(j))) '.v).^2);']);
-       eval([char(eval_string(iiiARG(j))) '.spd=current_speed;']);
-       current_direction=eval(['atan(' char(eval_string(iiiARG(j))) '.u ./' char(eval_string(iiiARG(j))) '.v)*180/pi;']);
-       d = eval(['find(' char(eval_string(iiiARG(j))) '.v<0);']);
-       current_direction(d)=current_direction(d)+180;
-       d = eval(['find(' char(eval_string(iiiARG(j))) '.v>=0 & ' char(eval_string(iiiARG(j))) '.u<0);']);
-       current_direction(d)=current_direction(d)+360;
-       eval([char(eval_string(iiiARG(j))) '.dir=current_direction;']);
-       
-       % determine current_speed for setting y-axis after plotting
-       max_spd=max(current_speed);
-       if max_spd > MAX_spd
-           MAX_spd = max_spd;
-       end
-       
-       j=j+1;
-    end
-end
-
-%------------------------------------
-% Now read in NORTEK data if required
-%------------------------------------
-if iiNOR>0
-    j=1;
-    
-    % loop to read one file at a time
-
-    for i=1:length(vecNOR);
-       serialno = vecNOR(i);
-       disp('*************************************************************')
-       disp(['Reading NORTEK - ',num2str(serialno)])
-       disp('*************************************************************')
-
-	if proclvl==2
-	       if isunix
-        	   infile = [procpath,moor,'/nor/',moor,'_',sprintf('%3.3d',vecNOR(i)),'.use'];
-       		elseif ispc
-        	   infile = [procpath,moor,'\nor\',moor,'_',sprintf('%3.3d',vecNOR(i)),'.use'];
-       		end
-	elseif proclvl==3
-	       if isunix
-        	   infile = [procpath,moor,'/nor/',moor,'_',sprintf('%3.3d',vecNOR(i)),'.edt'];
-       		elseif ispc
-        	   infile = [procpath,moor,'\nor\',moor,'_',sprintf('%3.3d',vecNOR(i)),'.edt'];
-       		end	
-	end    
-       
-
-       % read data into vectors and then into structure array
-
-       [yy,mm,dd,hh,t,p,u,v,w,hdg,pit,rol,uss,vss,wss,ipow,cs,cd] = rodbload(infile,'yy:mm:dd:hh:t:p:u:v:w:hdg:pit:rol:uss:vss:wss:ipow:cs:cd');
-       jd=julian(yy,mm,dd,hh);
-
-       bad_data=find(t==-9999); t(bad_data)=NaN;
-       bad_data=find(p==-9999); p(bad_data)=NaN;
-       bad_data=find(u==-9999); u(bad_data)=NaN;
-       bad_data=find(v==-9999); v(bad_data)=NaN;
-       bad_data=find(w==-9999); w(bad_data)=NaN;
-       bad_data=find(hdg==-9999); hdg(bad_data)=NaN;
-       bad_data=find(pit==-9999); pit(bad_data)=NaN;
-       bad_data=find(rol==-9999); rol(bad_data)=NaN;
-       bad_data=find(uss==-9999); uss(bad_data)=NaN;
-       bad_data=find(vss==-9999); vss(bad_data)=NaN;
-       bad_data=find(wss==-9999); wss(bad_data)=NaN;
-       bad_data=find(ipow==-9999); ipow(bad_data)=NaN;
-       bad_data=find(cs==-9999); cs(bad_data)=NaN;
-       bad_data=find(cd==-9999); cd(bad_data)=NaN;
-
-       eval_string(iiiNOR(j))={['NOR_' num2str(serialno)]};
-       
-       eval([char(eval_string(iiiNOR(j))) '.jd=jd;']);
-       eval([char(eval_string(iiiNOR(j))) '.t=t;']);
-       eval([char(eval_string(iiiNOR(j))) '.p=p;']);
-       eval([char(eval_string(iiiNOR(j))) '.u=u;']);
-       eval([char(eval_string(iiiNOR(j))) '.v=v;']);
-       eval([char(eval_string(iiiNOR(j))) '.w=w;']);
-       eval([char(eval_string(iiiNOR(j))) '.hdg=hdg;']);
-       eval([char(eval_string(iiiNOR(j))) '.pit=pit;']);
-       eval([char(eval_string(iiiNOR(j))) '.rol=rol;']);
-       eval([char(eval_string(iiiNOR(j))) '.uss=uss;']);
-       eval([char(eval_string(iiiNOR(j))) '.vss=vss;']);
-       eval([char(eval_string(iiiNOR(j))) '.wss=wss;']);
-       eval([char(eval_string(iiiNOR(j))) '.ipow=ipow;']);
-       eval([char(eval_string(iiiNOR(j))) '.cs=cs;']);
-       eval([char(eval_string(iiiNOR(j))) '.cd=cd;']);
-
-       sampling_rate = 1/median(diff(jd));
-
-       if filt_or_unfilt==0 % i.e. if want to filter the data prior to plotting
-           % Apply a butterworth filter to the data using auto_filt and use for
-           % plots
-           ii = eval(['find(~isnan(' char(eval_string(iiiNOR(j))) '.u));']);
-           eval([char(eval_string(iiiNOR(j))) '.u(ii)=auto_filt(' char(eval_string(iiiNOR(j)))...
-                 '.u(ii), sampling_rate, 1/2,''low'',4);']);
-           ii = eval(['find(~isnan(' char(eval_string(iiiNOR(j))) '.v));']); 
-           eval([char(eval_string(iiiNOR(j))) '.v(ii)=auto_filt(' char(eval_string(iiiNOR(j)))...
-                 '.v(ii), sampling_rate, 1/2,''low'',4);']);
-           ii = eval(['find(~isnan(' char(eval_string(iiiNOR(j))) '.w));']); 
-           eval([char(eval_string(iiiNOR(j))) '.w(ii)=auto_filt(' char(eval_string(iiiNOR(j)))...
-                 '.w(ii), sampling_rate, 1/2,''low'',4);']);            
-       end
-       
-       current_speed = eval(['sqrt((' char(eval_string(iiiNOR(j))) '.u).^2 + (' char(eval_string(iiiNOR(j))) '.v).^2);']);
-       eval([char(eval_string(iiiNOR(j))) '.spd=current_speed;']);
-       vert_speed = eval([ char(eval_string(iiiNOR(j))) '.w;']);
-       eval([char(eval_string(iiiNOR(j))) '.www=vert_speed;']);
-       current_direction=eval(['atan(' char(eval_string(iiiNOR(j))) '.u ./' char(eval_string(iiiNOR(j))) '.v)*180/pi;']);
-       d = eval(['find(' char(eval_string(iiiNOR(j))) '.v<0);']);
-       current_direction(d)=current_direction(d)+180;
-       d = eval(['find(' char(eval_string(iiiNOR(j))) '.v>=0 & ' char(eval_string(iiiNOR(j))) '.u<0);']);
-       current_direction(d)=current_direction(d)+360;
-       eval([char(eval_string(iiiNOR(j))) '.dir=current_direction;']);
-       
-       % determine current_speed for setting y-axis after plotting
-       max_spd=max(current_speed);
-       if max_spd > MAX_spd
-           MAX_spd = max_spd;
-       end
-        max_www=max(vert_speed);
-       if max_www > MAX_www
-           MAX_www = max_www;
-       end      
-       j=j+1;
-    end
-end
-%--------------------------------------
-% Now read in Seaguard data if required
-%--------------------------------------
-if iiSG>0
-    j=1;
-    
-    % loop to read one file at a time
-
-    for i=1:length(vecSG);
-       serialno = vecSG(i);
-       disp('*************************************************************')
-       disp(['Reading SG - ',num2str(serialno)])
-       disp('*************************************************************')
-
-       if isunix
-           infile = [procpath,moor,'/seaguard/',moor,'_',sprintf('%3.3d',vecSG(i)),'.use'];
-       elseif ispc
-           infile = [procpath,moor,'\seaguard\',moor,'_',sprintf('%3.3d',vecSG(i)),'.use'];
-       end
-       
-
-       % read data into vectors and then into structure array
-
-       [yy,mm,dd,hh,u,v,cs,cd,cssd,mss,hdg,pit,rol,t,c,tc,p,tp,ipow] = ...
-            rodbload(infile,'YY:MM:DD:HH:U:V:CS:CD:CSSD:MSS:HDG:PIT:ROL:T:C:TC:P:TP:IPOW');
-       jd=julian(yy,mm,dd,hh);
-
-       bad_data=find(t==-9999); t(bad_data)=NaN;
-       bad_data=find(p==-9999); p(bad_data)=NaN;
-       bad_data=find(u==-9999); u(bad_data)=NaN;
-       bad_data=find(v==-9999); v(bad_data)=NaN;
-       bad_data=find(c==-9999); c(bad_data)=NaN;
-       bad_data=find(hdg==-9999); hdg(bad_data)=NaN;
-       bad_data=find(pit==-9999); pit(bad_data)=NaN;
-       bad_data=find(rol==-9999); rol(bad_data)=NaN;
-
-       eval_string(iiiSG(j))={['SG_' num2str(serialno)]};
-       
-       eval([char(eval_string(iiiSG(j))) '.jd=jd;']);
-       eval([char(eval_string(iiiSG(j))) '.t=t;']);
-       eval([char(eval_string(iiiSG(j))) '.p=p;']);
-       eval([char(eval_string(iiiSG(j))) '.u=u;']);
-       eval([char(eval_string(iiiSG(j))) '.v=v;']);
-       eval([char(eval_string(iiiSG(j))) '.c=c;']);
-       eval([char(eval_string(iiiSG(j))) '.hdg=hdg;']);
-       eval([char(eval_string(iiiSG(j))) '.pit=pit;']);
-       eval([char(eval_string(iiiSG(j))) '.rol=rol;']);
-
-       sampling_rate = 1/median(diff(jd));
-
-       if filt_or_unfilt==0 % i.e. want to filter the data prior to plotting
-           % Apply a butterworth filter to the data using auto_filt and use for
-           % plots
-           
-           ii = eval(['find(~isnan(' char(eval_string(iiiSG(j))) '.u));']);
-           eval([char(eval_string(iiiSG(j))) '.u(ii)=auto_filt(' char(eval_string(iiiSG(j)))...
-                 '.u(ii), sampling_rate, 1/2,''low'',4);']);
-           ii = eval(['find(~isnan(' char(eval_string(iiiSG(j))) '.v));']); 
-           eval([char(eval_string(iiiSG(j))) '.v(ii)=auto_filt(' char(eval_string(iiiSG(j)))...
-                 '.v(ii), sampling_rate, 1/2,''low'',4);']);
-       end
-       
-       current_speed = eval(['sqrt((' char(eval_string(iiiSG(j))) '.u).^2 + (' char(eval_string(iiiSG(j))) '.v).^2);']);
-       eval([char(eval_string(iiiSG(j))) '.spd=current_speed;']);
-       current_direction=eval(['atan(' char(eval_string(iiiSG(j))) '.u ./' char(eval_string(iiiSG(j))) '.v)*180/pi;']);
-       d = eval(['find(' char(eval_string(iiiSG(j))) '.v<0);']);
-       current_direction(d)=current_direction(d)+180;
-       d = eval(['find(' char(eval_string(iiiSG(j))) '.v>=0 & ' char(eval_string(iiiSG(j))) '.u<0);']);
-       current_direction(d)=current_direction(d)+360;
-       eval([char(eval_string(iiiSG(j))) '.dir=current_direction;']);
-       
-       % determine current_speed for setting y-axis after plotting
-       max_spd=max(current_speed);
-       if max_spd > MAX_spd
-           MAX_spd = max_spd;
-       end
-       
-       j=j+1;
-    end
-end
+id_z_sn = id_z_sn(id_z_sn.data_loaded,:);
 
 % ------------------------------
 % Plotting section
 % ------------------------------
 colours = 'brgcmybrgcmybrgcmy';
-for i=1:length(iii)
-    if i<7 
+for iid = 1:length(id_z_sn.id)
+    if iid<7 
         line_style = '-';
-    elseif i>12
+    elseif iid>12
         line_style = '.';
     else
         line_style = 'o';
     end
-    figure(direction_plot); hold on
     a=1;%sampling_rate/num_to_plot; %value to decimate data by to ease plot visualisation doesn't actually average it, just decimates
     % if sampling rate equals num_to_plot entered in function then no decimation occurs.
     % Assumes same sampling rate for all current meters on the mooring.
     %a = 5; 
-    b = eval(['length(' char(eval_string(i)) '.jd);']);
-    eval(['plot(' char(eval_string(i)) '.jd(1:a:b)-jd1,' char(eval_string(i)) '.dir(1:a:b),''' colours(i) line_style ''',''MarkerSize'',3);']);
+    iname = sprintf('%s_%d', id_z_sn.inst{iid}, id_z_sn.sn(iid));
+    b = length(alldata.(iname).jd);
+    figure(direction_plot); hold on
+    plot(alldata.(iname).jd(1:a:b)-jd1,alldata.(iname).dir(1:a:b),colours(iid))
     figure(speed_plot); hold on
-    eval(['plot(' char(eval_string(i)) '.jd(1:a:b)-jd1,' char(eval_string(i)) '.spd(1:a:b),''' colours(i) line_style ''',''MarkerSize'',3);']);
+    plot(alldata.(iname).jd(1:a:b)-jd1,alldata.(iname).spd(1:a:b),colours(iid))
     figure(www_plot); hold on
-    eval(['plot(' char(eval_string(i)) '.jd(1:a:b)-jd1,' char(eval_string(i)) '.www(1:a:b),''' colours(i) line_style ''',''MarkerSize'',3);']);    
+    if isfield(alldata.(iname),'www')
+        plot(alldata.(iname).jd(1:a:b)-jd1,alldata.(iname).www(1:a:b),colours(iid))
+    end
 end
 
 
@@ -760,13 +309,14 @@ set(gca,'xTickLabel',xticklabels);
 set(gca,'XTick',jdxticks-jd1);
 set(gca,'ytick',[0 90 180 270 360]);
 s = regexprep(moor,'_','\\_');
-if filt_or_unfilt==0
+if unfilt==0
     title(['Current directions of low pass filtered currents at mooring ' s '.'])
 else
     title(['Current directions of unfiltered currents at mooring ' s '.'])
 end
-for i=1:length(eval_string)
-    legend_text(i)={[num2str(depths(i,2)) 'm']};
+for iid = 1:length(id_z_sn.id)
+    iname = sprintf('%s_%d', id_z_sn.inst{iid}, id_z_sn.sn(iid));
+    legend_text(iid)={[num2str(id_z_sn.z(iid)) ' m']};
 end
 legend(legend_text);
 text(1,-20,num2str(xticks(1,1)),'FontSize',10);
@@ -776,8 +326,9 @@ if plot_x_labels>0
         text((jd2-jd1)*(year_indexes(i)-1)/(length(xticklabels)-1),-20,num2str(xticks(year_indexes(i),1)),'FontSize',10);
     end
 end
-print('-dpng',[moor '_horcurrents_overlay_dir_proclvl_' proclvlstr])
-savefig([moor '_horcurrents_overlay_dir_proclvl_' proclvlstr])
+outfile = fullfile(outpath,[moor '_horcurrents_overlay_dir_proclvl_' proclvlstr]);
+print('-dpng',outfile)
+savefig(outfile)
 
 figure(speed_plot);
 ylabel('current speed (cm/s)');
@@ -788,7 +339,7 @@ set(gca,'YMinorTick','on');
 set(gca,'xTickLabel',xticklabels);
 set(gca,'XTick',jdxticks-jd1);
 s = regexprep(moor,'_','\\_');
-if filt_or_unfilt==0
+if unfilt==0
     title(['Hor. current speed of low pass filtered currents at mooring ' s '.'])
 else
     title(['Hor. current speed of ufiltered currents at mooring ' s '.'])
@@ -802,10 +353,9 @@ if plot_x_labels>0
     end
 end
 
-
-print('-dpng',[moor '_horcurrents_overlay_speed_proclvl_' proclvlstr])
-savefig([moor '_horcurrents_overlay_speed_proclvl_' proclvlstr])
-
+outfile = fullfile(outpath,[moor '_horcurrents_overlay_speed_proclvl_' proclvlstr]);
+print('-dpng',outfile)
+savefig(outfile)
 
 figure(www_plot);
 ylabel('current speed (cm/s)');
@@ -816,7 +366,7 @@ set(gca,'YMinorTick','on');
 set(gca,'xTickLabel',xticklabels);
 set(gca,'XTick',jdxticks-jd1);
 s = regexprep(moor,'_','\\_');
-if filt_or_unfilt==0
+if unfilt==0
     title(['Vert. current speed of low pass filtered currents at mooring ' s '.'])
 else
     title(['Vert. current speed of ufiltered currents at mooring ' s '.'])
@@ -830,6 +380,6 @@ if plot_x_labels>0
     end
 end
 
-
-print('-dpng',[moor '_horcurrents_overlay_speed_proclvl_' proclvlstr])
-savefig([moor '_horcurrents_overlay_speed_proclvl_' proclvlstr])
+outfile = fullfile(outpath,[moor '_vertcurrents_overlay_speed_proclvl_' proclvlstr]);
+print('-dpng',outfile)
+savefig(outfile)
