@@ -115,7 +115,8 @@ for iid=1:length(id_z_sn.id)
             disp(['Reading ' id_z_sn.inst{iid} ' - ',num2str(id_z_sn.sn(iid))])
             disp('*************************************************************')
         end
-        infile = fullfile(procpath,moor,id_z_sn.dirs{iid},sprintf('%s_%0.4d%s.use',moor,id_z_sn.sn(iid),id_z_sn.suf{iid}));
+        infile = sprintf('%s_%0.4d%s.use',moor,id_z_sn.sn(iid),id_z_sn.suf{iid});
+        infile = fullfile(procpath,moor,id_z_sn.dirs{iid},infile);
         iname = sprintf('%s_%d', id_z_sn.inst{iid}, id_z_sn.sn(iid));
 
         %read data into structure array
