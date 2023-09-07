@@ -81,9 +81,12 @@ for i = 1:length(vec)
         sprintf('%4.4d%s',vec(i),'_Data.cnv')
         sprintf('%4.4d%s',vec(i),'_data.asc')
         };
-    n = 1;
-    while ~exist(fullfile(inpath,infiles{n}),'file') && n<=length(infiles)
-        n = n+1;
+    for n = 1:length(infiles)
+        f = fullfile(inpath,infiles{n});
+        if exist(f,'file') && dir(f).bytes>0
+            %found it
+            break
+        end
     end
     infile = fullfile(inpath,infiles{n});
     if ~exist(infile,'file')

@@ -138,28 +138,28 @@ for i = 1:length(sn)
     
     %ylf dy146 condensed this part
     % try to find infile in list of possibilities
-    infiles = {[inpath,sprintf('%4.4d',sn(i)),'cal2.asc'];
-        [inpath,sprintf('%4.4d',sn(i)),'cal.asc'];
-        [inpath,sprintf('%3.3d',sn(i)),'cal.asc'];
-        [inpath,sprintf('%4.4d',sn(i)),'CAL.asc'];
-        [inpath,sprintf('%3.3d',sn(i)),'CAL.asc'];
-        [inpath,'cal',sprintf('%4.4d',sn(i)),'.asc'];
-        [inpath,sprintf('%4.4d',sn(i)),'_cal_dip2.asc'];
-        [inpath,sprintf('%4.4d',sn(i)),'_cal_dip_data2.asc'];
-        [inpath,sprintf('%4.4d',sn(i)),'_test.asc'];
-        [inpath,sprintf('%4.4d',sn(i)),'_data.asc'];
-        [inpath,sprintf('%4.4d',sn(i)),'_cal_dip.asc'];
-        [inpath,sprintf('%4.4d',sn(i)),'_cal_dip_data.asc'];
-        [inpath,sprintf('%4.4d',sn(i)),'_cal_dip_data.cnv'];
-        [inpath,sprintf('%4.4d',sn(i)),'_Cal_Dip_Data.cnv']};
-    while ~isempty(infiles)
-        infile = infiles{1};
-        if exist(infile,'file')==2
+    infiles = {[sprintf('%4.4d',sn(i)),'cal2.asc'];
+        [sprintf('%4.4d',sn(i)),'cal.asc'];
+        [sprintf('%3.3d',sn(i)),'cal.asc'];
+        [sprintf('%4.4d',sn(i)),'CAL.asc'];
+        [sprintf('%3.3d',sn(i)),'CAL.asc'];
+        ['cal',sprintf('%4.4d',sn(i)),'.asc'];
+        [sprintf('%4.4d',sn(i)),'_cal_dip2.asc'];
+        [sprintf('%4.4d',sn(i)),'_cal_dip_data2.asc'];
+        [sprintf('%4.4d',sn(i)),'_test.asc'];
+        [sprintf('%4.4d',sn(i)),'_data.asc'];
+        [sprintf('%4.4d',sn(i)),'_cal_dip.asc'];
+        [sprintf('%4.4d',sn(i)),'_cal_dip_data.asc'];
+        [sprintf('%4.4d',sn(i)),'_cal_dip_data.cnv'];
+        [sprintf('%4.4d',sn(i)),'_Cal_Dip_Data.cnv']};
+    for n = 1:length(infiles)
+        f = fullfile(inpath,infiles{n});
+        if exist(f,'file') && dir(f).bytes>0
+            %found it
             break
-        else
-            infiles(1) = [];
         end
     end
+    infile = fullfile(inpath,infiles{n});
     outfile = [outpath, 'cast', cast ,'_',sprintf('%4.4d',sn(i)),'.raw'];
 
     % --- convert from raw to rodb format ---
@@ -283,7 +283,7 @@ if id2(i)==335
     fprintf(fidlog,'%s \n',odiff);
 end
 
-outfig = [outpath, 'cast', cast ,'_all'];
+outfig = fullfile(MOORPROC_G.reportdir, cruise, 'figs', 'caldip', ['cast', cast ,'_all']);
 figure(34); hold on; box on;
 a=size(jd);
 colours = repmat([0 0 .8; 0 1 0; 1 0 0; 0 1 1; 1 .2 .9; .7 .5 0; 0 .4 0; 0 0 0],4,1);

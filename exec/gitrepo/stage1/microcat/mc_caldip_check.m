@@ -34,7 +34,7 @@ infofile  = [MOORPROC_G.moordatadir '/proc_calib/' cruise '/cal_dip/cast',cast,'
 ctdinfile = [MOORPROC_G.ctddir  '/ctd_' MOORPROC_G.cruise_ctd '_' ctdnum '_psal.nc'];
 
 % ----------------- load CTD DATA   ----------------------------------
-cvars = 'time press temp1 cond1 oxygen1 temp2 cond2 ';
+cvars = 'time press temp1 cond1 oxygen1 temp2 cond2 temp cond oxygen ';
 h = m_read_header(ctdinfile); if sum(strcmp(h.fldnam,'oxygen2')); cvars = [cvars 'oxygen2 ']; end
 d = mload(ctdinfile,[cvars ' ']);
 if strcmp(cruise,'d382')
@@ -96,9 +96,11 @@ nvec = length(ii);
 zmic = zins(ii);
 
 % Open output file for text and set plot name
-outlogf = [outpath,'microcat_check',cast,'.log'];
+%outlogf = [outpath,'microcat_check',cast,'.log'];
+outlogf = fullfile(MOORPROC_G.reportdir,'stats',['microcat_check' cast '.log']);
 ilogf = fopen(outlogf,'w');
-outplot = [outpath,'microcat_check_cast_',cast,'_plot'];
+%outplot = [outpath,'microcat_check_cast_',cast,'_plot'];
+outplot = fullfile(MOORPROC_G.reportdir,'figs','caldip',['microcat_check_cast_' cast '_plot']);
 
 % --- read data loop --
 for i = 1:nvec
@@ -111,7 +113,7 @@ for i = 1:nvec
    else
             [yy,mm,dd,hh,c,t,p,o] = rodbload(outfile,'yy:mm:dd:hh:c:t:p:o2');
    end
-   if (i > 7 & i<=14)  lstr='--'; elseif i>14  lstr ='-.'; else lstr = '-'; end 
+   if (i > 7 && i<=14)  lstr='--'; elseif i>14  lstr ='-.'; else lstr = '-'; end 
 % Time variable
    jd = julian(yy,mm,dd,hh)-jd0;
 % interpolate CTD onto microcat for a rough and ready mean diff

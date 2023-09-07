@@ -48,7 +48,7 @@ end
 %defaults
 layout = 'portrait';
 procpath = fullfile(MOORPROC_G.moordatadir,'proc');
-outpath = fullfile(MOORPROC_G.reportdir,'stats');
+outpath = fullfile(MOORPROC_G.reportdir,'figs');
 plot_interval = 0;
 width=26; height=17;
 num_to_plot = 2;
