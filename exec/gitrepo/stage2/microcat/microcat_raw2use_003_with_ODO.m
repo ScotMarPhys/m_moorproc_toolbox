@@ -18,7 +18,7 @@ clearvars -except MOORPROC_G
 % only mooring name and dates need to be modified, rest set in MOORPROC_G by
 % startup{cruise}.m
 
-moor = 'wb1_16_2023';
+moor = 'wb1_16_2023a';
 % the start and end times of the time axis for plotting
 plot_interval = [2023 03 05; 2023 07 21];
 

@@ -10,7 +10,7 @@ global MOORPROC_G
 clearvars -except MEXEC_G MOORPROC_G
 cruise   = MOORPROC_G.cruise;
 operator = MOORPROC_G.operator;
-moor='wb1_16_2023';
+moor='wb1_16_2023a';
 plot_interval=[2023 02 07 0, 2023 07 21 0];
 
 

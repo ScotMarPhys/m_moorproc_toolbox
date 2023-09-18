@@ -24,7 +24,7 @@ clearvars -except MOORPROC_G
 % only mooring name needs to be modified, rest set in MOORPROC_G by
 % startup{cruise}.m
 
-moor            = 'wb1_16_2023';
+moor            = 'wb1_16_2023a';
 ii = strfind(moor,'_');
 YEAR = str2double(moor(ii(end)+1:ii(end)+4)); % year of the first measurement
 dateoffset = 0;

@@ -47,7 +47,7 @@ a=strmatch('inpath',varargin,'exact');
 if a>0
     inpath=char(varargin(a+1));
 else
-    inpath = fullfile(MOORPROC_G.moordadtadir,'raw',cruise,'nor');end
+    inpath = fullfile(MOORPROC_G.moordatadir,'raw',cruise,'nor');end
 
 a=strmatch('outpath',varargin,'exact');
 if a>0
