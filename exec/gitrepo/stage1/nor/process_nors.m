@@ -1,4 +1,4 @@
-% PROCESS_NORS_rb1201.m is a script to process the nortek data.
+ed% PROCESS_NORS_rb1201.m is a script to process the nortek data.
 
 % 03.Apr.2010 ZB Szuts
 % Updated 2012 Feb 15

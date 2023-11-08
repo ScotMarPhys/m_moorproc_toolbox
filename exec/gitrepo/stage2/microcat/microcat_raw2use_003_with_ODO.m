@@ -361,7 +361,7 @@ for proc = 1 : length(sn)
 
     if sub == 3 
       
-      ax(3)=subplot(sub,1,3)
+      ax(3)=subplot(sub,1,3);
       
       plot(jd-jd1,pf)
       ylabel('Pressure [dbar]')
