@@ -49,7 +49,7 @@ lastyeardata            = '2020';
 
 JG                      = jg_start: 0.5: jg_end; % full time series using 2 samples per day
 pgg                     = 0:20:2000; % depths in 20dbar bins
-depthminforhoriz_interp = 40; % in case no data are available at a specific time
+depthminforhoriz_interp = 80; % in case no data are available at a specific time, % multiples of 20
 % (e.g.: mooring turn around, knock-down of the mooring head) don't interpolate on a time basis for level above 40 m
 
 % MOORING FILE NAMES 

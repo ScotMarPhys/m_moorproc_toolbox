@@ -713,9 +713,6 @@ for i = I: length(pgg) % for each depth
     %j = j + 1;
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
 % i = I; j = I;
 % for i = I: length(pgg) % for each depth
 % 
@@ -768,6 +765,15 @@ for n = 1:NT
     RTEB_merg.TGfs2(1:k_RTEB-1,n) = RTEB_merg.TGfs2(k_RTEB,n);
     RTEB_merg.SGfs2(1:k_RTEB-1,n) = RTEB_merg.SGfs2(k_RTEB,n);
 end
+
+
+%% FILL MISSING VALUES, incase of any missing values created by
+% depthminforhoriz_interp below real values
+for ii=1:length(JG)
+    RTEB_merg.TGfs2(:,ii)=fillmissing(RTEB_merg.TGfs2(:,ii),'linear','EndValues','none')
+    RTEB_merg.SGfs2(:,ii)=fillmissing(RTEB_merg.SGfs2(:,ii),'linear','EndValues','none')
+end
+
 
 % ALLOCATE VARIABLES AND SAVE
 
