@@ -766,9 +766,9 @@ elseif gridding == 1 % linear interpolation
             ivok = find(~isnan(Vfss(:,ijj)));
             iwok = find(~isnan(Wfss(:,ijj)));
             if length(iuok)>1
-                UGfs(:,ijj) = interp1(Pfss(iuok,ijj),Ufss(iuok,ijj),pgg,'linear','extrap') ;
+                UGfs(:,ijj) = interp1(Pfss(iuok,ijj),Ufss(iuok,ijj),pgg,'linear') ;
                 UGfs(inodata,ijj) = nan;
-                UGfs_pchip(:,ijj) = interp1(Pfss(iuok,ijj),Ufss(iuok,ijj),pgg,'pchip','extrap') ;
+                UGfs_pchip(:,ijj) = interp1(Pfss(iuok,ijj),Ufss(iuok,ijj),pgg,'pchip') ;
                 UGfs_pchip(inodata,ijj) = nan;
                 if length(iuok)>2
                     UGfs_akima(:,ijj) = akima(Pfss(iuok,ijj),Ufss(iuok,ijj),pgg) ;
@@ -776,9 +776,9 @@ elseif gridding == 1 % linear interpolation
                 end
             end
             if length(ivok)>1
-                VGfs(:,ijj) = interp1(Pfss(ivok,ijj),Vfss(ivok,ijj),pgg,'linear','extrap') ;    
+                VGfs(:,ijj) = interp1(Pfss(ivok,ijj),Vfss(ivok,ijj),pgg,'linear') ;    
                 VGfs(inodata,ijj) = nan;        
-                VGfs_pchip(:,ijj) = interp1(Pfss(ivok,ijj),Vfss(ivok,ijj),pgg,'pchip','extrap') ;  
+                VGfs_pchip(:,ijj) = interp1(Pfss(ivok,ijj),Vfss(ivok,ijj),pgg,'pchip') ;  
                 VGfs_pchip(inodata,ijj) = nan;
                 if length(ivok)>2
                     VGfs_akima(:,ijj) = akima(Pfss(iuok,ijj),Vfss(iuok,ijj),pgg) ;
@@ -786,9 +786,9 @@ elseif gridding == 1 % linear interpolation
                 end
             end
             if length(iwok)>1
-                WGfs(:,ijj) = interp1(Pfss(iwok,ijj),Wfss(iwok,ijj),pgg,'linear','extrap') ;    
+                WGfs(:,ijj) = interp1(Pfss(iwok,ijj),Wfss(iwok,ijj),pgg,'linear') ;    
                 WGfs(inodata,ijj) = nan;
-                WGfs_pchip(:,ijj) = interp1(Pfss(iwok,ijj),Wfss(iwok,ijj),pgg,'pchip','extrap') ;   
+                WGfs_pchip(:,ijj) = interp1(Pfss(iwok,ijj),Wfss(iwok,ijj),pgg,'pchip') ;   
                 WGfs_pchip(inodata,ijj) = nan;
                 if length(iwok)>2
                     WGfs_akima(:,ijj) = akima(Pfss(iuok,ijj),Wfss(iuok,ijj),pgg) ;
@@ -1042,18 +1042,18 @@ end
     RTEB_merg_CM.comment{4,1}= 'Wfs -- original stacked vertical data from the deployments ';    
     RTEB_merg_CM.comment{5,1}= 'Pfs -- original stacked Pressure data from the deployments';    
     RTEB_merg_CM.comment{6,1}= 'PGfs -- pressure grid ';
-    RTEB_merg_CM.comment{7,1}= 'UGfs -- zonal velocity interpolated onto the pressure grid (PGfs) with a linear extrapolation for surface values';
-    RTEB_merg_CM.comment{8,1}= 'VGfs -- meridional velocity interpolated onto the pressure grid (PGfs) with a linear extrapolation for surface values';
-    RTEB_merg_CM.comment{9,1}= 'WGfs -- vertical velocity interpolated onto the pressure grid (PGfs) with a linear extrapolation for surface values';    
+    RTEB_merg_CM.comment{7,1}= 'UGfs -- zonal velocity interpolated onto the pressure grid (PGfs) with a linear ';
+    RTEB_merg_CM.comment{8,1}= 'VGfs -- meridional velocity interpolated onto the pressure grid (PGfs) with a linear ';
+    RTEB_merg_CM.comment{9,1}= 'WGfs -- vertical velocity interpolated onto the pressure grid (PGfs) with a linear ';    
     RTEB_merg_CM.comment{10,1}= 'UGfs_akima -- zonal velocity interpolated onto the pressure grid (PGfs) with akima method';
     RTEB_merg_CM.comment{11,1}= 'VGfs_akima -- meridional velocity interpolated onto the pressure grid (PGfs) with akima method';
     RTEB_merg_CM.comment{12,1}= 'WGfs_akima -- vertical velocity interpolated onto the pressure grid (PGfs) with akima method';    
-    RTEB_merg_CM.comment{13,1}= 'UGfs_pchip -- zonal velocity interpolated onto the pressure grid (PGfs) with a pchip extrapolation for surface values';
-    RTEB_merg_CM.comment{14,1}= 'VGfs_pchip -- meridional velocity interpolated onto the pressure grid (PGfs) with a pchip extrapolation for surface values';
-    RTEB_merg_CM.comment{15,1}= 'WGfs_pchip -- vertical velocity interpolated onto the pressure grid (PGfs) with a pchip extrapolation for surface values';    
-    RTEB_merg_CM.comment{16,1}= 'UGfs2 -- zonal velocity interpolated onto the time grid (JG) after despiking with a linear extrapolation for surface values';  
-    RTEB_merg_CM.comment{17,1}= 'VGfs2 -- meridional velocity interpolated onto the time grid (JG) after despiking with a linear extrapolation for surface values';  
-    RTEB_merg_CM.comment{18,1}= 'WGfs2 -- vertical velocity interpolated onto the time grid (JG) after despiking with a linear extrapolation for surface values';  
+    RTEB_merg_CM.comment{13,1}= 'UGfs_pchip -- zonal velocity interpolated onto the pressure grid (PGfs) with a pchip ';
+    RTEB_merg_CM.comment{14,1}= 'VGfs_pchip -- meridional velocity interpolated onto the pressure grid (PGfs) with a pchip ';
+    RTEB_merg_CM.comment{15,1}= 'WGfs_pchip -- vertical velocity interpolated onto the pressure grid (PGfs) with a pchip ';    
+    RTEB_merg_CM.comment{16,1}= 'UGfs2 -- zonal velocity interpolated onto the time grid (JG) after despiking with a linear ';  
+    RTEB_merg_CM.comment{17,1}= 'VGfs2 -- meridional velocity interpolated onto the time grid (JG) after despiking with a linear ';  
+    RTEB_merg_CM.comment{18,1}= 'WGfs2 -- vertical velocity interpolated onto the time grid (JG) after despiking with a linear ';  
     
    
     RTEB_merg_CM

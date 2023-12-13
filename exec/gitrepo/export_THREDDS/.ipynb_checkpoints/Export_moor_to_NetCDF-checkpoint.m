@@ -4,7 +4,7 @@
 
 
 %% filename 
-startdate = '201407' % does not change!
+startdate = '201406'
 enddate='202207'
 version='v0'
 filename =strcat('Rockall_Trough_mooring_gridded_TSUV_',startdate,'_',enddate, version)
