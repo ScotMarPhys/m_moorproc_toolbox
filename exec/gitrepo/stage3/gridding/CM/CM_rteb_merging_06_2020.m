@@ -358,16 +358,6 @@ for i = 1: length(sn3)
     
 end
 
-%% EDIT IN 2024 BY LEWIS DRYSDALE
-% TOP TWO SENSORS DATA NOT TRUSTWORTHY, MAKE NAN
-Pfs3(1,2064:end)=NaN;
-Pfs3(2,2064:end)=NaN;
-Ufs3(1,2064:end)=NaN;
-Ufs3(2,2064:end)=NaN;
-Vfs3(1,2064:end)=NaN;
-Vfs3(2,2064:end)=NaN;
-Wfs3(1,2064:end)=NaN;
-Wfs3(2,2064:end)=NaN;
 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
