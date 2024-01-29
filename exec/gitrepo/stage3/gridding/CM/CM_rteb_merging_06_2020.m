@@ -358,8 +358,16 @@ for i = 1: length(sn3)
     
 end
 
-
-
+%% EDIT IN 2024 BY LEWIS DRYSDALE
+% TOP TWO SENSORS DATA NOT TRUSTWORTHY, MAKE NAN
+Pfs3(1,2064:end)=NaN;
+Pfs3(2,2064:end)=NaN;
+Ufs3(1,2064:end)=NaN;
+Ufs3(2,2064:end)=NaN;
+Vfs3(1,2064:end)=NaN;
+Vfs3(2,2064:end)=NaN;
+Wfs3(1,2064:end)=NaN;
+Wfs3(2,2064:end)=NaN;
 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -440,6 +448,7 @@ for i = 1: length(sn4)
     end
     
 end
+
 
 
 
@@ -660,7 +669,10 @@ Pfs     = [Pfs1;Pfs2;Pfs3;Pfs4;Pfs5;Pfs6];
 
 % order the matrices at every time step to avoid too many NaNs creeping in
 % 2004 removed....
-P_sort = NaN .* ones(size(Pfs)); U_sort = NaN .* ones(size(Ufs)); V_sort = NaN .* ones(size(Vfs)); W_sort = NaN .* ones(size(Wfs)); 
+P_sort = NaN .* ones(size(Pfs)); 
+U_sort = NaN .* ones(size(Ufs)); 
+V_sort = NaN .* ones(size(Vfs)); 
+W_sort = NaN .* ones(size(Wfs)); 
 j = 1;
 for ii = 1: length(JG)
     [P_variable, ix] = sort(Pfs(:, ii));
@@ -677,7 +689,7 @@ Ufss = nan(size(Pfs));
 Vfss = nan(size(Pfs));
 Wfss = nan(size(Pfs));
 i = 1; j = 1;
-for i = 1: length(P_sort(:,1))
+for i = 1: length(P_sort(:,1)) % for 1 to number of instruments
     ix = find(isnan(P_sort(i,:)));
     if length(ix) < length(JG)
         Pfss(j,:) = P_sort(i, :);

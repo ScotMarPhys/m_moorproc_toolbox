@@ -7,7 +7,7 @@
 startdate = '201407' % does not change!
 enddate='202207'
 version='v0'
-filename =strcat('Rockall_Trough_mooring_gridded_TSUV_',startdate,'_',enddate, version)
+filename =strcat('Rockall_Trough_mooring_gridded_TSUV_',startdate,'_',enddate,'_', version)
 outdir                         = ['X:\Marphys_Archive\Data\OSNAP\THREDDS_DATA'];
 % outdir2                      = [pathosnap '/data/moor/THREDDS'];
 outfile                     = fullfile(outdir, [filename '.nc']);
