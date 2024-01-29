@@ -78,6 +78,32 @@ for proc = 1 : length(vec);
     
     cc = cc+1;
 
+    %% top of mooring trawled in 2017- trim away bad data
+    if imoor==3 && sn(1)==9867 && proc==1
+        t(19367:end)=nan;
+        p(19367:end)=nan;
+        u(19367:end)=nan;
+        v(19367:end)=nan;
+        w(19367:end)=nan;
+    end
+
+    if imoor==3 && sn(2)==11035 && proc==2
+        t(19367:end)=nan;
+        p(19367:end)=nan;
+        u(19367:end)=nan;
+        v(19367:end)=nan;
+        w(19367:end)=nan;
+    end
+
+    if imoor==3 && sn(1)==6534 && proc==1
+        t(7112:8805)=nan;
+        p(7112:8805)=nan;
+        u(7112:8805)=nan;
+        v(7112:8805)=nan;
+        w(7112:8805)=nan;
+    end
+
+
     bad_data=find(t==-9999); t(bad_data)=nan;
     bad_data=find(p==-9999); p(bad_data)=nan;
     bad_data=find(u==-9999); u(bad_data)=nan;
