@@ -105,7 +105,7 @@ col             = {'r','b','m','c','g','y','r--','b--','m--','c--','g--','y--','
 % warning off
 gridding        = 1  ;  % 1: linear, 2: using climatological profiles
 bathy           = false ;  % turns on/off the bathy charts. off = flase
-cm_check_plot   = true; %false ;  % turns on/off the microcat check plots. off =flase
+cm_check_plot   = false ;  % turns on/off the microcat check plots. off =flase
 
 jg_start                = datenum(2014,6,01,00,00,00);
 jg_end                  = datenum(2022,07,31,00,00,00);
@@ -117,7 +117,7 @@ pgg = 0:20:2000; % depths in 20dbar bins
 depthminforhoriz_interp = 40; % in case no data are available at a specific time 
 % (e.g.: mooring turn around, knock-down of the mooring head) don't interpolate on a time basis for level above 40 m 
 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %  2a.  OSNAP 1 (PE399 --> DY053)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %  Notes:
@@ -199,7 +199,7 @@ end
 % % If a merge product of RTEB is available for this time period: 
 % jd1 = jdnew; SGfs1 = SGfs; TGfs1 = TGfs; PG1 = p_grid;    
 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %  2b.  OSNAP 2 (PE399 --> DY053)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %  Notes:
@@ -240,7 +240,16 @@ for i = 1: length(sn2)
     
     infile = [hydrodir, mooring2{i,:}, '_velocity_grid.mat'];
     load(infile,'dnumi','ufi','vfi','wfi','pfi');
-    jdnew = dnumi;    
+    
+    %remove suspicious values at beginning, vertical velocity suggests that
+    %mooring was still sinking
+    idx = find(dnumi>=datenum('22-Jun-2015 00:00:00'));
+    jdnew = dnumi(idx);
+    ufi =  ufi(:,idx);
+    vfi =  vfi(:,idx);
+    wfi =  wfi(:,idx);
+    pfi =  pfi(:,idx);
+    
     sampling_rate = round(1./median(diff(jdnew))); %nominal sampling rate [per day]
     uuu    = interp1(jdnew(1:end-1), ufi(cm2(i),1:end-1)', JG)';
     vvv    = interp1(jdnew(1:end-1), vfi(cm2(i),1:end-1)', JG)';
@@ -279,7 +288,7 @@ for i = 1: length(sn2)
 end
 
 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %  2c.  OSNAP 3 (DY053 --> DY078)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %  Notes:
@@ -320,7 +329,18 @@ for i = 1: length(sn3)
     
     infile = [hydrodir, mooring3{i,:}, '_velocity_grid.mat'];
     load(infile,'dnumi','ufi','vfi','wfi','pfi');
-    jdnew = dnumi;    
+    jdnew = dnumi;
+    
+    %remove suspicious values of upper two velocity instruments '28-Mar-2017 12:00:00'
+    
+    if cm3(i)==1 || cm3(i)==2
+        idx = find(jdnew>=datenum('28-Mar-2017 12:00:00'));
+        ufi(cm3(i),idx)=NaN;
+        vfi(cm3(i),idx)=NaN;
+        wfi(cm3(i),idx)=NaN;
+        pfi(cm3(i),idx)=NaN;
+    end
+    
     sampling_rate = round(1./median(diff(jdnew))); %nominal sampling rate [per day]
     uuu    = interp1(jdnew(1:end-1), ufi(cm3(i),1:end-1)', JG)';
     vvv    = interp1(jdnew(1:end-1), vfi(cm3(i),1:end-1)', JG)';
@@ -360,7 +380,7 @@ end
 
 
 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %  2d.  OSNAP 4 (DY078 --> AR30)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %  Notes:
@@ -401,7 +421,17 @@ for i = 1: length(sn4)
     
     infile = [hydrodir, mooring4{i,:}, '_velocity_grid.mat'];
     load(infile,'dnumi','ufi','vfi','wfi','pfi');
-    jdnew = dnumi;    
+    jdnew = dnumi;
+    
+    %remove suspicious values at beginning, vertical velocity suggests that
+    %mooring was still sinking
+    idx = find(dnumi>=datenum('15-May-2017 00:00:00'));
+    jdnew = dnumi(idx);
+    ufi =  ufi(:,idx);
+    vfi =  vfi(:,idx);
+    wfi =  wfi(:,idx);
+    pfi =  pfi(:,idx);
+    
     sampling_rate = round(1./median(diff(jdnew))); %nominal sampling rate [per day]
     uuu    = interp1(jdnew(1:end-1), ufi(cm4(i),1:end-1)', JG)';
     vvv    = interp1(jdnew(1:end-1), vfi(cm4(i),1:end-1)', JG)';
@@ -443,7 +473,7 @@ end
 
 
 
-% % If a merge product of RTEB is available for this time period: 
+%% % If a merge product of RTEB is available for this time period: 
 % jd2 = jdnew; SGfs2 = SGfs; TGfs2 = TGfs; PG2 = p_grid; % only keep the grid for the last microcat
 
 
@@ -489,6 +519,7 @@ for i = 1: length(sn5)
     infile = [hydrodir, mooring5{i,:}, '_velocity_grid.mat'];
     load(infile,'dnumi','ufi','vfi','wfi','pfi');
     jdnew = dnumi;    
+    
     sampling_rate = round(1./median(diff(jdnew))); %nominal sampling rate [per day]
     uuu    = interp1(jdnew(1:end-1), ufi(cm5(i),1:end-1)', JG)';
     vvv    = interp1(jdnew(1:end-1), vfi(cm5(i),1:end-1)', JG)';
@@ -527,7 +558,7 @@ for i = 1: length(sn5)
 end
 
 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %  2d.  OSNAP 6 (dy120 --> djc238)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %  Notes:
@@ -611,8 +642,8 @@ end
 % jd2 = jdnew; SGfs2 = SGfs; TGfs2 = TGfs; PG2 = p_grid; % only keep the grid for the last microcat
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%  3.  CONCATENATE AND ORDER THE MATRICES
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  3.  CONCATENATE AND ORDER THE MATRICES
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -648,17 +679,44 @@ datetick
 title('QUICK CHECK OF DATA')
 
 set(aa,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)   
-print('-dpng',[grdatdir 'otherfigure' filesep  'RTEBmerged_beforegrid_check'])
+% print('-dpng',[grdatdir 'otherfigure' filesep  'RTEBmerged_beforegrid_check'])
 
+%% KB outputs stagged files
+z_stacked = [100;250;500;1000;1350;1780];
+
+%%% add NaN where instrument is missing
+fill_values = NaN(1,length(Ufs5(1,:)));
+u_stacked5 = [Ufs5(1,:);fill_values;Ufs5(2:end,:)];
+v_stacked5 = [Vfs5(1,:);fill_values;Vfs5(2:end,:)];
+w_stacked5 = [Wfs5(1,:);fill_values;Wfs5(2:end,:)];
+p_stacked5 = [Pfs5(1,:);fill_values;Pfs5(2:end,:)];
+
+u_stacked6 = [Ufs6;fill_values];
+v_stacked6 = [Vfs6;fill_values];
+w_stacked6 = [Wfs6;fill_values];
+p_stacked6 = [Pfs6;fill_values];
+
+Ustacked = stack_vars(Ufs1,Ufs2,Ufs3,Ufs4,u_stacked5,u_stacked6);
+Vstacked = stack_vars(Vfs1,Vfs2,Vfs3,Vfs4,v_stacked5,v_stacked6);
+Wstacked = stack_vars(Wfs1,Wfs2,Wfs3,Wfs4,w_stacked5,w_stacked6);
+Pstacked = stack_vars(Pfs1,Pfs2,Pfs3,Pfs4,p_stacked5,p_stacked6);
+
+% plot(JG,Pstacked')
+% datetick
+
+save([pathgit,'\data\processed\stage3_gridding_CM\CM_rteb_stacked_201407_202207.mat'],...
+    'Ustacked','Vstacked','Wstacked','Pstacked','JG','z_stacked')
+%%
 
 % all the matrices for the deployments stacked together
 Ufs     = [Ufs1;Ufs2;Ufs3;Ufs4;Ufs5;Ufs6];
 Vfs     = [Vfs1;Vfs2;Vfs3;Vfs4;Vfs5;Vfs6];
 Wfs     = [Wfs1;Wfs2;Wfs3;Wfs4;Wfs5;Wfs6];
 Pfs     = [Pfs1;Pfs2;Pfs3;Pfs4;Pfs5;Pfs6];
+  
 
 % order the matrices at every time step to avoid too many NaNs creeping in
-% 2004 removed....
+% ....
 P_sort = NaN .* ones(size(Pfs)); 
 U_sort = NaN .* ones(size(Ufs)); 
 V_sort = NaN .* ones(size(Vfs)); 
@@ -695,8 +753,9 @@ clear Pfs1 Pfs2 Pfs3 Pfs4 Pfs5 Pfs6
 clear Ufs1 Ufs2 Ufs3 Ufs4 Ufs6 Ufs6
 clear Vfs1 Vfs2 Vfs3 Vfs4 Vfs5 Vfs6
 clear Wfs1 Wfs2 Wfs3 Wfs4 Wfs5 Wfs6
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%  4.  GRIDDING
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  4.  GRIDDING
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Hydro-Gridding....
@@ -802,7 +861,7 @@ end
 
 
 
-%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%
 
     
     display(['saving: ' outputfile '.mat'])
@@ -886,9 +945,9 @@ end
     graphics   = 'y';
     uuu = []; vvv = []; www =[];
     
-    %%%%%%
-    %  despike time series
-    %%%%%%
+%% %%%%
+%  despike time series
+%%%%%%
     for i = 1 : length(UGfs(:,1))   % loop through each depth level
         
         [uuu(i,:),dx,ndx] = ddspike(UGfs(i,:),[-std_win*nanstd(UGfs(i,:)),...
@@ -1064,90 +1123,95 @@ end
 
 %     ['save ' grdatdir outputfile ' RTEB_merg_CM']
 %     eval(['save ' grdatdir outputfile ' RTEB_merg_CM']);   
-    save([grdatdir outputfile],'RTEB_merg_CM');   
+%     save([grdatdir outputfile],'RTEB_merg_CM');   
   
     
-% 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% %%  6.  PLOTTING THE GRIDDED AND MERGED PROFILES
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 
-% 
-% figure(1000)
-% clf
-% subplot(3,1,1)
-% size(JG); size(PG1); size(SGfs1); size(TGfs1); 
-% contourf(jd1 , PG1, SGfs1) % doesnt work as there is no  merge RTWB mooring available
-% axis ij
-% hold on
-% contourf(jd2 , PG2, SGfs2)
-% % contourf(jd3a , PG3a, SGfs3a)
-% % contourf(jd3b , PG3b, SGfs3b)
-% % contourf(jd4 , PG4, SGfs4)
-% % contourf(jd5 , PG5, SGfs5)
-% %contourf(jd6 , PG6, SGfs6)
-% %contourf(jd7 , PG7, SGfs7)
-% %contourf(jd8 , PG8, SGfs8)
-% ylim([0,2000])
-% xlim([jd1(1) , JG(end) ])
-% title('CURRENT MERGING - SALINITY')
-% 
-% subplot(3,1,2)
-% contourf(JG , pgg, SGfs)
-% axis ij
-% ylim([0,2000])
-% xlim([jd1(1) , JG(end) ])
-% title('NEW MERGING BEFORE INTERPOLATION - SALINITY')
-% 
-% 
-% figure(1001)
-% clf
-% subplot(3,1,1)
-% contourf(jd1 , PG1, TGfs1)
-% axis ij
-% hold on
-% contourf(jd2 , PG2, TGfs2)
-% % contourf(jd3a , PG3a, TGfs3a)
-% % contourf(jd3b , PG3b, TGfs3b)
-% % contourf(jd4 , PG4, TGfs4)
-% % contourf(jd5 , PG5, TGfs5)
-% %contourf(jd6 , PG6, TGfs6)
-% %contourf(jd7 , PG7, TGfs7)
-% %contourf(jd8 , PG8, TGfs8)
-% ylim([0,2000])
-% xlim([jd1(1) , JG(end) ])
-% title('CURRENT MERGING - TEMPERATURE')
-% 
-% subplot(3,1,2)
-% contourf(JG , pgg, TGfs)
-% axis ij
-% ylim([0,2000])
-% xlim([jd1(1) , JG(end) ])
-% title('NEW MERGING BEFORE INTERPOLATION- TEMPERATURE')
-% 
-% 
-% 
-% if gridding == 0
-%     load ../mat_files/EB_merged_data_2010.mat
-% end
-% 
-% figure(1000)
-% subplot(3,1,3)
-% contourf(JG , pgg, SG_2)
-% axis ij
-% ylim([0,2000])
-% xlim([jd1(1) , JG(end) ])
-% title('NEW MERGING (after interp - SALINITY')
-% 
-% 
-% figure(1001)
-% subplot(3,1,3)
-% contourf(JG , pgg, TG_2)
-% axis ij
-% ylim([0,2000])
-% xlim([jd1(1) , JG(end) ])
-% title('NEW MERGING (after interp - TEMPERATURE')
-% 
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  6.  PLOTTING THE GRIDDED AND MERGED PROFILES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+figure(1000)
+clf
+subplot(3,1,1)
+size(JG); size(PG1); size(SGfs1); size(TGfs1); 
+contourf(jd1 , PG1, SGfs1) % doesnt work as there is no  merge RTWB mooring available
+axis ij
+hold on
+contourf(jd2 , PG2, SGfs2)
+% contourf(jd3a , PG3a, SGfs3a)
+% contourf(jd3b , PG3b, SGfs3b)
+% contourf(jd4 , PG4, SGfs4)
+% contourf(jd5 , PG5, SGfs5)
+%contourf(jd6 , PG6, SGfs6)
+%contourf(jd7 , PG7, SGfs7)
+%contourf(jd8 , PG8, SGfs8)
+ylim([0,2000])
+xlim([jd1(1) , JG(end) ])
+title('CURRENT MERGING - SALINITY')
+
+subplot(3,1,2)
+contourf(JG , pgg, SGfs)
+axis ij
+ylim([0,2000])
+xlim([jd1(1) , JG(end) ])
+title('NEW MERGING BEFORE INTERPOLATION - SALINITY')
+
+
+figure(1001)
+clf
+subplot(3,1,1)
+contourf(jd1 , PG1, TGfs1)
+axis ij
+hold on
+contourf(jd2 , PG2, TGfs2)
+% contourf(jd3a , PG3a, TGfs3a)
+% contourf(jd3b , PG3b, TGfs3b)
+% contourf(jd4 , PG4, TGfs4)
+% contourf(jd5 , PG5, TGfs5)
+%contourf(jd6 , PG6, TGfs6)
+%contourf(jd7 , PG7, TGfs7)
+%contourf(jd8 , PG8, TGfs8)
+ylim([0,2000])
+xlim([jd1(1) , JG(end) ])
+title('CURRENT MERGING - TEMPERATURE')
+
+subplot(3,1,2)
+contourf(JG , pgg, TGfs)
+axis ij
+ylim([0,2000])
+xlim([jd1(1) , JG(end) ])
+title('NEW MERGING BEFORE INTERPOLATION- TEMPERATURE')
 
 
 
+if gridding == 0
+    load ../mat_files/EB_merged_data_2010.mat
+end
+
+figure(1000)
+subplot(3,1,3)
+contourf(JG , pgg, SG_2)
+axis ij
+ylim([0,2000])
+xlim([jd1(1) , JG(end) ])
+title('NEW MERGING (after interp - SALINITY')
+
+
+figure(1001)
+subplot(3,1,3)
+contourf(JG , pgg, TG_2)
+axis ij
+ylim([0,2000])
+xlim([jd1(1) , JG(end) ])
+title('NEW MERGING (after interp - TEMPERATURE')
+
+
+
+%% functions
+function Ustacked = stack_vars(Ufs1,Ufs2,Ufs3,Ufs4,u_stacked5,u_stacked6)
+    Ustacked = cat(3,Ufs1,Ufs2,Ufs3,Ufs4,u_stacked5,u_stacked6);
+    Ustacked = sum(Ustacked,3,'omitnan');
+    Ustacked(Ustacked==0)=NaN;
+end
