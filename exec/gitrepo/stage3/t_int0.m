@@ -11,10 +11,8 @@
 %         cT  -- corresponding temperature
 %         tTg -- time dependend  temp. gradient [C/dbar] for: 18<T<26
 %         tT  -- corresponding temperature
-%         tt  -- corresponding time (decimal months)   
-%         preverse -- If a temperature inversion (i.e. increasing temperature with depth) is 
-%                     found below preverse [dbar] instead of dT/dP and dS/dP a simple linear interpolation
-%                     scheme is used to avoid ambiguities in the climatologies.%
+%         tt  -- corresponding time (decimal months)    
+%
 % output: innerT-- 
 %         innerP-- 
 %
@@ -22,12 +20,8 @@
 %  
 % T.Kanzow 4.4.00
 %          6.4.00   nearest.m replaced to speed up code 
-%          29.06.07 input variable preverse added (see description avove) 
-% J.Collins 3/3/10  added another if statement to cover case of deep data (> 4000)
-%                   and where there is no temperature inversion - from
-%                   mar0_2 mooring
 
-function [innerT,innerS,innerP] = t_int0(t,s,p,time,step,cTg,cSg,cT,tTg,tT,tt,preverse,ti)
+function [innerT,innerS,innerP] = t_int0(t,s,p,time,step,cTg,cSg,cT,tTg,tT,tt)
 
 innerT = [];
 innerP = [];
@@ -76,140 +70,98 @@ for i = 1 : ni,       % put-parts-together loop
   s2(1)     = sb(2);  % lower boundary temp
    
  %-- create continuous temp. profile between two successive sensors --
-
-   if pb(1) > 5000 
-       
-       
-      T_linint = interp1(pb,tb, inc);
-       S_linint = interp1(pb,sb, inc);
-       
-      innerT = [innerT;T_linint(:)];
-      innerS = [innerS;S_linint(:)];
-      innerP = [innerP;inc']; 
-      fprintf(1,'\r t_int0.m:     AABW moorings: p1 = %3.3d',round(pb(1)) )
-       
-       
-   elseif   pb(1) > preverse & pb(2) > preverse & tb(2) > tb(1)   % for deep ocean cases where temperature gradient reverses 
-                                                            % (i.e., increases with depth),
-                                                            % a linear interpolation should be used because the
-                                                            % climatology
-                                                            % is ambiguous
-                                                            
-                                                            
-                                                          
-      
-       T_linint = interp1(pb,tb, inc);
-       S_linint = interp1(pb,sb, inc);
-       
-      innerT = [innerT;T_linint(:)];
-      innerS = [innerS;S_linint(:)];
-      innerP = [innerP;inc']; 
-      fprintf(1,'\r t_int0.m:      T reversion: p1 = %3.3d ; p2 = %3.3d ; t1 = %3.2f ; t2 =%3.2f',...
-                                                                                  round(pb(1)),round(pb(2)),t1,t2) 
- 
-   else            % for all other cases the dT/dP (T) interpolation should be used     
- 
-     for j = 1 : length(dinc1)+1,  % integration loop
+  
+  for j = 1 : length(dinc1)+1,  % integration loop
     
-       if t1(j) <= 9999 % --------- beneath seasonal thermocline ----------------
+    if t1(j) <= 9999 % --------- beneath seasonal thermocline ----------------
 
        
-         if  t1(j)>=min(cT) & t1(j)<=max(cT)   
-           tgrad1(j)= interp1(cT,cTg,t1(j),'*linear');
-           sgrad1(j)= interp1(cT,cSg,t1(j),'*linear');
-         elseif t1(j) < min(cT)
+      if  t1(j)>=min(cT) & t1(j)<=max(cT)   
+        tgrad1(j)= interp1(cT,cTg,t1(j),'*linear');
+        sgrad1(j)= interp1(cT,cSg,t1(j),'*linear');
+      elseif t1(j) < min(cT)
            [xx,II] = min(cT);
            tgrad1(j) = cTg(II);
            sgrad1(j) = cSg(II);
-         elseif t1(j) > max(cT)
+      elseif t1(j) > max(cT)
            [xx,II]   = max(cT);
            tgrad1(j) = cTg(II);
            sgrad1(j) = cSg(II);
-         end     
-         if j < length(dinc1)+1
-           t1(j+1) = t1(j) + tgrad1(j) * dinc1(j); % new temperature at p+dp 
-           s1(j+1) = s1(j) + sgrad1(j) * dinc1(j); % new salinity at p+dp 
-         end
+      end     
+       if j < length(dinc1)+1
+         t1(j+1) = t1(j) + tgrad1(j) * dinc1(j); % new temperature at p+dp 
+         s1(j+1) = s1(j) + sgrad1(j) * dinc1(j); % new salinity at p+dp 
+       end
 
-       else %-------- above seasonal thermocline ---------------------------
+    else %-------- above seasonal thermocline ---------------------------
 
-         [xYY,ii] = min(abs(tT-t1(j)));
+       [xYY,ii] = min(abs(tT-t1(j)));
         
-         [xYY,jj] = min(abs(tt(ii)-time));
-         tgrad1(j)= tTg(ii(jj));
+       [xYY,jj] = min(abs(tt(ii)-time));
+       tgrad1(j)= tTg(ii(jj));
 
-         if j < length(dinc1)+1
-           t1(j+1) = t1(j) + tgrad1(j) * dinc1(j); % new temperature at p+dp
-         end
+       if j < length(dinc1)+1
+          t1(j+1) = t1(j) + tgrad1(j) * dinc1(j); % new temperature at p+dp
+       end
  
-       end % end thermocline if for t1
+    end % end thermocline if
   
-       if t2(j) <= 9999  %--------- beneath seasonal thermocline for t2---------------------
+   if t2(j) <= 9999  %--------- beneath seasonal thermocline ---------------------
 
        %%tgrad2(j)= interp1(cT,cTg,t2(j),'*linear');
        %%sgrad2(j)= interp1(cT,cSg,t2(j),'*linear');
 
-         if  t2(j)>=min(cT) & t2(j)<=max(cT)   
-           tgrad2(j)= interp1(cT,cTg,t2(j),'*linear');
-           sgrad2(j)= interp1(cT,cSg,t2(j),'*linear');
-         elseif t2(j) < min(cT)
+      if  t2(j)>=min(cT) & t2(j)<=max(cT)   
+        tgrad2(j)= interp1(cT,cTg,t2(j),'*linear');
+        sgrad2(j)= interp1(cT,cSg,t2(j),'*linear');
+      elseif t2(j) < min(cT)
            [xx,II] = min(cT);
            tgrad2(j) = cTg(II);
            sgrad2(j) = cSg(II);
-         elseif t2(j) > max(cT)
+      elseif t2(j) > max(cT)
            [xx,II]   = max(cT);
            tgrad2(j) = cTg(II);
            sgrad2(j) = cSg(II);
-         end     
-         if j < length(dinc1)+1
-           t2(j+1)  = t2(j) + tgrad2(j) * dinc2(j); % new temperature at p+dp
-           s2(j+1)  = s2(j) + sgrad2(j) * dinc2(j); % new salinity at p+dp
-         end
+      end     
+       if j < length(dinc1)+1
+         t2(j+1)  = t2(j) + tgrad2(j) * dinc2(j); % new temperature at p+dp
+         s2(j+1)  = s2(j) + sgrad2(j) * dinc2(j); % new salinity at p+dp
+       end
 
-       else %--------- above seasonal thermocline for t2-------------------------------
+    else %--------- above seasonal thermocline -------------------------------
 
 
          [xYY,ii] = min(abs(tT-t2(j)));
 
 
-         [xYY,jj] = min(abs(tt(ii)-time));
+       [xYY,jj] = min(abs(tt(ii)-time));
 
-         tgrad2(j)= tTg(ii(jj));   % 
+       tgrad2(j)= tTg(ii(jj));   % 
 
-         if j < length(dinc1)+1
+       if j < length(dinc1)+1
           t2(j+1) = t2(j) + tgrad2(j) * dinc2(j); % new temperature at p+dp
-         end
+       end
 
-       end % end thermocline  if for t2
+    end % end thermocline  if
   
-    
-    end  % end of integration loop 
+   
+  end    % end of integration loop 
   
-    T1 = w1.* (tb(1) + cumtrapz(inc,tgrad1));  % weighted upward integration
+  T1 = w1.* (tb(1) + cumtrapz(inc,tgrad1));  % weighted upward integration
  
-    T2 = w2.* fliplr(tb(2) + cumtrapz(fliplr(inc),tgrad2)); % weighted downward integration
+  T2 = w2.* fliplr(tb(2) + cumtrapz(fliplr(inc),tgrad2)); % weighted downward integration
 
-    S1 = w1.* (sb(1) + cumtrapz(inc,sgrad1));  % weighted upward integration
+  S1 = w1.* (sb(1) + cumtrapz(inc,sgrad1));  % weighted upward integration
  
-    S2 = w2.* fliplr(sb(2) + cumtrapz(fliplr(inc),sgrad2)); % weighted downward integration
-
-    if pb(1) >= preverse & ~isempty(find(T1 + T2 > innerT(end)))
-       
-        
-       T_linint = interp1(pb,tb, inc);
-       S_linint = interp1(pb,sb, inc);
-       
-      innerT = [innerT;T_linint(:)];
-      innerS = [innerS;S_linint(:)];
-      innerP = [innerP;inc']; 
-      fprintf(1,'\r t_int0.m:  Deep Temperature Overshoot due to dT/dP - using linear interpolation instead') 
-    else    
-      innerT = [innerT;[T1+T2]'];
-      innerS = [innerS;[S1+S2]'];
-      innerP = [innerP;inc'];
-    
-    end
-  end  % end distiction between normal (dT/dP) and linear interpolation (for deep temperature inversion) 
+  S2 = w2.* fliplr(sb(2) + cumtrapz(fliplr(inc),sgrad2)); % weighted downward integration
+   
+  
+  innerT = [innerT;[T1+T2]'];
+  innerS = [innerS;[S1+S2]'];
+  innerP = [innerP;inc'];
+  
+  %%innert1 = [innert1;t1'];
+  %%innert2 = [innert2;flipud(t2')];
   
 
 end    % end of put-parts-togehter loop   

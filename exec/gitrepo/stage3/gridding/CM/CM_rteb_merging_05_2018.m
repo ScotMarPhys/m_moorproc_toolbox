@@ -88,6 +88,7 @@ moor2 = 'rteb_CM_osnap_02_2015';
 moor3 = 'rteb_CM_osnap_03_2016';
 moor4 = 'rteb_CM_osnap_04_2017';
 moor5 = 'rteb_CM_osnap_05_2018';
+moor6 = 'rteb_CM_osnap_06_2020';
 
 basedir      = pathosnap;
 %basedir      = '/home/sa02lh/Data/Dropbox/Work/Postdoc_OSNAP/OSNAP_mooring/backup_mdrive';
@@ -862,11 +863,11 @@ end
         iw = find(~isnan(www(i,:)));
           
         % interpolate in time over the missing data
-        VG_2(j,:) = interp1(JG(iv), vvv(i, iv), JG);
+        VG_2(i,:) = interp1(JG(iv), vvv(i, iv), JG);
         % interpolate in time over the missing data
-        UG_2(j,:) = interp1(JG(iu), uuu(i, iu), JG);
+        UG_2(i,:) = interp1(JG(iu), uuu(i, iu), JG);
         % interpolate in time over the missing data
-        WG_2(j,:) = interp1(JG(iw), www(i, iw), JG);
+        WG_2(i,:) = interp1(JG(iw), www(i, iw), JG);
         
         % set NAN for nans gap of more than 10 days             
         ibad = find([diff(iv)]>20); 
@@ -878,7 +879,7 @@ end
             end
         end
         
-        j = j + 1;
+        %j = j + 1;
     end
     
     

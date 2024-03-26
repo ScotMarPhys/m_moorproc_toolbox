@@ -860,11 +860,11 @@ end
         iw = find(~isnan(www(i,:)));
           
         % interpolate in time over the missing data
-        VG_2(j,:) = interp1(JG(iv), vvv(i, iv), JG);
+        VG_2(i,:) = interp1(JG(iv), vvv(i, iv), JG);
         % interpolate in time over the missing data
-        UG_2(j,:) = interp1(JG(iu), uuu(i, iu), JG);
+        UG_2(i,:) = interp1(JG(iu), uuu(i, iu), JG);
         % interpolate in time over the missing data
-        WG_2(j,:) = interp1(JG(iw), www(i, iw), JG);
+        WG_2(i,:) = interp1(JG(iw), www(i, iw), JG);
         
         
         % set NAN for nans gap of more than 10 days             
@@ -877,7 +877,7 @@ end
             end
         end
         
-        j = j + 1;
+        %j = j + 1;
     end
     
     

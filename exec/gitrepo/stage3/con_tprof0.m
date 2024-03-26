@@ -8,7 +8,7 @@
 %   The Kuroshio east of Taiwan: Moored transport observations from the WOCE
 %   PCM-1 Array 
 %
-% function [t_con,s_con] = con_tprof0(tg,sg,pg,p_grid,time,int_step,TSclim,preverse)
+% function [t_con,s_con] = con_tprof0(tg,sg,pg,p_grid,time,int_step,TSclim)
 %    
 %   input:
 %      tg       = mooring temperature time series (stored as rows in tg)
@@ -24,14 +24,6 @@
 %
 %      TSclim   = dT/dP and dS/dP climatology
 %
-%      preverse = If a temperature inversion (i.e. increasing temperature with depth) is found below preverse [dbar]
-%                 instead of dT/dP and dS/dP a simple linear interpolation
-%                 scheme is used to avoid ambiguities in the climatologies.
-%                 Default = 4000 dbar
-%                 
-%                 
-%                       
-%
 %   output:
 %      t_con / s_con   = output temperature interpolated onto p_grid   
 %
@@ -39,15 +31,9 @@
 %        t_bound0.m, sst_check.m 
 %
 % T.Kanzow 3.4.00
-% 29.06.07 input variable preverse added (see description avove) 
 
-function [t_con,s_con] = con_tprof0(tg,sg,pg,p_grid,time,int_step,TSclim,preverse)  
-
-
-if nargin == 7
-    preverse = 4000;
-    fprintf(1,'con_tprof0.m: Default value preverse = %d is used \n',preverse)
-end    
+function [t_con,s_con] = con_tprof0(tg,sg,pg,p_grid,time,int_step,TSclim)  
+  
 t_con = []; 
 s_con = [];
 
@@ -85,12 +71,11 @@ pmax = max(p_grid);
 pmin = min(p_grid);
 
 for ti = 1 : size(tg,2),  % time loop
-  %if ti == 455
-  %    keyboard
-  %end
+  %%if ti == 303
+  %%    keyboard
+  %%end
   
   fprintf(1,['\r time step: ',num2str(ti),' of ',num2str(size(tg,2)),'                 '])
-
   ii = find(~isnan(tg(:,ti)) & ~isnan(pg(:,ti)));
 
   if length(ii) <2  % not-enough-values-if
@@ -101,7 +86,7 @@ for ti = 1 : size(tg,2),  % time loop
     P  = pg(ii,ti);
     S  = sg(ii,ti);
    
-    [innerT,innerS,innerP] = t_int0(T,S,P,time(ti),int_step,cTg,cSg,cT,tTg,tT,tt,preverse,ti);  %temperature between grid points  
+    [innerT,innerS,innerP] = t_int0(T,S,P,time(ti),int_step,cTg,cSg,cT,tTg,tT,tt);  %temperature between grid points  
 
     if(P(1) > pmin) % oneway integration for temp. guess above uppermost sensor
    

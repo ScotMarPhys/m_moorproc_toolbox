@@ -13,7 +13,7 @@ bad_data=find(nortekncdata.PRES==99999); nortekncdata.PRES(bad_data)=nan;
 
 %----------------------------------------------------
 % Graphical parameter
-vsblfig = 'off';
+vsblfig = 'on';
 zsc = get(0,'MonitorPositions');
 scrsz = [1 1 1900 1400]; % zsc(1,:);
 figpos = scrsz/60; %[0 0 27 21];
@@ -34,6 +34,7 @@ subplot(2,1,1)
 plot(nortekncdata.time, nortekncdata.UCUR);
 title([moor ' U (m.s-1)'])
 datetick
+legend(string(mcatinfo.serial_num),'Location','eastoutside');
 
 subplot(2,1,2)
 plot(nortekncdata.time, nortekncdata.VCUR);
