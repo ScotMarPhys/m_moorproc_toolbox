@@ -8,12 +8,12 @@ startdate = '201407' % does not change!
 enddate='202207'
 version='v0'
 filename =strcat('Rockall_Trough_mooring_gridded_TSUV_',startdate,'_',enddate,'_', version)
-outdir                         = ['X:\Marphys_Archive\Data\OSNAP\THREDDS_DATA'];
+outdir                      =  [pathgit '\data\processed\THREDDS_DATA\'];%['X:\Marphys_Archive\Data\OSNAP\THREDDS_DATA'];
 % outdir2                      = [pathosnap '/data/moor/THREDDS'];
 outfile                     = fullfile(outdir, [filename '.nc']);
 %% Input data
 tsdir                       = [pathosnap '/data/moor/proc/hydro_grid_merged/'];
-vldir                       = [pathosnap '/data/moor/proc/velocity_grid_merged/'];
+vldir                       = [pathgit '\data\processed\stage3_gridding_CM\'];%[pathosnap '/data/moor/proc/velocity_grid_merged/'];
 %% T S DATA 
 % Load western array data
 load([tsdir 'RTWB_merg_linear_interp_2020.mat']);
