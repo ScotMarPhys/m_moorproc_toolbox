@@ -93,7 +93,7 @@ moor6 = 'CM_rtwb1_osnap_06_2020';
 basedir      = pathosnap
 %basedir      = '/home/sa02lh/Data/Dropbox/Work/Postdoc_OSNAP/OSNAP_mooring/backup_mdrive';
 hydrodir    = [basedir '/data/moor/proc/velocity_grid/'];
-grdatdir    = [basedir '/data/moor/proc/velocity_grid_merged/'];
+grdatdir    = [pathgit '\data\processed\stage3_gridding_CM\'];%[basedir '/data/moor/proc/velocity_grid_merged/'];
 boundarydir = [execdir 'gitrepo/stage3/gridding/CM/'];
 
 col             = {'r','b','m','c','g','y','r--','b--','m--','c--','g--','y--','r:',...
@@ -104,7 +104,7 @@ col             = {'r','b','m','c','g','y','r--','b--','m--','c--','g--','y--','
 % warning off
 gridding        = 1  ;  % 1: linear, 2: using climatological profiles
 bathy           = false ;  % turns on/off the bathy charts. off = flase
-cm_check_plot   = true; %false ;  % turns on/off the microcat check plots. off =flase
+cm_check_plot   = false ;  % turns on/off the microcat check plots. off =flase
 
 jg_start                = datenum(2014,6,01,00,00,00);
 jg_end                  = datenum(2022,07,31,00,00,00);
@@ -115,7 +115,7 @@ pgg = 0:20:2000; % depths in 20dbar bins
 depthminforhoriz_interp = 40; % in case no data are available at a specific time 
 % (e.g.: mooring turn around, knock-down of the mooring head) don't interpolate on a time basis for level above 40 m 
 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %  2a.  OSNAP 1 (PE399 --> DY053)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %  Notes:
@@ -197,10 +197,10 @@ end
 % % If a merge product of RTWB1 is available for this time period: 
 % jd1 = jdnew; SGfs1 = SGfs; TGfs1 = TGfs; PG1 = p_grid;    
 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %  2b.  OSNAP 2 (PE399 --> DY053)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%  Notes:
+%  Notes: w suggest that values before '23-Jun-2015 12:00:00' needs to be removed
 %  ------
 %
 disp('---------  OSNAP 2 (PE399 --> DY053) ---------')
@@ -238,7 +238,16 @@ for i = 1: length(sn2)
     
     infile = [hydrodir, mooring2{i,:}, '_velocity_grid.mat'];
     load(infile,'dnumi','ufi','vfi','wfi','pfi');
-    jdnew = dnumi;    
+    
+    %remove suspicious values at beginning, vertical velocity suggests that
+    %mooring was still sinking '23-Jun-2015 12:00:00'
+    idx = find(dnumi>=datenum('23-Jun-2015 12:00:00'));
+    jdnew = dnumi(idx);
+    ufi =  ufi(:,idx);
+    vfi =  vfi(:,idx);
+    wfi =  wfi(:,idx);
+    pfi =  pfi(:,idx);    
+    
     sampling_rate = round(1./median(diff(jdnew))); %nominal sampling rate [per day]
     uuu    = interp1(jdnew(1:end-1), ufi(cm2(i),1:end-1)', JG)';
     vvv    = interp1(jdnew(1:end-1), vfi(cm2(i),1:end-1)', JG)';
@@ -277,12 +286,12 @@ for i = 1: length(sn2)
 end
 
 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %  2c.  OSNAP 3 (DY053 --> DY078)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%  Notes:
+%  Notes: w suggest that values before '05-Jul-2016 12:00:00' needs to be removed
 %  ------
-%
+% 
 disp('---------  OSNAP 3 (DY053 --> DY078) ---------')
 fileID3 = fopen([boundarydir, moor3, '.dat']);
 delimiter = {'\t',' '};
@@ -318,7 +327,16 @@ for i = 1: length(sn3)
     
     infile = [hydrodir, mooring3{i,:}, '_velocity_grid.mat'];
     load(infile,'dnumi','ufi','vfi','wfi','pfi');
-    jdnew = dnumi;    
+    
+    %remove suspicious values at beginning, vertical velocity suggests that
+    %mooring was still sinking
+    idx = find(dnumi>=datenum('05-Jul-2016 12:00:00'));
+    jdnew = dnumi(idx);
+    ufi =  ufi(:,idx);
+    vfi =  vfi(:,idx);
+    wfi =  wfi(:,idx);
+    pfi =  pfi(:,idx);
+   
     sampling_rate = round(1./median(diff(jdnew))); %nominal sampling rate [per day]
     uuu    = interp1(jdnew(1:end-1), ufi(cm3(i),1:end-1)', JG)';
     vvv    = interp1(jdnew(1:end-1), vfi(cm3(i),1:end-1)', JG)';
@@ -359,10 +377,10 @@ end
 
 
 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %  2d.  OSNAP 4 (DY078 --> AR30)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%  Notes:
+%  Notes: w suggest that values before '12-May-2017 12:00:00' needs to be removed
 %  ------
 %
 disp('---------  OSNAP 4 (DY078 --> AR30) ---------')
@@ -400,7 +418,16 @@ for i = 1: length(sn4)
     
     infile = [hydrodir, mooring4{i,:}, '_velocity_grid.mat'];
     load(infile,'dnumi','ufi','vfi','wfi','pfi');
-    jdnew = dnumi;    
+    
+    %remove suspicious values at beginning, vertical velocity suggests that
+    %mooring was still sinking
+    idx = find(dnumi>=datenum('12-May-2017 12:00:00'));
+    jdnew = dnumi(idx);
+    ufi =  ufi(:,idx);
+    vfi =  vfi(:,idx);
+    wfi =  wfi(:,idx);
+    pfi =  pfi(:,idx);    
+    
     sampling_rate = round(1./median(diff(jdnew))); %nominal sampling rate [per day]
     uuu    = interp1(jdnew(1:end-1), ufi(cm4(i),1:end-1)', JG)';
     vvv    = interp1(jdnew(1:end-1), vfi(cm4(i),1:end-1)', JG)';
@@ -446,7 +473,7 @@ end
 % jd2 = jdnew; SGfs2 = SGfs; TGfs2 = TGfs; PG2 = p_grid; % only keep the grid for the last microcat
 
 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %  2d.  OSNAP 5 (AR30 --> DY120)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %  Notes:
@@ -526,10 +553,10 @@ for i = 1: length(sn5)
 end
 
 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %  2d.  OSNAP 6 (DY120 --> JC238)
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%  Notes:
+%  Notes:w suggest that values before '16-Oct-2020 00:00:00' needs to be removed
 %  ------
 %
 disp('---------  OSNAP 6 (DY120 --> JC238) ---------')
@@ -567,7 +594,16 @@ for i = 1: length(sn6)
     
     infile = [hydrodir, mooring6{i,:}, '_velocity_grid.mat'];
     load(infile,'dnumi','ufi','vfi','wfi','pfi');
-    jdnew = dnumi;    
+    
+    %remove suspicious values at beginning, vertical velocity suggests that
+    %mooring was still sinking
+    idx = find(dnumi>=datenum('16-Oct-2020 00:00:00'));
+    jdnew = dnumi(idx);
+    ufi =  ufi(:,idx);
+    vfi =  vfi(:,idx);
+    wfi =  wfi(:,idx);
+    pfi =  pfi(:,idx); 
+    
     sampling_rate = round(1./median(diff(jdnew))); %nominal sampling rate [per day]
     uuu    = interp1(jdnew(1:end-1), ufi(cm6(i),1:end-1)', JG)';
     vvv    = interp1(jdnew(1:end-1), vfi(cm6(i),1:end-1)', JG)';
@@ -609,8 +645,9 @@ end
 
 % % If a merge product of RTWB1 is available for this time period: 
 % jd2 = jdnew; SGfs2 = SGfs; TGfs2 = TGfs; PG2 = p_grid; % only keep the grid for the last microcat
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%  3.  CONCATENATE AND ORDER THE MATRICES
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  3.  CONCATENATE AND ORDER THE MATRICES
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -645,9 +682,25 @@ ylabel('V')
 datetick
 title('QUICK CHECK OF DATA')
 
-set(aa,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)   
+set(aa,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5) 
+if ~exist([grdatdir 'otherfigure' filesep],'dir');mkdir([grdatdir 'otherfigure' filesep]);end
 print('-dpng',[grdatdir 'otherfigure' filesep  'RTWB1merged_beforegrid_check'])
 
+%% KB outputs stagged files
+z_stacked = [100;500;1000;1350;1570];
+
+%%% add NaN where instrument is missing
+Ustacked = stack_vars(Ufs1,Ufs2,Ufs3,Ufs4,Ufs5,Ufs6);
+Vstacked = stack_vars(Vfs1,Vfs2,Vfs3,Vfs4,Vfs5,Vfs6);
+Wstacked = stack_vars(Wfs1,Wfs2,Wfs3,Wfs4,Wfs5,Wfs6);
+Pstacked = stack_vars(Pfs1,Pfs2,Pfs3,Pfs4,Pfs5,Pfs6);
+
+% plot(JG,Pstacked')
+% datetick
+
+save([grdatdir,'CM_rtwb1_stacked_201407_' lastyeardata '07.mat'],...
+    'Ustacked','Vstacked','Wstacked','Pstacked','JG','z_stacked')
+%%
 
 % all the matrices for the deployments stacked together
 Ufs     = [Ufs1;Ufs2;Ufs3;Ufs4;Ufs5;Ufs6];
@@ -882,7 +935,7 @@ end
     graphics   = 'y';
     uuu = []; vvv = []; www =[];
     
-    %%%%%%
+    %% %%%%
     %  despike time series
     %%%%%%
     for i = 1 : length(UGfs(:,1))   % loop through each depth level
@@ -897,7 +950,15 @@ end
     
     [m,n] = size(UGfs);
     UG_2 = NaN * ones(m,n); VG_2 = NaN * ones(m,n); WG_2 = NaN * ones(m,n);
-    
+
+ %% KB, 27/03/2024
+ % This part of the code has the right idea but is wrongly excecuted in our
+ % case. I added a correct, working code further below... Our knock downs
+ % are much deeper than 40m. As the know downs are varying by depth we
+ % cannot rely on a fix value. We need to remove the horizonal
+ % interpolation in the upper cells afterwards for each colum seperately. I
+ % still leave it in as it get rid of the upper NaN rows
+ 
     % GDM, 9/4/2013
     % Need to interpolate horizontally over nans but...
     % Don't want to create fake values above knocked down moorings
@@ -960,200 +1021,151 @@ end
         
         %j = j + 1;
     end
-    
-    
-   contourlimituv = [-40:10:40];
-    contourlimitw = [-5:1:5];    
-    close all
-    figure(1); clf
-    subplot(3,1,1)
-    contourf(JG , pgg, UGfs, contourlimituv); axis ij
-    caxis([min(contourlimituv) max(contourlimituv)]);
-    datetick; ylabel('U')
-    title('BEFORE DESPIKING AND INTERPOLATION')
-    subplot(3,1,2)
-    contourf(JG , pgg, uuu, contourlimituv); axis ij
-    caxis([min(contourlimituv) max(contourlimituv)]);    
-    datetick; ylabel('U');
-    title('AFTER DESPIKING')
-    subplot(3,1,3)
-    contourf(JG , pgg, UG_2, contourlimituv); axis ij
-    caxis([min(contourlimituv) max(contourlimituv)]);    
-    datetick; ylabel('U')
-    title('AFTER DESPIKING AND INTERPOLATION')
-    
-    set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-    print('-dpng',[grdatdir outputfile '_uuu'])
-    
-    figure(2);clf
-    subplot(3,1,1)
-    contourf(JG , pgg, VGfs, contourlimituv); axis ij
-    datetick; ylabel('V')
-    caxis([min(contourlimituv) max(contourlimituv)]);    
-    title('BEFORE DESPIKING AND INTERPOLATION')
-    subplot(3,1,2)
-    contourf(JG , pgg, vvv, contourlimituv); axis ij
-    caxis([min(contourlimituv) max(contourlimituv)]);    
-    datetick; ylabel('V')
-    title('AFTER DESPIKING')
-    subplot(3,1,3)
-    contourf(JG , pgg, VG_2, contourlimituv); axis ij
-    caxis([min(contourlimituv) max(contourlimituv)]);    
-    datetick; ylabel('V')
-    title('AFTER DESPIKING AND INTERPOLATION')
-    
-     set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)   
-    print('-dpng',[grdatdir outputfile '_vvv'])
 
-    figure(2);clf
-    subplot(3,1,1)
-    contourf(JG , pgg, WGfs, contourlimitw); axis ij
-    caxis([min(contourlimitw) max(contourlimitw)]);    
-    datetick; ylabel('W')
-    title('BEFORE DESPIKING AND INTERPOLATION')
-    subplot(3,1,2)
-    contourf(JG , pgg, www, contourlimitw); axis ij
-    caxis([min(contourlimitw) max(contourlimitw)]);    
-    datetick; ylabel('W')
-    title('AFTER DESPIKING')
-    subplot(3,1,3)
-    contourf(JG , pgg, WG_2, contourlimitw); axis ij
-    caxis([min(contourlimitw) max(contourlimitw)]);    
-    datetick; ylabel('W')
-    title('AFTER DESPIKING AND INTERPOLATION')
+%% KB, 27/3/2024
+% Added code to remove horizontal interpolation when mooring was knocked down 
+% This was not needed before because data was vertical extrapolated to surface 
+% first which is now done in later step. 
+for i = 1:length(JG);
+    iu = find(~isnan(UGfs(:,i)),1,'first');
+    iv = find(~isnan(VGfs(:,i)),1,'first');
+    iw = find(~isnan(WGfs(:,i)),1,'first');
     
-     set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)   
-    print('-dpng',[grdatdir outputfile '_www'])
-    
-    % Alloacte variables into a structure
-    RTWB1_merg_CM.UGfs2= UG_2;
-    RTWB1_merg_CM.VGfs2= VG_2;
-    RTWB1_merg_CM.WGfs2= WG_2;
-        
-    %    ['save ' grdatdir char(OUT_FILE(3)) ...
-    %           ' JG pgg Tfs Sfs Pfs TGfs SGfs TG_2 SG_2 P_sort T_sort S_sort']
-    %    eval(['save ' grdatdir char(OUT_FILE(3)) ...
-    %           ' JG pgg Tfs Sfs Pfs TGfs SGfs TG_2 SG_2 P_sort T_sort S_sort'])
-    
-    RTWB1_merg_CM.comment{1,1}= 'JG -- julian day';
-    RTWB1_merg_CM.comment{2,1}= 'Ufs -- original stacked zonal velocity data from the deployments';
-    RTWB1_merg_CM.comment{3,1}= 'Vfs -- original stacked meridional data from the deployments ';
-    RTWB1_merg_CM.comment{4,1}= 'Wfs -- original stacked vertical data from the deployments ';    
-    RTWB1_merg_CM.comment{5,1}= 'Pfs -- original stacked Pressure data from the deployments';    
-    RTWB1_merg_CM.comment{6,1}= 'PGfs -- pressure grid ';
-    RTWB1_merg_CM.comment{7,1}= 'UGfs -- zonal velocity interpolated onto the pressure grid (PGfs) with a linear ';
-    RTWB1_merg_CM.comment{8,1}= 'VGfs -- meridional velocity interpolated onto the pressure grid (PGfs) with a linear ';
-    RTWB1_merg_CM.comment{9,1}= 'WGfs -- vertical velocity interpolated onto the pressure grid (PGfs) with a linear ';    
-    RTWB1_merg_CM.comment{10,1}= 'UGfs_akima -- zonal velocity interpolated onto the pressure grid (PGfs) with akima method';
-    RTWB1_merg_CM.comment{11,1}= 'VGfs_akima -- meridional velocity interpolated onto the pressure grid (PGfs) with akima method';
-    RTWB1_merg_CM.comment{12,1}= 'WGfs_akima -- vertical velocity interpolated onto the pressure grid (PGfs) with akima method';    
-    RTWB1_merg_CM.comment{13,1}= 'UGfs_pchip -- zonal velocity interpolated onto the pressure grid (PGfs) with a pchip ';
-    RTWB1_merg_CM.comment{14,1}= 'VGfs_pchip -- meridional velocity interpolated onto the pressure grid (PGfs) with a pchip ';
-    RTWB1_merg_CM.comment{15,1}= 'WGfs_pchip -- vertical velocity interpolated onto the pressure grid (PGfs) with a pchip ';    
-    RTWB1_merg_CM.comment{16,1}= 'UGfs2 -- zonal velocity interpolated onto the time grid (JG) after despiking with a linear ';  
-    RTWB1_merg_CM.comment{17,1}= 'VGfs2 -- meridional velocity interpolated onto the time grid (JG) after despiking with a linear ';  
-    RTWB1_merg_CM.comment{18,1}= 'WGfs2 -- vertical velocity interpolated onto the time grid (JG) after despiking with a linear ';  
-    
-   
-    RTWB1_merg_CM
+    VG_2(1:iv-1,i)=nan;
+    UG_2(1:iu-1,i)=nan;
+    WG_2(1:iw-1,i)=nan;
+end
 
-    
-
-%     ['save ' grdatdir outputfile ' RTWB1_merg_CM']
-%     eval(['save ' grdatdir outputfile ' RTWB1_merg_CM']);   
-      save([grdatdir outputfile],'RTWB1_merg_CM');   
-
-    
-% 
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %%  6.  PLOTTING THE GRIDDED AND MERGED PROFILES
 % % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% figure;
-% [c,h]=contourf(JG,PGfs,VGfs2,'LineColor','none');
-% cmocean('balance','pivot',0);
-% axis ij
-% datetick('x',12, 'keeplimits')
-% ylabel('Pressure (db)');
-% C=colorbar;
-% ylabel(C,' w velocity (cm s^{-1})')
+
+contourlimituv = [-40:10:40];
+contourlimitw = [-5:1:5];    
+close all
+figure(1); clf
+subplot(3,1,1)
+contourf(JG , pgg, UGfs, contourlimituv); axis ij
+hold on
+plot(JG,Pstacked','k')
+polarmap,colorbar
+caxis([min(contourlimituv) max(contourlimituv)]);
+datetick; ylabel('U')
+title('BEFORE DESPIKING AND INTERPOLATION')
+subplot(3,1,2)
+contourf(JG , pgg, uuu, contourlimituv); axis ij
+hold on
+plot(JG,Pstacked','k')
+polarmap,colorbar
+caxis([min(contourlimituv) max(contourlimituv)]);    
+datetick; ylabel('U');
+title('AFTER DESPIKING')
+subplot(3,1,3)
+contourf(JG , pgg, UG_2, contourlimituv); axis ij
+hold on
+plot(JG,Pstacked','k')
+polarmap,colorbar
+caxis([min(contourlimituv) max(contourlimituv)]);    
+datetick; ylabel('U')
+title('AFTER DESPIKING AND INTERPOLATION')
+
+set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
+print('-dpng',[grdatdir outputfile '_uuu'])
+
+figure(2);clf
+subplot(3,1,1)
+contourf(JG , pgg, VGfs, contourlimituv); axis ij
+hold on
+plot(JG,Pstacked','k')
+polarmap,colorbar
+datetick; ylabel('V')
+caxis([min(contourlimituv) max(contourlimituv)]);    
+title('BEFORE DESPIKING AND INTERPOLATION')
+subplot(3,1,2)
+contourf(JG , pgg, vvv, contourlimituv); axis ij
+hold on
+plot(JG,Pstacked','k')
+polarmap,colorbar
+caxis([min(contourlimituv) max(contourlimituv)]);    
+datetick; ylabel('V')
+title('AFTER DESPIKING')
+subplot(3,1,3)
+contourf(JG , pgg, VG_2, contourlimituv); axis ij
+hold on
+plot(JG,Pstacked','k')
+polarmap,colorbar
+caxis([min(contourlimituv) max(contourlimituv)]);    
+datetick; ylabel('V')
+title('AFTER DESPIKING AND INTERPOLATION')
+
+set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)   
+print('-dpng',[grdatdir outputfile '_vvv'])
+
+figure(3);clf
+subplot(3,1,1)
+contourf(JG , pgg, WGfs, contourlimitw); axis ij
+hold on
+plot(JG,Pstacked','k')
+polarmap,colorbar
+caxis([min(contourlimitw) max(contourlimitw)]);    
+datetick; ylabel('W')
+title('BEFORE DESPIKING AND INTERPOLATION')
+subplot(3,1,2)
+contourf(JG , pgg, www, contourlimitw); axis ij
+hold on
+plot(JG,Pstacked','k')
+polarmap,colorbar
+caxis([min(contourlimitw) max(contourlimitw)]);    
+datetick; ylabel('W')
+title('AFTER DESPIKING')
+subplot(3,1,3)
+contourf(JG , pgg, WG_2, contourlimitw); axis ij
+hold on
+plot(JG,Pstacked','k')
+polarmap,colorbar
+caxis([min(contourlimitw) max(contourlimitw)]);    
+datetick; ylabel('W')
+title('AFTER DESPIKING AND INTERPOLATION')
+
+set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)   
+print('-dpng',[grdatdir outputfile '_www'])
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  7.  SAVE DATA STRUCTURE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+% Alloacte variables into a structure
+RTWB1_merg_CM.UGfs2= UG_2;
+RTWB1_merg_CM.VGfs2= VG_2;
+RTWB1_merg_CM.WGfs2= WG_2;
+
+RTWB1_merg_CM.comment{1,1}= 'JG -- julian day';
+RTWB1_merg_CM.comment{2,1}= 'Ufs -- original stacked zonal velocity data from the deployments';
+RTWB1_merg_CM.comment{3,1}= 'Vfs -- original stacked meridional data from the deployments ';
+RTWB1_merg_CM.comment{4,1}= 'Wfs -- original stacked vertical data from the deployments ';    
+RTWB1_merg_CM.comment{5,1}= 'Pfs -- original stacked Pressure data from the deployments';    
+RTWB1_merg_CM.comment{6,1}= 'PGfs -- pressure grid ';
+RTWB1_merg_CM.comment{7,1}= 'UGfs -- zonal velocity interpolated onto the pressure grid (PGfs) with a linear ';
+RTWB1_merg_CM.comment{8,1}= 'VGfs -- meridional velocity interpolated onto the pressure grid (PGfs) with a linear ';
+RTWB1_merg_CM.comment{9,1}= 'WGfs -- vertical velocity interpolated onto the pressure grid (PGfs) with a linear ';    
+RTWB1_merg_CM.comment{10,1}= 'UGfs_akima -- zonal velocity interpolated onto the pressure grid (PGfs) with akima method';
+RTWB1_merg_CM.comment{11,1}= 'VGfs_akima -- meridional velocity interpolated onto the pressure grid (PGfs) with akima method';
+RTWB1_merg_CM.comment{12,1}= 'WGfs_akima -- vertical velocity interpolated onto the pressure grid (PGfs) with akima method';    
+RTWB1_merg_CM.comment{13,1}= 'UGfs_pchip -- zonal velocity interpolated onto the pressure grid (PGfs) with a pchip ';
+RTWB1_merg_CM.comment{14,1}= 'VGfs_pchip -- meridional velocity interpolated onto the pressure grid (PGfs) with a pchip ';
+RTWB1_merg_CM.comment{15,1}= 'WGfs_pchip -- vertical velocity interpolated onto the pressure grid (PGfs) with a pchip ';    
+RTWB1_merg_CM.comment{16,1}= 'UGfs2 -- zonal velocity interpolated onto the time grid (JG) after despiking with a linear ';  
+RTWB1_merg_CM.comment{17,1}= 'VGfs2 -- meridional velocity interpolated onto the time grid (JG) after despiking with a linear ';  
+RTWB1_merg_CM.comment{18,1}= 'WGfs2 -- vertical velocity interpolated onto the time grid (JG) after despiking with a linear ';  
 
 
-% 
-% figure(1000)
-% clf
-% subplot(3,1,1)
-% size(JG); size(PG1); size(SGfs1); size(TGfs1); 
-% contourf(jd1 , PG1, SGfs1) % doesnt work as there is no  merge RTWB mooring available
-% axis ij
-% hold on
-% contourf(jd2 , PG2, SGfs2)
-% % contourf(jd3a , PG3a, SGfs3a)
-% % contourf(jd3b , PG3b, SGfs3b)
-% % contourf(jd4 , PG4, SGfs4)
-% % contourf(jd5 , PG5, SGfs5)
-% %contourf(jd6 , PG6, SGfs6)
-% %contourf(jd7 , PG7, SGfs7)
-% %contourf(jd8 , PG8, SGfs8)
-% ylim([0,2000])
-% xlim([jd1(1) , JG(end) ])
-% title('CURRENT MERGING - SALINITY')
-% 
-% subplot(3,1,2)
-% contourf(JG , pgg, SGfs)
-% axis ij
-% ylim([0,2000])
-% xlim([jd1(1) , JG(end) ])
-% title('NEW MERGING BEFORE INTERPOLATION - SALINITY')
-% 
-% 
-% figure(1001)
-% clf
-% subplot(3,1,1)
-% contourf(jd1 , PG1, TGfs1)
-% axis ij
-% hold on
-% contourf(jd2 , PG2, TGfs2)
-% % contourf(jd3a , PG3a, TGfs3a)
-% % contourf(jd3b , PG3b, TGfs3b)
-% % contourf(jd4 , PG4, TGfs4)
-% % contourf(jd5 , PG5, TGfs5)
-% %contourf(jd6 , PG6, TGfs6)
-% %contourf(jd7 , PG7, TGfs7)
-% %contourf(jd8 , PG8, TGfs8)
-% ylim([0,2000])
-% xlim([jd1(1) , JG(end) ])
-% title('CURRENT MERGING - TEMPERATURE')
-% 
-% subplot(3,1,2)
-% contourf(JG , pgg, TGfs)
-% axis ij
-% ylim([0,2000])
-% xlim([jd1(1) , JG(end) ])
-% title('NEW MERGING BEFORE INTERPOLATION- TEMPERATURE')
-% 
-% 
-% 
-% if gridding == 0
-%     load ../mat_files/EB_merged_data_2010.mat
-% end
-% 
-% figure(1000)
-% subplot(3,1,3)
-% contourf(JG , pgg, SG_2)
-% axis ij
-% ylim([0,2000])
-% xlim([jd1(1) , JG(end) ])
-% title('NEW MERGING (after interp - SALINITY')
-% 
-% 
-% figure(1001)
-% subplot(3,1,3)
-% contourf(JG , pgg, TG_2)
-% axis ij
-% ylim([0,2000])
-% xlim([jd1(1) , JG(end) ])
-% title('NEW MERGING (after interp - TEMPERATURE')
-% 
+RTWB1_merg_CM
+ 
+save([grdatdir outputfile],'RTWB1_merg_CM');   
 
-
-
+%% functions
+function Ustacked = stack_vars(Ufs1,Ufs2,Ufs3,Ufs4,u_stacked5,u_stacked6)
+    Ustacked = cat(3,Ufs1,Ufs2,Ufs3,Ufs4,u_stacked5,u_stacked6);
+    Ustacked = sum(Ustacked,3,'omitnan');
+    Ustacked(Ustacked==0)=NaN;
+end
