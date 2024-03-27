@@ -94,7 +94,7 @@ basedir      = pathosnap;
 %basedir      = '/home/sa02lh/Data/Dropbox/Work/Postdoc_OSNAP/OSNAP_mooring/backup_mdrive';
 
 hydrodir    = [basedir '/data/moor/proc/velocity_grid/'];
-grdatdir    = [pathgit '\data\processed\stage3_gridding_CM\'];
+grdatdir    = [pathgit '\data\processed\stage3_gridding_CM\'];%[basedir '/data/moor/proc/velocity_grid_merged/'];
 boundarydir = [execdir 'gitrepo/stage3/gridding/CM/'];
 
 col             = {'r','b','m','c','g','y','r--','b--','m--','c--','g--','y--','r:',...
@@ -705,7 +705,7 @@ Pstacked = stack_vars(Pfs1,Pfs2,Pfs3,Pfs4,p_stacked5,p_stacked6);
 % plot(JG,Pstacked')
 % datetick
 
-save([grdatdir,'CM_rteb_stacked_201407_202207.mat'],...
+save([grdatdir,'CM_rteb_stacked_201407_' lastyeardata '07.mat'],...
     'Ustacked','Vstacked','Wstacked','Pstacked','JG','z_stacked')
 %%
 
@@ -961,7 +961,15 @@ end
     
     [m,n] = size(UGfs);
     UG_2 = NaN * ones(m,n); VG_2 = NaN * ones(m,n); WG_2 = NaN * ones(m,n);
-    
+
+ %% KB, 27/03/2024
+ % This part of the code has the right idea but is wrongly excecuted in our
+ % case. I added a correct, working code further below... Our knock downs
+ % are much deeper than 40m. As the know downs are varying by depth we
+ % cannot rely on a fix value. We need to remove the horizonal
+ % interpolation in the upper cells afterwards for each colum seperately. I
+ % still leave it in as it get rid of the upper NaN rows
+ 
     % GDM, 9/4/2013
     % Need to interpolate horizontally over nans but...
     % Don't want to create fake values above knocked down moorings
@@ -1023,7 +1031,22 @@ end
         
         %j = j + 1;
     end
+
+%% KB, 27/3/2024
+% Added code to remove horizontal interpolation when mooring was knocked down 
+% This was not needed before because data was vertical extrapolated to surface 
+% first which is now done in later step.
+
+for i = 1:length(JG);
+    iu = find(~isnan(UGfs(:,i)),1,'first');
+    iv = find(~isnan(VGfs(:,i)),1,'first');
+    iw = find(~isnan(WGfs(:,i)),1,'first');
     
+    VG_2(1:iv-1,i)=nan;
+    UG_2(1:iu-1,i)=nan;
+    WG_2(1:iw-1,i)=nan;
+end
+
  %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %  6.  PLOTTING THE GRIDDED AND MERGED PROFILES
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1034,18 +1057,24 @@ close all
 figure(1); clf
 subplot(3,1,1)
 contourf(JG , pgg, UGfs, contourlimituv); axis ij
+hold on
+plot(JG,Pstacked','k')
 polarmap,colorbar
 caxis([min(contourlimituv) max(contourlimituv)]);
 datetick; ylabel('U')
 title('BEFORE DESPIKING AND INTERPOLATION')
 subplot(3,1,2)
 contourf(JG , pgg, uuu, contourlimituv); axis ij
+hold on
+plot(JG,Pstacked','k')
 polarmap,colorbar
 caxis([min(contourlimituv) max(contourlimituv)]);    
 datetick; ylabel('U');
 title('AFTER DESPIKING')
 subplot(3,1,3)
 contourf(JG , pgg, UG_2, contourlimituv); axis ij
+hold on
+plot(JG,Pstacked','k')
 polarmap,colorbar
 caxis([min(contourlimituv) max(contourlimituv)]);    
 datetick; ylabel('U')
@@ -1057,18 +1086,24 @@ print('-dpng',[grdatdir outputfile '_uuu'])
 figure(2);clf
 subplot(3,1,1)
 contourf(JG , pgg, VGfs, contourlimituv); axis ij
+hold on
+plot(JG,Pstacked','k')
 polarmap,colorbar
 datetick; ylabel('V')
 caxis([min(contourlimituv) max(contourlimituv)]);    
 title('BEFORE DESPIKING AND INTERPOLATION')
 subplot(3,1,2)
 contourf(JG , pgg, vvv, contourlimituv); axis ij
+hold on
+plot(JG,Pstacked','k')
 polarmap,colorbar
 caxis([min(contourlimituv) max(contourlimituv)]);    
 datetick; ylabel('V')
 title('AFTER DESPIKING')
 subplot(3,1,3)
 contourf(JG , pgg, VG_2, contourlimituv); axis ij
+hold on
+plot(JG,Pstacked','k')
 polarmap,colorbar
 caxis([min(contourlimituv) max(contourlimituv)]);    
 datetick; ylabel('V')
@@ -1080,18 +1115,24 @@ print('-dpng',[grdatdir outputfile '_vvv'])
 figure(3);clf
 subplot(3,1,1)
 contourf(JG , pgg, WGfs, contourlimitw); axis ij
+hold on
+plot(JG,Pstacked','k')
 polarmap,colorbar
 caxis([min(contourlimitw) max(contourlimitw)]);    
 datetick; ylabel('W')
 title('BEFORE DESPIKING AND INTERPOLATION')
 subplot(3,1,2)
 contourf(JG , pgg, www, contourlimitw); axis ij
+hold on
+plot(JG,Pstacked','k')
 polarmap,colorbar
 caxis([min(contourlimitw) max(contourlimitw)]);    
 datetick; ylabel('W')
 title('AFTER DESPIKING')
 subplot(3,1,3)
 contourf(JG , pgg, WG_2, contourlimitw); axis ij
+hold on
+plot(JG,Pstacked','k')
 polarmap,colorbar
 caxis([min(contourlimitw) max(contourlimitw)]);    
 datetick; ylabel('W')
@@ -1103,38 +1144,34 @@ print('-dpng',[grdatdir outputfile '_www'])
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %  7.  SAVE DATA STRUCTURE
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    % Alloacte variables into a structure
-    RTEB_merg_CM.UGfs2= UG_2;
-    RTEB_merg_CM.VGfs2= VG_2;
-    RTEB_merg_CM.WGfs2= WG_2;
-    
-    RTEB_merg_CM.comment{1,1}= 'JG -- julian day';
-    RTEB_merg_CM.comment{2,1}= 'Ufs -- original stacked zonal velocity data from the deployments';
-    RTEB_merg_CM.comment{3,1}= 'Vfs -- original stacked meridional data from the deployments ';
-    RTEB_merg_CM.comment{4,1}= 'Wfs -- original stacked vertical data from the deployments ';    
-    RTEB_merg_CM.comment{5,1}= 'Pfs -- original stacked Pressure data from the deployments';    
-    RTEB_merg_CM.comment{6,1}= 'PGfs -- pressure grid ';
-    RTEB_merg_CM.comment{7,1}= 'UGfs -- zonal velocity interpolated onto the pressure grid (PGfs) with a linear ';
-    RTEB_merg_CM.comment{8,1}= 'VGfs -- meridional velocity interpolated onto the pressure grid (PGfs) with a linear ';
-    RTEB_merg_CM.comment{9,1}= 'WGfs -- vertical velocity interpolated onto the pressure grid (PGfs) with a linear ';    
-    RTEB_merg_CM.comment{10,1}= 'UGfs_akima -- zonal velocity interpolated onto the pressure grid (PGfs) with akima method';
-    RTEB_merg_CM.comment{11,1}= 'VGfs_akima -- meridional velocity interpolated onto the pressure grid (PGfs) with akima method';
-    RTEB_merg_CM.comment{12,1}= 'WGfs_akima -- vertical velocity interpolated onto the pressure grid (PGfs) with akima method';    
-    RTEB_merg_CM.comment{13,1}= 'UGfs_pchip -- zonal velocity interpolated onto the pressure grid (PGfs) with a pchip ';
-    RTEB_merg_CM.comment{14,1}= 'VGfs_pchip -- meridional velocity interpolated onto the pressure grid (PGfs) with a pchip ';
-    RTEB_merg_CM.comment{15,1}= 'WGfs_pchip -- vertical velocity interpolated onto the pressure grid (PGfs) with a pchip ';    
-    RTEB_merg_CM.comment{16,1}= 'UGfs2 -- zonal velocity interpolated onto the time grid (JG) after despiking with a linear ';  
-    RTEB_merg_CM.comment{17,1}= 'VGfs2 -- meridional velocity interpolated onto the time grid (JG) after despiking with a linear ';  
-    RTEB_merg_CM.comment{18,1}= 'WGfs2 -- vertical velocity interpolated onto the time grid (JG) after despiking with a linear ';  
-    
+% Alloacte variables into a structure
+RTEB_merg_CM.UGfs2= UG_2;
+RTEB_merg_CM.VGfs2= VG_2;
+RTEB_merg_CM.WGfs2= WG_2;
+
+RTEB_merg_CM.comment{1,1}= 'JG -- julian day';
+RTEB_merg_CM.comment{2,1}= 'Ufs -- original stacked zonal velocity data from the deployments';
+RTEB_merg_CM.comment{3,1}= 'Vfs -- original stacked meridional data from the deployments ';
+RTEB_merg_CM.comment{4,1}= 'Wfs -- original stacked vertical data from the deployments ';    
+RTEB_merg_CM.comment{5,1}= 'Pfs -- original stacked Pressure data from the deployments';    
+RTEB_merg_CM.comment{6,1}= 'PGfs -- pressure grid ';
+RTEB_merg_CM.comment{7,1}= 'UGfs -- zonal velocity interpolated onto the pressure grid (PGfs) with a linear ';
+RTEB_merg_CM.comment{8,1}= 'VGfs -- meridional velocity interpolated onto the pressure grid (PGfs) with a linear ';
+RTEB_merg_CM.comment{9,1}= 'WGfs -- vertical velocity interpolated onto the pressure grid (PGfs) with a linear ';    
+RTEB_merg_CM.comment{10,1}= 'UGfs_akima -- zonal velocity interpolated onto the pressure grid (PGfs) with akima method';
+RTEB_merg_CM.comment{11,1}= 'VGfs_akima -- meridional velocity interpolated onto the pressure grid (PGfs) with akima method';
+RTEB_merg_CM.comment{12,1}= 'WGfs_akima -- vertical velocity interpolated onto the pressure grid (PGfs) with akima method';    
+RTEB_merg_CM.comment{13,1}= 'UGfs_pchip -- zonal velocity interpolated onto the pressure grid (PGfs) with a pchip ';
+RTEB_merg_CM.comment{14,1}= 'VGfs_pchip -- meridional velocity interpolated onto the pressure grid (PGfs) with a pchip ';
+RTEB_merg_CM.comment{15,1}= 'WGfs_pchip -- vertical velocity interpolated onto the pressure grid (PGfs) with a pchip ';    
+RTEB_merg_CM.comment{16,1}= 'UGfs2 -- zonal velocity interpolated onto the time grid (JG) after despiking with a linear ';  
+RTEB_merg_CM.comment{17,1}= 'VGfs2 -- meridional velocity interpolated onto the time grid (JG) after despiking with a linear ';  
+RTEB_merg_CM.comment{18,1}= 'WGfs2 -- vertical velocity interpolated onto the time grid (JG) after despiking with a linear ';  
+
+
+RTEB_merg_CM
    
-    RTEB_merg_CM
-
-    
-
-    ['save ' grdatdir outputfile ' RTEB_merg_CM']
-    eval(['save ' grdatdir outputfile ' RTEB_merg_CM']);   
-    save([grdatdir outputfile],'RTEB_merg_CM');   
+save([grdatdir outputfile],'RTEB_merg_CM');   
  
 %% functions
 function Ustacked = stack_vars(Ufs1,Ufs2,Ufs3,Ufs4,u_stacked5,u_stacked6)
