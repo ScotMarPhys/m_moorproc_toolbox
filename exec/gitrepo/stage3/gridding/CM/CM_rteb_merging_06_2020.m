@@ -94,7 +94,7 @@ basedir      = pathosnap;
 %basedir      = '/home/sa02lh/Data/Dropbox/Work/Postdoc_OSNAP/OSNAP_mooring/backup_mdrive';
 
 hydrodir    = [basedir '/data/moor/proc/velocity_grid/'];
-grdatdir    = [basedir '/data/moor/proc/velocity_grid_merged/'];
+grdatdir    = [pathgit '\data\processed\stage3_gridding_CM\'];
 boundarydir = [execdir 'gitrepo/stage3/gridding/CM/'];
 
 col             = {'r','b','m','c','g','y','r--','b--','m--','c--','g--','y--','r:',...
@@ -678,8 +678,9 @@ ylabel('V')
 datetick
 title('QUICK CHECK OF DATA')
 
-set(aa,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)   
-% print('-dpng',[grdatdir 'otherfigure' filesep  'RTEBmerged_beforegrid_check'])
+set(aa,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
+if ~exist([grdatdir 'otherfigure' filesep],'dir');mkdir([grdatdir 'otherfigure' filesep]);end
+print('-dpng',[grdatdir 'otherfigure' filesep  'RTEBmerged_beforegrid_check'])
 
 %% KB outputs stagged files
 z_stacked = [100;250;500;1000;1350;1780];
@@ -704,7 +705,7 @@ Pstacked = stack_vars(Pfs1,Pfs2,Pfs3,Pfs4,p_stacked5,p_stacked6);
 % plot(JG,Pstacked')
 % datetick
 
-save([pathgit,'\data\processed\stage3_gridding_CM\CM_rteb_stacked_201407_202207.mat'],...
+save([grdatdir,'CM_rteb_stacked_201407_202207.mat'],...
     'Ustacked','Vstacked','Wstacked','Pstacked','JG','z_stacked')
 %%
 
@@ -1023,79 +1024,89 @@ end
         %j = j + 1;
     end
     
-    
-   contourlimituv = [-40:10:40];
-    contourlimitw = [-5:1:5];    
-    close all
-    figure(1); clf
-    subplot(3,1,1)
-    contourf(JG , pgg, UGfs, contourlimituv); axis ij
-    caxis([min(contourlimituv) max(contourlimituv)]);
-    datetick; ylabel('U')
-    title('BEFORE DESPIKING AND INTERPOLATION')
-    subplot(3,1,2)
-    contourf(JG , pgg, uuu, contourlimituv); axis ij
-    caxis([min(contourlimituv) max(contourlimituv)]);    
-    datetick; ylabel('U');
-    title('AFTER DESPIKING')
-    subplot(3,1,3)
-    contourf(JG , pgg, UG_2, contourlimituv); axis ij
-    caxis([min(contourlimituv) max(contourlimituv)]);    
-    datetick; ylabel('U')
-    title('AFTER DESPIKING AND INTERPOLATION')
-    
-    set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-    print('-dpng',[grdatdir outputfile '_uuu'])
-    
-    figure(2);clf
-    subplot(3,1,1)
-    contourf(JG , pgg, VGfs, contourlimituv); axis ij
-    datetick; ylabel('V')
-    caxis([min(contourlimituv) max(contourlimituv)]);    
-    title('BEFORE DESPIKING AND INTERPOLATION')
-    subplot(3,1,2)
-    contourf(JG , pgg, vvv, contourlimituv); axis ij
-    caxis([min(contourlimituv) max(contourlimituv)]);    
-    datetick; ylabel('V')
-    title('AFTER DESPIKING')
-    subplot(3,1,3)
-    contourf(JG , pgg, VG_2, contourlimituv); axis ij
-    caxis([min(contourlimituv) max(contourlimituv)]);    
-    datetick; ylabel('V')
-    title('AFTER DESPIKING AND INTERPOLATION')
-    
-     set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)   
-    print('-dpng',[grdatdir outputfile '_vvv'])
+ %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  6.  PLOTTING THE GRIDDED AND MERGED PROFILES
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   
+contourlimituv = [-40:10:40];
+contourlimitw = [-5:1:5];    
+close all
+figure(1); clf
+subplot(3,1,1)
+contourf(JG , pgg, UGfs, contourlimituv); axis ij
+polarmap,colorbar
+caxis([min(contourlimituv) max(contourlimituv)]);
+datetick; ylabel('U')
+title('BEFORE DESPIKING AND INTERPOLATION')
+subplot(3,1,2)
+contourf(JG , pgg, uuu, contourlimituv); axis ij
+polarmap,colorbar
+caxis([min(contourlimituv) max(contourlimituv)]);    
+datetick; ylabel('U');
+title('AFTER DESPIKING')
+subplot(3,1,3)
+contourf(JG , pgg, UG_2, contourlimituv); axis ij
+polarmap,colorbar
+caxis([min(contourlimituv) max(contourlimituv)]);    
+datetick; ylabel('U')
+title('AFTER DESPIKING AND INTERPOLATION')
 
-    figure(2);clf
-    subplot(3,1,1)
-    contourf(JG , pgg, WGfs, contourlimitw); axis ij
-    caxis([min(contourlimitw) max(contourlimitw)]);    
-    datetick; ylabel('W')
-    title('BEFORE DESPIKING AND INTERPOLATION')
-    subplot(3,1,2)
-    contourf(JG , pgg, www, contourlimitw); axis ij
-    caxis([min(contourlimitw) max(contourlimitw)]);    
-    datetick; ylabel('W')
-    title('AFTER DESPIKING')
-    subplot(3,1,3)
-    contourf(JG , pgg, WG_2, contourlimitw); axis ij
-    caxis([min(contourlimitw) max(contourlimitw)]);    
-    datetick; ylabel('W')
-    title('AFTER DESPIKING AND INTERPOLATION')
-    
-     set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)   
-    print('-dpng',[grdatdir outputfile '_www'])
-    
+set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
+print('-dpng',[grdatdir outputfile '_uuu'])
+
+figure(2);clf
+subplot(3,1,1)
+contourf(JG , pgg, VGfs, contourlimituv); axis ij
+polarmap,colorbar
+datetick; ylabel('V')
+caxis([min(contourlimituv) max(contourlimituv)]);    
+title('BEFORE DESPIKING AND INTERPOLATION')
+subplot(3,1,2)
+contourf(JG , pgg, vvv, contourlimituv); axis ij
+polarmap,colorbar
+caxis([min(contourlimituv) max(contourlimituv)]);    
+datetick; ylabel('V')
+title('AFTER DESPIKING')
+subplot(3,1,3)
+contourf(JG , pgg, VG_2, contourlimituv); axis ij
+polarmap,colorbar
+caxis([min(contourlimituv) max(contourlimituv)]);    
+datetick; ylabel('V')
+title('AFTER DESPIKING AND INTERPOLATION')
+
+set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)   
+print('-dpng',[grdatdir outputfile '_vvv'])
+
+figure(3);clf
+subplot(3,1,1)
+contourf(JG , pgg, WGfs, contourlimitw); axis ij
+polarmap,colorbar
+caxis([min(contourlimitw) max(contourlimitw)]);    
+datetick; ylabel('W')
+title('BEFORE DESPIKING AND INTERPOLATION')
+subplot(3,1,2)
+contourf(JG , pgg, www, contourlimitw); axis ij
+polarmap,colorbar
+caxis([min(contourlimitw) max(contourlimitw)]);    
+datetick; ylabel('W')
+title('AFTER DESPIKING')
+subplot(3,1,3)
+contourf(JG , pgg, WG_2, contourlimitw); axis ij
+polarmap,colorbar
+caxis([min(contourlimitw) max(contourlimitw)]);    
+datetick; ylabel('W')
+title('AFTER DESPIKING AND INTERPOLATION')
+
+set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)   
+print('-dpng',[grdatdir outputfile '_www'])
+ 
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  7.  SAVE DATA STRUCTURE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % Alloacte variables into a structure
     RTEB_merg_CM.UGfs2= UG_2;
     RTEB_merg_CM.VGfs2= VG_2;
     RTEB_merg_CM.WGfs2= WG_2;
-        
-    %    ['save ' grdatdir char(OUT_FILE(3)) ...
-    %           ' JG pgg Tfs Sfs Pfs TGfs SGfs TG_2 SG_2 P_sort T_sort S_sort']
-    %    eval(['save ' grdatdir char(OUT_FILE(3)) ...
-    %           ' JG pgg Tfs Sfs Pfs TGfs SGfs TG_2 SG_2 P_sort T_sort S_sort'])
     
     RTEB_merg_CM.comment{1,1}= 'JG -- julian day';
     RTEB_merg_CM.comment{2,1}= 'Ufs -- original stacked zonal velocity data from the deployments';
@@ -1121,94 +1132,10 @@ end
 
     
 
-%     ['save ' grdatdir outputfile ' RTEB_merg_CM']
-%     eval(['save ' grdatdir outputfile ' RTEB_merg_CM']);   
-%     save([grdatdir outputfile],'RTEB_merg_CM');   
-  
-    
-
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%  6.  PLOTTING THE GRIDDED AND MERGED PROFILES
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-figure(1000)
-clf
-subplot(3,1,1)
-size(JG); size(PG1); size(SGfs1); size(TGfs1); 
-contourf(jd1 , PG1, SGfs1) % doesnt work as there is no  merge RTWB mooring available
-axis ij
-hold on
-contourf(jd2 , PG2, SGfs2)
-% contourf(jd3a , PG3a, SGfs3a)
-% contourf(jd3b , PG3b, SGfs3b)
-% contourf(jd4 , PG4, SGfs4)
-% contourf(jd5 , PG5, SGfs5)
-%contourf(jd6 , PG6, SGfs6)
-%contourf(jd7 , PG7, SGfs7)
-%contourf(jd8 , PG8, SGfs8)
-ylim([0,2000])
-xlim([jd1(1) , JG(end) ])
-title('CURRENT MERGING - SALINITY')
-
-subplot(3,1,2)
-contourf(JG , pgg, SGfs)
-axis ij
-ylim([0,2000])
-xlim([jd1(1) , JG(end) ])
-title('NEW MERGING BEFORE INTERPOLATION - SALINITY')
-
-
-figure(1001)
-clf
-subplot(3,1,1)
-contourf(jd1 , PG1, TGfs1)
-axis ij
-hold on
-contourf(jd2 , PG2, TGfs2)
-% contourf(jd3a , PG3a, TGfs3a)
-% contourf(jd3b , PG3b, TGfs3b)
-% contourf(jd4 , PG4, TGfs4)
-% contourf(jd5 , PG5, TGfs5)
-%contourf(jd6 , PG6, TGfs6)
-%contourf(jd7 , PG7, TGfs7)
-%contourf(jd8 , PG8, TGfs8)
-ylim([0,2000])
-xlim([jd1(1) , JG(end) ])
-title('CURRENT MERGING - TEMPERATURE')
-
-subplot(3,1,2)
-contourf(JG , pgg, TGfs)
-axis ij
-ylim([0,2000])
-xlim([jd1(1) , JG(end) ])
-title('NEW MERGING BEFORE INTERPOLATION- TEMPERATURE')
-
-
-
-if gridding == 0
-    load ../mat_files/EB_merged_data_2010.mat
-end
-
-figure(1000)
-subplot(3,1,3)
-contourf(JG , pgg, SG_2)
-axis ij
-ylim([0,2000])
-xlim([jd1(1) , JG(end) ])
-title('NEW MERGING (after interp - SALINITY')
-
-
-figure(1001)
-subplot(3,1,3)
-contourf(JG , pgg, TG_2)
-axis ij
-ylim([0,2000])
-xlim([jd1(1) , JG(end) ])
-title('NEW MERGING (after interp - TEMPERATURE')
-
-
-
+    ['save ' grdatdir outputfile ' RTEB_merg_CM']
+    eval(['save ' grdatdir outputfile ' RTEB_merg_CM']);   
+    save([grdatdir outputfile],'RTEB_merg_CM');   
+ 
 %% functions
 function Ustacked = stack_vars(Ufs1,Ufs2,Ufs3,Ufs4,u_stacked5,u_stacked6)
     Ustacked = cat(3,Ufs1,Ufs2,Ufs3,Ufs4,u_stacked5,u_stacked6);
