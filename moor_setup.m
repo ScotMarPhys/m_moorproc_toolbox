@@ -37,7 +37,7 @@ if ~exist('YEAR','var')
         YEAR = input('start year?   ','n');
     end
 end
-YEAR
+
 if ~isfield(MOORPROC_G,'cruise_ctd')
 
     if ~exist('mcruise','var')
@@ -57,10 +57,14 @@ if ~isfield(MOORPROC_G,'cruise_ctd')
     MOORPROC_G.YEAR = YEAR;
 end
 
-%if exist('operator', %MOORPROC_G.operator = input('operator?   ','s');
-MOORPROC_G.project = input('project?   ','s');
-%MOORPROC_G.project = 'RAPID';
-MOORPROC_G.operator = 'ylf';
+%MOORPROC_G.project = input('project?   ','s');
+MOORPROC_G.project = 'RAPID';
+[s,u] = system('whoami');
+if s==0
+    MOORPROC_G.operator = u(1:end-1);
+else
+    MOORPROC_G.operator = input('operator?    ','s');
+end
 
 % Add to the path osnap mooring functions to go with this file:
 pathgit = fileparts(which(mfilename));
@@ -77,7 +81,7 @@ switch lower(MOORPROC_G.project)
         basedir = fullfile(datadir, 'rpdmoc');
         MOORPROC_G.moordatadir = fullfile(basedir,'rapid','data','moor');
         MOORPROC_G.reportdir = fullfile(basedir,'rapid','documents','datareports',MOORPROC_G.cruise);
-        MOORPROC_G.ctddir = fullfile(basedir,MOORPROC_G.cruise,'data','ctd');
+        MOORPROC_G.ctddir = fullfile(basedir,MOORPROC_G.cruise,'mcruise','data','ctd');
     case 'osnap'
         basedir = fullfile(datadir, 'osnap');
         MOORPROC_G.moordatadir = fullfile(basedir,'data','moor');
@@ -93,10 +97,11 @@ MOORPROC_G.logdir  = fullfile(MOORPROC_G.moordatadir, 'logs');
 if ~exist(MOORPROC_G.logdir,'dir')
     mkdir(MOORPROC_G.logdir)
 end
-if ~exist('MOORPROC_G.reportdir','dir')
+if ~exist(MOORPROC_G.reportdir,'dir')
     mkdir(MOORPROC_G.reportdir)
 end
 
+mcruise = MOORPROC_G.cruise;
 disp ([upper(mcruise) ', ' num2str(YEAR)])
 disp ('-----------------------------------------------------------------------------------------------')
 fprintf(1,'%s\n',['ran the ' mcruise ' setup file to open the paths to'], ...

@@ -43,15 +43,12 @@ if strcmp(cruise,'d382')
     d.cond2=d.cond2*10;  
 end
 %and rename primary(s)
-d.temp = d.(['temp' ctdsen]);
+d.temp = d.(['temp' ctdsen]);    
+dnum = m_commontime(d,'time',h,'datenum');
+d.dday = dnum - datenum(MOORPROC_G.YEAR,1,1);
 d.cond = d.(['cond' ctdsen]);
 d.oxygen = d.(['oxygen' oxysen]);
-
-HH = h.data_time_origin(4)+h.data_time_origin(5)/60+h.data_time_origin(6)/3600;
-jtime=h.data_time_origin(1:3);
-jtime=[jtime HH];
-d.dday=julian(jtime)+d.time/86400-jd0;
-ctdtimetx = datestr(h.data_time_origin);
+ctdtimetx = datestr(dnum(1));
 ptittxt = sprintf('Cast %s start %s SBE-CTD sensor set %s',cast,ctdtimetx,ctdsen);
 
 
@@ -62,10 +59,13 @@ if strcmp(cruise,'en705') && strcmp(cast,'2')
     mxpi = 3046;
     imp = d.press > mxpi-10 & d.press < mxpi+10 & d.dday>d.dday(d.press==max(d.press));
     pwarn = 1;
+    lct = 'CTD stats for deepest 10 dbar where microcats were logging';
 else
+    %within 10 dbar of deepest
     mxpi = max(d.press);
     imp = d.press > mxpi-10;
     pwarn = 0;
+    lct = 'CTD stats for deepeset 10 dbar';
 end
 trc = [min(d.dday(imp)) max(d.dday(imp))];
 tm1p = trc(1)+diff(trc)/4;
@@ -108,9 +108,26 @@ zmic = zins(ii);
 % Open output file for text and set plot name
 %outlogf = [outpath,'microcat_check',cast,'.log'];
 outlogf = fullfile(MOORPROC_G.reportdir,'stats',['microcat_check' cast '.log']);
+if ~exist(fileparts(outlogf),'dir')
+    warning('creating directory for log file')
+    try
+        mkdir(fileparts(outlogf))
+    end
+end
 ilogf = fopen(outlogf,'w');
+if ilogf==-1
+    error('could not open log file %s for writing',outlogf)
+end
 %outplot = [outpath,'microcat_check_cast_',cast,'_plot'];
 outplot = fullfile(MOORPROC_G.reportdir,'figs','caldip',['microcat_check_cast_' cast '_plot']);
+if ~exist(fileparts(outplot),'dir')
+    warning('creating directory for figures')
+    try
+        mkdir(fileparts(outplot))
+    catch
+        error('no directory for %s',outplot)
+    end
+end
 
 % --- read data loop --
 for i = 1:nvec
@@ -260,7 +277,8 @@ end
 % Display CTD characteristics
 
 
-fprintf(ilogf,'\nCTD mean temp (1,2) %8.4f %8.4f \n',ctd1_temp_mn,ctd2_temp_mn);
+fprintf(ilogf,'\n%s: \n',lct);
+fprintf(ilogf,'CTD mean temp (1,2) %8.4f %8.4f \n',ctd1_temp_mn,ctd2_temp_mn);
 fprintf(ilogf,'CTD sdev temp (1,2) %8.5f %8.5f \n',ctd1_temp_st,ctd2_temp_st);
 fprintf(ilogf,'CTD sensor mean and sdev diff tenperature  %8.5f %8.5f  \n', ...
     t_ctd_m,t_ctd_s);
@@ -416,7 +434,11 @@ ylabel('[dbar]')
 subplot(4,1,4);hold on;grid on;grid minor;
 errorbar(pdifx(:,2),pstd(:,2))
 %ylim([-10 10])
-ylim([min(pdifx(:,2)-max(pstd(:,2))) max(pdifx(:,2)+max(pstd(:,2)))])
+yl = [min(pdifx(:,2)-max(pstd(:,2))) max(pdifx(:,2)+max(pstd(:,2)))];
+if isnan(sum(yl))
+    yl = [-10 10];
+end
+ylim(yl)
 
 set(gca,'xtick',1:1:length(vectx),'XTicklabel',vectx,'XTickLabelRotation',45)
 title({'Pdiff @ nominal deployment pressure'})

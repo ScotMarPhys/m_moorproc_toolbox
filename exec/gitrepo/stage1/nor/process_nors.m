@@ -1,4 +1,4 @@
-ed% PROCESS_NORS_rb1201.m is a script to process the nortek data.
+% PROCESS_NORS_rb1201.m is a script to process the nortek data.
 
 % 03.Apr.2010 ZB Szuts
 % Updated 2012 Feb 15
@@ -10,9 +10,10 @@ global MOORPROC_G
 clearvars -except MEXEC_G MOORPROC_G
 cruise   = MOORPROC_G.cruise;
 operator = MOORPROC_G.operator;
-moor='wb1_16_2023a';
-plot_interval=[2023 02 07 0, 2023 07 21 0];
-
+moor = input('mooring deployment (e.g. ebh2_15_2022) to process:   ','s');
+%moor='wb1_16_2023a';
+%plot_interval=[2023 02 07 0, 2023 07 21 0];
+plot_interval=[]; %automatic based on available times
 
 inpath   = fullfile(MOORPROC_G.moordatadir,'raw',cruise,'nor');%'nortek'
 procpath = fullfile(MOORPROC_G.moordatadir,'proc');

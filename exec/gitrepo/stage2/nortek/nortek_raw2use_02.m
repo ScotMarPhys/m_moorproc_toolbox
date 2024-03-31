@@ -48,14 +48,10 @@ else
     outpath = fullfile(procpath,moor,'nor');
 end
 a = find(strcmp('plot_interval', varargin));
-if a>0
-    plot_interval=varargin(a+1);
-    plot_interval2=zeros(2,4); 
-    plot_interval2(1,1:4)=plot_interval{1}(1:4); 
-    plot_interval2(2,1:4)=plot_interval{1}(5:8);
-    plot_interval=plot_interval2;
+if a>0 && ~isempty(varargin{a+1})
+    plot_interval=reshape(varargin{a+1},4,2)';
 else
-    plot_interval=0;
+    plot_interval=[];
 end
 
 operator = MOORPROC_G.operator;
@@ -83,10 +79,8 @@ fprintf(fid_stat,['        Norteks in Mooring ',moor,'\n\n\n']);
 dummy    = -9999;
 
 % Determine plot_interval if not input to function
-if plot_interval==0
-    plot_interval = zeros(2,4);
-    plot_interval(1,1) = s_d(1); plot_interval(1,2) = s_d(2)-1; plot_interval(1,3) = 1; plot_interval(1,4) = 0;
-    plot_interval(2,1) = e_d(1); plot_interval(2,2) = e_d(2)+1; plot_interval(2,3) = 1; plot_interval(2,4) = 0;
+if isempty(plot_interval)
+    plot_interval = [s_d(1) s_d(2)-1 s_d(3) 0; e_d(1) e_d(2)+1 e_d(3) 0];
     if plot_interval(1,2)==0
         plot_interval(1,2)=12; plot_interval(1,1)=plot_interval(1,1)-1;
     end

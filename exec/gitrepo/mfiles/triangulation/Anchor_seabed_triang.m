@@ -1,22 +1,29 @@
-function Anchor5
+function Anchor_seabed_triang(varargin)
 %
-% Find the anchor position from 3 or more positions and ranges
-% This version user enters only time information in file  <moorname>_times.txt
-% created by the user and stored in:
-%   /noc/users/pstar/rpdmoc/rapid/data/moor/raw/<cruise>/moor_positions/
+% Anchor_seabed_triang(varargin)
+% Anchor_seabed_triang(moor_loc, release_height, transducer_depth)
 %
-% Results written and position is found from navigation files on Techsas.
+% e.g.
+% >> Anchor_seabed_triang('ebh3', 1, 5)
+% or without input arguments, 
+% >> Anchor_seabed_triang
+% will prompt user for inputs
+%
+% Find the anchor position from 3 or more positions and ranges from text
+% file
+%   {MOORPROC_G.moordatadir}/raw/{cruise}/moor_positions/{moor}_times.txt
 %
 % Format of text file should be 
 %    YYYY MM DD HH MM SS range depth(if applicable)
 %
 % First line is anchor drop:
 %   - enter zero for range
-%   - and NEGATIVE of uncorrected water depth at time of anchor drop
-%   - if no depth data are available, enter a POSITIVE number as best
-%   estimate of depth
+%   - for depth, a POSITIVE value will be used as the estimated
+%   (uncorrected) depth; to instead interpolate from the ship's underway
+%   depth stream to the anchor drop time, enter a NEGATIVE value on this
+%   line   
 %
-% following lines are traingulation times (enter zero for depth)
+% following lines are triangulation times (enter zero for depth)
 %
 % e.g.
 %
@@ -26,23 +33,23 @@ function Anchor5
 % 2015 10 28 11 00 30 1549 0
 % 2015 10 28 11 11 30 1547 0
 %
-% Also solves for traingulation position.
+% Also solves for triangulation position.
 %
-% Saves restults to /noc/users/pstar/rpdmoc/rapid/data/moor/raw/<cruise>/moor_positions/
+% Saves results to moor_positions/{moor}_triangle.txt
 %
-% This version uses calls to m_map toolbox to use m_fdist and m_idist to calculate
-% distances on spheroid.
+% This version uses calls to mrvdas/mtechsas/mscs to get data from ship
+% underway system, and uses m_map toolbox to use m_fdist and m_idist to
+% calculate distances on spheroid.
 %
 % DAS October 2012 Updated for JC103 May 2014
 %
 
-% Techsas stream to get navigation info from:
 global MEXEC_G MOORPROC_G
 
 switch MEXEC_G.Mshipdatasystem
     case 'techsas'
-    	nav_stream = 'cnav';
-    	dep_stream = 'sim';
+        nav_stream = 'cnav';
+        dep_stream = 'sim';
     case 'scs'
         nav_stream = 'posfur';
         nav_vars   = 'time GPS-Furuno-GGA-lat GPS-Furuno-GGA-lon';
@@ -50,6 +57,12 @@ switch MEXEC_G.Mshipdatasystem
         dep_vars = 'time waterdepth';
         %	ms_raw_to_sed(57);
         %	update_allmat;
+    case 'rvdas'
+        nav_stream = 'posmv_gpgga';
+        nav_vars = 'time latitude longitude';
+        dep_stream = 'ea640_sddbs';
+        dep_vars = 'time waterdepth';
+
 end
 
 mcruise = MOORPROC_G.cruise;
@@ -59,71 +72,77 @@ dirout = fullfile(MOORPROC_G.moordatadir,'raw',mcruise,'moor_positions');
 iscor = 0;
 
 % User input
-fprintf(1,'\n Enter mooring name (e.g. ebh3)). Times will then be read from <name>_times.txt: \n');
-fprintf(1,' - in the folder %s \n',dirout)
-fprintf(1,' - with one range per line in format  YYYY MM DD HH MM SS range. \n')
-fprintf(1, ' Output will be saved to <name>_triangle.txt in the same directory. \n\n');
-loc_name = input('Enter mooring name (e.g. ebh3): ','s');
+if nargin>0
+    loc_name = varargin{1};
+    if nargin>1
+        rht = varargin{2};
+        if nargin>2
+            td = varargin{3};
+        else
+            td =input('Enter approximate transducer depth in metres: ');
+        end
+    else
+        rht=input('Enter approximate height of release above seabed in metres: ');
+    end
+else
+    fprintf(1,'\n Enter mooring name (e.g. ebh3)). Times will then be read from <name>_times.txt: \n');
+    fprintf(1,' - in the folder %s \n',dirout)
+    fprintf(1,' - with one range per line in format  YYYY MM DD HH MM SS range. \n')
+    fprintf(1, ' Output will be saved to <name>_triangle.txt in the same directory. \n\n');
+    loc_name = input('Enter mooring name (e.g. ebh3): ','s');
+end
 
 if strmatch(loc_name, '')
     return
 else
-    if exist(dirout,'dir')
-        filein = fullfile(dirout, [loc_name '_times.txt']);
-        fileout = fullfile(dirout, [loc_name '_triangle.txt']);
-        disp(['Reading times from ' filein]);
-        if exist(filein,'file')
-            indata = load(filein);
-        else
-            disp('input file does not exst')
-            return
-        end
-        disp(['Opening output file ' fileout]);
-        disp('If file exists contents will be overwritten')
-        iout = fopen(fileout,'w+');
+    if ~exist(dirout,'dir')
+        warning('making directory %s', dirout)
+        mkdir(dirout)
+    end
+    filein = fullfile(dirout, [loc_name '_times.txt']);
+    fileout = fullfile(dirout, [loc_name '_triangle.txt']);
+    disp(['Reading times from ' filein]);
+    if exist(filein,'file')
+        indata = load(filein);
     else
-        disp(['Directory ' dirout ' does not exist']);
+        warning('input file %s does not exist',filein)
         return
     end
+    disp(['Opening output file ' fileout]);
+    disp('If file exists contents will be overwritten')
+    iout = fopen(fileout,'w+');
 end
-
-rht=input('Enter approximate height of release above seabed in metres: ');
-td =input('Enter approximate transducer depth in metres: ');
 
 % Read in data from text file assume first point is anchor drop
-for i = 1:size(indata,1)
-    dvec = indata(i,1:6);
-    tme(i) = datenum(dvec);
-    if i == 1
-        range(1) = -999;
-    else
-        range(i) = indata(i,7);
-    end
-    if size(indata,2) == 8
-        dptvl(i) = indata(i,8);
-    else
-    	dptvl(i) = -999;
-    end
+tme = datenum(indata(:,1:6));
+range = indata(:,7); range(1) = -999;
+if size(indata,2) == 8
+    dptvl = indata(:,8);
+else
+    dptvl = -999+zeros(size(range));
 end
 
-% Now get data from Techsas
+% Now get data from underway data system
 switch MEXEC_G.Mshipdatasystem
     case 'techsas'
-    	pos = mtload(nav_stream,datevec(tme(1)-0.04), ...
+        pos = mtload(nav_stream,datevec(tme(1)-0.04), ...
             datevec(tme(end)+0.01),'time lat long');
-    	pos.time = pos.time + MEXEC_G.uway_torg;
-    	pos.lon = pos.long;
+        pos.time = pos.time + MEXEC_G.uway_torg;
+        pos.lon = pos.long;
     case 'rvdas'
-    	pos = mtload(nav_stream,datevec(tme(1)-0.04), ...
-            datevec(tme(end)+0.01),'time lat long');
+        pos = mrload(nav_stream,datevec(tme(1)-0.04), ...
+            datevec(tme(end)+0.01),'time latitude longitude');
+        pos.lat = pos.latitude;
+        pos.lon = pos.longitude;
+        pos.time = pos.dnum;
     case 'scs'
-    	pos = msload(nav_stream,datevec(tme(1)-0.04), ...
+        pos = msload(nav_stream,datevec(tme(1)-0.04), ...
             datevec(tme(end)+0.01),nav_vars);
-    	pos.lat = pos.GPS_Furuno_GGA_lat;
-    	pos.lon = pos.GPS_Furuno_GGA_lon;
-    	[pos.time, IA, IC] = unique(pos.time);
-    	pos.lat = pos.lat(IA);
-    	pos.lon = pos.lon(IA);
+        pos.lat = pos.GPS_Furuno_GGA_lat;
+        pos.lon = pos.GPS_Furuno_GGA_lon;
+        [pos.time, IA, IC] = unique(pos.time);
+        pos.lat = pos.lat(IA);
+        pos.lon = pos.lon(IA);
 end
 
 % interpolate for positions then depths
@@ -138,13 +157,13 @@ if dptvl(1) < 0
                 datevec(tme(1)+0.01),'time depthm');
             dep.time = dep.time + MEXEC_G.uway_torg;
         case 'rvdas'
-            dep = mtload(dep_stream,datevec(tme(1)-0.01), ...
-                datevec(tme(1)+0.01),'time depthm');
+            dep = mrload(dep_stream,datevec(tme(1)-0.01), ...
+                datevec(tme(1)+0.01),'time waterdepthmeters');
         case 'scs'
             dep = msload(dep_stream,datevec(tme(1)-0.01), ...
                 datevec(tme(1)+0.01),dep_vars);
             dep.depthm = dep.waterdepth;
-        	[dep.time, IA, IC] = unique(dep.time);
+            [dep.time, IA, IC] = unique(dep.time);
             dep.depthm = dep.depthm(IA);
     end
 
@@ -224,7 +243,7 @@ for i=1:no_fixes
     elseif irn == 2
         corr_struct = 	mcarter(lat(1),lon(1),range(i));
         rangeC = corr_struct.cordep;
-    	rangeh(i)=sqrt((rangeC)^2 - (wd_corr-rht-td)^2);
+        rangeh(i)=sqrt((rangeC)^2 - (wd_corr-rht-td)^2);
     elseif irn == 3
         rangeh(i)=sqrt((range(i))^2 - (wd-rht-td)^2);
     end
@@ -253,12 +272,12 @@ for i=1:no_fixes
     if i < 4
         plot(lon(i),lat(i),'b+');
     else
-    	plot(lon(i),lat(i),'r+')
+        plot(lon(i),lat(i),'r+')
     end
     if i < 4
         plot(clon,clat,'b');
     else
-    	plot(clon,clat,'r');
+        plot(clon,clat,'r');
     end
 end
 
@@ -324,15 +343,15 @@ latmin = 60*(APlat-latdeg);
 lonmin = 60*(-APlon-londeg);
 
 title4 = sprintf('Latitude %i %5.2f N, Longitude %i %5.2f W',latdeg,latmin,londeg,lonmin);
-%fallback1 = sw_dist([APlat lat(1)],[APlon lon(1)],'nm');
-%fallback2 = sw_dist([APlat lat(1)],[APlon lon(1)],'km');
+fallback1 = sw_dist([APlat lat(1)],[APlon lon(1)],'nm');
+fallback2 = sw_dist([APlat lat(1)],[APlon lon(1)],'km');
 
 plot(APlon,APlat,'r+');
 plot(APlon,APlat,'ro');
 plot(lonD,latD,'g+');
 plot(lonD,latD,'go');
 titletext3=['Red = anchor seabed position. ',num2str(APlat),'N ',num2str(APlon),'W.'];
-%titletext4=['Fall back = ' num2str(fallback2) ' km = ' num2str(fallback1) ' nm.'];
+titletext4=['Fall back = ' num2str(fallback2) ' km = ' num2str(fallback1) ' nm.'];
 title({titletext1;titletext2;titletext3;title4});
 
 % Calcualte distance from drop to moored positions
@@ -412,7 +431,7 @@ fprintf(iout,'%s  %s \n',loc_name,datestr(tmeD,1));
 fprintf(iout,'Anchor drop at: %s %8.4f %8.4f Corr. water depth: %6.1f \n', ...
     datestr(tmeD,31),latD,lonD,wd_corr);
 fprintf(iout,'%s',swtx)
-fprintf(iout,'Date      Time       Lat   Lon  Slant range  Horiz range Residaul \n');
+fprintf(iout,'Date      Time       Lat   Lon  Slant range  Horiz range Residual \n');
 for i = 1:no_fixes
     fprintf(iout,'%s  %8.4f %8.4f %7.0f %7.0f %7.0f \n', ...
         datestr(tme(i),31),lat(i),lon(i),range(i),rangeh(i),reser(i));

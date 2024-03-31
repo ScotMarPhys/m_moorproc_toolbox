@@ -88,12 +88,11 @@ serial_nums=sn(vec)
 
 textfile=fullfile(inpath,[moor '_filenames.txt']);
 %check if file exists
-if ~exist(textfile)
-    disp(textfile)
-    error('File containing filenames does not exist - stopping routine.')
+if ~exist(textfile,'file')
+    error('Create list of S/Ns and data file names in %s and try again',textfile)
 
 end
-[input_ser_nums filenames]=textread(textfile,'%d %s');
+[input_ser_nums, filenames]=textread(textfile,'%d %s');
 
 % -------- load data --------------
 for i = 1:length(filenames)
@@ -115,7 +114,7 @@ for i = 1:length(filenames)
        end
        continue
     else 
-        disp(['Processing file ' serial_nums(i)])
+        fprintf(1,'Processing file %d\n', serial_nums(i))
     end
     
     all_data=load(infile);

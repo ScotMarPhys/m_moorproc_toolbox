@@ -44,6 +44,7 @@ global MEXEC_G MOORPROC_G
 mcruise = MOORPROC_G.cruise;
 opt1 = 'ship'; opt2 = 'datasys_best'; get_cropt %default_navstream
 nav_stream = default_navstream;
+
 dirout = fullfile(MOORPROC_G.moordatadir,'raw',mcruise,'moor_positions');
 
 % User input

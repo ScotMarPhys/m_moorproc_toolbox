@@ -18,9 +18,11 @@ clearvars -except MOORPROC_G
 % only mooring name and dates need to be modified, rest set in MOORPROC_G by
 % startup{cruise}.m
 
-moor = 'wb1_16_2023a';
+moor = input('mooring deployment (e.g. ebh2_15_2022) to process:   ','s');
+%moor = 'ebh2_15_2022';
 % the start and end times of the time axis for plotting
-plot_interval = [2023 03 05; 2023 07 21];
+%plot_interval = [2023 03 05; 2023 07 21];
+%plot_interval = [2022 02 24; 2024 03 30];
 
 cruise = MOORPROC_G.cruise;
 operator = MOORPROC_G.operator;
@@ -29,6 +31,7 @@ basedir = MOORPROC_G.moordatadir;
 inpath  = fullfile(basedir, 'proc', moor, 'microcat');
 outpath  = fullfile(basedir, 'proc', moor, 'microcat');
 infofile = fullfile(basedir, 'proc', moor, [moor 'info.dat']);
+
 
 % -------------------------------------------------------------------
 
@@ -55,23 +58,23 @@ id     = id(zx);
 
 
 
-fid_stat = fopen(fullfile(outpath,'stage2_log'),'w');
+fid_stat = fopen(fullfile(MOORPROC_G.reportdir,'stats',['stage2_log_' moor]),'w');
 fprintf(fid_stat,'Processing steps taken by %s:\n',mfilename);
 fprintf(fid_stat,'  1. eliminate lauching and recovery period\n');
 fprintf(fid_stat,'  2. save data to rdb file\n');
-fprintf(fid_stat,'\n Operated by:%s on %s\n',operator,datestr(clock)); 
+fprintf(fid_stat,'\n Operated by:%s on %s\n',operator,datestr(clock));
 fprintf(fid_stat,['        MicroCAT in Mooring ',moor,'\n\n\n']);
-fprintf(fid_stat,'     ID    Depth   Start         End      Cycles  Spikes  Gaps   Mean     STD     Max     Min\n');          
+fprintf(fid_stat,'     ID    Depth   Start         End      Cycles  Spikes  Gaps   Mean     STD     Max     Min\n');
 
 % ---- despike paramenters
 
 %T_range = [-15 +15];
-%C_range = [-30 +30];  
-%P_range = [-100 2000]; 
+%C_range = [-30 +30];
+%P_range = [-100 2000];
 
 %dT_range = 18;  % accepted standard deviation envelope of adjecent T-values
-%dC_range = 18;  % accepted standard deviation envelope of adjecent C-values 
-%dP_range = 18;  % accepted standard deviation envelope of adjecent P-values 
+%dC_range = 18;  % accepted standard deviation envelope of adjecent C-values
+%dP_range = 18;  % accepted standard deviation envelope of adjecent P-values
 %nloop    = 3;
 
 dummy    = -9999;
@@ -88,323 +91,334 @@ jd_e  = julian(e_d(1),e_d(2),e_d(3),e_t(1)+e_t(2)/60);  % end time
 
 for proc = 1 : length(sn)
     disp('plotting')
-    
-  infile  = fullfile(inpath,[moor,'_',sprintf('%4.4d',sn(proc)),'.raw']);
-  if exist(infile,'file')
- 
-    rodbfile= [moor,'_',sprintf('%4.4d',sn(proc)),'.use']; % MPC: change 'inst' to 'sn' in filename 
-    outfile = fullfile(outpath,rodbfile);
 
-    inst = inst +1;
+    infile  = fullfile(inpath,[moor,'_',sprintf('%4.4d',sn(proc)),'.raw']);
+    if exist(infile,'file')
 
-    if id(proc) == 335
-% load in ODO 
-% OT - Oxygen temperature
-% O2 - Oxygen
-    [YY,MM,DD,HH,C,T,P,OT,O2] = rodbload(infile,'YY:MM:DD:HH:C:T:P:OT:O2');
-    else
-% standard SMP
-    [YY,MM,DD,HH,C,T,P] = rodbload(infile,'YY:MM:DD:HH:C:T:P');
-    end
+        rodbfile= [moor,'_',sprintf('%4.4d',sn(proc)),'.use']; % MPC: change 'inst' to 'sn' in filename
+        outfile = fullfile(outpath,rodbfile);
 
-    %------------------------------------------ 
-    %----- cut off launching and recovery period
-    %------------------------------------------
-    disp('cut off launching and recovery period')
- 
-    jd = julian(YY,MM,DD,HH);
-    ii = find(jd <= jd_e & jd >= jd_s );
-    YY = YY(ii);   MM = MM(ii);   DD = DD(ii);
-    HH = HH(ii);   c = C(ii);     t = T(ii);
-    jd = jd(ii); 
-    if length(P) > 1,  p = P(ii); end
+        inst = inst +1;
 
-% ODO - added bim DY039
-    if id(proc) == 335, ot = OT(ii); o2= O2(ii); end
+        if id(proc) == 335
+            % load in ODO
+            % OT - Oxygen temperature
+            % O2 - Oxygen
+            [YY,MM,DD,HH,C,T,P,OT,O2] = rodbload(infile,'YY:MM:DD:HH:C:T:P:OT:O2');
+        else
+            % standard SMP
+            [YY,MM,DD,HH,C,T,P] = rodbload(infile,'YY:MM:DD:HH:C:T:P');
+        end
 
-    cycles     = length(ii);
-    Start_Date = [YY(1) MM(1) DD(1)];
-    Start_Time = HH(1);
-    End_Date = [YY(cycles) MM(cycles) DD(cycles)];
-    End_Time = HH(cycles);     
+        %------------------------------------------
+        %----- cut off launching and recovery period
+        %------------------------------------------
+        disp('cut off launching and recovery period')
 
-    %------------------------------------------
-    %--- despike ------------------------------
-    %------------------------------------------
-    % disp('ddspike')   
+        jd = julian(YY,MM,DD,HH);
+        ii = find(jd <= jd_e & jd >= jd_s );
+        YY = YY(ii);   MM = MM(ii);   DD = DD(ii);
+        HH = HH(ii);   c = C(ii);     t = T(ii);
+        jd = jd(ii);
+        if length(P) > 1,  p = P(ii); end
+        if isempty(YY)
+            warning('no data found in deployment period for file %d, %s; skipping',proc,infile)
+            continue
+        end
 
-    % [t,tdx,tndx] = ddspike(T,T_range,dT_range,nloop,'y',dummy); 
-    % [c,cdx,cndx] = ddspike(C,C_range,dC_range,nloop,'y',dummy); 
-    % if length(P) > 1 
-    %   [p,pdx,pndx] = ddspike(P,P_range,dP_range,nloop,'y',dummy); 
-    % end
+        % ODO - added bim DY039
+        if id(proc) == 335, ot = OT(ii); o2= O2(ii); end
 
-    % -----------------------------------------
-    % ---  basic statistics -------------------
-    % -----------------------------------------
-    % tstat = find(t ~= dummy);
-    % cstat = find(c ~= dummy);    
-    % tstat = t(tstat);
-    % cstat = c(cstat);
+        cycles     = length(ii);
+        Start_Date = [YY(1) MM(1) DD(1)];
+        Start_Time = HH(1);
+        End_Date = [YY(cycles) MM(cycles) DD(cycles)];
+        End_Time = HH(cycles);
 
-    tm = meannan(t);
-    cm = meannan(c);
-  
-    tsd= stdnan(t);
-    csd= stdnan(c);
+        %------------------------------------------
+        %--- despike ------------------------------
+        %------------------------------------------
+        % disp('ddspike')
 
-    tmx = max(t);
-    cmx = max(c);
-    tmn = min(t);
-    cmn = min(c);
+        % [t,tdx,tndx] = ddspike(T,T_range,dT_range,nloop,'y',dummy);
+        % [c,cdx,cndx] = ddspike(C,C_range,dC_range,nloop,'y',dummy);
+        % if length(P) > 1
+        %   [p,pdx,pndx] = ddspike(P,P_range,dP_range,nloop,'y',dummy);
+        % end
 
-    if length(P) > 1
-      % pstat = find(p ~= dummy);
-      pm  = meannan(p);
-      psd = stdnan(p);
-      pmx = max(p);
-      pmn = min(p);
-    end 
+        % -----------------------------------------
+        % ---  basic statistics -------------------
+        % -----------------------------------------
+        % tstat = find(t ~= dummy);
+        % cstat = find(c ~= dummy);
+        % tstat = t(tstat);
+        % cstat = c(cstat);
 
-    if id(proc) == 335 % ODO
-      otm  = meannan(ot); otsd = stdnan(ot);
-      otmx = max(ot); otmn = min(ot);
-      o2m  = meannan(o2); o2sd = stdnan(o2);
-      o2mx = max(o2); o2mn = min(o2);
-    end
+        tm = meannan(t);
+        cm = meannan(c);
 
-    %------------------------------------------
-    %---- fill time gaps  with dummy
-    %------------------------------------------
+        tsd= stdnan(t);
+        csd= stdnan(c);
 
-    disp(' fill time gaps  with dummy')
+        tmx = max(t);
+        cmx = max(c);
+        tmn = min(t);
+        cmn = min(c);
 
-    djd = diff(jd);           % time step  
-    sr  = median(djd);        % sampling interval
-    ii  = find(djd > 1.5*sr);  % find gaps
-    gap = round(djd(ii)/sr)-1;
-    addt= []; 
+        if length(P) > 1
+            % pstat = find(p ~= dummy);
+            pm  = meannan(p);
+            psd = stdnan(p);
+            pmx = max(p);
+            pmn = min(p);
+        end
 
-    for i = 1 : length(gap), 
-      addt = [addt; [[1:gap(i)]*sr + jd(ii(i))]'];
-                         
-    end 
+        if id(proc) == 335 % ODO
+            otm  = meannan(ot); otsd = stdnan(ot);
+            otmx = max(ot); otmn = min(ot);
+            o2m  = meannan(o2); o2sd = stdnan(o2);
+            o2mx = max(o2); o2mn = min(o2);
+        end
 
-    [jd,xx] = sort([jd; addt]);   % add time
-    ngap    = length(addt);       % number of time gaps         
-    gt      = gregorian(jd);
-    YY = gt(:,1);   MM = gt(:,2);   DD = gt(:,3); 
-    if size(gt,2) == 6
-       HH=hms2h(gt(:,4),gt(:,5),gt(:,6)); 
-    else 
-       HH= gt(:,4);
-    end    
-       
-   
-    t = [t;dummy*ones(ngap,1)]; t = t(xx);
-    c = [c;dummy*ones(ngap,1)]; c = c(xx); 
-    if length(P) > 1
-       p = [p;dummy*ones(ngap,1)]; p = p(xx); 
-    end
-%ODO
-    if id(proc) == 335
-       ot = [ot;dummy*ones(ngap,1)]; ot = ot(xx);
-       o2 = [o2;dummy*ones(ngap,1)]; o2 = o2(xx);
-    end
+        %------------------------------------------
+        %---- fill time gaps  with dummy
+        %------------------------------------------
 
-    %-----------------------------------------------------
-    %  write output to logfile ---------------------------
-    %-----------------------------------------------------
+        disp(' fill time gaps  with dummy')
 
-    disp(' write output to logfile')
+        djd = diff(jd);           % time step
+        sr  = median(djd);        % sampling interval
+        ii  = find(djd > 1.5*sr);  % find gaps
+        gap = round(djd(ii)/sr)-1;
+        addt= [];
+
+        for i = 1 : length(gap),
+            addt = [addt; [[1:gap(i)]*sr + jd(ii(i))]'];
+
+        end
+
+        [jd,xx] = sort([jd; addt]);   % add time
+        ngap    = length(addt);       % number of time gaps
+        gt      = gregorian(jd);
+        YY = gt(:,1);   MM = gt(:,2);   DD = gt(:,3);
+        if size(gt,2) == 6
+            HH=hms2h(gt(:,4),gt(:,5),gt(:,6));
+        else
+            HH= gt(:,4);
+        end
 
 
-    fprintf(fid_stat,'T   %5.5d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d   %d         %d   %5.2f   %5.2f   %5.2f   %5.2f \n',...
-               sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,tm,tsd,tmx,tmn'); 
+        t = [t;dummy*ones(ngap,1)]; t = t(xx);
+        c = [c;dummy*ones(ngap,1)]; c = c(xx);
+        if length(P) > 1
+            p = [p;dummy*ones(ngap,1)]; p = p(xx);
+        end
+        %ODO
+        if id(proc) == 335
+            ot = [ot;dummy*ones(ngap,1)]; ot = ot(xx);
+            o2 = [o2;dummy*ones(ngap,1)]; o2 = o2(xx);
+        end
 
-    fprintf(fid_stat,'C   %5.5d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d   %d         %d   %5.2f   %5.2f   %5.2f   %5.2f \n',...
-               sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,cm,csd,cmx,cmn'); 
+        %-----------------------------------------------------
+        %  write output to logfile ---------------------------
+        %-----------------------------------------------------
 
-    if length(P) > 1
-      fprintf(fid_stat,'P   %5.5d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d  %d        %d    %5.1f   %5.2f   %5.2f   %5.2f \n',...
-               sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,pm,psd,pmx,pmn');  
-    end
-    if id(proc) == 335 % ODO
-      fprintf(fid_stat,'OT  %5.5d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d  %d        %d    %5.2f   %5.2f   %5.2f   %5.2f \n',...
-               sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,otm,otsd,otmx,otmn');
-      fprintf(fid_stat,'O2  %5.5d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d  %d        %d    %5.2f   %5.2f   %5.2f   %5.2f \n',...
-               sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,o2m,o2sd,o2mx,o2mn');
-    end
-    fprintf(fid_stat,'\n');
-
-    %-----------------------------------  
-    %--- write data to rodb format -----
-    %-----------------------------------
-
-    disp(['writing data to ',outfile]) 
-    
-    rodboutvars = ['Latitude:Longitude:Columns:Start_Date:Start_Time:'...
-                   'SerialNumber:Mooring:WaterDepth:Instrdepth:'...
-                   'End_Date:End_Time'];
-    if length(P) <= 1 % no pressure measurement
-      sub =2;
-      fort = '%4.4d   %2.2d   %2.2d   %8.5f   %6.4f   %6.4f';
-      cols = 'YY:MM:DD:HH:T:C';
-      rodbsave(outfile,rodboutvars,fort,...
-               lat,lon,cols,Start_Date,Start_Time,sn(proc),mr,wd,...
-               z(proc),End_Date,End_Time,[YY MM DD HH t c]);
-
-    elseif id(proc) == 335 % ODO
-      sub  = 5;
-      fort = '%4.4d   %2.2d   %2.2d   %8.5f   %6.4f   %6.4f  %5.1f %8.5f %6.3f';
-      cols = 'YY:MM:DD:HH:T:C:P:OT:O2';
-      rodbsave(outfile,rodboutvars,fort,...
-               lat,lon,cols,Start_Date,Start_Time,sn(proc),mr,wd,...
-               z(proc),End_Date,End_Time,[YY MM DD HH t c p ot o2]);
-    else
-      sub  = 3;  
-      fort = '%4.4d   %2.2d   %2.2d   %8.5f   %6.4f   %6.4f  %5.1f';
-      cols = 'YY:MM:DD:HH:T:C:P';
-      rodbsave(outfile,rodboutvars,fort,...
-               lat,lon,cols,Start_Date,Start_Time,sn(proc),mr,wd,...
-               z(proc),End_Date,End_Time,[YY MM DD HH t c p]);
-    end
-
-    %%%%%%%%%% Graphics %%%%%%%%%%%%%%%%
-
-    jd1 = julian(plot_interval(1,:));
-    jd2 = julian(plot_interval(2,:)); 
-
-    figure(1);clf
-    subplot(sub,1,1); ii = find(~isnan(t)&t>dummy);
-    
-    plot(jd(ii)-jd1,t(ii))
-    title(['MicroCAT s/n: ',num2str(sn(proc)),'; Target Depth: ',num2str(z(proc))])
-    ylabel('Temperature [deg C]')
-    grid on
-    xlim([0 jd2-jd1])
-    
-    subplot(sub,1,2); ii = find(~isnan(c)&c>dummy);
-
-    plot(jd(ii)-jd1,c(ii))
-    ylabel('Conductivity [mS/cm]')
-    grid on
-    xlim([0 jd2-jd1])
+        disp(' write output to logfile')
 
 
-    if sub == 3 
+        fprintf(fid_stat,'T   %5.5d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d   %d         %d   %5.2f   %5.2f   %5.2f   %5.2f \n',...
+            sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,tm,tsd,tmx,tmn');
 
-      subplot(sub,1,3); ii = find(~isnan(p)&p>dummy);
-      plot(jd(ii)-jd1,p(ii))
+        fprintf(fid_stat,'C   %5.5d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d   %d         %d   %5.2f   %5.2f   %5.2f   %5.2f \n',...
+            sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,cm,csd,cmx,cmn');
 
-      ylabel('Pressure [dbar]')
-      grid on 
-      xlim([0 jd2-jd1])
+        if length(P) > 1
+            fprintf(fid_stat,'P   %5.5d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d  %d        %d    %5.1f   %5.2f   %5.2f   %5.2f \n',...
+                sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,pm,psd,pmx,pmn');
+        end
+        if id(proc) == 335 % ODO
+            fprintf(fid_stat,'OT  %5.5d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d  %d        %d    %5.2f   %5.2f   %5.2f   %5.2f \n',...
+                sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,otm,otsd,otmx,otmn');
+            fprintf(fid_stat,'O2  %5.5d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d  %d        %d    %5.2f   %5.2f   %5.2f   %5.2f \n',...
+                sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,o2m,o2sd,o2mx,o2mn');
+        end
+        fprintf(fid_stat,'\n');
 
-    end
+        %-----------------------------------
+        %--- write data to rodb format -----
+        %-----------------------------------
 
-    if sub == 5
+        disp(['writing data to ',outfile])
 
-      subplot(sub,1,3); ii = find(~isnan(p)&p>dummy);
-      plot(jd(ii)-jd1,p(ii))
+        rodboutvars = ['Latitude:Longitude:Columns:Start_Date:Start_Time:'...
+            'SerialNumber:Mooring:WaterDepth:Instrdepth:'...
+            'End_Date:End_Time'];
+        if length(P) <= 1 % no pressure measurement
+            sub =2;
+            fort = '%4.4d   %2.2d   %2.2d   %8.5f   %6.4f   %6.4f';
+            cols = 'YY:MM:DD:HH:T:C';
+            rodbsave(outfile,rodboutvars,fort,...
+                lat,lon,cols,Start_Date,Start_Time,sn(proc),mr,wd,...
+                z(proc),End_Date,End_Time,[YY MM DD HH t c]);
 
-      ylabel('Pressure [dbar]')
-      grid on
-      xlim([0 jd2-jd1])
+        elseif id(proc) == 335 % ODO
+            sub  = 5;
+            fort = '%4.4d   %2.2d   %2.2d   %8.5f   %6.4f   %6.4f  %5.1f %8.5f %6.3f';
+            cols = 'YY:MM:DD:HH:T:C:P:OT:O2';
+            rodbsave(outfile,rodboutvars,fort,...
+                lat,lon,cols,Start_Date,Start_Time,sn(proc),mr,wd,...
+                z(proc),End_Date,End_Time,[YY MM DD HH t c p ot o2]);
+        else
+            sub  = 3;
+            fort = '%4.4d   %2.2d   %2.2d   %8.5f   %6.4f   %6.4f  %5.1f';
+            cols = 'YY:MM:DD:HH:T:C:P';
+            rodbsave(outfile,rodboutvars,fort,...
+                lat,lon,cols,Start_Date,Start_Time,sn(proc),mr,wd,...
+                z(proc),End_Date,End_Time,[YY MM DD HH t c p]);
+        end
 
-      subplot(sub,1,4); ii = find(~isnan(ot)&ot>dummy);
-      plot(jd(ii)-jd1,ot(ii))
+        %%%%%%%%%% Graphics %%%%%%%%%%%%%%%%
 
-      ylabel('Oxygen temperature [degC]')
-      grid on
-      xlim([0 jd2-jd1])
+        if exist('plot_interval','var') && ~isempty(plot_interval)
+            jd1 = julian(plot_interval(1,:));
+            jd2 = julian(plot_interval(2,:));
+        else
+            jd1 = jd_s-7;
+            jd2 = jd_e+7;
+        end
 
-      subplot(sub,1,5); ii = find(~isnan(o2)&o2>dummy);
-      plot(jd(ii)-jd1,o2(ii))
+        figure(1);clf
+        subplot(sub,1,1); ii = find(~isnan(t)&t>dummy);
 
-      ylabel('Oxygen [umol/kg]')
-      grid on
-      xlim([0 jd2-jd1])
+        plot(jd(ii)-jd1,t(ii))
+        title(['MicroCAT s/n: ',num2str(sn(proc)),'; Target Depth: ',num2str(z(proc))])
+        ylabel('Temperature [deg C]')
+        grid on
+        xlim([0 jd2-jd1])
 
-    end
-    orient tall
-    print(gcf,'-dpng', '-r300',[outfile '.png'])
+        subplot(sub,1,2); ii = find(~isnan(c)&c>dummy);
 
-
-    sampling_rate = 1/median(diff(jd));
-    tf            = auto_filt(t, sampling_rate, 1/2,'low',4);
-    cf            = auto_filt(c, sampling_rate, 1/2,'low',4);
-    pf            = auto_filt(p, sampling_rate, 1/2,'low',4);
-    
-	if id(proc) == 335
-    otf            = auto_filt(ot, sampling_rate, 1/2,'low',4);
-    o2f            = auto_filt(o2, sampling_rate, 1/2,'low',4);	
-	end
-
-    figure(2);clf
-    ax(1)=subplot(sub,1,1); ii = find(~isnan(t)&t>dummy);
-
-    plot(jd-jd1,tf)
-    title(['2-day low-pass; MicroCAT s/n: ',num2str(sn(proc)),'; Target Depth: ',num2str(z(proc))])
-    ylabel('Temperature [deg C]')
-    grid on  
-    xlim([0 jd2-jd1])
-      xlabel('Days since deployment');
-  
-    ax(2)=subplot(sub,1,2); ii = find(~isnan(c)&c>dummy);
-    
-    plot(jd-jd1,cf)
-    ylabel('Conductivity [mS/cm]')
-    grid on
-    xlim([0 jd2-jd1])
-      xlabel('Days since deployment');
-
-    if sub == 3 
-      
-      ax(3)=subplot(sub,1,3);
-      
-      plot(jd-jd1,pf)
-      ylabel('Pressure [dbar]')
-      grid on 
-      xlim([0 jd2-jd1])
-      xlabel('Days since deployment');
-
-    end
-    if sub == 5
-
-      ax(3)=subplot(sub,1,3); 
-      plot(jd(ii)-jd1,pf(ii))
-
-      ylabel('Pressure [dbar]')
-      grid on
-      xlim([0 jd2-jd1])
-      xlabel('Days since deployment');
-
-      ax(4)=subplot(sub,1,4); 
-      plot(jd(ii)-jd1,otf(ii))
-
-      ylabel('Oxygen temperature [degC]')
-      grid on
-      xlim([0 jd2-jd1])
-      xlabel('Days since deployment');
+        plot(jd(ii)-jd1,c(ii))
+        ylabel('Conductivity [mS/cm]')
+        grid on
+        xlim([0 jd2-jd1])
 
 
-      ax(5)=subplot(sub,1,5); 
-      plot(jd(ii)-jd1,o2f(ii))
+        if sub == 3
 
-      ylabel('Oxygen [umol/kg]')
-      grid on
-      xlim([0 jd2-jd1])
-      xlabel('Days since deployment');
- 
-    end
+            subplot(sub,1,3); ii = find(~isnan(p)&p>dummy);
+            plot(jd(ii)-jd1,p(ii))
 
-    orient tall
-    print(gcf,'-dpng', '-r300',[outfile '_lowpass.png'])
+            ylabel('Pressure [dbar]')
+            grid on
+            xlim([0 jd2-jd1])
 
-  end % if exist(infile)
-  
+        end
+
+        if sub == 5
+
+            subplot(sub,1,3); ii = find(~isnan(p)&p>dummy);
+            plot(jd(ii)-jd1,p(ii))
+
+            ylabel('Pressure [dbar]')
+            grid on
+            xlim([0 jd2-jd1])
+
+            subplot(sub,1,4); ii = find(~isnan(ot)&ot>dummy);
+            plot(jd(ii)-jd1,ot(ii))
+
+            ylabel('Oxygen temperature [degC]')
+            grid on
+            xlim([0 jd2-jd1])
+
+            subplot(sub,1,5); ii = find(~isnan(o2)&o2>dummy);
+            plot(jd(ii)-jd1,o2(ii))
+
+            ylabel('Oxygen [umol/kg]')
+            grid on
+            xlim([0 jd2-jd1])
+
+        end
+        orient tall
+        print(gcf,'-dpng', '-r300',[outfile '.png'])
+        disp('pause (press any key to continue)'); pause
+
+
+        sampling_rate = 1/median(diff(jd));
+        tf            = auto_filt(t, sampling_rate, 1/2,'low',4);
+        cf            = auto_filt(c, sampling_rate, 1/2,'low',4);
+        pf            = auto_filt(p, sampling_rate, 1/2,'low',4);
+
+    	if id(proc) == 335
+            otf            = auto_filt(ot, sampling_rate, 1/2,'low',4);
+            o2f            = auto_filt(o2, sampling_rate, 1/2,'low',4);
+    	end
+
+        figure(2);clf
+        ax(1)=subplot(sub,1,1);
+        ii = find(~isnan(t)&t>dummy);
+
+        plot(jd-jd1,tf)
+        title(['2-day low-pass; MicroCAT s/n: ',num2str(sn(proc)),'; Target Depth: ',num2str(z(proc))])
+        ylabel('Temperature [deg C]')
+        grid on
+        xlim([0 jd2-jd1])
+        xlabel('Days since deployment');
+
+        ax(2)=subplot(sub,1,2); ii = find(~isnan(c)&c>dummy);
+
+        plot(jd-jd1,cf)
+        ylabel('Conductivity [mS/cm]')
+        grid on
+        xlim([0 jd2-jd1])
+        xlabel('Days since deployment');
+
+        if sub == 3
+
+            ax(3)=subplot(sub,1,3);
+
+            plot(jd-jd1,pf)
+            ylabel('Pressure [dbar]')
+            grid on
+            xlim([0 jd2-jd1])
+            xlabel('Days since deployment');
+
+        end
+        if sub == 5
+
+            ax(3)=subplot(sub,1,3);
+            plot(jd(ii)-jd1,pf(ii))
+
+            ylabel('Pressure [dbar]')
+            grid on
+            xlim([0 jd2-jd1])
+            xlabel('Days since deployment');
+
+            ax(4)=subplot(sub,1,4);
+            plot(jd(ii)-jd1,otf(ii))
+
+            ylabel('Oxygen temperature [degC]')
+            grid on
+            xlim([0 jd2-jd1])
+            xlabel('Days since deployment');
+
+
+            ax(5)=subplot(sub,1,5);
+            plot(jd(ii)-jd1,o2f(ii))
+
+            ylabel('Oxygen [umol/kg]')
+            grid on
+            xlim([0 jd2-jd1])
+            xlabel('Days since deployment');
+
+        end
+
+        orient tall
+        print(gcf,'-dpng', '-r300',[outfile '_lowpass.png'])
+
+    end % if exist(infile)
+
 end % for proc = 1 : length(sn),
 
 
-  
+

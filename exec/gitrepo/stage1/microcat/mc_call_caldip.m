@@ -57,16 +57,15 @@ global MOORPROC_G
 clearvars -except MOORPROC_G
 close all;
 
-do_microcat2rodb = 1; % if 0, Does not write rodb format files. Useful for fast rerun of plots
+%do_microcat2rodb = 1; % if 0, Does not write rodb format files. Useful for fast rerun of plots
+%cast = '2';
+cast = input('Which cast number? ','s');
+do_microcat2rodb = input('write rodb files (1) or only make plots (0)?  ');
+ctdnum = sprintf('%03d',str2double(cast));
 
 cruise = MOORPROC_G.cruise;
 
-cast = '7';
-
 doctd = 1;% 1; % whether to load and plot CTD data: 1 if mstar format, 99 if native cnv file (without header)
-jd0 = julian(MOORPROC_G.YEAR,1,0,0); % set to current year
-
-ctdnum = sprintf('%03d',str2num(cast));
 
 % --- set paths for data input and output ---
  
@@ -75,19 +74,41 @@ outpath   = [MOORPROC_G.moordatadir '/proc_calib/' cruise '/cal_dip/microcat/cas
 infofile  = [MOORPROC_G.moordatadir '/proc_calib/' cruise '/cal_dip/cast',cast,'info.dat'];
 ctdinfile = [MOORPROC_G.ctddir '/ctd_' MOORPROC_G.cruise_ctd '_' ctdnum '_psal.nc'];
 
-%addpath('/noc/users/pstar/di359/data/mexec_processing_scripts/',path);
-%jd0 = julian(2014,1,0,0);
+%test for files/directories
+if do_microcat2rodb
+    if ~exist(inpath,'dir')
+        error('input data directory %s not found', inpath)
+    end
+    if ~exist(outpath,'dir')
+        warning('creating directory %s for converted data')
+        try
+            mkdir(outpath)
+        catch
+            error('could not create output directory')
+        end
+    end
+else
+    if ~exist(outpath,'dir')
+        error('input rodb format directory %s not found', outpath)
+    end
+end
+if ~exist(infofile,'file')
+    error('infofile %s not found')
+end
+if ~exist(ctdinfile,'file')
+    error('ctdinfile %s not found',ctdinfile)
+end
+
+jd0 = julian(MOORPROC_G.YEAR,1,0); %use to get yearday
 if doctd == 1
     [d, h]=mload(ctdinfile,'/');
-    HH = h.data_time_origin(4)+h.data_time_origin(5)/60+h.data_time_origin(6)/3600;
-    jtime=h.data_time_origin(1:3);
-    jtime=[jtime HH];
-    d.timeJ=julian(jtime)+d.time/86400-jd0;
+    dnum = m_commontime(d,'time',h,'datenum');
+    d.yd = dnum - datenum(MOORPROC_G.YEAR,1,0);
     if ~isfield(d,'oxygen2')
         d.oxygen2 = d.oxygen1;
     end
 elseif doctd == 99 % using cnv file instead of .nc
-    warning('hardwired cast numbers/times')
+    warning('hardwired cast numbers/times (what cruise is this code from?)')
     if contains(cast,'1')
        start_date_cast = datenum(2018,07,02,18,17,06);  
     elseif contains(cast,'2')
@@ -100,7 +121,7 @@ elseif doctd == 99 % using cnv file instead of .nc
     elseif contains(cast,'6')
        start_date_cast = datenum(2018,07,07,13,13,15);
     end
-    read_ctd_cnv(ctdinfile,start_date_cast)
+    read_ctd_cnv(ctdinfile,start_date_cast);
 end
 
 % --- get mooring information from infofile ---
@@ -120,11 +141,11 @@ zp = zp(ii);
 sn = sn(ii);
 
 % --- create log file ---
-if exist(outpath,'dir')==0
-    mkdir(outpath)
+logf = fullfile(outpath,'microcat2rodb.log');
+fidlog = fopen(logf,'w');
+if fidlog==-1
+    error('could not open logfile %s',logf)
 end
-fidlog = fopen([outpath,'microcat2rodb.log'],'w');
-
 legend_handle = ['[';'[';'['];
 legend_string = [];
 
@@ -172,9 +193,6 @@ for i = 1:length(sn)
             dateoffsetmc = 2017;
         elseif  (contains(cruise,'ar30') && sn(i) == 9141 && contains(cast,'5'))
              dateoffsetmc = 2016;          
-        elseif sn(i)==6322
-            disp('ADDING AN OFFSET')
-            dateoffsetmc=60/86400;
         elseif strcmp(cruise,'dy146') && sn(i)==6322
             dateoffsetmc=60/86400;
         elseif strcmp(cruise,'en705') && strcmp(cast,'2')
@@ -197,12 +215,12 @@ for i = 1:length(sn)
         else % treats as ODO
             [yy,mm,dd,hh,c,t,p,ot,o2] = rodbload(outfile,'yy:mm:dd:hh:c:t:p:ot:o2');
         end
-        jd = julian(yy,mm,dd,hh)-jd0;
+        yd = julian(yy,mm,dd,hh)-jd0;
         %ylf dy146 files can be different sizes anyway, so no need to keep
         %all the NaNs we would put at the ends (~ixjd), right?
-        ixjd = jd >jdstt & jd < jdend;
+        ixjd = yd >jdstt & yd < jdend;
         mx_length = max(mx_length,length(ixjd));
-        data(i).jd = jd(ixjd);
+        data(i).jd = yd(ixjd);
         data(i).c = c(ixjd);
         data(i).t = t(ixjd);
         data(i).p = p(ixjd);
@@ -219,7 +237,7 @@ zp = zp(valid_sn);
 data = data(valid_sn);
 snl = [num2str(sn) repmat(' (',length(sn),1) num2str(zp) repmat(')',length(sn),1)];
 
-jd = ones(length(sn),mx_length)+nan;
+yd = ones(length(sn),mx_length)+nan;
 c = ones(length(sn),mx_length)+nan;
 t = ones(length(sn),mx_length)+nan;
 p = ones(length(sn),mx_length)+nan;
@@ -236,7 +254,7 @@ ctdo2 = ones(length(sn),mx_length)+nan;
 
 for i = 1:length(sn)
     ll = length(data(i).jd);
-    jd(i,1:ll) = data(i).jd;
+    yd(i,1:ll) = data(i).jd;
     t(i,1:ll) = data(i).t;
     c(i,1:ll) = data(i).c;
     p(i,1:ll) = data(i).p;
@@ -246,12 +264,12 @@ for i = 1:length(sn)
     end
     % interp here if doctd
     if doctd==1 || doctd==99
-        ni = ~isnan(jd(i,:));
-        ctdc2(i,ni)=interp1(d.timeJ, d.cond, jd(i,ni));
-        ctdt2(i,ni)=interp1(d.timeJ, d.temp, jd(i,ni));
-        ctdp(i,ni)=interp1(d.timeJ, d.press, jd(i,ni));
-        ctdot(i,ni)=interp1(d.timeJ, d.temp, jd(i,ni));
-        ctdo2(i,ni)=interp1(d.timeJ, d.oxygen, jd(i,ni));
+        ni = ~isnan(yd(i,:));
+        ctdc2(i,ni)=interp1(d.yd, d.cond, yd(i,ni));
+        ctdt2(i,ni)=interp1(d.yd, d.temp, yd(i,ni));
+        ctdp(i,ni)=interp1(d.yd, d.press, yd(i,ni));
+        ctdot(i,ni)=interp1(d.yd, d.temp, yd(i,ni));
+        ctdo2(i,ni)=interp1(d.yd, d.oxygen, yd(i,ni));
     end
 end
 
@@ -283,21 +301,24 @@ if id2(i)==335
     fprintf(fidlog,'%s \n',odiff);
 end
 
-outfig = fullfile(MOORPROC_G.reportdir, cruise, 'figs', 'caldip', ['cast', cast ,'_all']);
+outfig = fullfile(MOORPROC_G.reportdir, 'figs', 'caldip', ['cast', cast ,'_all']);
+if ~exist(fileparts(outfig),'dir')
+    mkdir(outfig)
+end
 figure(34); hold on; box on;
-a=size(jd);
+a=size(yd);
 colours = repmat([0 0 .8; 0 1 0; 1 0 0; 0 1 1; 1 .2 .9; .7 .5 0; 0 .4 0; 0 0 0],4,1);
 linestyles={'-','-','-','-','-','-','-','-','-.','-.','-.','-.','-.','-.','-.','-.','--','--','--','--','--','--','--','--',':',':',':',':',':',':',':',':'};
 lwmc = 2;
 for i=1:a(1)
-    plot(jd(i,:),c(i,:),'color',colours(i,:),'linestyle',linestyles{i},'linewidth',lwmc);
+    plot(yd(i,:),c(i,:),'color',colours(i,:),'linestyle',linestyles{i},'linewidth',lwmc);
 end
 legend(snl,'location','eastoutside')
 ylabel('conductivity')
 xlabel(['yearday (relative to ' num2str(MOORPROC_G.YEAR) '/1/0 00:00)'])
 title(['CAST ' cast ' Calibration Dip'])
 if doctd
-    hl = plot(d.timeJ,d.cond1-.02,d.timeJ,d.cond1+.02,d.timeJ,d.cond1,d.timeJ,d.cond2); 
+    hl = plot(d.yd,d.cond1-.02,d.yd,d.cond1+.02,d.yd,d.cond1,d.yd,d.cond2); 
     set(hl(1:2),'color',[.8 .8 .8],'linestyle','--');
     set(hl(3),'color',[0 0 0]);set(hl(4),'color',[.4 .4 .4]); % ylf jc145 plot both
     title(['CAST ' cast  ' Calibration Dip (-k=CTD1,gray=CTD2)'])
@@ -309,14 +330,14 @@ saveas(gcf,[outfig '_cond.fig'],'fig')
 
 figure(35);hold on; box on;
 for i=1:a(1)
-    plot(jd(i,:),t(i,:),'color',colours(i,:),'linestyle',linestyles{i},'linewidth',lwmc);
+    plot(yd(i,:),t(i,:),'color',colours(i,:),'linestyle',linestyles{i},'linewidth',lwmc);
 end
 legend(snl,'location','eastoutside')
 ylabel('temperature')
 xlabel(['yearday (relative to ' num2str(MOORPROC_G.YEAR) '/1/0 00:00)'])
 title(['CAST ' cast ' Calibration Dip'])
 if doctd
-    hl = plot(d.timeJ,d.temp1+.005,d.timeJ,d.temp1-.005,d.timeJ,d.temp1,d.timeJ,d.temp2); 
+    hl = plot(d.yd,d.temp1+.005,d.yd,d.temp1-.005,d.yd,d.temp1,d.yd,d.temp2); 
     set(hl(1:2),'color',[.8 .8 .8],'linestyle','--')
     set(hl(3),'color',[0 0 0]);set(hl(4),'color',[.4 .4 .4]); % ylf jc145 plot both
     title(['CAST ' cast  ' Calibration Dip (-k=CTD1,gray=CTD2)'])
@@ -330,14 +351,14 @@ saveas(gcf,figname,'fig')
 %%
 figure(36);hold on; box on;
 for i=1:a(1)
-    plot(jd(i,:),p(i,:),'color',colours(i,:),'linestyle',linestyles{i},'linewidth',lwmc);
+    plot(yd(i,:),p(i,:),'color',colours(i,:),'linestyle',linestyles{i},'linewidth',lwmc);
 end
 legend(snl,'location','eastoutside')
 ylabel('pressure')
 xlabel(['yearday (relative to ' num2str(MOORPROC_G.YEAR) '/1/0 00:00)'])
 title(['CAST ' cast ' Calibration Dip'])
 if doctd
-    hl = plot(d.timeJ,d.press+5,d.timeJ,d.press-5,d.timeJ,d.press,'k-'); % bim
+    hl = plot(d.yd,d.press+5,d.yd,d.press-5,d.yd,d.press,'k-'); % bim
     set(hl(1:2),'color',[.8 .8 .8],'linestyle','--')
     set(hl(3),'color',[0 0 0])
     title(['CAST ' cast ' Calibration Dip (-k=CTD)'])
@@ -351,14 +372,14 @@ if find(id2==335)
 
     figure(38);hold on; box on;
     for i=1:a(1)
-        plot(jd(i,:),o2(i,:),'color',colours(i,:),'linestyle',linestyles{i},'linewidth',lwmc);
+        plot(yd(i,:),o2(i,:),'color',colours(i,:),'linestyle',linestyles{i},'linewidth',lwmc);
     end
     legend(snl,'location','eastoutside')
     ylabel('oxygen')
     xlabel(['yearday (relative to ' num2str(MOORPROC_G.YEAR) '/1/0 00:00)'])
     title(['CAST ' cast ' Calibration Dip'])
     if doctd
-        hl = plot(d.timeJ,d.oxygen1-20,d.timeJ,d.oxygen1+20,d.timeJ,d.oxygen1,d.timeJ,d.oxygen2); 
+        hl = plot(d.yd,d.oxygen1-20,d.yd,d.oxygen1+20,d.yd,d.oxygen1,d.yd,d.oxygen2); 
         set(hl(1:2),'color',[.8 .8 .8],'linestyle','--')
         set(hl(3),'color',[0 0 0]); set(hl(4),'color',[.4 .4 .4]); % ylf jc145 plot both
         title(['CAST ' cast ' Calibration Dip (-k=CTD)'])
