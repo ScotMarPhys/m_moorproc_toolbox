@@ -1,4 +1,4 @@
-% MC_CALL_CALDIP_V4 is a script that performs stage1 processing
+% MC_CALL_CALDIP is a script that performs stage1 processing
 % on microcat data from CTD calibration casts (caldips).  It
 % converts microcat data from raw to rodb format for an entire
 % caldip, and plots it with CTD data.
@@ -48,17 +48,10 @@
 % under verison control (GitHub) so no longer need for comments. ]
 % L. Drysdale 2020
 
-% -----------------------------------------------------------------
-% --- This is the information that needs to be modified for -------
-% --- different users, directory trees, and moorings --------------
-% ----------------------------------------------------------------
-
 global MOORPROC_G
 clearvars -except MOORPROC_G
 close all;
 
-%do_microcat2rodb = 1; % if 0, Does not write rodb format files. Useful for fast rerun of plots
-%cast = '2';
 cast = input('Which cast number? ','s');
 do_microcat2rodb = input('write rodb files (1) or only make plots (0)?  ');
 ctdnum = sprintf('%03d',str2double(cast));
@@ -68,11 +61,14 @@ cruise = MOORPROC_G.cruise;
 doctd = 1;% 1; % whether to load and plot CTD data: 1 if mstar format, 99 if native cnv file (without header)
 
 % --- set paths for data input and output ---
- 
-inpath    = [MOORPROC_G.moordatadir '/raw/' cruise '/microcat_cal_dip/cast',cast,'/'];
-outpath   = [MOORPROC_G.moordatadir '/proc_calib/' cruise '/cal_dip/microcat/cast' cast '/'];
-infofile  = [MOORPROC_G.moordatadir '/proc_calib/' cruise '/cal_dip/cast',cast,'info.dat'];
-ctdinfile = [MOORPROC_G.ctddir '/ctd_' MOORPROC_G.cruise_ctd '_' ctdnum '_psal.nc'];
+inpath    = fullfile(MOORPROC_G.moordatadir, 'raw', cruise, 'microcat_cal_dip', ['cast' cast]);
+infofile  = fullfile(fileparts(fileparts(outpath)),['cast' cast,'info.dat']);
+ctdinfile = fullfile(MOORPROC_G.ctddir, ['ctd_' MOORPROC_G.cruise_ctd '_' ctdnum '_psal.nc']);
+outpath   = fullfile(MOORPROC_G.moordatadir, 'proc_calib', cruise, 'cal_dip', 'microcat', ['cast' cast]);
+logf = fullfile(outpath,'microcat2rodb.log');
+outfilepre = fullfile(outpath,['cast' cast '_']); %will be suffixed by serial number in loop
+outfig = fullfile(MOORPROC_G.reportdir, 'figs', 'caldip', ['cast', cast ,'_all_']); %suffixed by temp, cond, etc.
+figform = '-depsc';
 
 %test for files/directories
 if do_microcat2rodb
@@ -93,14 +89,17 @@ else
     end
 end
 if ~exist(infofile,'file')
-    error('infofile %s not found')
+    error('infofile %s not found',infofile)
 end
 if ~exist(ctdinfile,'file')
     error('ctdinfile %s not found',ctdinfile)
 end
+if ~exist(fileparts(outfig),'dir')
+    mkdir(outfig)
+end
 
 jd0 = julian(MOORPROC_G.YEAR,1,0); %use to get yearday
-if doctd == 1
+if ~exist('doctd','var') || doctd == 1
     [d, h]=mload(ctdinfile,'/');
     dnum = m_commontime(d,'time',h,'datenum');
     d.yd = dnum - datenum(MOORPROC_G.YEAR,1,0);
@@ -108,7 +107,7 @@ if doctd == 1
         d.oxygen2 = d.oxygen1;
     end
 elseif doctd == 99 % using cnv file instead of .nc
-    warning('hardwired cast numbers/times (what cruise is this code from?)')
+    warning('hardwired cast numbers/times in %s (what cruise is this code from?)',mfilename)
     if contains(cast,'1')
        start_date_cast = datenum(2018,07,02,18,17,06);  
     elseif contains(cast,'2')
@@ -141,7 +140,6 @@ zp = zp(ii);
 sn = sn(ii);
 
 % --- create log file ---
-logf = fullfile(outpath,'microcat2rodb.log');
 fidlog = fopen(logf,'w');
 if fidlog==-1
     error('could not open logfile %s',logf)
@@ -181,7 +179,7 @@ for i = 1:length(sn)
         end
     end
     infile = fullfile(inpath,infiles{n});
-    outfile = [outpath, 'cast', cast ,'_',sprintf('%4.4d',sn(i)),'.raw'];
+    outfile = [outfilepre sprintf('%4.4d',sn(i)),'.raw'];
 
     % --- convert from raw to rodb format ---
     
@@ -301,10 +299,6 @@ if id2(i)==335
     fprintf(fidlog,'%s \n',odiff);
 end
 
-outfig = fullfile(MOORPROC_G.reportdir, 'figs', 'caldip', ['cast', cast ,'_all']);
-if ~exist(fileparts(outfig),'dir')
-    mkdir(outfig)
-end
 figure(34); hold on; box on;
 a=size(yd);
 colours = repmat([0 0 .8; 0 1 0; 1 0 0; 0 1 1; 1 .2 .9; .7 .5 0; 0 .4 0; 0 0 0],4,1);
@@ -325,8 +319,9 @@ if doctd
 end
 xlim(sort([jdstt-.01 jdend+.01])); grid
 orient tall
-print(gcf,'-depsc',[outfig '_cond.ps'])
-saveas(gcf,[outfig '_cond.fig'],'fig')
+figname = [outfig '_cond'];
+print(gcf,figpform,figname)
+saveas(gcf,[figname '.fig'],'fig')
 
 figure(35);hold on; box on;
 for i=1:a(1)
@@ -344,10 +339,9 @@ if doctd
 end
 xlim([jdstt-0.01 jdend+0.01]); grid
 orient tall
-figname=[outfig,'_temp'];
-print(gcf,'-depsc',[figname,'.ps'])
-figname=[figname,'.fig'];
-saveas(gcf,figname,'fig')
+figname = [outfig '_temp'];
+print(gcf,figpform,figname)
+saveas(gcf,[figname '.fig'],'fig')
 %%
 figure(36);hold on; box on;
 for i=1:a(1)
@@ -365,8 +359,9 @@ if doctd
 end
 xlim([jdstt-0.01 jdend+0.01]); grid
 orient tall
-print(gcf,'-depsc',[outfig '_pres.ps'])
-saveas(gcf,[outfig '_pres.fig'],'fig')
+figname = [outfig '_press'];
+print(gcf,figpform,figname)
+saveas(gcf,[figname '.fig'],'fig')
 
 if find(id2==335)
 

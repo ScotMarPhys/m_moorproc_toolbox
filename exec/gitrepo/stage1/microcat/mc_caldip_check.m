@@ -1,4 +1,4 @@
-% mc_caldip_check_jc103 reads microcat caldip data from raw rodb file
+% mc_caldip_check reads microcat caldip data from raw rodb file
 % and compares data with the lowered CTD data
 %
 % DAS created this file based on mc_call_caldip
@@ -6,18 +6,13 @@
 % LOH May 2017 - adapted for SBE37 ODO and CTD with two oxygen sensors
 % SCU June 2018 AR30-04 
 
-% -----------------------------------------------------------------
-% --- This is the information that needs to be modified for -------
-% --- different users, directory trees, and moorings --------------
-% ----------------------------------------------------------------
 global MOORPROC_G
 clearvars -except MOORPROC_G
 close all;
 
 cruise = MOORPROC_G.cruise; % used for microcat data
 YEAR = MOORPROC_G.YEAR;
-% cruise2=cruise_ctd; % used for ctd data name
-% Time origin to turn jday into dday
+% Time origin to turn jday into dday -- same function used by rodbload
 jd0 = julian(YEAR,1,1,0);
 
 % -----------------------------------------------------------------
@@ -29,9 +24,17 @@ ctdsen = input('Which CTD sensors (1 or 2 [or blank to use already-selected prim
 oxysen = input('Which CTD oxygen (1 or 2 [or blank to use already-selected primary])?' , 's');
 
 % --- set paths for data input and output ---
-outpath   = [MOORPROC_G.moordatadir '/proc_calib/' cruise '/cal_dip/microcat/cast' cast '/'];
-infofile  = [MOORPROC_G.moordatadir '/proc_calib/' cruise '/cal_dip/cast',cast,'info.dat']; 
-ctdinfile = [MOORPROC_G.ctddir  '/ctd_' MOORPROC_G.cruise_ctd '_' ctdnum '_psal.nc'];
+inpath   = fullfile(MOORPROC_G.moordatadir, 'proc_calib', cruise, 'cal_dip', 'microcat', ['cast' cast]);
+infofile  = fullfile(MOORPROC_G.moordatadir, 'proc_calib', cruise, 'cal_dip', ['cast' cast 'info.dat']);
+ctdinfile = fullfile(MOORPROC_G.ctddir,  ['ctd_' MOORPROC_G.cruise_ctd '_' ctdnum '_psal.nc']);
+outplot = fullfile(MOORPROC_G.reportdir,'figs','caldip',['microcat_check_cast_' cast '_plot']);
+outlogf = fullfile(MOORPROC_G.reportdir,'stats',['microcat_check' cast '.log']);
+if ~exist(fileparts(outlogf),'dir')
+    warning('creating directory for log file')
+    try
+        mkdir(fileparts(outlogf))
+    end
+end
 
 % ----------------- load CTD DATA   ----------------------------------
 cvars = 'time press temp1 cond1 oxygen1 temp2 cond2 temp cond oxygen ';
@@ -107,19 +110,10 @@ zmic = zins(ii);
 
 % Open output file for text and set plot name
 %outlogf = [outpath,'microcat_check',cast,'.log'];
-outlogf = fullfile(MOORPROC_G.reportdir,'stats',['microcat_check' cast '.log']);
-if ~exist(fileparts(outlogf),'dir')
-    warning('creating directory for log file')
-    try
-        mkdir(fileparts(outlogf))
-    end
-end
 ilogf = fopen(outlogf,'w');
 if ilogf==-1
     error('could not open log file %s for writing',outlogf)
 end
-%outplot = [outpath,'microcat_check_cast_',cast,'_plot'];
-outplot = fullfile(MOORPROC_G.reportdir,'figs','caldip',['microcat_check_cast_' cast '_plot']);
 if ~exist(fileparts(outplot),'dir')
     warning('creating directory for figures')
     try
@@ -132,7 +126,7 @@ end
 % --- read data loop --
 for i = 1:nvec
     % display( [,num2str(vec(i)),])
-    rawfile = [outpath, 'cast', cast ,'_',sprintf('%4.4d',vec(i)),'.raw'];
+    rawfile = sprintf('%scast%s_%4.4d.raw',outpath,cast,vec(i));
     % --- load rodb data ---
     if id2(i)~=335 % checks if not ODO microcat
         [yy,mm,dd,hh,c,t,p] = rodbload(rawfile,'yy:mm:dd:hh:c:t:p');
