@@ -27,10 +27,9 @@ moor = input('mooring deployment (e.g. ebh2_15_2022) to process:   ','s');
 cruise = MOORPROC_G.cruise;
 operator = MOORPROC_G.operator;
 
+% get paths to files
+pd = moor_inoutpaths('microcat',moor);
 basedir = MOORPROC_G.moordatadir;
-inpath  = fullfile(basedir, 'proc', moor, 'microcat');
-outpath  = fullfile(basedir, 'proc', moor, 'microcat');
-infofile = fullfile(basedir, 'proc', moor, [moor 'info.dat']);
 
 
 % -------------------------------------------------------------------
@@ -41,7 +40,7 @@ mc_id    = [333 335 337] ;             % microcat id numbers
 % --- get mooring information from infofile 
 
 [id,sn,z,s_t,s_d,e_t,e_d,lat,lon,wd,mr] = ...
-    rodbload(infofile,['instrument:serialnumber:z:Start_Time:Start_Date:'...
+    rodbload(pd.infofile,['instrument:serialnumber:z:Start_Time:Start_Date:'...
                     'End_Time:End_Date:Latitude:Longitude:WaterDepth:Mooring']);
 
 ii = find(id >= mc_id(1) & id<=mc_id(3));
@@ -58,7 +57,7 @@ id     = id(zx);
 
 
 
-fid_stat = fopen(fullfile(MOORPROC_G.reportdir,'stats',['stage2_log_' moor]),'w');
+fid_stat = fopen(pd.stage2log,'w');
 fprintf(fid_stat,'Processing steps taken by %s:\n',mfilename);
 fprintf(fid_stat,'  1. eliminate lauching and recovery period\n');
 fprintf(fid_stat,'  2. save data to rdb file\n');
@@ -67,15 +66,16 @@ fprintf(fid_stat,['        MicroCAT in Mooring ',moor,'\n\n\n']);
 fprintf(fid_stat,'     ID    Depth   Start         End      Cycles  Spikes  Gaps   Mean     STD     Max     Min\n');
 
 % ---- despike paramenters
-
-%T_range = [-15 +15];
-%C_range = [-30 +30];
-%P_range = [-100 2000];
-
-%dT_range = 18;  % accepted standard deviation envelope of adjecent T-values
-%dC_range = 18;  % accepted standard deviation envelope of adjecent C-values
-%dP_range = 18;  % accepted standard deviation envelope of adjecent P-values
-%nloop    = 3;
+despike = 0;
+if despike
+    T_range = [-15 +15];
+    C_range = [-30 +30];
+    P_range = [-100 2000];
+    dT_range = 18;  % accepted standard deviation envelope of adjecent T-values
+    dC_range = 18;  % accepted standard deviation envelope of adjecent C-values
+    dP_range = 18;  % accepted standard deviation envelope of adjecent P-values
+    nloop    = 3;
+end
 
 dummy    = -9999;
 
@@ -92,11 +92,10 @@ jd_e  = julian(e_d(1),e_d(2),e_d(3),e_t(1)+e_t(2)/60);  % end time
 for proc = 1 : length(sn)
     disp('plotting')
 
-    infile  = fullfile(inpath,[moor,'_',sprintf('%4.4d',sn(proc)),'.raw']);
+    infile  = fullfile(pd.stage1path,sprintf(pd.stage1form,sn(proc)));
     if exist(infile,'file')
 
-        rodbfile= [moor,'_',sprintf('%4.4d',sn(proc)),'.use']; % MPC: change 'inst' to 'sn' in filename
-        outfile = fullfile(outpath,rodbfile);
+        outfile = fullfile(pd.stage2path,sprintf(pd.stage2form,sn(proc)));
 
         inst = inst +1;
 
@@ -135,24 +134,26 @@ for proc = 1 : length(sn)
         End_Date = [YY(cycles) MM(cycles) DD(cycles)];
         End_Time = HH(cycles);
 
-        %------------------------------------------
-        %--- despike ------------------------------
-        %------------------------------------------
-        % disp('ddspike')
+        if despike
+            %------------------------------------------
+            %--- despike ------------------------------
+            %------------------------------------------
+            disp('ddspike')
 
-        % [t,tdx,tndx] = ddspike(T,T_range,dT_range,nloop,'y',dummy);
-        % [c,cdx,cndx] = ddspike(C,C_range,dC_range,nloop,'y',dummy);
-        % if length(P) > 1
-        %   [p,pdx,pndx] = ddspike(P,P_range,dP_range,nloop,'y',dummy);
-        % end
+            [t,tdx,tndx] = ddspike(T,T_range,dT_range,nloop,'y',dummy);
+            [c,cdx,cndx] = ddspike(C,C_range,dC_range,nloop,'y',dummy);
+            if length(P) > 1
+                [p,pdx,pndx] = ddspike(P,P_range,dP_range,nloop,'y',dummy);
+            end
 
-        % -----------------------------------------
-        % ---  basic statistics -------------------
-        % -----------------------------------------
-        % tstat = find(t ~= dummy);
-        % cstat = find(c ~= dummy);
-        % tstat = t(tstat);
-        % cstat = c(cstat);
+            % -----------------------------------------
+            % ---  basic statistics -------------------
+            % -----------------------------------------
+            tstat = find(t ~= dummy);
+            cstat = find(c ~= dummy);
+            tstat = t(tstat);
+            cstat = c(cstat);
+        end
 
         tm = meannan(t);
         cm = meannan(c);
@@ -166,7 +167,9 @@ for proc = 1 : length(sn)
         cmn = min(c);
 
         if length(P) > 1
-            % pstat = find(p ~= dummy);
+            if despike
+                pstat = find(p ~= dummy);
+            end
             pm  = meannan(p);
             psd = stdnan(p);
             pmx = max(p);
@@ -192,7 +195,7 @@ for proc = 1 : length(sn)
         gap = round(djd(ii)/sr)-1;
         addt= [];
 
-        for i = 1 : length(gap),
+        for i = 1 : length(gap)
             addt = [addt; [[1:gap(i)]*sr + jd(ii(i))]'];
 
         end
@@ -288,17 +291,17 @@ for proc = 1 : length(sn)
         end
 
         figure(1);clf
-        subplot(sub,1,1); ii = find(~isnan(t)&t>dummy);
+        subplot(sub,1,1); m =~isnan(t)&t>dummy;
 
-        plot(jd(ii)-jd1,t(ii))
+        plot(jd(m)-jd1,t(m))
         title(['MicroCAT s/n: ',num2str(sn(proc)),'; Target Depth: ',num2str(z(proc))])
         ylabel('Temperature [deg C]')
         grid on
         xlim([0 jd2-jd1])
 
-        subplot(sub,1,2); ii = find(~isnan(c)&c>dummy);
+        subplot(sub,1,2); m = ~isnan(c)&c>dummy;
 
-        plot(jd(ii)-jd1,c(ii))
+        plot(jd(m)-jd1,c(m))
         ylabel('Conductivity [mS/cm]')
         grid on
         xlim([0 jd2-jd1])
@@ -306,8 +309,8 @@ for proc = 1 : length(sn)
 
         if sub == 3
 
-            subplot(sub,1,3); ii = find(~isnan(p)&p>dummy);
-            plot(jd(ii)-jd1,p(ii))
+            subplot(sub,1,3); m = ~isnan(p)&p>dummy;
+            plot(jd(m)-jd1,p(m))
 
             ylabel('Pressure [dbar]')
             grid on
@@ -340,9 +343,8 @@ for proc = 1 : length(sn)
 
         end
         orient tall
-        print(gcf,'-dpng', '-r300',[outfile '.png'])
+        print(gcf,'-dpng','-r300',fullfile(pd.stage2figpath,sprintf(pd.stage2form,sn(proc))));
         disp('pause (press any key to continue)'); pause
-
 
         sampling_rate = 1/median(diff(jd));
         tf            = auto_filt(t, sampling_rate, 1/2,'low',4);
@@ -414,7 +416,7 @@ for proc = 1 : length(sn)
         end
 
         orient tall
-        print(gcf,'-dpng', '-r300',[outfile '_lowpass.png'])
+        print(gcf,'-dpng','-r300',fullfile(pd.stage2figpath,[sprintf(pd.stage2form,sn(proc)) '_lowpass']));
 
     end % if exist(infile)
 

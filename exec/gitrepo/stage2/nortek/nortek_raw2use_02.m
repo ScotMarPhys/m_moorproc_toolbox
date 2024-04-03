@@ -1,4 +1,4 @@
-% function nortek_raw2use_02(moor,'procpath',procpath,'outpath',outpath)
+% function nortek_raw2use_02(moor,varargin)
 %
 % basic preprocessing for Nortek Aquadopp data
 % 
@@ -35,18 +35,12 @@ if nargin==0
 end
 
 % check for optional arguments
-a = find(strcmp('procpath', varargin));
-if a>0
-    procpath=char(varargin(a+1));
+if nargin==1
+    pd = moor_inoutpaths('nor',moor);
 else
-    procpath=fullfile(MOORPROC_G.moordatadir,'proc'); % path on D382 using oceanus workstation
+    pd = varargin{1};
 end
-a = find(strcmp('outpath', varargin));
-if a>0
-    outpath=char(varargin(a+1));
-else
-    outpath = fullfile(procpath,moor,'nor');
-end
+
 a = find(strcmp('plot_interval', varargin));
 if a>0 && ~isempty(varargin{a+1})
     plot_interval=reshape(varargin{a+1},4,2)';
@@ -56,20 +50,14 @@ end
 
 operator = MOORPROC_G.operator;
 
-% -- set path for data input
-inpath  = fullfile(procpath,moor);
-
-% --- get moring information from infofile 
-infofile = fullfile(procpath,moor,[moor 'info.dat']);
-
-[id,sn,z,s_t,s_d,e_t,e_d,lat,lon,wd,mr]  =  rodbload(infofile,'instrument:serialnumber:z:Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:WaterDepth:Mooring');
+[id,sn,z,s_t,s_d,e_t,e_d,lat,lon,wd,mr]  =  rodbload(pd.infofile,'instrument:serialnumber:z:Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:WaterDepth:Mooring');
 
 vec=find((id==368|id==370)); % Nortek id number
 
 sn=sn(vec);
 z = z(vec);
 
-fid_stat= fopen([outpath moor '_Nortek_stage2.log'],'a');
+fid_stat= fopen(pd.stage2log,'a');
 fprintf(fid_stat,['Processing steps taken by ' mfilename ':\n']);
 fprintf(fid_stat,'  1. eliminate lauching and recovery period\n');
 fprintf(fid_stat,'  2. save data to rdb file\n');
@@ -103,14 +91,13 @@ jd_e  = julian(e_d(1),e_d(2),e_d(3),e_t(1)+e_t(2)/60);  % end time
 for proc = 1 : length(vec)
     columns = 'YY:MM:DD:HH:T:P:U:V:W:HDG:PIT:ROL:USS:VSS:WSS:IPOW:CS:CD';
     indep  = z(proc);
-    infile  = fullfile(inpath,'nor',[moor,'_',num2str(sn(proc)),'.raw']);
-  
-    if exist(infile)==0
+    infile  = fullfile(pd.stage1path,sprintf(pd.stage1form,sn(proc)));
+
+    if exist(infile,'file')==0
         disp(['infile: ' infile ' does not exist.'])
-      
-    elseif exist(infile)   > 0 
-        rodbfile= [moor,'_',num2str(sn(proc)),'.use']; 
-        outfile = fullfile(outpath,rodbfile);
+
+    else
+        outfile = fullfile(pd.stage2path,sprintf(pd.stage2form,sn(proc)));
         fprintf(fid_stat,'Serialnumber %d \n',sn(proc));
         fprintf(fid_stat,'Infile %s \n',infile);
         fprintf(fid_stat,'Outfile %s \n',outfile);
@@ -118,18 +105,18 @@ for proc = 1 : length(vec)
         [YY,MM,DD,HH,t,p,u,v,w,hdg,pit,rol,uss,vss,wss,ipow,cs,cd] = ...
             rodbload(infile,[columns]);
 
-        %------------------------------------------ 
+        %------------------------------------------
         %----- cut off launching and recovery period
         %------------------------------------------
         disp('cut off launching and recovery period')
 
         jd  = julian(YY,MM,DD,HH);
         %gregorian(jd);
-%         jd_e
-%         gregorian(jd_e)
-%         jd_s
-%         gregorian(jd_s)
-        
+        %         jd_e
+        %         gregorian(jd_e)
+        %         jd_s
+        %         gregorian(jd_s)
+
         ii  = find(jd <= jd_e & jd >= jd_s );
 
         YY=YY(ii);MM=MM(ii);DD=DD(ii);HH=HH(ii);
@@ -138,13 +125,13 @@ for proc = 1 : length(vec)
         hdg=hdg(ii);pit=pit(ii);rol=rol(ii);
         uss=uss(ii);vss=vss(ii);wss=wss(ii);
         ipow=ipow(ii); cs=cs(ii); cd=cd(ii);
-        jd  = jd(ii); 
+        jd  = jd(ii);
 
         cycles     = length(ii);
         Y = [YY(1) MM(1) DD(1)];
         Start_Time = HH(1);
         End_Date = [YY(cycles) MM(cycles) DD(cycles)];
-        End_Time = HH(cycles);     
+        End_Time = HH(cycles);
 
 
         %------------------------------------------
@@ -152,92 +139,92 @@ for proc = 1 : length(vec)
         %------------------------------------------
         disp(' fill time gaps  with dummy')
 
-        djd = diff(jd);           % time step  
+        djd = diff(jd);           % time step
         sr  = median(djd);        % sampling interval
         ii  = djd > 1.5*sr;  % find gaps
         gap = round(djd(ii)/sr)-1;
-        addt= []; 
+        addt= [];
 
-        
+
 
         %-----------------------------------------------------
         %  write output to logfile ---------------------------
         %-----------------------------------------------------
 
-        fprintf(fid_stat,'Operation interval: %s  to  %s\n', ... 
-             datestr(gregorian(jd(1))),datestr(gregorian(jd(end)) ));
+        fprintf(fid_stat,'Operation interval: %s  to  %s\n', ...
+            datestr(gregorian(jd(1))),datestr(gregorian(jd(end)) ));
         fprintf(fid_stat,'\n');
 
-        %-----------------------------------  
+        %-----------------------------------
         %--- write data to rodb format -----
         %-----------------------------------
 
-        disp(['writing data to ',outfile]) 
+        disp(['writing data to ',outfile])
         fort =['%4.4d %2.2d %2.2d  %6.4f  %4.2f %7.3f  %4.1f %4.1f %4.1f  '...
             '%4.1f %4.1f %4.1f  %2d %2d %2d  %2.1f  %4.1f %5.2f'];
-        
+
         rodbsave(outfile,...
-          'Latitude:Longitude:Columns:Start_Date:Start_Time:SerialNumber:Mooring:WaterDepth:Instrdepth:End_Date:End_Time',...
-           fort,...
-          lat,lon,columns,s_d,Start_Time,sn(proc),mr,wd,indep,End_Date,End_Time,...
-          [ YY,MM,DD,HH,t,p,u,v,w,hdg,pit,rol,uss,vss,wss,ipow,cs,cd]);
-      
-      
-      % aurelie: i have replace Start_Date by s_d and it works !!!!
-        
+            'Latitude:Longitude:Columns:Start_Date:Start_Time:SerialNumber:Mooring:WaterDepth:Instrdepth:End_Date:End_Time',...
+            fort,...
+            lat,lon,columns,s_d,Start_Time,sn(proc),mr,wd,indep,End_Date,End_Time,...
+            [ YY,MM,DD,HH,t,p,u,v,w,hdg,pit,rol,uss,vss,wss,ipow,cs,cd]);
+
+
+        % aurelie: i have replace Start_Date by s_d and it works !!!!
+
         %%%%%%%%%% Graphics %%%%%%%%%%%%%%%%%%
-%who
+        %who
         jd0 = julian(-1,1,1,24);
         jd1 = julian(plot_interval(1,:))-jd0;
-        jd2 = julian(plot_interval(2,:))-jd0; 
+        jd2 = julian(plot_interval(2,:))-jd0;
         sampling_rate = 1/median(diff(jd));
 
         STR = ['Temperature [deg C]   ';
-               'Pressure [dbar]       ';  
-               'Zonal Velocity [cm/s] ';
-               'Merid. Velocity [cm/s]';
-               'Vert. Velocity [cm/s] ']; 
+            'Pressure [dbar]       ';
+            'Zonal Velocity [cm/s] ';
+            'Merid. Velocity [cm/s]';
+            'Vert. Velocity [cm/s] '];
         STR2 = {'Heading [deg]';
-                'angle [deg]';
-                'sig. str. [counts]'};
+            'angle [deg]';
+            'sig. str. [counts]'};
         VAR1= ['t';'p';'u';'v';'w'];
         VAR2= {'hdg';'pit';'rol';'uss';'vss';'wss'};
         panels=5;
         panels2=3;
-                
+
         figure;
         for sub = 1 : 5
-          eval(['var1 = ',VAR1(sub),';'])
-          var2=[];
-          var3=[];
-          ok = plot_timeseries(jd,var1,var2,var3,sampling_rate,STR(sub,:),sub,[jd1 jd2],'n',panels);
-          
+            eval(['var1 = ',VAR1(sub),';'])
+            var2=[];
+            var3=[];
+            ok = plot_timeseries(jd,var1,var2,var3,sampling_rate,STR(sub,:),sub,[jd1 jd2],'n',panels);
+
         end
 
         subplot(5,1,1)
         title(['Nortek s/n: ',num2str(sn(proc)), ...
-             '; Target Depth: ',num2str(indep)])
+            '; Target Depth: ',num2str(indep)])
 
         orient tall
-        %eval(['print -depsc2 -tiff ',outfile,'.eps']) 
-        eval(['print -dpng ',outfile,'.png']) 
+        %eval(['print -depsc2 -tiff ',outfile,'.eps'])
+        eval(['print -dpng ',outfile,'.png'])
 
         figure;
 
         for sub = 1 : 5
-          eval(['var1 = ',VAR1(sub),';'])
-          var2=[];
-          var3=[];
-          ok = plot_timeseries(jd,var1,var2,var3,sampling_rate,STR(sub,:),sub,[jd1 jd2],'y',panels);
+            eval(['var1 = ',VAR1(sub),';'])
+            var2=[];
+            var3=[];
+            ok = plot_timeseries(jd,var1,var2,var3,sampling_rate,STR(sub,:),sub,[jd1 jd2],'y',panels);
         end
 
         subplot(5,1,1)
         title(['Nortek s/n: ',num2str(sn(proc)), ...
-               '; Target Depth: ',num2str(indep)])
+            '; Target Depth: ',num2str(indep)])
         orient tall
- %       eval(['print -depsc ',outfile,'.filtered.eps']) 
-        eval(['print -dpng ',outfile,'.filtered.png']) 
-        
+        %       eval(['print -depsc ',outfile,'.filtered.eps'])
+        eval(['print -dpng ',outfile,'.filtered.png'])
+
         % plot of diagnostics info
         figure;
         subplot(3,1,1)
@@ -246,87 +233,87 @@ for proc = 1 : length(vec)
         var3=[];
         ok = plot_timeseries(jd,var1,var2,var3,sampling_rate,STR2{1},1,[jd1 jd2],'n',panels2);
         legend({'hdg'})
-        
+
         subplot(3,1,2)
         eval(['var1 = ',VAR2{2},';'])
         eval(['var2 = ',VAR2{3},';'])
         var3=[];
         ok = plot_timeseries(jd,var1,var2,var3,sampling_rate,STR2{2},2,[jd1 jd2],'n',panels2);
         legend({'pit','rol'})
-        
+
         subplot(3,1,3)
         eval(['var1 = ',VAR2{4},';'])
         eval(['var2 = ',VAR2{5},';'])
         eval(['var3 = ',VAR2{6},';'])
-        
+
         ok = plot_timeseries(jd,var1,var2,var3,sampling_rate,STR2{3},3,[jd1 jd2],'n',panels2);
         legend({'beam1','beam2','beam3'})
-        
-        
-        
-        suptitle(['Nortek s/n: ',num2str(sn(proc)), ...
-                 '; Target Depth: ',num2str(indep)])
 
-          orient tall
-       % eval(['print -depsc2 -tiff ',outfile,'_diagnostics.eps'])
-        eval(['print -dpng ',outfile,'_diagnostics.png'])         
-        end % if exist(infile)==0
-  end  % for proc=1:length(combo_sn)+length(individual_sn) loop
+
+
+        suptitle(['Nortek s/n: ',num2str(sn(proc)), ...
+            '; Target Depth: ',num2str(indep)])
+
+        orient tall
+        % eval(['print -depsc2 -tiff ',outfile,'_diagnostics.eps'])
+        eval(['print -dpng ',outfile,'_diagnostics.png'])
+    end % if exist(infile)==0
+end  % for proc=1:length(combo_sn)+length(individual_sn) loop
 end % function
-  
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-  function ok = plot_timeseries(jd,var1,var2,var3,sr,str,sub,jdlim,filt,panels)
+function ok = plot_timeseries(jd,var1,var2,var3,sr,str,sub,jdlim,filt,panels)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % plot time series
 
 
-  jd0 = julian(-1,1,1,24);
+jd0 = julian(-1,1,1,24);
 
-  i1    = find(~isnan(var1) & var1~=0);
- 
-  if strcmp(filt,'y')
+i1    = find(~isnan(var1) & var1~=0);
+
+if strcmp(filt,'y')
     var1  = auto_filt(var1(i1),sr,1/2,'low',4);
-  else
+else
     var1  = var1(i1);
-  end 
+end
 
-  if ~isempty(var2)
+if ~isempty(var2)
     i2    = find(~isnan(var2) & var2~=0);
     if strcmp(filt,'y')
-      var2  = auto_filt(var2(i2),sr,1/2,'low',4);
+        var2  = auto_filt(var2(i2),sr,1/2,'low',4);
     else
-      var2  = var2(i2);
+        var2  = var2(i2);
     end
-  end
+end
 
-  if ~isempty(var3)
+if ~isempty(var3)
     i3    = find(~isnan(var3) & var3~=0);
     if strcmp(filt,'y')
-      var3  = auto_filt(var3(i3),sr,1/2,'low',4);
+        var3  = auto_filt(var3(i3),sr,1/2,'low',4);
     else
-      var3  = var3(i3);
+        var3  = var3(i3);
     end
-  end
-  
-  subplot(panels,1,sub);
-  
-  plot(jd(i1)-jd0,var1)
-  hold on
+end
 
-  if ~isempty(var2)
+subplot(panels,1,sub);
+
+plot(jd(i1)-jd0,var1)
+hold on
+
+if ~isempty(var2)
     plot(jd(i2)-jd0,var2,'r')
-  end
- 
-  if ~isempty(var3)
-    plot(jd(i3)-jd0,var3,'g')
-  end
-  
-  ylabel(str)
-  grid on
-  xlim([jdlim])
-  datetick('x',12,'keeplimits')
-  
-      
-  ok=1;
+end
 
-  end
+if ~isempty(var3)
+    plot(jd(i3)-jd0,var3,'g')
+end
+
+ylabel(str)
+grid on
+xlim([jdlim])
+datetick('x',12,'keeplimits')
+
+
+ok=1;
+
+end

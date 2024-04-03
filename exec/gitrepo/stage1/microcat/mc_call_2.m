@@ -1,4 +1,4 @@
-% mc_call_2_XXXX is a script that performs stage1 processing
+% mc_call_2 is a script that performs stage1 processing
 % on microcat data.  It converts microcat data from raw to rodb
 % format for an entire mooring.
 %
@@ -33,22 +33,16 @@ dateoffset = 0;
 cruise          = MOORPROC_G.cruise;
 operator        = MOORPROC_G.operator;
 
-basedir = MOORPROC_G.moordatadir;
-inpath   = fullfile(basedir, 'raw', cruise, 'microcat');
-outpath  = fullfile(basedir, 'proc', moor, 'microcat');
-if ~exist(outpath,'dir')
-    mkdir(outpath)
-end
-infofile = fullfile(basedir, 'proc', moor, [moor 'info.dat']);
-
+%get file paths
+pd = moor_inoutpaths('microcat',moor);
 out_ext  = '.raw';
 
 % --- get mooring information from infofile ---
 
-[id,sn,lat,lon] = rodbload(infofile,'id:sn:latitude:longitude');
+[id,sn,lat,lon] = rodbload(pd.infofile,'id:sn:latitude:longitude');
 if isempty(id) || isnan(id)
   [id,sn,lat,lon] = ...
-      rodbload(infofile,'instrument:serialnumber:latitude:longitude');
+      rodbload(pd.infofile,'instrument:serialnumber:latitude:longitude');
 end
 
 % --- vector of serial numbers ---
@@ -56,7 +50,7 @@ ii = find(id >= 335 & id <=337);
 vec = sn(ii);
 
 % --- write header info to log file ---
-fidlog = fopen([outpath,'stage1_log'],'a');
+fidlog = fopen(pd.stage1log,'a');
 fprintf(fidlog,'Transformation of ascii data to rodb format \n');
 fprintf(fidlog,'Processing carried out by %s at %s\n\n\n',operator,datestr(clock));
 
@@ -83,18 +77,18 @@ for i = 1:length(vec)
         sprintf('%4.4d%s',vec(i),'_data.asc')
         };
     for n = 1:length(infiles)
-        f = fullfile(inpath,infiles{n});
-        if exist(f,'file') && dir(f).bytes>0
+        infile = fullfile(pd.rawpath,infiles{n});
+        if exist(infile,'file') && dir(infile).bytes>0
             %found it
             break
         end
     end
-    infile = fullfile(inpath,infiles{n});
+    infile = fullfile(pd.rawpath,infiles{n});
     if ~exist(infile,'file')
         ssname = regexp(moor,'_','split');
         mcatfname = [ssname{1} '_' sprintf('%4.4d',vec(i)) '_' ...
             num2str(YEAR+1,'%4.0f') '.cnv'];
-        infile = [inpath,mcatfname];
+        infile = fullfile(pd.rawpath,mcatfname);
     end
     stopped=0;
     % if still doesn't exist, flag to operator
@@ -102,16 +96,15 @@ for i = 1:length(vec)
         disp(' ')
         disp(['WARNING: No data file found for serial number ' num2str(vec(i))])
         want_to_continue=input('Do you wish to continue processing the rest of the mooring? (y/n):- ','s');
-        if isempty(strmatch(upper(want_to_continue),'Y'))
+        if strncmpi(want_to_continue,'y',1)==0
             disp('Stopping!')
             stopped=1;
             fprintf(fidlog,['\n Routine stopped due to missing datafile for serial number: ' num2str(vec(i))]);
             break
         end
     else
-
-        outfile = fullfile(outpath,[moor,'_',sprintf('%4.4d',vec(i)),out_ext]);
-        microcat2rodb(infile,outfile,infofile,fidlog,'y',dateoffset);
+        outfile = fullfile(pd.stage1path,sprintf(pd.stage1form,vec(i)));
+        microcat2rodb(infile,outfile,pd.infofile,fidlog,'y',dateoffset);
         disp('Press any key to continue: ')
         pause
     end

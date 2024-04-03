@@ -15,13 +15,8 @@ moor = input('mooring deployment (e.g. ebh2_15_2022) to process:   ','s');
 %plot_interval=[2023 02 07 0, 2023 07 21 0];
 plot_interval=[]; %automatic based on available times
 
-inpath   = fullfile(MOORPROC_G.moordatadir,'raw',cruise,'nor');%'nortek'
-procpath = fullfile(MOORPROC_G.moordatadir,'proc');
-outpath  = fullfile(procpath,moor,'nor');
-if ~exist(outpath,'dir')
-    mkdir(outpath)
-end
+pd = moor_inoutpaths('nor',moor);
 
-nortek2rodb_01(moor,'inpath',inpath,'outpath',outpath,'procpath',procpath)
+nortek2rodb_01(moor,pd)
 
-nortek_raw2use_02(moor,'outpath',outpath,'procpath',procpath,'plot_interval',plot_interval)
+nortek_raw2use_02(moor,pd,'plot_interval',plot_interval)

@@ -60,47 +60,41 @@ cruise = MOORPROC_G.cruise;
 
 doctd = 1;% 1; % whether to load and plot CTD data: 1 if mstar format, 99 if native cnv file (without header)
 
-% --- set paths for data input and output ---
-inpath    = fullfile(MOORPROC_G.moordatadir, 'raw', cruise, 'microcat_cal_dip', ['cast' cast]);
-infofile  = fullfile(fileparts(fileparts(outpath)),['cast' cast,'info.dat']);
-ctdinfile = fullfile(MOORPROC_G.ctddir, ['ctd_' MOORPROC_G.cruise_ctd '_' ctdnum '_psal.nc']);
-outpath   = fullfile(MOORPROC_G.moordatadir, 'proc_calib', cruise, 'cal_dip', 'microcat', ['cast' cast]);
-logf = fullfile(outpath,'microcat2rodb.log');
-outfilepre = fullfile(outpath,['cast' cast '_']); %will be suffixed by serial number in loop
-outfig = fullfile(MOORPROC_G.reportdir, 'figs', 'caldip', ['cast', cast ,'_all_']); %suffixed by temp, cond, etc.
+% get paths for data input and output
+pd = moor_inoutpaths('microcat_cal_dip',cast);
 figform = '-depsc';
 
 %test for files/directories
 if do_microcat2rodb
-    if ~exist(inpath,'dir')
-        error('input data directory %s not found', inpath)
+    if ~exist(pd.rawpath,'dir')
+        error('input data directory %s not found', pd.rawpath)
     end
-    if ~exist(outpath,'dir')
+    if ~exist(pd.stage1path,'dir')
         warning('creating directory %s for converted data')
         try
-            mkdir(outpath)
+            mkdir(pd.stage1path)
         catch
             error('could not create output directory')
         end
     end
 else
-    if ~exist(outpath,'dir')
-        error('input rodb format directory %s not found', outpath)
+    if ~exist(pd.stage1path,'dir')
+        error('input rodb format directory %s not found', pd.stage1path)
     end
 end
-if ~exist(infofile,'file')
-    error('infofile %s not found',infofile)
+if ~exist(pd.infofile,'file')
+    error('infofile %s not found',pd.infofile)
 end
-if ~exist(ctdinfile,'file')
-    error('ctdinfile %s not found',ctdinfile)
+if ~exist(pd.ctdfile,'file')
+    error('ctdinfile %s not found',pd.ctdfile)
 end
-if ~exist(fileparts(outfig),'dir')
-    mkdir(outfig)
+if ~exist(pd.stage1fig,'dir')
+    mkdir(pd.stage1fig)
 end
 
 jd0 = julian(MOORPROC_G.YEAR,1,0); %use to get yearday
 if ~exist('doctd','var') || doctd == 1
-    [d, h]=mload(ctdinfile,'/');
+    [d, h]=mload(pd.ctdfile,'/');
     dnum = m_commontime(d,'time',h,'datenum');
     d.yd = dnum - datenum(MOORPROC_G.YEAR,1,0);
     if ~isfield(d,'oxygen2')
@@ -120,14 +114,14 @@ elseif doctd == 99 % using cnv file instead of .nc
     elseif contains(cast,'6')
        start_date_cast = datenum(2018,07,07,13,13,15);
     end
-    read_ctd_cnv(ctdinfile,start_date_cast);
+    read_ctd_cnv(pd.ctdfile,start_date_cast);
 end
 
 % --- get mooring information from infofile ---
-[zp,id,sn]= rodbload(infofile,'z:instrument:serialnumber');
+[zp,id,sn]= rodbload(pd.infofile,'z:instrument:serialnumber');
 
 % --  Start and end times
-[stdt,stti,endt,enti]= rodbload(infofile,'StartDate:StartTime:EndDate:EndTime');
+[stdt,stti,endt,enti]= rodbload(pd.infofile,'StartDate:StartTime:EndDate:EndTime');
 jdstt = julian([stdt;stti(1)+stti(2)/60]')-jd0;
 jdend = julian([endt;enti(1)+enti(2)/60]')-jd0;
 
@@ -140,7 +134,7 @@ zp = zp(ii);
 sn = sn(ii);
 
 % --- create log file ---
-fidlog = fopen(logf,'w');
+fidlog = fopen(pd.stage1log,'w');
 if fidlog==-1
     error('could not open logfile %s',logf)
 end
@@ -172,14 +166,14 @@ for i = 1:length(sn)
         [sprintf('%4.4d',sn(i)),'_cal_dip_data.cnv'];
         [sprintf('%4.4d',sn(i)),'_Cal_Dip_Data.cnv']};
     for n = 1:length(infiles)
-        f = fullfile(inpath,infiles{n});
-        if exist(f,'file') && dir(f).bytes>0
+        infile = fullfile(pd.rawpath,infiles{n});
+        if exist(infile,'file') && dir(infile).bytes>0
             %found it
             break
         end
     end
-    infile = fullfile(inpath,infiles{n});
-    outfile = [outfilepre sprintf('%4.4d',sn(i)),'.raw'];
+    infile = fullfile(pd.rawpath,infiles{n});
+    outfile = fullfile(pd.stage1path,sprintf(pd.stage1form,sn(i)));
 
     % --- convert from raw to rodb format ---
     
@@ -200,7 +194,7 @@ for i = 1:length(sn)
         end
         %--------------------------------------------------------------
         if do_microcat2rodb
-            microcat2rodb(infile,outfile,infofile,fidlog,'y',dateoffsetmc)
+            microcat2rodb(infile,outfile,pd.infofile,fidlog,'y',dateoffsetmc)
         else
             disp('*** WARNING **** NOT WRITING RODB FILES');
         end
@@ -319,8 +313,8 @@ if doctd
 end
 xlim(sort([jdstt-.01 jdend+.01])); grid
 orient tall
-figname = [outfig '_cond'];
-print(gcf,figpform,figname)
+figname = fullfile(pd.stage1fig,['cast' cast '_all_cond']);
+print(gcf,figform,figname)
 saveas(gcf,[figname '.fig'],'fig')
 
 figure(35);hold on; box on;
@@ -339,8 +333,8 @@ if doctd
 end
 xlim([jdstt-0.01 jdend+0.01]); grid
 orient tall
-figname = [outfig '_temp'];
-print(gcf,figpform,figname)
+figname = fullfile(pd.stage1fig,['cast' cast '_all_temp']);
+print(gcf,figform,figname)
 saveas(gcf,[figname '.fig'],'fig')
 %%
 figure(36);hold on; box on;
@@ -359,8 +353,8 @@ if doctd
 end
 xlim([jdstt-0.01 jdend+0.01]); grid
 orient tall
-figname = [outfig '_press'];
-print(gcf,figpform,figname)
+figname = fullfile(pd.stage1fig,['cast' cast '_all_press']);
+print(gcf,figform,figname)
 saveas(gcf,[figname '.fig'],'fig')
 
 if find(id2==335)
@@ -381,8 +375,9 @@ if find(id2==335)
     end
     xlim([jdstt-0.01 jdend+0.01]); grid
     orient tall
-    print(gcf,'-depsc',[outfig '_oxy.ps'])
-    saveas(gcf,[outfig '_oxy.fig'],'fig')
+    figname = fullfile(pd.stage1fig,['cast' cast '_all_oxy']);
+    print(gcf,figform,figname)
+    saveas(gcf,[figname '.fig'],'fig')
 end
 
 disp(['number of MicroCATs processed = ' num2str(length(sn))])

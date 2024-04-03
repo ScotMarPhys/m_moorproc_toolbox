@@ -23,23 +23,19 @@ ctdnum = sprintf('%03d',str2double(cast));
 ctdsen = input('Which CTD sensors (1 or 2 [or blank to use already-selected primary])?) ','s');
 oxysen = input('Which CTD oxygen (1 or 2 [or blank to use already-selected primary])?' , 's');
 
-% --- set paths for data input and output ---
-inpath   = fullfile(MOORPROC_G.moordatadir, 'proc_calib', cruise, 'cal_dip', 'microcat', ['cast' cast]);
-infofile  = fullfile(MOORPROC_G.moordatadir, 'proc_calib', cruise, 'cal_dip', ['cast' cast 'info.dat']);
-ctdinfile = fullfile(MOORPROC_G.ctddir,  ['ctd_' MOORPROC_G.cruise_ctd '_' ctdnum '_psal.nc']);
-outplot = fullfile(MOORPROC_G.reportdir,'figs','caldip',['microcat_check_cast_' cast '_plot']);
-outlogf = fullfile(MOORPROC_G.reportdir,'stats',['microcat_check' cast '.log']);
-if ~exist(fileparts(outlogf),'dir')
+% --- get paths for data input and output ---
+pd = moor_inoutpaths('microcat_cal_dip',cast);
+if ~exist(fileparts(pd.stage2log),'dir')
     warning('creating directory for log file')
     try
-        mkdir(fileparts(outlogf))
+        mkdir(fileparts(pd.stage2log))
     end
 end
 
 % ----------------- load CTD DATA   ----------------------------------
 cvars = 'time press temp1 cond1 oxygen1 temp2 cond2 temp cond oxygen ';
-h = m_read_header(ctdinfile); if sum(strcmp(h.fldnam,'oxygen2')); cvars = [cvars 'oxygen2 ']; end
-d = mload(ctdinfile,[cvars ' ']);
+h = m_read_header(pd.ctdfile); if sum(strcmp(h.fldnam,'oxygen2')); cvars = [cvars 'oxygen2 ']; end
+d = mload(pd.ctdfile,[cvars ' ']);
 if strcmp(cruise,'d382')
     % Correction for Di382
     d.cond1=d.cond1*10;  
@@ -99,7 +95,7 @@ ctd_oxy_mn = nanmean(d.oxygen(imp2));
 ctd_oxy_st = nanstd(d.oxygen(imp2));
 
 % --- get mooring information from infofile ---
-[zins,id,sn]= rodbload(infofile,'z:instrument:serialnumber');
+[zins,id,sn]= rodbload(pd.infofile,'z:instrument:serialnumber');
 
 % --- vector of serial numbers ---
 ii = find(id >= 332 & id <= 337);
@@ -109,30 +105,31 @@ nvec = length(ii);
 zmic = zins(ii);
 
 % Open output file for text and set plot name
-%outlogf = [outpath,'microcat_check',cast,'.log'];
-ilogf = fopen(outlogf,'w');
+%pd.stage2log = [outpath,'microcat_check',cast,'.log'];
+ilogf = fopen(pd.stage2log,'w');
 if ilogf==-1
-    error('could not open log file %s for writing',outlogf)
+    error('could not open log file %s for writing',pd.stage2log)
 end
-if ~exist(fileparts(outplot),'dir')
+if ~exist(fileparts(pd.stage2fig),'dir')
     warning('creating directory for figures')
     try
-        mkdir(fileparts(outplot))
+        mkdir(fileparts(pd.stage2fig))
     catch
-        error('no directory for %s',outplot)
+        error('no directory for %s',pd.stage2fig)
     end
 end
 
 % --- read data loop --
 for i = 1:nvec
     % display( [,num2str(vec(i)),])
-    rawfile = sprintf('%scast%s_%4.4d.raw',outpath,cast,vec(i));
+
+    infile = fullfile(pd.stage1path,sprintf(pd.stage1form,vec(i)));
     % --- load rodb data ---
     if id2(i)~=335 % checks if not ODO microcat
-        [yy,mm,dd,hh,c,t,p] = rodbload(rawfile,'yy:mm:dd:hh:c:t:p');
+        [yy,mm,dd,hh,c,t,p] = rodbload(infile,'yy:mm:dd:hh:c:t:p');
         o=c*nan;
     else
-        [yy,mm,dd,hh,c,t,p,o] = rodbload(rawfile,'yy:mm:dd:hh:c:t:p:o2');
+        [yy,mm,dd,hh,c,t,p,o] = rodbload(infile,'yy:mm:dd:hh:c:t:p:o2');
     end
     if (i > 7 && i<=14)  lstr='--'; elseif i>14  lstr ='-.'; else lstr = '-'; end
     % Time variable
@@ -314,7 +311,7 @@ for i = 1:length(vec)
         pdifx(i,jj),pstd(i,jj), odifx(i,jj), ostd(i,jj));
 end
 %%
-doplot=0
+doplot=0;
 if doplot
     figure(1);clf;grid on;grid minor
     subplot(4,1,1);
@@ -345,9 +342,8 @@ if doplot
 
     % Finally save plotfile
     set(gcf,'PaperUnits','centimeters','PaperPosition',[-2 0 27 18 ])
-    print('-depsc', outplot)
+    print('-depsc', pd.stage2fig)
     % Display the results
-    eval(['!cat ',outlogf]);
 end
 
 %% PLOT DATA AT BOTTLE STOPSs
@@ -440,6 +436,6 @@ ylabel('[dbar]')
 
 % Finally save plotfile
 set(gcf,'PaperUnits','centimeters','PaperPosition',[-2 0 27 18 ])
-print('-dpng', outplot)
+print('-dpng', pd.stage2fig)
 
-type(outlogf)
+type(pd.stage2log)
