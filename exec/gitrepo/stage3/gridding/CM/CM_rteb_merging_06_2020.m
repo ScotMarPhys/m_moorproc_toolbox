@@ -37,9 +37,8 @@ moor5 = 'rteb_CM_osnap_05_2018';
 moor6 = 'rteb_CM_osnap_06_2020';
 
 % in- and output directories
-basedir  = pathosnap;
-hydrodir = [basedir '/data/moor/proc/velocity_grid/'];
-grdatdir = [pathgit '\data\processed\stage3_gridding_CM\'];%[basedir '/data/moor/proc/velocity_grid_merged/'];
+hydrodir = [basedir 'data/moor/proc/velocity_grid/'];
+grdatdir = [pathgit 'data\processed\stage3_gridding_CM\'];%[basedir '/data/moor/proc/velocity_grid_merged/'];
 boundarydir = [execdir 'gitrepo/stage3/gridding/CM/'];
 
 % turns on/off check plots. off=false, on=true
