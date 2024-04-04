@@ -42,7 +42,7 @@ grdatdir = [pathgit '\data\processed\stage3_gridding_CM\'];%[basedir '/data/moor
 boundarydir = [execdir 'gitrepo/stage3/gridding/CM/'];
 
 % turns on/off check plots. off=false, on=true
-cm_check_plot = true ;  
+cm_check_plot = false ;  
 
 % add start and end of total time period
 jg_start                = datenum(2014,07,01,00,00,00);

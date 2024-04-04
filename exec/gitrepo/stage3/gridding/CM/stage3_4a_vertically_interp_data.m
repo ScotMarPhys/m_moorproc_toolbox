@@ -1,4 +1,38 @@
-function RT_merg_CM = stage3_4a_vertically_interp_data(Ufss,Vfss,Wfss,Pfss,pgg,JG)
+function RT_merg_CM = stage3_4a_vertically_interp_data(Ufs,Vfs,Wfs,Pfs,pgg,JG)
+    
+    % order the matrices at every time step to avoid too many NaNs creeping in
+    % ....
+    P_sort = NaN .* ones(size(Pfs)); 
+    U_sort = NaN .* ones(size(Ufs)); 
+    V_sort = NaN .* ones(size(Vfs)); 
+    W_sort = NaN .* ones(size(Wfs)); 
+    j = 1;
+    for ii = 1: length(JG)
+        [P_variable, ix] = sort(Pfs(:, ii));
+        P_sort(:,j) = Pfs(ix,ii);
+        U_sort(:,j) = Ufs(ix,ii);
+        V_sort(:,j) = Vfs(ix,ii);
+        W_sort(:,j) = Wfs(ix,ii);    
+        j = j + 1;
+    end
+
+    % removing unused rows of the sorted matrices
+    Pfss = nan(size(Pfs));
+    Ufss = nan(size(Pfs));
+    Vfss = nan(size(Pfs));
+    Wfss = nan(size(Pfs));
+    i = 1; j = 1;
+    for i = 1: length(P_sort(:,1)) % for 1 to number of instruments
+        ix = find(isnan(P_sort(i,:)));
+        if length(ix) < length(JG)
+            Pfss(j,:) = P_sort(i, :);
+            Ufss(j,:) = U_sort(i, :);
+            Vfss(j,:) = V_sort(i, :);
+            Wfss(j,:) = W_sort(i, :);        
+            j = j + 1;
+        end
+    end
+
     maxdepth = max(nanmean(Pfss,2));
     inodata = find(pgg>maxdepth);
 
