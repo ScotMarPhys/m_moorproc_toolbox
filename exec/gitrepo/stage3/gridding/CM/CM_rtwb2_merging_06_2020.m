@@ -60,7 +60,7 @@ idepth = 40; % depth of shallowest instrument, steps of 20 (i.e. if shallowest
              % instrument is at 50m, select 40m
 
 % output filenames (should be automatic)
-outputfile = [MOOR '_merg_linear_interp' jg_start_str '_' jg_end_str];
+outputfile = [MOOR '_merg_linear_interp_' jg_start_str '_' jg_end_str];
 outputfile_stacked = ['CM_rtwb2_stacked_' jg_start_str '_' jg_end_str,...
                         '_' data_version];
 
