@@ -65,7 +65,7 @@ outputfile_stacked = ['CM_rtwb2_stacked_' jg_start_str '_' jg_end_str,...
                         '_' data_version];
 
 % Praemble for 4.b despike time series
-stddy_tol  = 10; % set max velocities renage (median pm stddy_tol)
+stddy_tol  = 10; % tolerance range of differences between adjacent values
 std_win    = 3.5; % 3.5 * std of the time series (median pm std_wind)
 [nloop]    = 5; % max number of despiking repetitions
 graphics   = 'y'; %y if plots of despiking on, 'n' if off

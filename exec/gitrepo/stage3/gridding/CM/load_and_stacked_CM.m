@@ -36,6 +36,7 @@ function [U,V,W,P,z] = load_and_stacked_CM(boundarydir,hydrodir,moor,JG,cm_check
         infile = [hydrodir, mooring{i,:}, '_velocity_grid.mat'];
         load(infile,'dnumi','ufi','vfi','wfi','pfi');
         
+        % exclude erroneous data individually for each deployment if needed
         if strcmp(moor,'rteb_CM_osnap_02_2015')
             idx = find(dnumi>=datenum('22-Jun-2015 00:00:00'));
         elseif strcmp(moor,'rteb_CM_osnap_04_2017')
@@ -64,6 +65,7 @@ function [U,V,W,P,z] = load_and_stacked_CM(boundarydir,hydrodir,moor,JG,cm_check
         wfi =  wfi(:,idx);
         pfi =  pfi(:,idx);
         
+        % exclude erroneous data individually for each deployment if needed
         if strcmp(moor,'rteb_CM_osnap_03_2016')
             if cm(i)==1 || cm(i)==2
                 idx = find(jdnew>=datenum('28-Mar-2017 12:00:00'));
