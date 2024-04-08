@@ -8,7 +8,7 @@
 % basedir      = '/home/sa02lh/Data/Dropbox/Work/Postdoc_OSNAP/OSNAP_mooring/backup_mdrive';
 basedir = pathosnap;
 
-for iyear=6 %1:3
+for iyear=1 %1:3
 switch(iyear)
     case(1)
         year = '_01_2014'; jg_start = datenum(2014,7,19,00,00,00);  jg_end = datenum(2015,6,20,00,00,00);
