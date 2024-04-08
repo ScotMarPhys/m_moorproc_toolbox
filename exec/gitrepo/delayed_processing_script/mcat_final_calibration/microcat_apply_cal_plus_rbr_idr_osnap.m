@@ -19,17 +19,11 @@ warning off
 global basedir datadir execdir pathgit pathosnap
 
 % path of the mooring data define in the startup file under osnap/
-<<<<<<< HEAD
-%moor = 'rtwb1_05_2018';
-% moor = 'ib5_01_2018';
-% moor = 'rteb1_05_2018';
-moor = 'rteb1_04_2017';
-% moor = 'ib3_01_2018';
-=======
-%moor = 'rteb1_06_2020';
+
+% moor = 'rteb1_06_2020';
 % moor = 'rtwb1_06_2020';
 moor = 'rtwb2_06_2020';
->>>>>>> 2af73ab2fec32c1d802e82fe5e117559383feb25
+
 
 %=========================================================================
 % Apply calibration coefficients to series, removes bad data. If required, applies
@@ -38,6 +32,8 @@ p_applycal.operator  = 'LD';
 p_applycal.mooring  = moor;   
 p_applycal.sensortyp = 'seaphox';%'microcat';   % arg / microcat / rbr / idr
 p_applycal.delim = ',';
+
+% input directories & files
 p_applycal.mooring_dir         = [pathosnap '/data/moor/proc/'];
 p_applycal.mooring_outdir      = [pathosnap '/data/moor/proc/'];
 p_applycal.coef_dir            = [pathgit '/data/moor/cal_coef/']; 
@@ -62,7 +58,7 @@ loclegend = 'north';
 % ---------------------------------------------------------------------------
 operator  = p_applycal.operator; 
 mooring   = p_applycal.mooring ;
-sensortyp = p_applycal.sensortyp; 
+sensortyp = p_applycal.sensortyp; % arg / microcat / rbr / idr
 strformat = p_applycal.strformat;
 
 delim = p_applycal.delim;

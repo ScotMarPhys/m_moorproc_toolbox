@@ -657,6 +657,9 @@ for ijj=1:length(JG)
 end
 end 
 
+%% Apply correction for 2017 data to EB mooring
+[wbfile,path] = uigetfile(grdatdir,'Select most recent version of WB merged') % select the most recent processing of the WB data
+[Tfs,Sfs,Pfs,TGfs,SGfs] = extrap_missing_data(pathosnap,wbfile,Tfs,Sfs,Pfs,TGfs,SGfs,JG,pgg);
 
 %% Apply correction for 2017 data to EB mooring
 [wbfile,path] = uigetfile(grdatdir,'Select most recent version of WB merged') % select the most recent processing of the WB data

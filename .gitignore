@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-# ignore data
-/data
-=======
 # data directories
 /data/ar304
 /data/dy053
@@ -18,8 +14,19 @@
 /data/moor/oceansites_format
 /data/moor/oceansites_format
 /data/moor/OSNAPmooring_infodat
-/data/moor/proc
-/data/moor/proc_calib
+
+# data/moor/proc
+# data (or plot) file types, but not info file types
+*.raw
+*.use*
+*.png
+*.eps
+*.fig
+*.tiff
+*.ps
+*.log
+
+# /data/moor/proc_calib
 /data/moor/raw
 /data/moor/THREDDS
 
@@ -32,7 +39,6 @@
 
 # diaries
 /matlab_diaries
->>>>>>> 2af73ab2fec32c1d802e82fe5e117559383feb25
 
 # ignore oceansites_format folder
 exec/gitrepo/export_Oceansites/oceansites_format/
@@ -41,9 +47,10 @@ exec/gitrepo/export_Oceansites/oceansites_format/
 *.nc
 
 # ignore gridded figures folder
-#exec/gitrepo/export_THREDDS/Figure/
 
 # temporary matlab file:
 *~
-**.asv
+*.asv
 
+# Mac things
+.DS_Store

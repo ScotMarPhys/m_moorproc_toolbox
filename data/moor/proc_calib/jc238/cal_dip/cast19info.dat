@@ -1,0 +1,11 @@
+Mooring            = cast19
+Latitude           =  57 32.05 N
+Longitude          =  -12 51.9 W
+WaterDepth         =  1076
+StartDate          = 2022/07/18
+StartTime          = 10:40
+EndDate            = 2022/07/18 
+EndTime            = 11:40
+Columns            = z:serialnumber:instrument:deployment
+50	9141	337	1
+
