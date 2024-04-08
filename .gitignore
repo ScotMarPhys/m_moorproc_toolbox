@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+# ignore data
+/data
+=======
 # data directories
 /data/ar304
 /data/dy053
@@ -28,6 +32,7 @@
 
 # diaries
 /matlab_diaries
+>>>>>>> 2af73ab2fec32c1d802e82fe5e117559383feb25
 
 # ignore oceansites_format folder
 exec/gitrepo/export_Oceansites/oceansites_format/
@@ -40,3 +45,5 @@ exec/gitrepo/export_Oceansites/oceansites_format/
 
 # temporary matlab file:
 *~
+**.asv
+

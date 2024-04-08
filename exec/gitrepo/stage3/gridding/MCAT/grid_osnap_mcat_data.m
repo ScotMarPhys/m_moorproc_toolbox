@@ -18,7 +18,7 @@ p_hydrogrid.gap_max      = 10;          % allow for a maximum of gap [days] in d
 p_hydrogrid.y_tol        = [-10 10];    % deviation in PSU allowed by depsike routine
 p_hydrogrid.stddy_tol    = 4;           % tolerance range of differences between adjacent values of y
 p_hydrogrid.nloop        = 5;           % despike loop number
-p_hydrogrid.graphics     = 'y';
+p_hydrogrid.graphics     = 'n';
 p_hydrogrid.distrangectd = 100e3;       % distance of the reference ctd from the mooring - UNUSED
 
 % 3.GRID INITIALISATION
@@ -31,9 +31,9 @@ p_hydrogrid.iss          = 12; % initial sub-sampling frequency [1/days]
 p_hydrogrid.fss          = 2;  % final sub-sampling frequency [1/days]
 
 % 4.SET DIRECTORIES FOR MERGE
-
 hydrodir                = [pathosnap filesep 'data/moor/proc/hydro_grid/'];
-grdatdir                = [pathosnap filesep 'data/moor/proc/hydro_grid_merged/'];
+grdatdir                = [pathgit filesep 'data/moor/proc/hydro_grid_merged/'];
+if exist(grdatdir,'dir')==0;mkdir(grdatdir);end
 boundarydir             = [pathgit filesep 'exec/gitrepo/stage3/gridding/MCAT/DAT/'];
 
 % 5.MERGE INITIALISATION 
@@ -42,15 +42,22 @@ gridding                = 1  ;  % 1: linear, 2: using climatological profiles
 bathy                   = false ;  % turns on/off the bathy charts. off = flase
 mc_check_plot           = true; %false ;  % turns on/off the microcat check plots. off =false
 
-jg_start                = datenum(2014,6,01,00,00,00);
+jg_start                = datenum(2014,07,01,00,00,00);
 jg_end                  = datenum(2022,07,31,00,00,00);
+
+
+jg_start_str = datestr(jg_start,'YYYYmm');
+jg_end_str = datestr(jg_end,'YYYYmm');
 
 lastyeardata            = '2020';
 
 JG                      = jg_start: 0.5: jg_end; % full time series using 2 samples per day
 pgg                     = 0:20:2000; % depths in 20dbar bins
-depthminforhoriz_interp = 80; % in case no data are available at a specific time, % multiples of 20
+max_depth               = 1780; %set max depth of valid data
+depthminforhoriz_interp = 0; % in case no data are available at a specific time, % multiples of 20
 % (e.g.: mooring turn around, knock-down of the mooring head) don't interpolate on a time basis for level above 40 m
+
+data_version = 'v0'; 
 
 % MOORING FILE NAMES 
 % UPDATE NEW MOORING FILES HERE 

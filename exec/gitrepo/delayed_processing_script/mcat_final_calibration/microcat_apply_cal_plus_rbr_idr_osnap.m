@@ -16,20 +16,28 @@ close all
 clearvars  -except pathosnap pathgit
 warning off
 
+global basedir datadir execdir pathgit pathosnap
+
 % path of the mooring data define in the startup file under osnap/
+<<<<<<< HEAD
+%moor = 'rtwb1_05_2018';
+% moor = 'ib5_01_2018';
+% moor = 'rteb1_05_2018';
+moor = 'rteb1_04_2017';
+% moor = 'ib3_01_2018';
+=======
 %moor = 'rteb1_06_2020';
 % moor = 'rtwb1_06_2020';
 moor = 'rtwb2_06_2020';
+>>>>>>> 2af73ab2fec32c1d802e82fe5e117559383feb25
 
 %=========================================================================
 % Apply calibration coefficients to series, removes bad data. If required, applies
 % constant offsets, and conductivity pressure correction
 p_applycal.operator  = 'LD';
 p_applycal.mooring  = moor;   
-p_applycal.sensortyp = 'microcat';   % arg / microcat / rbr / idr
+p_applycal.sensortyp = 'seaphox';%'microcat';   % arg / microcat / rbr / idr
 p_applycal.delim = ',';
-
-% input directories & files 
 p_applycal.mooring_dir         = [pathosnap '/data/moor/proc/'];
 p_applycal.mooring_outdir      = [pathosnap '/data/moor/proc/'];
 p_applycal.coef_dir            = [pathgit '/data/moor/cal_coef/']; 
@@ -54,7 +62,7 @@ loclegend = 'north';
 % ---------------------------------------------------------------------------
 operator  = p_applycal.operator; 
 mooring   = p_applycal.mooring ;
-sensortyp = p_applycal.sensortyp;   % arg / microcat / rbr / idr
+sensortyp = p_applycal.sensortyp; 
 strformat = p_applycal.strformat;
 
 delim = p_applycal.delim;
@@ -89,8 +97,6 @@ deplcr = txt(find(num==cruiseI(1))+1);
 reccr  = txt(find(num==cruiseI(2))+1);
 
 % ------ output  data ---- 
-
-%%ext      = '.microcat';
 dum      = -9999; 
 pref     = 0;
 t90_68   = 1.00024;  % convert its90 to its68 for cond. to sal.
@@ -98,6 +104,7 @@ t90_68   = 1.00024;  % convert its90 to its68 for cond. to sal.
 % ------ conversion ------------
 cols      = 'YY:MM:DD:HH:T:C'; % column info for rodb header
 colsp     = 'YY:MM:DD:HH:T:C:P'; % column info for rodb header (mc with pressure sensor)
+colsphox  = 'YY:MM:DD:HH:T:S:P'; % column info for rodb header (mc with pressure sensor)
 colsarg   = 'YY:MM:DD:HH:T:TCAT:P:PCAT:C:U:V:W';
 fort      = '%4.4d  %2.2d  %2.2d  %7.5f   %6.4f  %6.4f'; %data output format
 fortp     = '%4.4d  %2.2d  %2.2d  %7.5f   %6.4f  %6.4f  %5.1f'; %data output format(mc with pressure sensor)  
@@ -112,6 +119,8 @@ elseif strcmp('rbr',sensortyp)
   typ_id = [330];
 elseif strcmp('idr',sensortyp)
     typ_id = [339];
+elseif strcmp('seaphox',sensortyp)
+    typ_id = [375];
 end
 ext = ['.',sensortyp];
 
@@ -121,7 +130,7 @@ head    = ['Mooring:SerialNumber:WaterDepth:InstrDepth:Start_Date:Start_Time:End
 % ---- load calib offsets (pre and post cruise) ----
 % Conductivity / Temperature / Depth
 
-if strcmp('microcat',sensortyp) | strcmp('idr',sensortyp) | strcmp('rbr',sensortyp)
+if strcmp('microcat',sensortyp) | strcmp('idr',sensortyp) | strcmp('rbr',sensortyp)| strcmp('seaphox',sensortyp)
  
   fidt  = fopen([coef_dir,'microcat_temp.csv'],'r');
   ttext = textscan(fidt,strformat.mctemptxt,'delimiter',delim);
@@ -309,8 +318,11 @@ for mc = 1: length(serial)
   end
   
   % read .USE file
-  if strcmp(sensortyp,'microcat') | strcmp(sensortyp,'rbr') | strcmp(sensortyp,'idr')  
+  if strcmp(sensortyp,'microcat') | strcmp(sensortyp,'rbr') | strcmp(sensortyp,'idr') 
     [yy,mm,dd,hh,t,c,p]= rodbload(mcfile,colsp);
+  elseif strcmp(sensortyp,'seaphox')
+    [yy,mm,dd,hh,t,s,p]= rodbload(mcfile,colsphox); 
+    c = gsw_C_from_SP(s,t,p);
   elseif strcmp(sensortyp,'arg')
     [yy,mm,dd,hh,t,tcat,p,pcat,c,u,v,w]= rodbload(mcfile,colsarg);
   end      
@@ -846,7 +858,7 @@ end
         end
       end 
 
-      for i = 1 : length(invalP)/2,  
+      for i = 1 : length(invalP)/2  
         dumI = find(jd0>= invalP(i*2-1) & jd0 <= invalP(i*2));    
         pn(dumI) = dum;
       end
