@@ -24,6 +24,10 @@
 %                - add reference to structure p_insitucal in which the parameters
 %                 are defined (see osnap/users/loh/mcatpostcruisecalib/postcalib_process)  
 %               - add a parameter mc_cunit
+<<<<<<< HEAD
+% Lewis Drysdale - added ability to read seaphox data. 
+% 21.07.21
+=======
 % 
 % Lewis Drysdale, - bug fix with Julian date conversion of microcvat data
 %     06.12.2022,     see issues in GitHub https://github.com/ScotMarPhys/m_moorproc_toolbox/issues/17
@@ -31,6 +35,7 @@
 % 
 % 
 
+>>>>>>> 2af73ab2fec32c1d802e82fe5e117559383feb25
 
 close all
 clearvars  -except pathgitrepo pathosnap p_insitucal pathgit
@@ -70,8 +75,10 @@ lat                = p_insitucal.lat;
                           
 % ------ output / input files and directories ---------------
 
-if sensor_id(1) >= 332 & sensor_id(end) <= 337
+if sensor_id(1) >= 332 && sensor_id(end) <= 337
    sensor      = 'microcat';
+elseif sensor_id(1) == 375
+    sensor     = 'seaphox';
 elseif sensor_id(1) == 366
    sensor      = 'arg';
    cond_threshold = 10; % dbar
@@ -177,6 +184,7 @@ elseif strcmp('ar304',cruise)
 elseif strcmp('dy120',cruise)
   mc_ext      = '.raw';  
   mc_dir      = [basedir,'/data/moor/proc_calib/',cruise,'/cal_dip/',sensor,'/'];
+  sp_dir      = [basedir,'/data/moor/proc_calib/',cruise,'/cal_dip/',sensor,'/'];
   info_dir    = [basedir,'/data/moor/proc_calib/',cruise,'/cal_dip/'];
   ctd_dir     = [basedir '/cruise_data/',cruise,'/ctd/'];
   ctdraw_dir  = [basedir '/cruise_data/',cruise,'/ctd/ASCII_FILES/'];
@@ -339,7 +347,11 @@ if strcmp(ctdformat,'aoml')
   clear cnv_cor_save
   pack
 elseif strcmp(ctdformat,'pstar')  
+<<<<<<< HEAD
+    ctd_file;
+=======
   ctd_file
+>>>>>>> 2af73ab2fec32c1d802e82fe5e117559383feb25
   [d h]  = pload(ctd_file,'press temp cond time','silent');
 
   year   = floor(h.iymd/10000);
@@ -424,17 +436,16 @@ end
     bottle.jd         = bottle.jd - cnv_time_correction;
     bottle.start_time = bottle.start_time -cnv_time_correction;
 
-% --- MicroCAT -------
+% --- MicroCAT and Seaphox -----------------------------------------------
 
 fprintf(1,'\n loading MicroCAT/CTD data ... \n\n')
 
-%instr=instr(13:15);
 ninst = length(instr);
 
 for mc = 1 : ninst
 
-  [yy,mm,dd,hh,p,t,c]  = rodbload([mc_file,sprintf('%4.4d',instr(mc)),mc_ext],...
-                                   'YY:MM:DD:HH:P:T:C'); 
+  [yy,mm,dd,hh,p,t,c,s]  = rodbload([mc_file,sprintf('%4.4d',instr(mc)),mc_ext],...
+                                   'YY:MM:DD:HH:P:T:C:S'); 
   lyy                = length(yy);
   YY(1:lyy,mc)       = yy; 
   MM(1:lyy,mc)       = mm; 
@@ -443,29 +454,47 @@ for mc = 1 : ninst
   T(1:lyy,mc)        = t; 
   C(1:lyy,mc)        = c; 
   P(1:lyy,mc)        = p; 
+  S(1:lyy,mc)        = s; 
 end
 
+<<<<<<< HEAD
+ii     = find(YY == 0);
+YY(ii) =NaN; 
+MM(ii) =NaN; 
+DD(ii) =NaN; 
+HH(ii) =NaN; 
+T(ii)  =NaN; 
+C(ii)  =NaN;
+S(ii)  =NaN;
+JD     = julian(YY,MM,DD,HH);% julian day mc time 
+=======
 ii    = find(YY == 0);
 YY(ii)=NaN; MM(ii)=NaN; DD(ii)=NaN; HH(ii)=NaN; T(ii)=NaN; C(ii)=NaN;
 decstr=datestr(HH/24,'HH:MM:SS');
 [~,~,~,HH,M,SS]=datevec(decstr);
 JD    = juliandate(YY,MM,DD,HH,M,SS);                    % julian day mc time 
+>>>>>>> 2af73ab2fec32c1d802e82fe5e117559383feb25
 
 % check which variables have been measured by sensor  
+pstat = 1;tstat = 1;cstat = 1;
 
-pstat = 1;
-tstat = 1;
-cstat = 1;
-
-if isempty(find(~isnan(P)))
+if isempty(find(~isnan(P), 1))
    pstat = 0;
 end   
-if isempty(find(~isnan(T)))
+if isempty(find(~isnan(T), 1))
    tstat = 0;
 end   
-if isempty(find(~isnan(C)))
+if isempty(find(~isnan(C), 1))
    cstat = 0;
 end   
+
+% Seaphox outputs salinity but not conductiity so back calculate
+% conductvity if salinity is a variable
+if sensor_id==375
+   if  isempty(find(~isnan(C),1)) && ~isempty(find(~isnan(S),1))
+       C = gsw_C_from_SP(S,T,P);
+   end
+end
 
 % --------------------------------------------------------------------------
 % 2. ---- water impact times: determine time offsets between ctd and mc ----
@@ -483,6 +512,7 @@ if size(wit_ctd,2) == 6
 elseif  size(wit_ctd,2) == 4
   wit_ctd_jd = julian(wit_ctd);
 end
+
 
 % MicroCAT impact
 if strcmp(mc_cunit,'S/m')
@@ -769,20 +799,20 @@ average_interval = average_interval(1):20:average_interval(2);
         dp_mcdep_ext(i) = polyval(pol,mcdep(i));
     end    
     
-    dt_av(i)  =  mean(interp1([MP bot_p0av(oknan,1)'],...
+    dt_av(i)  =  nanmean(interp1([MP bot_p0av(oknan,1)'],...
                               [dt(1,i) dt(oknan,i)'],average_interval));
-    dc_av(i)  =  mean(interp1([MP bot_p0av(oknan,1)'],...
+    dc_av(i)  =  nanmean(interp1([MP bot_p0av(oknan,1)'],...
                               [dc(1,i) dc(oknan,i)'],average_interval));
-    dp_av(i)  =  mean(interp1([MP bot_p0av(oknan,1)'],...
+    dp_av(i)  =  nanmean(interp1([MP bot_p0av(oknan,1)'],...
                               [dp(1,i) dp(oknan,i)'],average_interval));
 
-    dt_sd(i)  =  std(interp1([MP bot_p0av(oknan,1)'],...
+    dt_sd(i)  =  nanstd(interp1([MP bot_p0av(oknan,1)'],...
                               [dt(1,i) dt(oknan,i)'],average_interval));
-    dc_sd(i)  =  std(interp1([MP bot_p0av(oknan,1)'],...
+    dc_sd(i)  =  nanstd(interp1([MP bot_p0av(oknan,1)'],...
                               [dc(1,i) dc(oknan,i)'],average_interval)); 
                           
     if ~isempty(find(i==pproblem)) % if MC press. bad, use ctd press. to correct conduct.
-       dc_av_pproblem(i) = mean(interp1([MP bot_p0av(oknan,1)'],...
+       dc_av_pproblem(i) = nanmean(interp1([MP bot_p0av(oknan,1)'],...
                     [dc_pproblem(1,pp_count) dc_pproblem(oknan,pp_count)'],average_interval));
        pp_count = pp_count + 1; 
     end    
@@ -908,8 +938,29 @@ if ~isempty(pproblem)
     
 end   
 % -- TEXT OUTPUT ---------
+<<<<<<< HEAD
+% if strcmp('rb0701',cruise)
+%     if cast == 27
+% fid = fopen([mc_dir,'cast',num2str(cast+1),'/',output_name,'.txt'],'w');
+% fprintf(fid,['%s',cruise,'  cast:',num2str(cast+1),' MicroCAT - CTD // processing date: ',date,' \n'],'%');
+%     elseif cast == 28
+% fid = fopen([mc_dir,'cast',num2str(cast-1),'/',output_name,'.txt'],'w');
+% fprintf(fid,['%s',cruise,'  cast:',num2str(cast-1),' MicroCAT - CTD // processing date: ',date,' \n'],'%');
+%     else
+% fid = fopen([mc_dir,'cast',num2str(cast),'/',output_name,'.txt'],'w');
+% fprintf(fid,['%s',cruise,'  cast:',num2str(cast),' MicroCAT - CTD // processing date: ',date,' \n'],'%');
+%     end
+if strcmp('sensor','seaphox')
+fid = fopen([sp_dir,'cast',num2str(cast),'/',output_name,'.txt'],'w');
+fprintf(fid,['%s',cruise,'  cast:',num2str(cast),' SeaPhox - CTD // processing date: ',date,' \n'],'%');
+else
 fid = fopen([mc_dir,'cast',num2str(cast),'/',output_name,'.txt'],'w');
 fprintf(fid,['%s',cruise,'  cast:',num2str(cast),' MicroCAT - CTD // processing date: ',date,' \n'],'%');
+end
+=======
+fid = fopen([mc_dir,'cast',num2str(cast),'/',output_name,'.txt'],'w');
+fprintf(fid,['%s',cruise,'  cast:',num2str(cast),' MicroCAT - CTD // processing date: ',date,' \n'],'%');
+>>>>>>> 2af73ab2fec32c1d802e82fe5e117559383feb25
 
 fprintf(fid,'%sID   CAST   DEPTH RANGE  DEPTH   dt  dt_sd     dc  dc_sd       dp    |  dp_ext | dc_pproblem\n','%'); 
 fprintf(fid,'%sID   CAST    T/C [m]     P [m]   [K]   [K] [mS/cm]   [ms/cm]  [dbar] |  [dbar] |   [mS/cm] \n','%'); 

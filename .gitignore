@@ -14,7 +14,8 @@
 /data/moor/oceansites_format
 /data/moor/oceansites_format
 /data/moor/OSNAPmooring_infodat
-# /data/moor/proc
+
+# data/moor/proc
 # data (or plot) file types, but not info file types
 *.raw
 *.use*
@@ -24,6 +25,7 @@
 *.tiff
 *.ps
 *.log
+
 # /data/moor/proc_calib
 /data/moor/raw
 /data/moor/THREDDS
@@ -45,7 +47,6 @@ exec/gitrepo/export_Oceansites/oceansites_format/
 *.nc
 
 # ignore gridded figures folder
-#exec/gitrepo/export_THREDDS/Figure/
 
 # temporary matlab file:
 *~

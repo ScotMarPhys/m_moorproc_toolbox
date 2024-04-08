@@ -4,8 +4,8 @@
 
 close all, 
 clearvars -except MEXEC MEXEC_A MEXEC_G pathosnap;
-cruise   = 'dy120_test';
+cruise   = 'ar30';
 operator = 'lad';
-moor = 'test_00_0000';
+moor = 'rteb1_04_2017';
 
 seaphox2rodb_01(moor,'cruise',cruise)

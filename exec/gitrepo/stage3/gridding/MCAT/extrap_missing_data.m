@@ -10,7 +10,7 @@ function [Tfs,Sfs,Pfs,TGfs,SGfs] = extrap_missing_data(pathosnap,wbfile,Tfs,Sfs,
 % from the RTWB microcat 
     
 % load western boundary data
-wbfile=fullfile(pathosnap, '\data\moor\proc','hydro_grid_merged',wbfile);
+wbfile=fullfile(pathosnap,wbfile);
 load(wbfile)
 S_RTWB = RTWB_merg.SGfs;
 T_RTWB = RTWB_merg.TGfs;
@@ -80,11 +80,11 @@ b= mdl.Coefficients.Estimate;
 figure;plot(EB(1).S,WB(1).S,'+');
 hold on; plot(EB(1).S,b(1) + b(2)*WB(1).S,'x')
 EB(1).Snew = b(1) + b(2)*WB(1).S;
-print(gcf,'-dpng',fullfile(pathosnap, '\data\moor\proc','hydro_grid_merged','otherfigure','TSplusLinear.png'));
+print(gcf,'-dpng',fullfile(pathosnap, 'otherfigure','TSplusLinear.png'));
 figure;
 plot(t_RTWB,EB(1).S);hold on;
 plot(t_RTWB,EB(1).Snew );
-print(gcf,'-dpng',fullfile(pathosnap, '\data\moor\proc','hydro_grid_merged','otherfigure','EBold_EBnew.png'));
+print(gcf,'-dpng',fullfile(pathosnap, 'otherfigure','EBold_EBnew.png'));
 
 
 
@@ -202,4 +202,4 @@ caxis([min(c200) max(c200)])
 title('New EB1 temp. field used in the analysis (linear regression on upper RTWB1 microcat data for Mar-May 2017 ')
 xlim(xlimit)
 datetick('keeplimits')
-print(gcf,'-dpng',fullfile(pathosnap, '\data\moor\proc','hydro_grid_merged','otherfigure','_EB1_corrected_temp.png'));
+print(gcf,'-dpng',fullfile(pathosnap, 'otherfigure','_EB1_corrected_temp.png'));

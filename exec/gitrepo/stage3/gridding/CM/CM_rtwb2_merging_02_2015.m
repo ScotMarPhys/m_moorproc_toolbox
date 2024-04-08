@@ -86,12 +86,13 @@ close all
 moor1 = 'CM_rtwb2_osnap_01_2014';
 moor2 = 'CM_rtwb2_osnap_02_2015';
 
-basedir      = '/media/SAMS/m/Mar_Phys/OSNAP_mooring_data_processing/osnap';
+basedir      = pathosnap;
 %basedir      = '/home/sa02lh/Data/Dropbox/Work/Postdoc_OSNAP/OSNAP_mooring/backup_mdrive';
 
 hydrodir    = [basedir '/data/moor/proc/velocity_grid/'];
 grdatdir    = [basedir '/data/moor/proc/velocity_grid_merged/'];
-boundarydir = [basedir '/exec/dy053/stage3/gridding/CM/'];
+boundarydir = [execdir 'gitrepo/stage3/gridding/CM/'];
+
 
 col             = {'r','b','m','c','g','y','r--','b--','m--','c--','g--','y--','r:',...
     'b:','m:','c:','g:','y:','r.','b.','m.','c.','g.','y.','r'};
