@@ -24,18 +24,12 @@
 %                - add reference to structure p_insitucal in which the parameters
 %                 are defined (see osnap/users/loh/mcatpostcruisecalib/postcalib_process)  
 %               - add a parameter mc_cunit
-<<<<<<< HEAD
 % Lewis Drysdale - added ability to read seaphox data. 
 % 21.07.21
-=======
-% 
 % Lewis Drysdale, - bug fix with Julian date conversion of microcvat data
 %     06.12.2022,     see issues in GitHub https://github.com/ScotMarPhys/m_moorproc_toolbox/issues/17
 %                     
-% 
-% 
 
->>>>>>> 2af73ab2fec32c1d802e82fe5e117559383feb25
 
 close all
 clearvars  -except pathgitrepo pathosnap p_insitucal pathgit
