@@ -341,11 +341,9 @@ if strcmp(ctdformat,'aoml')
   clear cnv_cor_save
   pack
 elseif strcmp(ctdformat,'pstar')  
-<<<<<<< HEAD
-    ctd_file;
-=======
+
   ctd_file
->>>>>>> 2af73ab2fec32c1d802e82fe5e117559383feb25
+
   [d h]  = pload(ctd_file,'press temp cond time','silent');
 
   year   = floor(h.iymd/10000);
@@ -451,23 +449,11 @@ for mc = 1 : ninst
   S(1:lyy,mc)        = s; 
 end
 
-<<<<<<< HEAD
-ii     = find(YY == 0);
-YY(ii) =NaN; 
-MM(ii) =NaN; 
-DD(ii) =NaN; 
-HH(ii) =NaN; 
-T(ii)  =NaN; 
-C(ii)  =NaN;
-S(ii)  =NaN;
-JD     = julian(YY,MM,DD,HH);% julian day mc time 
-=======
 ii    = find(YY == 0);
 YY(ii)=NaN; MM(ii)=NaN; DD(ii)=NaN; HH(ii)=NaN; T(ii)=NaN; C(ii)=NaN;
 decstr=datestr(HH/24,'HH:MM:SS');
 [~,~,~,HH,M,SS]=datevec(decstr);
 JD    = juliandate(YY,MM,DD,HH,M,SS);                    % julian day mc time 
->>>>>>> 2af73ab2fec32c1d802e82fe5e117559383feb25
 
 % check which variables have been measured by sensor  
 pstat = 1;tstat = 1;cstat = 1;
@@ -932,7 +918,6 @@ if ~isempty(pproblem)
     
 end   
 % -- TEXT OUTPUT ---------
-<<<<<<< HEAD
 % if strcmp('rb0701',cruise)
 %     if cast == 27
 % fid = fopen([mc_dir,'cast',num2str(cast+1),'/',output_name,'.txt'],'w');
@@ -951,10 +936,7 @@ else
 fid = fopen([mc_dir,'cast',num2str(cast),'/',output_name,'.txt'],'w');
 fprintf(fid,['%s',cruise,'  cast:',num2str(cast),' MicroCAT - CTD // processing date: ',date,' \n'],'%');
 end
-=======
-fid = fopen([mc_dir,'cast',num2str(cast),'/',output_name,'.txt'],'w');
-fprintf(fid,['%s',cruise,'  cast:',num2str(cast),' MicroCAT - CTD // processing date: ',date,' \n'],'%');
->>>>>>> 2af73ab2fec32c1d802e82fe5e117559383feb25
+
 
 fprintf(fid,'%sID   CAST   DEPTH RANGE  DEPTH   dt  dt_sd     dc  dc_sd       dp    |  dp_ext | dc_pproblem\n','%'); 
 fprintf(fid,'%sID   CAST    T/C [m]     P [m]   [K]   [K] [mS/cm]   [ms/cm]  [dbar] |  [dbar] |   [mS/cm] \n','%'); 
