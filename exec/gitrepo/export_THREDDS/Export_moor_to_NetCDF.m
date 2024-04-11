@@ -6,7 +6,7 @@
 %% filename 
 startdate = '201407' % does not change!
 enddate='202207'
-version='v0'
+version='v1'
 filename =strcat('Rockall_Trough_mooring_gridded_TSUV_',startdate,'_',enddate,'_', version)
 % outdir                      =  [pathgit '\data\processed\THREDDS_DATA\'];%['X:\Marphys_Archive\Data\OSNAP\THREDDS_DATA'];
 outdir                      = [pathgit '/data/moor/THREDDS'];
@@ -40,7 +40,6 @@ load([vldir ffile]);
 % rename vars
 U_WEST_1             =RTWB1_merg_CM.UGfs2; 
 V_WEST_1             =RTWB1_merg_CM.VGfs2; 
-W_WEST_1             =RTWB1_merg_CM.WGfs2; 
 
 % western boundary 2
 ffile               ='RTWB2_merg_linear_interp_201407_202207.mat';
@@ -48,7 +47,6 @@ load([vldir ffile]);
 % rename vars
 U_WEST_2             =RTWB2_merg_CM.UGfs2;
 V_WEST_2             =RTWB2_merg_CM.VGfs2;
-W_WEST_2             =RTWB2_merg_CM.WGfs2;
             
 % eastern boundary 
 ffile               ='RTEB_merg_linear_interp_201407_202207.mat';
@@ -56,7 +54,6 @@ load([vldir ffile]);
 % rename vars
 U_EAST             =RTEB_merg_CM.UGfs2;
 V_EAST             =RTEB_merg_CM.VGfs2;
-W_EAST             =RTEB_merg_CM.WGfs2;
             
 % WRITE FILE 
 
@@ -221,16 +218,6 @@ ncwriteatt(outfile,'V_WEST_1', 'QC_indicator','good data');
 % ncwriteatt(outfile,'U_WEST_1', 'valid_min',single(0));  % CHANGE
 % ncwriteatt(outfile,'U_WEST_1', 'valid_max',single(40));  % CHANGE
 
-nccreate(outfile,'W_WEST_1', 'Dimensions',{'PRES',PressureDim, 'TIME',TimeDim}, 'Datatype','single');
-ncwrite(outfile,'W_WEST_1', single(W_WEST_1));
-ncwriteatt(outfile,'W_WEST_1', 'standard_name','velocity');
-ncwriteatt(outfile,'W_WEST_1', 'units','cm/s');
-ncwriteatt(outfile,'W_WEST_1', '_FillValue', 'NaN');
-ncwriteatt(outfile,'W_WEST_1', 'coordinates','TIME PRES');
-ncwriteatt(outfile,'W_WEST_1', 'long_name','current speed w-direction at western boundary 1 XXN/XXW');
-ncwriteatt(outfile,'W_WEST_1', 'QC_indicator','good data');
-% ncwriteatt(outfile,'U_WEST_1', 'valid_min',single(0));  % CHANGE
-% ncwriteatt(outfile,'U_WEST_1', 'valid_max',single(40));  % CHANGE
 
 nccreate(outfile,'U_WEST_2', 'Dimensions',{'PRES',PressureDim, 'TIME',TimeDim}, 'Datatype','single');
 ncwrite(outfile,'U_WEST_2', single(U_WEST_2));
@@ -254,18 +241,6 @@ ncwriteatt(outfile,'V_WEST_2', 'QC_indicator','good data');
 % ncwriteatt(outfile,'U_WEST_2', 'valid_min',single(0));  % CHANGE
 % ncwriteatt(outfile,'U_WEST_2', 'valid_max',single(40));  % CHANGE
 
-
-nccreate(outfile,'W_WEST_2', 'Dimensions',{'PRES',PressureDim, 'TIME',TimeDim}, 'Datatype','single');
-ncwrite(outfile,'W_WEST_2', single(W_WEST_2));
-ncwriteatt(outfile,'W_WEST_2', 'standard_name','velocity');
-ncwriteatt(outfile,'W_WEST_2', 'units','cm/s');
-ncwriteatt(outfile,'W_WEST_2', '_FillValue', 'NaN');
-ncwriteatt(outfile,'W_WEST_2', 'coordinates','TIME PRES');
-ncwriteatt(outfile,'W_WEST_2', 'long_name','current speed w-direction at western boundary 2 XXN/XXW');
-ncwriteatt(outfile,'W_WEST_2', 'QC_indicator','good data');
-% ncwriteatt(outfile,'U_WEST_2', 'valid_min',single(0));  % CHANGE
-% ncwriteatt(outfile,'U_WEST_2', 'valid_max',single(40));  % CHANGE
-
 nccreate(outfile,'U_EAST', 'Dimensions',{'PRES',PressureDim, 'TIME',TimeDim}, 'Datatype','single');
 ncwrite(outfile,'U_EAST', single(U_EAST));
 ncwriteatt(outfile,'U_EAST', 'standard_name','velocity');
@@ -285,17 +260,6 @@ ncwriteatt(outfile,'V_EAST', '_FillValue', 'NaN');
 ncwriteatt(outfile,'V_EAST', 'coordinates','TIME PRES');
 ncwriteatt(outfile,'V_EAST', 'long_name','current speed v-direction at eastern boundary 57.1N/-9.6W');
 ncwriteatt(outfile,'V_EAST', 'QC_indicator','good data');
-% ncwriteatt(outfile,'U_EAST', 'valid_min',single(0));  % CHANGE
-% ncwriteatt(outfile,'U_EAST', 'valid_max',single(40));  % CHANGE
-
-nccreate(outfile,'W_EAST', 'Dimensions',{'PRES',PressureDim, 'TIME',TimeDim}, 'Datatype','single');
-ncwrite(outfile,'W_EAST', single(W_EAST));
-ncwriteatt(outfile,'W_EAST', 'standard_name','velocity');
-ncwriteatt(outfile,'W_EAST', 'units','cm/s');
-ncwriteatt(outfile,'W_EAST', '_FillValue', 'NaN');
-ncwriteatt(outfile,'W_EAST', 'coordinates','TIME PRES');
-ncwriteatt(outfile,'W_EAST', 'long_name','current speed w-direction at eastern boundary 57.1N/-9.6W');
-ncwriteatt(outfile,'W_EAST', 'QC_indicator','good data');
 % ncwriteatt(outfile,'U_EAST', 'valid_min',single(0));  % CHANGE
 % ncwriteatt(outfile,'U_EAST', 'valid_max',single(40));  % CHANGE
 
