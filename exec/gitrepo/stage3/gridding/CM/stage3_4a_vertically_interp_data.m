@@ -60,7 +60,7 @@ function RT_merg_CM = stage3_4a_vertically_interp_data(Ufs,Vfs,Pfs,pgg,JG)
             VGfs_pchip(:,ijj) = interp1(Pfss(ivok,ijj),Vfss(ivok,ijj),pgg,'pchip') ;  
             VGfs_pchip(inodata,ijj) = nan;
             if length(ivok)>2
-                VGfs_akima(:,ijj) = akima(Pfss(iuok,ijj),Vfss(iuok,ijj),pgg) ;
+                VGfs_akima(:,ijj) = akima(Pfss(ivok,ijj),Vfss(ivok,ijj),pgg) ;
                 VGfs_akima(inodata,ijj) = nan;
             end
         end
