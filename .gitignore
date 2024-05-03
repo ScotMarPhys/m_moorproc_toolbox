@@ -39,3 +39,8 @@ exec/gitrepo/stage3/gridding/MCAT/old_unused_files/
 exec/gitrepo/stage3/gridding/MCAT/rapid/*.dat
 exec/gitrepo/stage3/oldgridding/MCAT/*.dat
 exec/gitrepo/stage3/oldgridding/MCAT/rapid/*.dat
+
+# exclude any cruise specific startup files
+startup*
+NEED_TO_BE_ADAPT_FOR_ON_SHORE_PROC_startupar30.m
+
