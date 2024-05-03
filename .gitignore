@@ -20,6 +20,7 @@ exec/gitrepo/export_Oceansites/oceansites_format/
 
 # nc files
 *.nc
+*.mat
 
 # ignore gridded figures folder
 
