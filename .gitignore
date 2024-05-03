@@ -31,4 +31,11 @@ exec/gitrepo/export_Oceansites/oceansites_format/
 # other
 **.DS_Store
 **.ipynb_checkpoints
-**.dat
+
+#specific .dat files
+exec/gitrepo/stage3/gridding/CM/*.dat
+exec/gitrepo/stage3/gridding/MCAT/DAT/
+exec/gitrepo/stage3/gridding/MCAT/old_unused_files/
+exec/gitrepo/stage3/gridding/MCAT/rapid/*.dat
+exec/gitrepo/stage3/oldgridding/MCAT/*.dat
+exec/gitrepo/stage3/oldgridding/MCAT/rapid/*.dat
