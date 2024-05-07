@@ -3,6 +3,7 @@
 %
 %       by loh, 06/05/2016
 %
+% JC238 update - Lewis Drysdale, 2022
 
 close all 
 
@@ -15,9 +16,11 @@ close all
 % Calculation of calibration coefficient
 % For cruise ar304, casts for IB moorings = [1,2]
 % For cruise dy120: cast= [1,3,4,5,8,9,10]
-p_insitucal.cruise           =  'dy120' ;%'ar304'; %'ar304' %'dy078';%'dy053';%'pe400'; %'kn221-02'; %'pe399';       % campaign cd177 / cd170 / d304 / kn182, ...
-p_insitucal.cast             = 6;   
-p_insitucal.depl_period      = 'osnap5'; %'osnap2'    % move1; move2; rapid 1; rapid 2
+% For cruise jc238: cast= [1,3,4,19,33,37,38,43]
+p_insitucal.cruise           =  'jc238' ;%'ar304'; %'ar304' %'dy078';%'dy053';%'pe400'; %'kn221-02'; %'pe399';       % campaign cd177 / cd170 / d304 / kn182, ...
+p_insitucal.cast             = 19;   
+p_insitucal.depl_period      = 'osnap6'; %'osnap2'    % move1; move2; rapid 1; rapid 2
+
 
 % ---- parameters ----------------------------------------------------
 p_insitucal.sensorselec      = 1;
@@ -34,7 +37,7 @@ if strcmp(p_insitucal.cruise,'pe399') & (p_insitucal.cast == 17 | p_insitucal.ca
 elseif strcmp(p_insitucal.cruise,'dy078') | strcmp(p_insitucal.cruise,'ar304') | strcmp(p_insitucal.cruise,'dy120')
     p_insitucal.interval_move  = [-600 600]*2; % bottlestop can be up to 20 mins for 02 sensors   
 else
-    p_insitucal.interval_move  = [-280 -320];    
+    p_insitucal.interval_move  = [-600 600];    
 end
 %[-220 -260] % originally: [-100 -50];  %[-100 -50] move0bottlestop averaging interval [begin end] [seconds]  
                         % to reach the best positioning of interval within the bottlestops  
@@ -218,6 +221,12 @@ elseif strcmp(p_insitucal.cruise,'dy120') & p_insitucal.cast == 10
     p_insitucal.t_interval     = [-.02 .02];
     p_insitucal.dp_interval    = [-10 10];   
     p_insitucal.p_interval       = [0  3000];
+    p_insitucal.average_interval = [1500 2950];% [1000 2150];
+elseif strcmp(p_insitucal.cruise,'jc238') & p_insitucal.cast == 19
+    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0  1200];
     p_insitucal.average_interval = [1500 2950];% [1000 2150];
 else
     p_insitucal.c_interval     = [-0.025 0.025]; 

@@ -8,7 +8,7 @@
 % basedir      = '/home/sa02lh/Data/Dropbox/Work/Postdoc_OSNAP/OSNAP_mooring/backup_mdrive';
 basedir = pathosnap;
 
-for iyear=1:5 %1:3
+for iyear=1 %1:3
 switch(iyear)
     case(1)
         year = '_01_2014'; jg_start = datenum(2014,7,19,00,00,00);  jg_end = datenum(2015,6,20,00,00,00);
@@ -19,7 +19,9 @@ switch(iyear)
     case(4)
         year = '_04_2017'; jg_start = datenum(2017,5,11,00,00,00); jg_end = datenum(2018,7,10,00,00,00);    
     case(5)
-        year = '_05_2018'; jg_start = datenum(2018,7,9,00,00,00); jg_end = datenum(2020,10,10,00,00,00);
+        year = '_05_2018'; jg_start = datenum(2018,7,9,00,00,00); jg_end = datenum(2020,10,10,00,00,00);    
+    case(6)
+        year = '_06_2020'; jg_start = datenum(2020,10,10,00,00,00); jg_end = datenum(2022,7,15,00,00,00);
 end
 
  for imoor=1:3
@@ -75,6 +77,32 @@ for proc = 1 : length(vec);
     end
     
     cc = cc+1;
+
+    %% top of mooring trawled in 2017- trim away bad data
+    if imoor==3 && sn(1)==9867 && proc==1
+        t(19367:end)=nan;
+        p(19367:end)=nan;
+        u(19367:end)=nan;
+        v(19367:end)=nan;
+        w(19367:end)=nan;
+    end
+
+    if imoor==3 && sn(2)==11035 && proc==2
+        t(19367:end)=nan;
+        p(19367:end)=nan;
+        u(19367:end)=nan;
+        v(19367:end)=nan;
+        w(19367:end)=nan;
+    end
+
+    if imoor==3 && sn(1)==6534 && proc==1
+        t(7112:8805)=nan;
+        p(7112:8805)=nan;
+        u(7112:8805)=nan;
+        v(7112:8805)=nan;
+        w(7112:8805)=nan;
+    end
+
 
     bad_data=find(t==-9999); t(bad_data)=nan;
     bad_data=find(p==-9999); p(bad_data)=nan;

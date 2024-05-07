@@ -17,11 +17,12 @@ procpath = [pathosnap '/data/moor/proc/'];
 outpath = [basedir 'gitrepo/export_Oceansites/oceansites_format'];
 %-------------------------------------
 % Selection of the deployment year
-% depyear ='01_2014';
-% depyear ='02_2015';
-% depyear = '03_2016';
+%depyear ='01_2014';
+%depyear ='02_2015';
+%  depyear = '03_2016';
 % depyear = '04_2017';
-depyear='05_2018';
+% depyear='05_2018';
+depyear='06_2020';
 %-------------------------------------
 %% Selection of the mooring to process
 %moorlist ={'nocm1','nocm2','nocm3','nocm4','nocm5'};
@@ -40,9 +41,9 @@ for ijk= 1:length(moorlist)
             moorinfo.adcp.principal_investigator_email = 'stuart.cunningham@sams.ac.uk';	% CHANGE
             moorinfo.adcp.principal_investigator_url = 'http://www.sams.ac.uk';	% CHANGE
             moorinfo.adcp.institution = 'Scottish Association for Marine Science, SAMS';	% CHANGE
-            moorinfo.adcp.contributor_name = 'Stuart Cunningham; Loic Houpert';	% CHANGE
+            moorinfo.adcp.contributor_name = 'Lewis Drysdale; Sam Diabate';	% CHANGE
             moorinfo.adcp.contributor_role = 'data processing and interpretation';	% CHANGE
-            moorinfo.adcp.contributor_email = 'stuart.cunningham@sams.ac.uk; loic.houpert@noc.ac.uk';	% CHANGE
+            moorinfo.adcp.contributor_email = 'lewis.drysdale@sams.ac.uk';	% CHANGE
             moorinfo.adcp.proclvl             = 'calibrated;good data';
             moorinfo.adcp.sensor_model        = 'Workhorse Long Ranger 75 kHz';
             moorinfo.adcp.sensor_manufacturer = 'Teledyne RDI';
@@ -65,18 +66,18 @@ for ijk= 1:length(moorlist)
             moorinfo.mcat.principal_investigator_email = 'stuart.cunningham@sams.ac.uk';	% CHANGE
             moorinfo.mcat.principal_investigator_url = 'http://www.sams.ac.uk';	% CHANGE
             moorinfo.mcat.institution = 'Scottish Association for Marine Science, SAMS';	% CHANGE
-            moorinfo.mcat.contributor_name = 'Stuart Cunningham; Sam Jones; Loic Houpert; Lewis Drysdale';	% CHANGE
+            moorinfo.mcat.contributor_name = 'Sam Jones; Lewis Drysdale';	% CHANGE
             moorinfo.mcat.contributor_role = 'data processing and interpretation';	% CHANGE
-            moorinfo.mcat.contributor_email = 'stuart.cunningham@sams.ac.uk; sam.jones@sams.ac.uk; loic.houpert@noc.ac.uk; lewis.drysdale@sams.ac.uk';	% CHANGE      
+            moorinfo.mcat.contributor_email = 'sam.jones@sams.ac.uk; lewis.drysdale@sams.ac.uk';	% CHANGE      
             
        % Nortek
             moorinfo.nortek.principal_investigator = 'Stuart Cunningham';	% CHANGE
             moorinfo.nortek.principal_investigator_email = 'stuart.cunningham@sams.ac.uk';	% CHANGE
             moorinfo.nortek.principal_investigator_url = 'http://www.sams.ac.uk';	% CHANGE
             moorinfo.nortek.institution = 'Scottish Association for Marine Science, SAMS';	% CHANGE
-            moorinfo.nortek.contributor_name = 'Stuart Cunningham; Sam Jones; Loic Houpert; Lewis Drysdale';	% CHANGE
+            moorinfo.nortek.contributor_name = 'Lewis Drysdale; Sam Diabate';	% CHANGE
             moorinfo.nortek.contributor_role = 'data processing and interpretation';	% CHANGE
-            moorinfo.nortek.contributor_email = 'stuart.cunningham@sams.ac.uk;  sam.jones@sams.ac.uk; loic.houpert@noc.ac.uk; lewis.drysdale@sams.ac.uk';	% CHANGE      
+            moorinfo.nortek.contributor_email = 'lewis.drysdale@sams.ac.uk';	% CHANGE      
             
         case {'nocm1','nocm2','nocm3','nocm4','nocm5'};
             

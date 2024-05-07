@@ -1,27 +1,28 @@
-%=========================================================================
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%--------------- GRID AND MERGE DATA for OSNAP mooring --------------------
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%=========================================================================
+%% GRID AND MERGE DATA for OSNAP mooring
+% _*Original author: Lewis Drysdale, 2020*_
+
+
 clearvars -except pathosnap pathgit ; close('all')
 
+% 1.SET GRID AND QA PARAMETERS
 
-%======================== SET GRID AND QA PARAMETERS =====================
 p_hydrogrid.dum         = -9999.0000;
 p_hydrogrid.c1535       = 42.914;
 p_hydrogrid.mcat        = [332:337];    % instrument model numbers
 p_hydrogrid.int_step    = 10;           % vertical interpolation step
 p_hydrogrid.preverse    = 4000;         % 4000 pressure level below whch deep temperature reversion may occur
 
-%======================== REPAIR AND DESPIKE STTINGS =====================
+% 2.REPAIR AND DESPIKE SETTINGS
+
 p_hydrogrid.gap_max      = 10;          % allow for a maximum of gap [days] in data to interpolate across
 p_hydrogrid.y_tol        = [-10 10];    % deviation in PSU allowed by depsike routine
 p_hydrogrid.stddy_tol    = 4;           % tolerance range of differences between adjacent values of y
 p_hydrogrid.nloop        = 5;           % despike loop number
-p_hydrogrid.graphics     = 'y';
+p_hydrogrid.graphics     = 'n';
 p_hydrogrid.distrangectd = 100e3;       % distance of the reference ctd from the mooring - UNUSED
 
-%======================== GRID INITIALISATION =============================
+% 3.GRID INITIALISATION
+
 % CURRENTLY DEFINED IN INI FOLDER .DAT FILE. FUNCTION
 p_hydrogrid.p_gridsize   = 20;
 p_hydrogrid.v_interp     = 'linear';
@@ -29,31 +30,40 @@ p_hydrogrid.co           = 1/2; % filter cut off frequency [1/days]
 p_hydrogrid.iss          = 12; % initial sub-sampling frequency [1/days]
 p_hydrogrid.fss          = 2;  % final sub-sampling frequency [1/days]
 
-%======================== SET DIRECTORIES FOR MERGE =======================
+% 4.SET DIRECTORIES FOR MERGE
 hydrodir                = [pathosnap filesep 'data/moor/proc/hydro_grid/'];
-grdatdir                = [pathosnap filesep 'data/moor/proc/hydro_grid_merged/'];
-boundarydir             = [pathgit filesep 'exec/gitrepo/stage3/gridding/MCAT/'];
+grdatdir                = [pathgit filesep 'data/moor/proc/hydro_grid_merged/'];
+if exist(grdatdir,'dir')==0;mkdir(grdatdir);end
+boundarydir             = [pathgit filesep 'exec/gitrepo/stage3/gridding/MCAT/DAT/'];
 
-%======================== MERGE INITIALISATION =============================
+% 5.MERGE INITIALISATION 
+
 gridding                = 1  ;  % 1: linear, 2: using climatological profiles
 bathy                   = false ;  % turns on/off the bathy charts. off = flase
 mc_check_plot           = true; %false ;  % turns on/off the microcat check plots. off =false
 
-jg_start                = datenum(2014,6,01,00,00,00);
-jg_end                  = datenum(2020,10,20,00,00,00);
+jg_start                = datenum(2014,07,01,00,00,00);
+jg_end                  = datenum(2022,07,31,00,00,00);
 
-lastyeardata            = '2018';
+
+jg_start_str = datestr(jg_start,'YYYYmm');
+jg_end_str = datestr(jg_end,'YYYYmm');
+
+lastyeardata            = '2020';
 
 JG                      = jg_start: 0.5: jg_end; % full time series using 2 samples per day
 pgg                     = 0:20:2000; % depths in 20dbar bins
-depthminforhoriz_interp = 40; % in case no data are available at a specific time
+max_depth               = 1780; %set max depth of valid data
+depthminforhoriz_interp = 0; % in case no data are available at a specific time, % multiples of 20
 % (e.g.: mooring turn around, knock-down of the mooring head) don't interpolate on a time basis for level above 40 m
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%======================== MOORING FILE NAMES =============================
-% ------------------ UPDATE NEW MOORING FILES HERE -----------------------
+data_version = 'v0'; 
+
+% MOORING FILE NAMES 
+% UPDATE NEW MOORING FILES HERE 
 % path of the mooring data is defined in the startup file under osnap/
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 moorings = {'rteb1_01_2014';...
             'rtwb1_01_2014';...
             'rtwb2_01_2014';...
@@ -68,8 +78,12 @@ moorings = {'rteb1_01_2014';...
             'rteb1_04_2017';...
             'rtwb1_05_2018';...
             'rtwb2_05_2018';...
-            'rteb1_05_2018'};
-
+            'rteb1_05_2018';...
+            'rtwb1_06_2020';...
+            'rtwb2_06_2020';...
+            'rteb1_06_2020'};
+        
+% order of microCATs (serial numbers 335:337) in info.dat file, but exclude double deployed ODO 
 microcat_order=(   {[1:4 6:8],...
                     [1:8],...
                     [1:2],...
@@ -84,6 +98,9 @@ microcat_order=(   {[1:4 6:8],...
                     [2:6 9:11 13],...
                     [1:9],...
                     [1:3],...
+                    [1:5 8:12] ...
+                    [1:9] ...
+                    [1:3] ...
                     [1:5 8:12]});
 instrument_order=(  {[1:4 6:8],...
                     [1:8],...
@@ -99,11 +116,15 @@ instrument_order=(  {[1:4 6:8],...
                     [2:6 9:11 13],...
                     [9140 14355 3481 11329 10559 14368 11337 14353 14354],...
                     [9377 3218 9372],...
-                    [11290 11289 11288 11287 10577 3276 10560 10562 9113 9375]});
+                    [11290 11289 11288 11287 10577 3276 10560 10562 9113 9375],...
+                    [11343,11342,14364,7923,7924,11137,11139,10576,11465],...
+                    [10575,11341,13020],...
+                    [9141,11322,9396,21560,11327,11330,11334,11335,9390,11338]});
 
                 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%======================== CHECK FOR FOLDERS =============================
+
+% CHECK FOR FOLDERS 
+
 for ii=1:numel(moorings)
     if exist([pathosnap '/Figures/' char(moorings(ii))],'dir')==7
     else
@@ -111,8 +132,8 @@ for ii=1:numel(moorings)
     end
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%======================== GRID AND MERGE =============================
+%% GRID AND MERGE 
+
 gridans = questdlg(['Grid or merge moorings?'],...
     'Grid and merge',...
     'Grid','Merge','Merge');
@@ -138,12 +159,15 @@ moor=mlist{ii}; % select the first moooring to process
 
 p_hydrogrid.mc_ind=cell2mat(ilist(ii)); % get instrument order
 
-% if there is a requirement to process uncalibrtaed data make nect line
-% uncommented, and update serial numbers above
-% p_hydrogrid.mc_int=cell2mat(tlist(ii)); % get instrument list
-p_hydrogrid.mc_int=[]; % get instrument list
+%% 
+% _*if there is a requirement to process uncalibrtaed data make next line uncommented, 
+% and update serial numbers above*_ 
 
-%======================== SET PATHS ======================================
+% p_hydrogrid.mc_int=cell2mat(tlist(ii)); %get instrument list
+% p_hydrogrid.mc_int=[]; % get instrument list
+
+% SET PATHS
+
 p_hydrogrid.basedir      = pathosnap;
 p_hydrogrid.moor         = moor;
 p_hydrogrid.ini_path     = [p_hydrogrid.basedir '/data/moor/proc/hydro_grid/ini'];
@@ -156,14 +180,19 @@ p_hydrogrid.outname      = [moor,'_grid.mat'];
 p_hydrogrid.dataexternal_ctd_dir        = [p_hydrogrid.basedir '/cruise_data/'];
 p_hydrogrid.datactd_ref_cruises   = {'kn221';'pe399'}; % for plot
 
-%======================== INTERPOLATE ====================================
-% - no use of TS climatology to get salinities where the sal. record is completely useless
-% - no guess of  the course of the profiles between the vertical grid points
-% - ini file no longer required
+% INTERPOLATE 
+%% 
+% * no use of TS climatology to get salinities where the sal. record is completely 
+% useless
+% * no guess of  the course of the profiles between the vertical grid points
+% * ini file no longer required
+% * 
+
 hydro_grid_osnap_linear_interp(p_hydrogrid);
 end
+% 
+%  OPTIONS TO MERGE 
 
-%======================= OPTIONS TO MERGE =================================
 answer = questdlg(['Do you want to merge data?'], ...
     'Merge',...
     'Yes','No','No');
@@ -260,7 +289,7 @@ case 'Merge'
             % the difference is the way the data is indexed in the code,
             % and could probably do with an overhaul
             if ismember(moor{1}(3:4),'eb')
-                run merge_osnap_data_east.m
+               run merge_osnap_data_east.m
             else
                 run merge_osnap_data_west.m
             end

@@ -19,11 +19,11 @@ warning off
 global basedir datadir execdir pathgit pathosnap
 
 % path of the mooring data define in the startup file under osnap/
-%moor = 'rtwb1_05_2018';
-% moor = 'ib5_01_2018';
-% moor = 'rteb1_05_2018';
-moor = 'rteb1_04_2017';
-% moor = 'ib3_01_2018';
+
+% moor = 'rteb1_06_2020';
+% moor = 'rtwb1_06_2020';
+moor = 'rtwb2_06_2020';
+
 
 %=========================================================================
 % Apply calibration coefficients to series, removes bad data. If required, applies
@@ -32,18 +32,20 @@ p_applycal.operator  = 'LD';
 p_applycal.mooring  = moor;   
 p_applycal.sensortyp = 'seaphox';%'microcat';   % arg / microcat / rbr / idr
 p_applycal.delim = ',';
+
+% input directories & files
 p_applycal.mooring_dir         = [pathosnap '/data/moor/proc/'];
 p_applycal.mooring_outdir      = [pathosnap '/data/moor/proc/'];
 p_applycal.coef_dir            = [pathgit '/data/moor/cal_coef/']; 
 p_applycal.external_ctd_dir    = [pathosnap '/cruise_data/'];
 p_applycal.ctd_ref_cruises     = {''};%{'pe400'}; %{'kn221-02';'pe399'}; % references cruises for the QC
 p_applycal.distrangectd        = 100e3; % distance of the reference ctd from the mooring
-p_applycal.strformat.mctemptxt = repmat('%s',1,32);
-p_applycal.strformat.mctempnum = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,7)];
-p_applycal.strformat.mcsaltxt  = repmat('%s',1,32);
-p_applycal.strformat.mcsalnum  = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,7)];
-p_applycal.strformat.mcprestxt = repmat('%s',1,65);
-p_applycal.strformat.mcpresnum = ['%f' repmat('%s%f%s%s',1,16)];
+p_applycal.strformat.mctemptxt = repmat('%s',1,35);
+p_applycal.strformat.mctempnum = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,8)];
+p_applycal.strformat.mcsaltxt  = repmat('%s',1,35);
+p_applycal.strformat.mcsalnum  = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,8)];
+p_applycal.strformat.mcprestxt = repmat('%s',1,77);
+p_applycal.strformat.mcpresnum = ['%f' repmat('%s%f%s%s',1,19)];
 
 loclegend = 'north';
 
@@ -56,7 +58,7 @@ loclegend = 'north';
 % ---------------------------------------------------------------------------
 operator  = p_applycal.operator; 
 mooring   = p_applycal.mooring ;
-sensortyp = p_applycal.sensortyp; 
+sensortyp = p_applycal.sensortyp; % arg / microcat / rbr / idr
 strformat = p_applycal.strformat;
 
 delim = p_applycal.delim;
@@ -661,19 +663,25 @@ end
   
   % Salinity from cndr, T, P
   sn = sw_salt(cn(ii)/c3515,tn(ii)*t90_68,pn(ii));
- 
-  figure(6);clf; hold on
+  s = sw_salt(c/c3515,t*t90_68,p);
   
-  plot(jd(ii)-jd(1),sn)
+  figure(6);clf; hold on
+  plot(jd(ii)-jd(1),s,'b')
+  plot(jd(ii)-jd(1),sn,'r')
+  legend('Pre-cal','post-cal','Location','Best')
   ylabel('Salinity')
-  title(['Salinity at ' num2str(nanmean(p),'%04.0f') 'm'])
+  title(['Post-calibration Salinity at ' num2str(nanmean(p),'%04.0f') ' m'])
+  grid on
   
   figure(6)
   
   print([mcfig_out,'_salinity', '.png'],'-dpng');
-  sss=sw_salt(c/c3515,t*t90_68,p);
+%   sss=sw_salt(c/c3515,t*t90_68,p);
+  
   figure(8);clf; hold on
-  plot(sss,t,'.')
+  plot(s,t,'b.')
+  plot(sn,t,'r.')
+  title('Black = pre-cal, Red = post-cal')
   xlabel('Salinity')
   ylabel('Temperature')
   

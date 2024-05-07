@@ -1,65 +1,41 @@
-%function [SGfs,TGfs,p_grid] = hydro_grid_osnap_linear_interp(p_hydrogrid)
-%
-% convert C into S, lowpass filter and
-% interpolate onto regular grid (pressure x time)
-%
-% uses rodbload.m, sal78.m, ddspike.m, auto_filt.m, tem2sal.m, theta2sal.m,
-%      con_tprof0.m, igrep.m
-%
-%
-% T. Kanzow, Nov 2005
-%
-% GDM, edited on JC064, Sept 2011
-% edited by Loic Houpert October 2015, only linear interpolation
-%
-% line 24 % commmented out GLOBAL LD 2020
-% added class to exist command LD 2020
-% line 621 % change from EVAL command  to SAVE- LD 2020
-% line 644 % removed EVAL to replavce with PRINT LD 2020
-% line 699 % removed EVAL to replavce with PRINT LD 2020
-% translated all german comments to english
-% use cmocean package for colormaps in contour plots, data pivoting at 0
-% change title to include underscores (..., 'Interpreter', 'none')
-% added exist arguamnet for instrument name in interpolate T and C onto
-% pressure time grid section
-
-
-function [SGfs,TGfs,p_grid] = hydro_grid_osnap_linear_interp_INDEV_v2(p_hydrogrid)
-
+function [SGfs,TGfs,p_grid] = hydro_grid_osnap_linear_interp(p_hydrogrid)
+%% HYDRO_GRID_OSNAP_LINEAR_INTERP *function [SGfs,TGfs,p_grid] = hydro_grid_osnap_linear_interp(p_hydrogrid)*
+%% 
+% * convert C into S and TEOS-10
+% * lowpass filter
+% * interpolate onto regular grid (pressure x time)
+%% 
+% Requires:  _*rodbload.m, sal78.m, ddspike.m, auto_filt.m, tem2sal.m, theta2sal.m, 
+% con_tprof0.m, igrep.m*_
+% 
+% _*cmocean*_ <https://uk.mathworks.com/matlabcentral/fileexchange/57773-cmocean-perceptually-uniform-colormaps 
+% https://uk.mathworks.com/matlabcentral/fileexchange/57773-cmocean-perceptually-uniform-colormaps>
+% 
+% _*gsw toolbox*_ <http://www.teos-10.org/software.htm http://www.teos-10.org/software.htm>
+% 
+% Author list: T. Kanzow, Nov 2005,  GDM, Sept 2011,  Loic Houpert October 2015, 
+% Lewis Drysdale, 2020
 warning off
-
-use p_hydrogrid % load all the structure paths and paramter options
-
-% ------ load data -----------------
-
+% Load all the structure paths and paramter options
+use p_hydrogrid
+%  Load data
 info       = [info_path,moor,'info.dat'];
 [sn_info,id_info,wd,lt,ln,start_date,start_time,end_date,end_time] = ...
     rodbload(info,'serialnumber:instrument:Waterdepth:Latitude:Longitude:Start_Date:Start_Time:End_Date:End_Time');
 start = [start_date' start_time(1)+start_time(2)/60];
 stop  = [end_date' end_time(1)+end_time(2)/60];
-
-% ------ microcat data -----------------
-
-% if ~isempty(mc_ind)
-%     mc_path = [mooringpath,':',moor,':microcat:[',num2str(mc_ind),']'];  
+% Read microcat data
+% Loop option to bypass the calibration stage for shipboard processsing to look 
+% at data
+% if ~isempty(mc_int)
+%     mc_path = [mooringpath,':',moor,':microcat:[',num2str(mc_int),']'];  
 %     [yy_mc,mm,dd,hh,t,c,p,sn_mc,depth_mc] = ...
 %         rodbload(mc_path,'yy:mm:dd:hh:t:c:p:SerialNumber:Instrdepth');
 %     jd_mc     = julian(yy_mc,mm,dd,hh);
 %     t_mc      = dum2nan(t,dum);
 %     c_mc      = dum2nan(c,dum);
 %     p_mc      = dum2nan(p,dum);
-% end
-
-% bypass the calbrtaion stage for shipboard/ealry processsing
-if ~isempty(mc_int)
-    mc_path = [mooringpath,':',moor,':microcat:[',num2str(mc_int),']'];  
-    [yy_mc,mm,dd,hh,t,c,p,sn_mc,depth_mc] = ...
-        rodbload(mc_path,'yy:mm:dd:hh:t:c:p:SerialNumber:Instrdepth');
-    jd_mc     = julian(yy_mc,mm,dd,hh);
-    t_mc      = dum2nan(t,dum);
-    c_mc      = dum2nan(c,dum);
-    p_mc      = dum2nan(p,dum);
-else
+% else
     mc_path = [mooringpath,':',moor,':microcat:[',num2str(mc_ind),']'];  
     [yy_mc,mm,dd,hh,t,c,p,sn_mc,depth_mc] = ...
         rodbload(mc_path,'yy:mm:dd:hh:t:c:p:SerialNumber:Instrdepth');
@@ -67,19 +43,13 @@ else
     t_mc      = dum2nan(t,dum);
     c_mc      = dum2nan(c,dum);
     p_mc      = dum2nan(p,dum);    
-end
-
-% ----- interpolate T and C onto pressure time grid
-
+% end
+% Interpolate T and C onto pressure time grid
 jd_grid = ceil(julian(start)):1/iss:floor(julian(stop));
 tres    = diff(jd_grid(1:2)); % get temporal resolution of new grid
-
 T  = []; C = []; P = []; % set empty arrays
-
 disp(' interpolate T and C onto time grid ...')
-
 if exist('mc_ind','var')
-
     for inst = 1 : length(mc_ind)
         val  = find(yy_mc(:,inst) > 0 );
         T    = [T; interp1(jd_mc(val,inst),t_mc(val,inst),jd_grid)];
@@ -88,17 +58,14 @@ if exist('mc_ind','var')
         instrdepth = [depth_mc];
         sn         = [sn_mc];
     end
-
 end
-
+% Repair pressures 
+%% 
+% # Where parts of timeseries are ok
 [m,n]  = size(P);
-
-% ------ repair P ------------------------------------
 P_nan   = isnan(P);
 cnt_nan = sum(P_nan');
 P_std   = nanstd(P');
-
-% repair Pressures where parts of timeseries are ok
 for prep = 1 : m  
     if cnt_nan(prep) > 0 & cnt_nan(prep) < n & find(cnt_nan == 0)
         index_good = find(~isnan(P(prep,:)));
@@ -117,14 +84,13 @@ for prep = 1 : m
         end
     end
 end
-
 P_nan   = isnan(P);
 cnt_nan = sum(P_nan');
 P_std   = nanstd(P');
-
-% repair Pressure where complete time series is bad
-% thiis loop will not work if mc_P0 is not set in ini/*moor*.m script
-% could add an error if mc_P0 is empty?
+%% 
+% 2. Repair Pressure where complete time series is bad _(this loop will not 
+% work if mc_P0 is not set in ini/*moor*.m script. Could add an error if mc_P0 
+% is empty?)_
 for prep = 1 : m 
     if cnt_nan(prep) == n & sum(cnt_nan == 0) > 0
         p0I    = find(sn(prep)== mc_p0(:,1));
@@ -140,10 +106,8 @@ for prep = 1 : m
             I      = comp(I);                        
             P2f  = P(I(2),:) - mean(P(I(2),:));
             P1f  = P(I(1),:) - mean(P(I(1),:));
-            fac  = diff(instrdepth([I(1) prep]))/diff(instrdepth(I([1 2])));
-            
-        elseif sum(cnt_nan == 0) == 1
-            
+            fac  = diff(instrdepth([I(1) prep]))/diff(instrdepth(I([1 2])));            
+        elseif sum(cnt_nan == 0) == 1            
             P2f  = zeros(1,n);
             P1f  = P(comp,:) - mean(P(comp,:));
             fac  = diff([instrdepth([comp prep])])/diff([instrdepth(comp) wd]);
@@ -153,7 +117,6 @@ for prep = 1 : m
           
     end
     
-
     if cnt_nan(prep) == n & sum(cnt_nan == 0) == 0
         p0I    = find(sn(prep)== mc_p0(:,1));
         P0     = mc_p0(p0I,2);
@@ -164,25 +127,17 @@ for prep = 1 : m
         P(prep,:) = P0;     
     end
 end
-
-
-% ------ converting C into S and despike--------------
-
+% Converting C into S and convert TO TEOS 10
 disp('converting C into S ...')
-
-% ---------------- CONVERT TO TEOS 10 ------------------------------------
-
+% ----------------  ------------------------------------
 SP      = gsw_SP_from_C(C,T,P);         % Practical salinity from conductivity
-
-[S, ~]  = gsw_SA_from_SP(SP,P,ln,lt);   % Absolute salinity from practical salinity
-
-T       = gsw_CT_from_t(S,T,P);
-
-% ----- despike -------------------------------------
+[SA, ~]  = gsw_SA_from_SP(SP,P,ln,lt);   % Absolute salinity from practical salinity
+T       = gsw_CT_from_t(SA,T,P);
+% Despike
 for i = 1 : m 
-    if ~isempty(find(~isnan(S(i,:)), 1))
+    if ~isempty(find(~isnan(SA(i,:)), 1))
         %   Despike salinity, replace bad values with NAN
-        [S(i,:),dx,~] = ddspike(S(i,:),y_tol,stddy_tol,[nloop],'y',NaN);
+        [SA(i,:),dx,~] = ddspike(SA(i,:),y_tol,stddy_tol,[nloop],'y',NaN);
         % Replce contemperaneous temperatures with NAN
         T(i,dx)         = NaN;
         % save de-spike plots
@@ -193,22 +148,18 @@ for i = 1 : m
     end
     close('all')
 end
-
-% ------  temporal low pass filter ------
-
+% Temporal low pass filter
 % identify NaNs in the interpolated data
 tnan_sum = sum(isnan(T'));
-snan_sum = sum(isnan(S'));
+snan_sum = sum(isnan(SA'));
 pnan_sum = sum(isnan(P'));
-
 % make NaN matrix for filtered data
 Tf = NaN * ones(m,n);
 Sf = NaN * ones(m,n);
 Pf = NaN * ones(m,n);
-
 for pg = 1 : m
     tnnan = find(~isnan(T(pg,:)));
-    snnan = find(~isnan(S(pg,:)));
+    snnan = find(~isnan(SA(pg,:)));
     pnnan = find(~isnan(P(pg,:)));
     
     if length(tnnan) < 30  % The number must be at least 3 times the filter order
@@ -227,7 +178,6 @@ for pg = 1 : m
         Tf(pg,tnnan) = auto_filt(T(pg,tnnan),1/tres,co);
         % interpolate on to original grid
         Tf(pg,:)     = interp1(jd_grid(tnnan),Tf(pg,tnnan)',jd_grid)';
-
         if tnan_sum(pg)/iss > gap_max
             gapI   = gap_mark(T(pg,:),gap_max,iss);
             Tf(pg,gapI) = NaN;
@@ -236,13 +186,13 @@ for pg = 1 : m
     
     % Filter salinity as long as there are more than 30 non-nan records
     if ~isempty(snnan)
-        Sf(pg,snnan)  = auto_filt(S(pg,snnan),1/tres,co);
+        Sf(pg,snnan)  = auto_filt(SA(pg,snnan),1/tres,co);
         % interpolate on to original grid
         Sf(pg,:)      = interp1(jd_grid(snnan),Sf(pg,snnan)',jd_grid)';
         %   Sf(pg,snnan)  = auto_filt(Sf(pg,snnan),1/tres,co);
         
         if snan_sum(pg)/iss > gap_max
-            gapI        = gap_mark(S(pg,:),gap_max,iss);
+            gapI        = gap_mark(SA(pg,:),gap_max,iss);
             Sf(pg,gapI) = NaN;
         end        
     end
@@ -258,15 +208,12 @@ for pg = 1 : m
         end
     end
 end
-
-% create new time grid
+% Create new time grid
 jd   = ceil(julian(start)+2): 1/fss:floor(julian(stop)-2);
-
 % interpolate filtered data on to new grid
 Tfs      = interp1(jd_grid,Tf',jd)';
 Sfs      = interp1(jd_grid,Sf',jd)';
 Pfs      = interp1(jd_grid,Pf',jd)';
-
 % close "big" salinity gaps
 for pg = 1 : m 
     inan  = find(isnan(Sfs(pg,:)) & ~isnan(Tfs(pg,:)));
@@ -280,24 +227,101 @@ for pg = 1 : m
         end
     end
 end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%-------------------- USE T/S CLIMATOLOGY  --------------------------------
-%---------------------------UNUSED!!---------------------------------------
-% if 0 
-% 
-% % use T/S climatology to get salinities where the sal. record is completely useless
-% noS = find(sum(~isnan(Sfs'))==0 | sum(Sfs')==0);
-% for i = noS
-%     fprintf(1,'No salinities in record %d - using Theta/S climatology',i)
-%     sguess       = tem2sal(Tfs(i,:),TSclim);  % first guess for salinities
-%     theta_guess  = theta(Pfs(i,:),Tfs(i,:),sguess,0); % guess for theta
-%     Sfs(i,:)     = theta2sal(theta_guess,Theta_S_clim);
+%% 
+% not sure about this stage?
+%         % remove also bad data in the orginal grid files:
+%         %figure;surf(t_RTWB,RTEB_merg.Pfs,RTEB_merg.Tfs);view([0 -90])
+%         S_RTEBini(P_RTWB<100,ibadEB1topmc)=nan;
+%         T_RTEBini(P_RTWB<100,ibadEB1topmc)=nan;
+%         
+%% 
+% Get depth mean across time
+%         WB(1).T = nanmean(RTWB_merg.Tfs(WBmc1,:));
+%         WB(1).S = nanmean(RTWB_merg.Sfs(WBmc1,:));
+%         WB(3).T = nanmean(RTWB_merg.Tfs(WBmc3,:));
+%         WB(3).S = nanmean(RTWB_merg.Sfs(WBmc3,:));
+%         
+%         EB(1).T = nanmean(Tfs(EBmc1,:));
+%         EB(1).S = nanmean(Sfs(EBmc1,:));
+%         EB(3).T = nanmean(Tfs(EBmc3,:));
+%         EB(3).S = nanmean(Sfs(EBmc3,:));
+%     
+%% 
+% Low pass filtering of the temperature and salinity
+%         daynber = 10;
+%         Fc=1/daynber;
+%         
+%         % low pass WB depth mean temperature
+%         abc=find(~isnan(WB(1).T ));
+%         WB(1).Tlp =nan*WB(1).T ;
+%         WB(1).Tlp(abc)=auto_filt(WB(1).T(abc),1/median(diff(jd)),Fc);
+%         
+%         % low pass EB depth mean temperature
+%         abc=find(~isnan(EB(1).T ));
+%         EB(1).Tlp =nan*EB(1).T ;
+%         EB(1).Tlp(abc)=auto_filt(EB(1).T(abc),1/median(diff(t_RTWB)),Fc);
+%         
+%         % low pass WB depth mean salinity
+%         abc=find(~isnan(WB(1).S));
+%         WB(1).Slp =nan*WB(1).S;
+%         WB(1).Slp(abc)=auto_filt(WB(1).S(abc),1/median(diff(t_RTWB)),Fc);
+%         
+%         % low pass WB depth mean salinity
+%         abc=find(~isnan(EB(1).S));
+%         EB(1).Slp =nan*EB(1).S;
+%         EB(1).Slp(abc)=auto_filt(EB(1).S(abc),1/median(diff(t_RTWB)),Fc);
+%         
+%% 
+% Plot temperature
+%         
+%         figure;
+%         plot(EB(1).Tlp,WB(1).Tlp,'+');
+%         
+%         topmc = table(WB(1).Tlp',EB(1).Tlp','VariableNames',{'WB1','EB1'});
+%         mdl = fitlm(topmc,'linear');
+%         
+%         %[b,bint,r,rint,stats] = regress(EB(1).T',[ones(size(EB(1).T)); WB(1).T]');
+%         b= mdl.Coefficients.Estimate;
+%         figure;plot(EB(1).T,WB(1).T,'+');
+%         hold on; plot(EB(1).T,b(1) + b(2)*WB(1).T,'x')
+%         
+%         EB(1).Tnew = b(1) + b(2)*WB(1).T;
+%         
+%         figure;
+%         plot(jd,EB(1).T);hold on;
+%         plot(jd,EB(1).Tnew);
+%         
+%% 
+% Plot Salinity
+%         
+%         figure;
+%         plot(EB(1).Slp,WB(1).Slp,'+');
+%         
+%         topmc = table(WB(1).Slp',EB(1).Slp','VariableNames',{'WB1','EB1'});
+%         mdl = fitlm(topmc,'linear');
+%         
+%         %[b,bint,r,rint,stats] = regress(EB(1).S',[ones(size(EB(1).S)); WB(1).S]');
+%         b= mdl.Coefficients.Estimate;
+%         figure;plot(EB(1).S,WB(1).S,'+');
+%         hold on; plot(EB(1).S,b(1) + b(2)*WB(1).S,'x')
+%         
+%         EB(1).Snew = b(1) + b(2)*WB(1).S;
+%         
+%         figure;
+%         plot(jd,EB(1).S);hold on;
+%         plot(jd,EB(1).Snew );
+%         
+%         
+%         Pfs(EBmc1(3),ibadEB1topmc)=RTWB_merg.Pfs(WBmc1(3),ibadEB1topmc);
+%         Sfs(EBmc1(3),ibadEB1topmc)=EB(1).Snew(ibadEB1topmc);
+%         Tfs(EBmc1(3),ibadEB1topmc)=EB(1).Tnew(ibadEB1topmc);
+%     else
+%            warning('2016 Western boundary mooring must be processed first!!')
+%     end
+% else
+%     disp('No correction for missing data applied')
 % end
-% end
-% if  ~isempty(noS) %pg ==1
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+% Create figures
 if  pg ==1
     figure;   plot( Tfs); title('Temp')
     figure;   plot( Sfs); title('Salinity')
@@ -341,155 +365,10 @@ else
     print(gcf, '-dpng',savename);
     
 end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%-------------------- USE EXTERNAL CTD FILE--------------------------------
-%---------------------------UNUSED!!---------------------------------------
-% load CTD data
-%  if exist([external_ctd,external_ctd_file]) == 2
-%    eval(['load ',external_ctd,external_ctd_file])
-%    for cnt = 1 :length(ctd_prof)
-%      dis(cnt) = dist2([ lt ctd_lat(cnt)],[ln ctd_lon(cnt)]);
-%    end
-%
-%    near = find(dis<200e3);
-%    rodbpath(rodbpath,rodbctdpath)
-%    [ctd_p,ctd_t,ctd_s] = ...
-%        rodbload(['cruise:d279:ctd:[',num2str(near),']'],'p:t:s');
-%  end
-% ct_p=NaN*ones(6000,50);
-% ct_t=NaN*ones(6000,50);
-% ct_s=NaN*ones(6000,50);
-% ct_pp=NaN*ones(6000,50);
-% ct_tt=NaN*ones(6000,50);
-% ct_ss=NaN*ones(6000,50);
-% ct_ppp=NaN*ones(6000,50);
-% ct_ttt=NaN*ones(6000,50);
-% ct_sss=NaN*ones(6000,50);
-% ne=0;
-% 
-% external_ctd = [];
-% external_ctd_file = [];
-% 
-% for ijk=1:length(datactd_ref_cruises)
-%     external_ctd        = [external_ctd ; ...
-%             [dataexternal_ctd_dir datactd_ref_cruises{ijk} '/ctd/rodb/']];
-%     external_ctd_file   = [external_ctd_file ; ...
-%             [datactd_ref_cruises{ijk} '_pos.mat']];
-% end
-% for zz=1:size(external_ctd_file,1)
-%    if exist([external_ctd(zz,1:max(findstr(external_ctd(zz,:),'/'))),external_ctd_file(zz,(~isspace(external_ctd_file(zz,:))))]) == 2
-%       eval(['load ',external_ctd(zz,1:max(findstr(external_ctd(zz,:),'/'))),external_ctd_file(zz,:)])
-%         clear cnt dis
-%         %rodbpath(rodbpath,rodbctdpath)
-%         for cnt = 1 :length(ctd_prof)
-%             dis(cnt) = dist2([ lt ctd_lat(cnt)],[ln ctd_lon(cnt)]);
-%         end
-%         clear near
-%         near = find(dis<distrangectd)
-%         distance = dis(near)/1000
-%         for qq=1:length(near)
-%               if ~isempty(strfind(external_ctd(zz,:),'kn221'))
-%                     ctd_t(ctd_t==0)=nan;
-%                     ctd_s(ctd_s==0)=nan;                   
-%                     hold on
-%                 ct_pp(1:size(ctd_p,1),qq+ne)=ctd_p(:,qq);
-%                 ct_tt(1:size(ctd_p,1),qq+ne)=ctd_t(:,qq);
-%                 ct_ss(1:size(ctd_p,1),qq+ne)=ctd_s(:,qq);
-%                 xli = get(gca,'Xlim');
-%                 yli = get(gca,'Ylim');
-%                 %        if ~isempty(find(pn>dum))
-%                 %%plot(ctd_s,theta(ctd_p,ctd_t,ctd_s,median(pn(val))),'g')
-%                 %        plot(ctd_s,sw_ptmp(ctd_s,ctd_t,ctd_p,median(pn(val))),'g')
-%                 %        else
-%                 %         plot(ctd_s,ctd_t,'g')
-%                 %        end
-%            elseif ~isempty(strfind(external_ctd(zz,:),'pe399'))
-%            ctd_file = [external_ctd(zz,1:max(findstr(external_ctd(zz,:),'/'))),external_ctd_file(zz,1:5),'_',sprintf('%3.3d',ctd_prof(near(qq))),'.ctd'];
-%                [ctd_pp,ctd_tt,ctd_ss] = rodbload(ctd_file,'p:t:s');
-%                ctd_tt(ctd_tt==0)=nan;
-%                ctd_ss(ctd_ss==0)=nan;       
-%                 % [ctd_p,ctd_t,ctd_s] = rodbload(['..:..:..:..:d279:ctd:[',num2str(ctd_prof(near)),']'],'p:t:s');
-%                 hold on
-%                 xli = get(gca,'Xlim');
-%                 yli = get(gca,'Ylim');
-%                 ct_ppp(1:size(ctd_pp,1),qq+ne)=ctd_pp;
-%                 ct_ttt(1:size(ctd_pp,1),qq+ne)=ctd_tt;
-%                 ct_sss(1:size(ctd_pp,1),qq+ne)=ctd_ss;
-%             else
-%                 disp(['No specific routines use for the external ctd ' external_ctd_file(zz,1:5) ])
-%                 % for qq=1:length(near)
-%                 ctd_file = [external_ctd(zz,1:max(findstr(external_ctd(zz,:),'/'))),external_ctd_file(zz,1:5),'_',sprintf('%3.3d',ctd_prof(near(qq))),'.ctd'];
-%                 [c_p,c_t,c_s] = rodbload(ctd_file,'p:t:s');
-%                 hold on
-%                 xli = get(gca,'Xlim');
-%                 yli = get(gca,'Ylim');
-%                 %       if ~isempty(find(pn>dum))
-%                 %%plot(ctd_s,theta(ctd_p,ctd_t,ctd_s,median(pn(val))),'g')
-%                 %        plot(ctd_s,sw_ptmp(ctd_s,ctd_t,ctd_p,median(pn(val))),'b')
-%                 %     else
-%                 %         plot(ctd_s,ctd_t,'b')
-%                 %    end
-%                 
-%                 ct_p(1:size(c_p,1),qq+ne)=c_p;
-%                 ct_t(1:size(c_p,1),qq+ne)=c_t;
-%                 ct_s(1:size(c_p,1),qq+ne)=c_s;
-%                 %ne=ne+length(near);
-%             end
-%             ne=ne+length(near);
-%         end
-%     end
-% end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
-% no use of vertical gradient of T and S to guess the shape of the profile
-% ----- vertical interpolation ----------
-% if 0 % size(Tf,1) >1     
-%     % Deal with collapsed moorings on a mooring by mooring basis
-%     % Grid all until time that pressure of instruments goes out of sequence.
-%     % After collapse, grid only those instruments that remain in pressure order.
-%     if strcmp(moor,'wb2_2_200528')
-%         len  = length(jd);
-%         Pfs1 = Pfs(:,1:351);
-%         Pfs2 = Pfs(7:11,352:end);
-%         Tfs1 = Tfs(:,1:351);
-%         Tfs2 = Tfs(7:11,352:end);
-%         Sfs1 = Sfs(:,1:351);
-%         Sfs2 = Sfs(7:11,352:end);
-%         pmin2     = ceil(mmin(Pfs2)/p_gridsize)*p_gridsize;
-%         pmin1     = ceil(mmin(Pfs)/p_gridsize)*p_gridsize;
-%         pmax      = floor(mmax(Pfs)/p_gridsize)*p_gridsize;
-%         p_grid    = [pmin1:p_gridsize:pmax]';
-%         p_grid2   = [pmin2:p_gridsize:pmax]';
-%         nlev      = length(p_grid);
-%         nlev2      = length(p_grid2);
-%         [TGfs(:,1:351),SGfs(:,1:351)] = ...
-%             con_tprof0(Tfs1,Sfs1,Pfs1,p_grid,0*ones(1,size(Tfs1,2)),int_step,TSclim,preverse);
-%         [TGfs(nlev-nlev2+1:nlev,352:len),SGfs(nlev-nlev2+1:nlev,352:len)] = ...
-%             con_tprof0(Tfs2,Sfs2,Pfs2,p_grid2,0*ones(1,size(Tfs2,2)),int_step,TSclim,preverse);
-%         TGfs = dum2nan(TGfs,0);
-%         SGfs = dum2nan(SGfs,0);
-%     else
-%         fprintf(1,'\n Carrying out vertical interpolation of mooring \n %s using climatology\n %s\n\n',moor,TSclim)       
-%         [TGfs,SGfs] = con_tprof0(Tfs,Sfs,Pfs,p_grid,....
-%             0*ones(1,size(Tfs,2)),int_step,TSclim,preverse);
-%     end
-% else %linear interpolation
-%     TGfs = nan(length(p_grid),length(jd));
-%     SGfs = nan(length(p_grid),length(jd)); 
-%     for ijj=1:length(jd)
-%         TGfs(:,ijj) = interp1(Pfs(:,ijj),Tfs(:,ijj),p_grid) ; 
-%         SGfs(:,ijj) = interp1(Pfs(:,ijj),Sfs(:,ijj),p_grid) ;        
-%     end
-% end
-
-% -------- VERTICAL LINEAR INTPEROLATION ---------------------------------
+% Vertical linear interpolation
 pmin     = ceil(mmin(Pfs)/p_gridsize)*p_gridsize;
 pmax     = floor(mmax(Pfs)/p_gridsize)*p_gridsize;
 p_grid   = [pmin:p_gridsize:pmax]';
-
 TGfs = nan(length(p_grid),length(jd));
 SGfs = nan(length(p_grid),length(jd)); 
 for ijj=1:length(jd)
@@ -497,16 +376,11 @@ for ijj=1:length(jd)
     SGfs(:,ijj) = interp1(Pfs(:,ijj),Sfs(:,ijj),p_grid) ;        
 end
     
-
-% ---save data ------
+% Save data
 save([out_path outname],'Tfs','Sfs', 'Pfs', 'TGfs', 'SGfs', 'jd',...
-    'p_grid','co', 'T', 'C', 'S', 'P', 'jd_grid', 'Pf', 'Tf', 'Sf');
-
-
-% ------ add interpolated data to graphics -------------------------------
-
-[m,n] = size(TGfs);
-
+    'p_grid','co', 'T', 'C', 'SA', 'P', 'jd_grid', 'Pf', 'Tf', 'Sf');
+% Add interpolated data to graphics 
+[~,n] = size(TGfs);
 figure;
 pt_Gfs=gsw_pt_from_CT(SGfs,TGfs);
 pt=gsw_pt_from_CT(Sf,Tf);
@@ -532,12 +406,10 @@ print([out_path filesep 'hydro_grid_' moor '_theta_s'],'-dpng')
 savename=[basedir '/Figures/' moor '/_theta_s'];
 print(gcf, '-dpng',savename);
     
-% ---- plot anomalies of non-gridded data ------
-
+% Plot anomalies of non-gridded data
 datum = gregorian(jd);
 monI  = find(datum(:,3)==1 & datum(:,4) == 0 & ~isodd(datum(:,2)));
 datum = datenum(datum);
-
 if size(Tf,1) >1
     
     ta    = TGfs - meannan(TGfs',2)'* ones(1,n);
@@ -583,18 +455,12 @@ if size(Tf,1) >1
     orient landscape
     
     print([out_path filesep 'hydro_grid_' moor '_ta_sa'],'-dpng')
-
         
     savename=[basedir '/Figures/' moor '/TS_ANOM'];
     print(gcf, '-dpng',savename);
 end
-
-
-% -------------------------------------------------------------------------
-% sub routines
-% -------------------------------------------------------------------------
+%% *Sub routines*
 function gapI=gap_mark(vec,gap_max,iss)
-
 [a,b]    = consec_nan(vec);
 gap      = b/iss;
 gapI     = find(gap>gap_max);
@@ -603,7 +469,6 @@ if ~isempty(gapI)
 else
     gapI        = [];
 end
-
 function []=use(x)
 %USE  Copies structure fields into named variables in workspace.
 %
@@ -618,7 +483,6 @@ function []=use(x)
 %   __________________________________________________________________
 %   This is part of JLAB --- type 'help jlab' for more information
 %   (C) 2000--2014 J.M. Lilly --- type 'help jlab_license' for details    
-
 clear str
 str{1}    =['if ~isempty(' x '),'];
 str{end+1}=['  ZZFNAMES=fieldnames(' x ');' ];
@@ -631,7 +495,6 @@ str{end+1}='end;';
 str{end+1}='clear ZZi ZZFNAMES';
 str=strs2sray(str);
 evalin('caller',str)
-
 function [row]=strs2sray(x)
 %STRS2SRAY  Converts a cell array of strings into a string array /w returns
 %   __________________________________________________________________
@@ -643,16 +506,12 @@ if ~iscell(x)
   clear x
   x{1}=xtemp;
 end
-
 M=length(x);
 for i=1:M
     n(i)=length(x{i});
 end
 N=max(n);
-
 row=[];
-
 for i=1:M
    row=[row,x{i},char(10)]; 
 end
-
