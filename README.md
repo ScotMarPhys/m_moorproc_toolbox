@@ -35,7 +35,10 @@ This toolbox is managed using git. The master branch should be the last working 
 It might be nessecary to create feature branches from the cruise branches to solve certain issues (e.g. 'JC238-revise-CM-merging'). When merging the cruise branch into the master branch, any feature branches for the cruise branch should be merged with the cruise branch and deleted so that there is only one branch per cruise. After the final merging (2.b) the cruise branch will be locked by one of the administrators making is read only and no changes can be made.
 
 # Getting started
-To set up git and the mooring toolbox please see Documents/Processing_documents/OSNAP_mooring_processing.pdf
+To set up git and the mooring toolbox please see:
+
+Documents/Processing_documents/OSNAP_mooring_processing.pdf
+
 Please note that the document is work in progress as the mooring toolbox envolves constantly and despite best effort might not always reflect the most current version of the toolbox.
 
 To keep up to date with the most recent updates have also a look on the issues page.
