@@ -19,17 +19,17 @@ This toolbox is managed using git. The master branch should be the last working 
 
 ## Updating the master branch with latest cruise branch
 1. Before each cruise, users of this mooring processing toolbox should request a new branch from the master branch. Before the users make any changes, they should rename their working branch to reflect the upcoming cruise. E.g. for the cruise JC238 the branch name should be 'JC238'.
-2. To keep the master branch up to date, a pull request to merge the cruise branch with the master branch should be raised following good housekeeping practices (below)
-   a) Directly after the cruise to push any important on-cruise changes
-   b) After on land post-processing when the calibration of the single intruments are finalised and there will be no changes anymore.
-3. One of the repository administrators who is not the creator of the branch will review the pull request and check the changes made.
-4. If the reviewer finds no issues they will continue to 5. If there are issues or even merge conflicts the reviewer will block the pull request and raise either discussions within the pull request or issues to be addressed by the branch creator. These are open discussion and any contributor are encourage to take part in them to find the best solution. Once an agreement is reached and the creator implemented any nessecary changes and any merge conflicts are resolved steps 2-4 will be repeated.
-5. If everything is ok the reviewer can verified the pull request and merge the cruise and master branch.
-6. If the cruise branch is finalised and no further changes are expected, it will be locked by one of the administrators making it read only and protecting it from being deleted.
+2. To keep the master branch up to date, a pull request to merge the cruise branch with the master branch should be raised a) directly after the cruise to push any important on-cruise changes
+   and b) after on land post-processing when the calibration of the single intruments are finalised and there will be no changes anymore. Please follow good housekeeping practices (below).
+4. One of the repository administrators who is not the creator of the branch will review the pull request and check the changes made.
+5. If the reviewer finds no issues they will continue to 5. If there are issues or even merge conflicts the reviewer will block the pull request and raise either discussions within the pull request or issues to be addressed by the branch creator. These are open discussion and any contributor are encourage to take part in them to find the best solution. Once an agreement is reached and the creator implemented any nessecary changes and any merge conflicts are resolved steps 2-4 will be repeated.
+6. If everything is ok the reviewer can verified the pull request and merge the cruise and master branch.
+7. If the cruise branch is finalised and no further changes are expected, it will be locked by one of the administrators making it read only and protecting it from being deleted.
 
 ### Working on board
-- A copy of the cruise branch should be physically taken on the ship (i.e. osnap/exec/$cruise/) as the internet connection cannot be quarantied on the ship.
-- The data (archived from previous cruise) is not kept on git and effort should be made to make sure that the most recent version is copied prior to the cruise/processing. Once the cruise is complete the cruise branch should be pushed to the remote repository (if not already happened during the cruise due to connection problems).
+- A copy of the cruise branch should be physically taken on the ship (i.e. osnap/exec/$cruise/) as an internet connection is not garanteed during the cruise.
+- The data (archived from previous cruise) is not kept on git and effort should be made to make sure that the most recent version is copied prior to the cruise/processing. Once the cruise is completed the cruise branch should be pushed to the remote repository (if not already happened during the cruise due to connection problems).
+- A pull request to merge the cruise branch to the master branch should be raised a) directly after the cruise to push any important on-cruise changesand b) after on land post-processing when the calibration of the single intruments are finalised and there will be no changes anymore. Please following the steps under 'Updating the master branch with latest cruise branch'.
 
 ### Housekeeping
 It might be nessecary to create feature branches from the cruise branches to solve certain issues (e.g. 'JC238-revise-CM-merging'). When merging the cruise branch into the master branch, any feature branches for the cruise branch should be merged with the cruise branch and deleted so that there is only one branch per cruise. After the final merging (2.b) the cruise branch will be locked by one of the administrators making is read only and no changes can be made.
