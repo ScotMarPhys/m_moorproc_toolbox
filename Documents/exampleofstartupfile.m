@@ -1,25 +1,44 @@
-% Add to the path osnap mooring functions:
-pathosnap   = '/Users/locupe/Dropbox/Work/osnap';
-pathgit = '/Users/locupe/Dropbox/Work/Python/Repos_perso/m_moorproc_toolbox';   
+%This is the Matlab startup file for processing hydro and/or RAPID and/or OSNAP (etc.) mooring data at sea
 
-%% startup file for cruise data processing
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% change the next lines to reflect your directory structure %%%
+project = 'RAPID';
+basedir = '/data/pstar/projects/';
+progdir = '/data/pstar/programs/gitvcd/';
+MEXEC_G_user.other_programs_root = '/data/pstar/programs/others/'; %gsw, etc.
+MEXEC_G_user.mexec_data_root = '/data/pstar/cruise/data'; %mexec hydro data
+%example other paths for NOCS Linux machines
+%basedir = '/noc/mpoc/';
+%progdir = '/noc/mpoc/drake/programs/';
+%or for a PC
+%basedir = 'D:\';
+%progdir = 'D:\programs\';
 
-disp ('Welcome back to Matlab!')
-disp ('-----------------------------------------------------------------------------------------------')
-disp('    ')
-disp ('DY120, 2020')
-disp ('-----------------------------------------------------------------------------------------------')
-disp (['this is the dy120 startup file to open the OSNAP paths to '...
-    'osnap/data/moor/ and osnap/exec/dy120, '])
+% setup for hydro data processing including running m_setup
+addpath(fullfile(progdir,'ocp_hydro_matlab'))
+path_choose = m_setup(MEXEC_G_user); %m_setup returns 1 if cruise options/user selects to process LADCP rather than moored data
+m_common %global variables to workspace
+mcruise = MEXEC_G.MSCRIPT_CRUISE_STRING;
 
-basedir = [ pathosnap filesep]; 
-datadir = [ pathgit filesep 'data' filesep ]; 
-execdir = [ pathgit filesep 'exec' filesep]; 
+if path_choose==0 || path_choose==2
+    % setup for mooring procssing
+    % setup for using m_moorproc_toolbox since en705
+    pathgit = fullfile(progdir,'m_moorproc_toolbox');
+    addpath(pathgit)
+    if isempty(which('moor_setup'))
+        warning('add m_moorproc_toolbox containing moor_setup to path, enter to continue',MEXEC_G.MSCRIPT_CRUISE_STRING)
+        pause
+    end
+    switch project
+        case 'RAPID'    
+	    moor_setup('datadir', fullfile(basedir,'rpdmoc/rapid'), 'project', project);
+        case 'OSNAP'
+            moor_setup('datadir', fullfile(basedir,'osnap'), 'project', project);
+        otherwise
+            moor_setup('project',project) %prompt for datadir
+    end
+    expa = which('mc_call_caldip');
+    if contains(expa,mcruise) && ~contains(expa,'gitrepo')
+        warning('is this where you intend your mooring processing tools to come from? (%s)',fileparts(fileparts(expa)))
+    end
 
-this_cruise = 'dy120';
-baselogdir = [basedir];
-addpath(genpath([execdir]))
-cd([pathgit filesep 'exec' filesep 'gitrepo']) 
-
-p=path;
+end
