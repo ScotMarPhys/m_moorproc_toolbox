@@ -15,9 +15,12 @@ function moor_setup(varargin)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 global MEXEC_G MOORPROC_G
+if isempty(MOORPROC_G)
+    clear MOORPROC_G
+end
 
 %parameters input to function
-if nargin>1
+if nargin>0
     if isstruct(varargin{1})
         MOORPROC_G = varargin{1};
         varargin(1) = [];
@@ -52,7 +55,7 @@ if ~isfield(MOORPROC_G,'YEAR')
     if isstruct(MEXEC_G)
         MOORPROC_G.YEAR = MEXEC_G.MDEFAULT_DATA_TIME_ORIGIN(1);
     else
-        MOORPROC_G.YEAR = input('start year?   ','n');
+        MOORPROC_G.YEAR = input('start year?   ');
     end
 end
 
@@ -124,7 +127,7 @@ while n<4 && ~exist(MOORPROC_G.moordatadir,'dir')
     n = n+1;
 end
 n = 0;
-while n<4 && ~exist(MOORPROC_G.ctddir,'dir')
+while n<4 && (~isfield(MOORPROC_G,'ctddir') || ~exist(MOORPROC_G.ctddir,'dir'))
     c = input(sprintf('directory for ctd data, %s, not found\n; create (1), change setting (2), or skip(3)?  ',MOORPROC_G.ctddatadir),'n');
     if c==1
         mkdir(MOORPROC_G.ctddir);

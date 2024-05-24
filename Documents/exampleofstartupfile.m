@@ -2,9 +2,10 @@
 
 %%% change the next lines to reflect your directory structure %%%
 project = 'RAPID';
-basedir = '/data/pstar/projects/'; %contains osnap, or rpdmoc
-progdir = '/data/pstar/programs/gitvcd/'; %contains m_moorproc_toolbox
+basedir = '/Users/yfiring/programs/moor_demo/'; %contains osnap, or rpdmoc
+progdir = '/Users/yfiring/programs/gitvcd/'; %contains m_moorproc_toolbox
 use_mexec = 0;
+cruise = 'dy174';
 if use_mexec
     MEXEC_G_user.other_programs_root = '/data/pstar/programs/others/'; %gsw, etc.
     MEXEC_G_user.mexec_data_root = '/data/pstar/cruise/data'; %mexec hydro data
@@ -23,7 +24,9 @@ if use_mexec
     m_common %global variables to workspace
 else
     path_choose = 2;
-end
+    MOORPROC_G.cruise = 'dy174';
+    MOORPROC_G.cruise_ctd = 'dy174';
+end    
 
 if path_choose==0 || path_choose==2
     % setup for mooring procssing
@@ -34,16 +37,17 @@ if path_choose==0 || path_choose==2
         warning('add m_moorproc_toolbox containing moor_setup to path, enter to continue',MEXEC_G.MSCRIPT_CRUISE_STRING)
         pause
     end
+    MOORPROC_G.project = project;
     switch project
-        case 'RAPID'    
-	    moor_setup('datadir', fullfile(basedir,'rpdmoc/rapid'), 'project', project);
+        case 'RAPID'
+            MOORPROC_G.datadir = fullfile(basedir,'rpdmoc/rapid');
         case 'OSNAP'
-            moor_setup('datadir', fullfile(basedir,'osnap'), 'project', project);
-        otherwise
-            moor_setup('project',project) %prompt for datadir
+            MOORPROC_G.datadir = fullfile(basedir,'osnap');
     end
+    moor_setup(MOORPROC_G)
     expa = which('mc_call_caldip');
-    if contains(expa,mcruise) && ~contains(expa,'gitrepo')
+    global MOORPROC_G
+    if contains(expa,MOORPROC_G.cruise) && ~contains(expa,'gitrepo')
         warning('is this where you intend your mooring processing tools to come from? (%s)',fileparts(fileparts(expa)))
     end
 
