@@ -2,8 +2,8 @@
 
 %%% change the next lines to reflect your directory structure %%%
 project = 'RAPID';
-basedir = '/data/pstar/projects/';
-progdir = '/data/pstar/programs/gitvcd/';
+basedir = '/data/pstar/projects/'; %contains osnap, or rpdmoc
+progdir = '/data/pstar/programs/gitvcd/'; %contains m_moorproc_toolbox
 MEXEC_G_user.other_programs_root = '/data/pstar/programs/others/'; %gsw, etc.
 MEXEC_G_user.mexec_data_root = '/data/pstar/cruise/data'; %mexec hydro data
 %example other paths for NOCS Linux machines
@@ -15,9 +15,10 @@ MEXEC_G_user.mexec_data_root = '/data/pstar/cruise/data'; %mexec hydro data
 
 % setup for hydro data processing including running m_setup
 addpath(fullfile(progdir,'ocp_hydro_matlab'))
-path_choose = m_setup(MEXEC_G_user); %m_setup returns 1 if cruise options/user selects to process LADCP rather than moored data
-m_common %global variables to workspace
-mcruise = MEXEC_G.MSCRIPT_CRUISE_STRING;
+%path_choose = m_setup(MEXEC_G_user); %m_setup returns 1 if cruise options/user selects to process LADCP rather than moored data
+%m_common %global variables to workspace
+%mcruise = MEXEC_G.MSCRIPT_CRUISE_STRING;
+path_choose = 2;
 
 if path_choose==0 || path_choose==2
     % setup for mooring procssing
