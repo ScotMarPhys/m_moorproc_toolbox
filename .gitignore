@@ -14,16 +14,13 @@
 *.tiff
 *.ps
 *.log
-
-# ignore oceansites_format folder
-exec/gitrepo/export_Oceansites/oceansites_format/
-
-# nc files
 *.nc
 *.mat
 *.mat.zip
+*.dat
 
-# ignore gridded figures folder
+# ignore oceansites_format folder
+exec/gitrepo/export_Oceansites/oceansites_format/
 
 # temporary matlab file:
 *~**
@@ -33,14 +30,6 @@ exec/gitrepo/export_Oceansites/oceansites_format/
 **.DS_Store
 **.ipynb_checkpoints
 **._*
-
-#specific .dat files
-exec/gitrepo/stage3/gridding/CM/*.dat
-exec/gitrepo/stage3/gridding/MCAT/DAT/
-exec/gitrepo/stage3/gridding/MCAT/old_unused_files/
-exec/gitrepo/stage3/gridding/MCAT/rapid/*.dat
-exec/gitrepo/stage3/oldgridding/MCAT/*.dat
-exec/gitrepo/stage3/oldgridding/MCAT/rapid/*.dat
 
 # exclude any cruise specific startup files
 startup*
