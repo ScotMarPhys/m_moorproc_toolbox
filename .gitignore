@@ -17,7 +17,9 @@
 **/*.nc
 **/*.mat
 **/*.mat.zip
-**/*.dat
+
+# sometimes keep (in metadata), sometimes ignore
+exec/gitrepo/**/*.dat
 
 # ignore oceansites_format folder
 exec/gitrepo/export_Oceansites/oceansites_format/
