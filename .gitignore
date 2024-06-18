@@ -21,6 +21,7 @@ exec/gitrepo/export_Oceansites/oceansites_format/
 # nc files
 *.nc
 *.mat
+*.mat.zip
 
 # ignore gridded figures folder
 
@@ -31,6 +32,7 @@ exec/gitrepo/export_Oceansites/oceansites_format/
 # other
 **.DS_Store
 **.ipynb_checkpoints
+**._*
 
 #specific .dat files
 exec/gitrepo/stage3/gridding/CM/*.dat
