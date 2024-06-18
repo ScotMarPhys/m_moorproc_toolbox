@@ -6,18 +6,18 @@
 
 
 # data (or plot) file types, but not info file types
-*.raw
-*.use*
-*.png
-*.eps
-*.fig
-*.tiff
-*.ps
-*.log
-*.nc
-*.mat
-*.mat.zip
-*.dat
+**/*.raw
+**/*.use*
+**/*.png
+**/*.eps
+**/*.fig
+**/*.tiff
+**/*.ps
+**/*.log
+**/*.nc
+**/*.mat
+**/*.mat.zip
+**/*.dat
 
 # ignore oceansites_format folder
 exec/gitrepo/export_Oceansites/oceansites_format/
