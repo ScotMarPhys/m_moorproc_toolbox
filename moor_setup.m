@@ -55,7 +55,8 @@ if ~isfield(MOORPROC_G,'YEAR')
     if isstruct(MEXEC_G)
         MOORPROC_G.YEAR = MEXEC_G.MDEFAULT_DATA_TIME_ORIGIN(1);
     else
-        MOORPROC_G.YEAR = input('start year?   ');
+        %MOORPROC_G.YEAR = input('start year?   ');
+        MOORPROC_G.YEAR = input('start year of this cruise?   ');
     end
 end
 

@@ -140,6 +140,45 @@ for i = 1:nvec
     ci = interp1(d.dday, d.cond, dday);
     oi = interp1(d.dday, d.oxygen, dday);
 
+    %% PLOT DATA AT BOTTLE STOPS
+    dobotstop=1; 
+    if dobotstop %***come back to this, only giving 0-1 dots per figure?
+        dp=gradient(p(i,:));
+        % i=find(dp<0.02 & dp>-0.02 & abs(ctdp(1,j)-p(1,j)) < 10);
+        if id2(i)==337
+            iis=find(dp<0.2 & dp>-0.2);
+            nsubplot =3;
+        elseif id2(i)==335
+            iis=find(dp<1 & dp>-1);
+            nsubplot =4;
+        end
+        figure(10+i);clf;
+        subplot(nsubplot,1,1);hold on ; grid on;
+        plot(pi(iis),pi(iis)-p(iis),'ko');
+        xlim([0 max(pi)]); ylim([-5 5]);
+        xlabel('press [db]');ylabel('dp [db]');
+        title(['s/n : ',num2str(vec(i))]);
+
+        % subplot(nsubplot,1,2);hold on ; grid on;
+        % plot(ctdp(j,i),(ctdt2(j,i)-t(j,i)),'ko');
+        % xlim([0 max(ctdp(j,:))]); ylim([-0.01 0.01]);
+        % xlabel('press [db]');ylabel('dt [C]');
+        % 
+        % 
+        % subplot(nsubplot,1,3);hold on ; grid on;
+        % plot(ctdp(j,i),(ctdc2(j,i)-c(j,i)),'ko');
+        % xlim([0 max(ctdp(j,:))]); ylim([-0.01 0.01]);
+        % xlabel('press [db]');ylabel('dc [mS/cm]');
+        % 
+        % if id2(j)==335
+        %     subplot(nsubplot,1,4);hold on ; grid on;
+        %     plot(ctdp(j,i),(ctdo2(j,i)-o2(j,i)),'ko');
+        %     xlim([0 max(ctdp(j,:))]); ylim([-20 0]);
+        %     xlabel('press [db]');ylabel('do2 [umol/l]');
+        % end
+
+end
+
     % Select data from period when CTD kept at maximum depth
     impt = dday>tm1p & dday < tm2p;
     if sum(impt)==0
@@ -311,7 +350,7 @@ for i = 1:length(vec)
         pdifx(i,jj),pstd(i,jj), odifx(i,jj), ostd(i,jj));
 end
 %%
-doplot=0;
+doplot=1;
 if doplot
     figure(1);clf;grid on;grid minor
     subplot(4,1,1);
@@ -346,51 +385,6 @@ if doplot
     % Display the results
 end
 
-%% PLOT DATA AT BOTTLE STOPSs
-doit=0
-if doit
-    for j=1:length(vec);
-
-        dp=gradient(p(j,:));
-
-        % i=find(dp<0.02 & dp>-0.02 & abs(ctdp(1,j)-p(1,j)) < 10);
-        if id2(j)==337
-            i=find(dp<0.2 & dp>-0.2);
-            nsubplot =3;
-        elseif id2(j)==335
-            i=find(dp<1 & dp>-1);
-            nsubplot =4;
-        end
-
-
-
-        figure(j);clf;
-        subplot(nsubplot,1,1);hold on ; grid on;
-        plot(ctdp(j,i),(ctdp(j,i)-p(j,i)),'ko');
-        xlim([0 max(ctdp(j,:))]); ylim([-5 5]);
-        xlabel('press [db]');ylabel('dp [db]');
-        title(['s/n : ',num2str(vec(j))]);
-
-        subplot(nsubplot,1,2);hold on ; grid on;
-        plot(ctdp(j,i),(ctdt2(j,i)-t(j,i)),'ko');
-        xlim([0 max(ctdp(j,:))]); ylim([-0.01 0.01]);
-        xlabel('press [db]');ylabel('dt [C]');
-
-
-        subplot(nsubplot,1,3);hold on ; grid on;
-        plot(ctdp(j,i),(ctdc2(j,i)-c(j,i)),'ko');
-        xlim([0 max(ctdp(j,:))]); ylim([-0.01 0.01]);
-        xlabel('press [db]');ylabel('dc [mS/cm]');
-
-        if id2(j)==335
-            subplot(nsubplot,1,4);hold on ; grid on;
-            plot(ctdp(j,i),(ctdo2(j,i)-o2(j,i)),'ko');
-            xlim([0 max(ctdp(j,:))]); ylim([-20 0]);
-            xlabel('press [db]');ylabel('do2 [umol/l]');
-        end
-    end
-
-end
 
 %%
 figure(2);clf
@@ -410,7 +404,7 @@ ylim([min(tdifx(:,1)-max(tstd(:,1))) max(tdifx(:,1)+max(tstd(:,1)))])
 
 set(gca,'xtick',1:1:length(vectx),'XTicklabel',vectx,'XTickLabelRotation',45)
 title('Temp diff @ pmax')
-ylabel('[°C]')
+ylabel('[^oC]')
 
 subplot(4,1,3);hold on;grid on;grid minor;
 errorbar(pdifx(:,1),pstd(:,1))

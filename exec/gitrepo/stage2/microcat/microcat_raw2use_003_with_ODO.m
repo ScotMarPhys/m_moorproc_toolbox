@@ -65,16 +65,20 @@ fprintf(fid_stat,'\n Operated by:%s on %s\n',operator,datestr(clock));
 fprintf(fid_stat,['        MicroCAT in Mooring ',moor,'\n\n\n']);
 fprintf(fid_stat,'     ID    Depth   Start         End      Cycles  Spikes  Gaps   Mean     STD     Max     Min\n');
 
-% ---- despike paramenters
-despike = 0;
-if despike
+% ---- despike parameters
+despike = 1; %***prompt
+if despike %***track parameters (and whether used) for each cruise/record
     T_range = [-15 +15];
     C_range = [-30 +30];
     P_range = [-100 2000];
-    dT_range = 18;  % accepted standard deviation envelope of adjecent T-values
-    dC_range = 18;  % accepted standard deviation envelope of adjecent C-values
-    dP_range = 18;  % accepted standard deviation envelope of adjecent P-values
+    O_range = [50 550];
+    % change from one point to the next can be no larger than 18*standard deviation of time series (after range editing)
+    dT_range = 18; 
+    dC_range = 18; 
+    dP_range = 18; 
+    dO_range = 18;
     nloop    = 3;
+    %*** consider adding (even more conservative) parameters for oxygen?
 end
 
 dummy    = -9999;
@@ -124,7 +128,6 @@ for proc = 1 : length(sn)
             warning('no data found in deployment period for file %d, %s; skipping',proc,infile)
             continue
         end
-
         % ODO - added bim DY039
         if id(proc) == 335, ot = OT(ii); o2= O2(ii); end
 
@@ -134,25 +137,33 @@ for proc = 1 : length(sn)
         End_Date = [YY(cycles) MM(cycles) DD(cycles)];
         End_Time = HH(cycles);
 
-        if despike
+        if despike %***also plot with and without! 
             %------------------------------------------
             %--- despike ------------------------------
             %------------------------------------------
             disp('ddspike')
 
-            [t,tdx,tndx] = ddspike(T,T_range,dT_range,nloop,'y',dummy);
-            [c,cdx,cndx] = ddspike(C,C_range,dC_range,nloop,'y',dummy);
-            if length(P) > 1
-                [p,pdx,pndx] = ddspike(P,P_range,dP_range,nloop,'y',dummy);
+            [t,tdx,tndx] = ddspike(t,T_range,dT_range,nloop,'y',dummy);
+            [c,cdx,cndx] = ddspike(c,C_range,dC_range,nloop,'y',dummy);
+            if length(p) > 1
+                [p,pdx,pndx] = ddspike(p,P_range,dP_range,nloop,'y',dummy);
+            end
+            if id(proc)==335
+               [o2,o2dx,o2ndx] = ddspike(o2,O_range,dO_range,nloop,'y',dummy);
+               [ot,otdx,otndx] = ddspike(ot,T_range,dT_range,nloop,'y',dummy);
             end
 
             % -----------------------------------------
             % ---  basic statistics -------------------
             % -----------------------------------------
-            tstat = find(t ~= dummy);
-            cstat = find(c ~= dummy);
+            tstat = t ~= dummy;
+            cstat = c ~= dummy;
             tstat = t(tstat);
             cstat = c(cstat);
+            if id(proc)==335
+                o2stat = o2 ~= dummy;
+                o2stat = o2(o2stat);
+            end
         end
 
         tm = meannan(t);

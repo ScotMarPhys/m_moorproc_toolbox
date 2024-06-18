@@ -167,9 +167,12 @@ for i = 1:length(sn)
         [sprintf('%4.4d',sn(i)),'_Cal_Dip_Data.cnv']};
     for n = 1:length(infiles)
         infile = fullfile(pd.rawpath,infiles{n});
-        if exist(infile,'file') && dir(infile).bytes>0
-            %found it
-            break
+        if exist(infile,'file')
+            datfileinfo = dir(infile);
+            if datfileinfo.bytes>0
+               %found it
+               break
+            end
         end
     end
     infile = fullfile(pd.rawpath,infiles{n});

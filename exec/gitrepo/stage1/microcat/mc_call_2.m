@@ -50,6 +50,9 @@ ii = find(id >= 335 & id <=337);
 vec = sn(ii);
 
 % --- write header info to log file ---
+if ~exist(pd.stage1path,'dir')
+    mkdir(pd.stage1path)
+end
 fidlog = fopen(pd.stage1log,'a');
 fprintf(fidlog,'Transformation of ascii data to rodb format \n');
 fprintf(fidlog,'Processing carried out by %s at %s\n\n\n',operator,datestr(clock));
@@ -78,9 +81,12 @@ for i = 1:length(vec)
         };
     for n = 1:length(infiles)
         infile = fullfile(pd.rawpath,infiles{n});
-        if exist(infile,'file') && dir(infile).bytes>0
-            %found it
-            break
+        if exist(infile,'file')
+            datfileinfo = dir(infile);
+            if datfileinfo.bytes>0
+               %found it
+               break
+            end
         end
     end
     infile = fullfile(pd.rawpath,infiles{n});
