@@ -19,6 +19,7 @@ end
 
 % setup for hydro data processing including running m_setup
 addpath(fullfile(progdir,'ocp_hydro_matlab'))
+global MOORPROC_G
 if use_mexec
     path_choose = m_setup(MEXEC_G_user); %m_setup returns 1 if cruise options/user selects to process LADCP rather than moored data
     m_common %global variables to workspace
