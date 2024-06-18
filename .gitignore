@@ -1,25 +1,36 @@
-# all data directories
-/data #cruise data and mooring data may be linked here
-# working directory for plots and temporary output
-/working
-# diaries
+# directories
+/data
+/users
 /matlab_diaries
+**.
+
 
 # data (or plot) file types, but not info file types
-*.mat.zip
-*.mat
-*.raw
-*.use*
-*.png
-*.eps
-*.fig
-*.tiff
-*.ps
-*.log
-*.nc
+**/*.raw
+**/*.use*
+**/*.png
+**/*.eps
+**/*.fig
+**/*.tiff
+**/*.ps
+**/*.log
+**/*.nc
+**/*.mat
+**/*.mat.zip
+**/*.dat
 
-# temporary files and Mac things
-*~
+# ignore oceansites_format folder
+exec/gitrepo/export_Oceansites/oceansites_format/
+
+# temporary matlab file:
+*~**
 *.asv
-.DS_Store
-._*
+
+# other
+**.DS_Store
+**.ipynb_checkpoints
+**._*
+
+# exclude any cruise specific startup files
+startup*
+
