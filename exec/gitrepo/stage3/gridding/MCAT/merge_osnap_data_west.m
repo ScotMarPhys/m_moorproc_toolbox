@@ -50,6 +50,11 @@ col             = {'r','b','m','c','g','y','r--','b--','m--','c--','g--','y--','
 
 [~,idx]=unique(cell2mat(moor),'rows');
 moor =  moor(idx,:);
+
+% DEFINE OUTPUTFILES
+outputfile_stacked = ['Hydro_rtwb_stacked_' jg_start_str '_' jg_end_str,...
+                        '_' data_version];
+
 %% 1. READ MOORING DATA
 % OSNAP 1 (KN221 --> PE399)
 
@@ -452,7 +457,8 @@ ylabel('SAL.')
 datetick
 title('SALINITY')
     
-set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)   
+set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
+if ~exist([grdatdir 'otherfigure' filesep],'dir');mkdir([grdatdir 'otherfigure' filesep]);end
 print('-dpng',[grdatdir 'otherfigure' filesep  'RTWBmerged_beforegrid_check1'])
 
 figure(10)   %  graph of the data to show that it is all there!
@@ -488,6 +494,44 @@ print('-dpng',[grdatdir 'otherfigure' filesep  'RTWBmerged_beforegrid_check2'])
 Pfs     = [Pfs1;Pfs2;Pfs3;Pfs4;Pfs5;Pfs6];
 Sfs     = [Sfs1;Sfs2;Sfs3;Sfs4;Sfs5;Sfs6];
 Tfs     = [Tfs1;Tfs2;Tfs3;Tfs4;Tfs5;Tfs6];
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% KB outputs stagged files
+z_stacked = [50;75;100;250;500;750;1000;1250;1500;1650;1775];
+
+%%% add NaN where instrument is missing
+fvs = NaN(1,length(JG));
+t_st1 = [fvs;Tfs1(1,:);fvs;Tfs1(2:4,:);fvs;Tfs1(5:6,:);fvs;Tfs1(7,:)];
+s_st1 = [fvs;Sfs1(1,:);fvs;Sfs1(2:4,:);fvs;Sfs1(5:6,:);fvs;Sfs1(7,:)];
+p_st1 = [fvs;Pfs1(1,:);fvs;Pfs1(2:4,:);fvs;Pfs1(5:6,:);fvs;Pfs1(7,:)];
+
+t_st2 = [fvs;Tfs2(1,:);fvs;Tfs2(2:7,:);fvs;Tfs2(8,:)];
+s_st2 = [fvs;Sfs2(1,:);fvs;Sfs2(2:7,:);fvs;Sfs2(8,:)];
+p_st2 = [fvs;Pfs2(1,:);fvs;Pfs2(2:7,:);fvs;Pfs2(8,:)];
+
+t_st3 = [fvs;fvs;Tfs3(1,:);fvs;Tfs3(2:6,:);fvs;Tfs3(7,:)];
+s_st3 = [fvs;fvs;Sfs3(1,:);fvs;Sfs3(2:6,:);fvs;Sfs3(7,:)];
+p_st3 = [fvs;fvs;Pfs3(1,:);fvs;Pfs3(2:6,:);fvs;Pfs3(7,:)];
+
+t_st4 = [Tfs4(1,:);fvs;Tfs4(2:8,:);fvs;Tfs4(9,:)];
+s_st4 = [Sfs4(1,:);fvs;Sfs4(2:8,:);fvs;Sfs4(9,:)];
+p_st4 = [Pfs4(1,:);fvs;Pfs4(2:8,:);fvs;Pfs4(9,:)];
+
+t_st5 = [Tfs5(1,:);fvs;Tfs5(2:10,:)];
+s_st5 = [Sfs5(1,:);fvs;Sfs5(2:10,:)];
+p_st5 = [Pfs5(1,:);fvs;Pfs5(2:10,:)];
+
+t_st6 = [Tfs6(1,:);fvs;Tfs6(2:10,:)];
+s_st6 = [Sfs6(1,:);fvs;Sfs6(2:10,:)];
+p_st6 = [Pfs6(1,:);fvs;Pfs6(2:10,:)];
+
+%%% add NaN where instrument is missing
+Tstacked = stack_vars(t_st1,t_st2,t_st3,t_st4,t_st5,t_st6);
+Sstacked = stack_vars(s_st1,s_st2,s_st3,s_st4,s_st5,s_st6);
+Pstacked = stack_vars(p_st1,p_st2,p_st3,p_st4,p_st5,p_st6);
+
+save([grdatdir outputfile_stacked '.mat'],...
+    'Tstacked','Sstacked','Pstacked','JG','z_stacked')
 
 % order the matrices at every time step to avoid too many NaNs creeping in
 % 2004 removed....
@@ -572,7 +616,7 @@ if gridding == 2 % using climatological profiles
    
 elseif gridding == 1 % linear interpolation   
     
-    outputfile = ['RTWB_merg_linear_interp' '_'  lastyeardata '_' datestr(now, 30) ];
+    outputfile = ['RTWB_merg_linear_interp' '_'  lastyeardata ];
     TGfs = nan(length(pgg),length(JG));
     SGfs = nan(length(pgg),length(JG)); 
     for ijj=1:length(JG)
@@ -588,6 +632,9 @@ elseif gridding == 1 % linear interpolation
        
     
 end 
+
+TGfs(pgg>max_depth,:)=NaN;
+SGfs(pgg>max_depth,:)=NaN;
 
 disp(['saving: ' outputfile '.mat'])
 % Alloacte variables into a structure
@@ -669,6 +716,21 @@ for i = I: length(pgg) % for each depth
     TG_west(i,:) = interp1(JG(it), temp(i, it), JG);
 
     %j = j + 1;
+end
+
+
+%%
+ % KB, 27/3/2024
+    % Added code to remove horizontal interpolation when mooring was knocked down 
+    % This was not needed before because data was vertical extrapolated to surface 
+    % first which is now done in later step.
+
+for i = 1:length(JG);
+    it = find(~isnan(TGfs(:,i)),1,'first');
+    is = find(~isnan(SGfs(:,i)),1,'first');
+
+    TG_west(1:it-1,i)=nan;
+    SG_west(1:is-1,i)=nan;
 end
 
 %% 5. Plotting
@@ -824,11 +886,11 @@ RTWB_merg.SGfs2= SG_west;
 [NZ,NT] = size(RTWB_merg.TGfs2);
 
 % Duplicate SA and CT to surface
-for n = 1:NT
-    k_RTWB = find(~isnan(RTWB_merg.TGfs2(:,n)),1,'first');
-    RTWB_merg.TGfs2(1:k_RTWB-1,n) = RTWB_merg.TGfs2(k_RTWB,n);
-    RTWB_merg.SGfs2(1:k_RTWB-1,n) = RTWB_merg.SGfs2(k_RTWB,n);
-end
+% for n = 1:NT
+%    k_RTWB = find(~isnan(RTWB_merg.TGfs2(:,n)),1,'first');
+%    RTWB_merg.TGfs2(1:k_RTWB-1,n) = RTWB_merg.TGfs2(k_RTWB,n);
+%    RTWB_merg.SGfs2(1:k_RTWB-1,n) = RTWB_merg.SGfs2(k_RTWB,n);
+%end
 
 
 % Alloacte variables into a structure
@@ -844,3 +906,10 @@ RTWB_merg.comment{8,1}= 'TGfs2 -- temperature interpolated onto the time grid (J
 RTWB_merg.comment{9,1}= 'SGfs2 -- salinity interpolated onto the time grid (JG) after despiking';  
 
 save([grdatdir outputfile],'RTWB_merg');
+ 
+%% functions
+function Ustacked = stack_vars(U1,U2,U3,U4,U5,U6)
+    Ustacked = cat(3,U1,U2,U3,U4,U5,U6);
+    Ustacked = sum(Ustacked,3,'omitnan');
+    Ustacked(Ustacked==0)=NaN;
+end

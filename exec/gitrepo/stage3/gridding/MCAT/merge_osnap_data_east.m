@@ -49,7 +49,11 @@ col         = {'r','b','m','c','g','y','r--','b--','m--','c--','g--','y--','r:',
 [~,idx]=unique(cell2mat(moor),'rows');
 moor =  moor(idx,:);
 
+% DEFINE OUTPUTFILES
+outputfile_stacked = ['Hydro_rteb_stacked_' jg_start_str '_' jg_end_str,...
+                        '_' data_version];
 
+%%
 % OSNAP 1 (KN221 --> PE399)
 
 
@@ -503,7 +507,8 @@ ylabel('SAL.')
 datetick
 title('SALINITY')
     
-set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)   
+set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
+if ~exist([grdatdir 'otherfigure' filesep],'dir');mkdir([grdatdir 'otherfigure' filesep]);end
 print('-dpng',[grdatdir 'otherfigure' filesep  'RTEBmerged_beforegrid_check1'])
 
 figure(10)   %  graph of the data to show that it is all there!
@@ -540,7 +545,45 @@ Pfs     = [Pfs1;Pfs2;Pfs3;Pfs4;Pfs5;Pfs6];
 Sfs     = [Sfs1;Sfs2;Sfs3;Sfs4;Sfs5;Sfs6];
 Tfs     = [Tfs1;Tfs2;Tfs3;Tfs4;Tfs5;Tfs6];
 
-% order the matrices at every time step to avoid too many NaNs creeping in
+%% %%%%%%%%%%%%%%%%%%%%%%%%%
+% KB outputs stagged files
+z_stacked = [50;75;100;250;500;750;1000;1250;1500;1650;1775];
+
+%%% add NaN where instrument is missing
+fvs = NaN(1,length(JG));
+t_st1 = [fvs;Tfs1(1,:);fvs;Tfs1(2:4,:);fvs;Tfs1(5:6,:);fvs;Tfs1(7,:)];
+s_st1 = [fvs;Sfs1(1,:);fvs;Sfs1(2:4,:);fvs;Sfs1(5:6,:);fvs;Sfs1(7,:)];
+p_st1 = [fvs;Pfs1(1,:);fvs;Pfs1(2:4,:);fvs;Pfs1(5:6,:);fvs;Pfs1(7,:)];
+
+t_st2 = [fvs;Tfs2(1,:);fvs;Tfs2(2:7,:);fvs;Tfs2(8,:)];
+s_st2 = [fvs;Sfs2(1,:);fvs;Sfs2(2:7,:);fvs;Sfs2(8,:)];
+p_st2 = [fvs;Pfs2(1,:);fvs;Pfs2(2:7,:);fvs;Pfs2(8,:)];
+
+t_st3 = [fvs;fvs;Tfs3(1,:);fvs;Tfs3(2:6,:);fvs;Tfs3(7,:)];
+s_st3 = [fvs;fvs;Sfs3(1,:);fvs;Sfs3(2:6,:);fvs;Sfs3(7,:)];
+p_st3 = [fvs;fvs;Pfs3(1,:);fvs;Pfs3(2:6,:);fvs;Pfs3(7,:)];
+
+t_st4 = [Tfs4(1,:);fvs;Tfs4(2:8,:);fvs;Tfs4(9,:)];
+s_st4 = [Sfs4(1,:);fvs;Sfs4(2:8,:);fvs;Sfs4(9,:)];
+p_st4 = [Pfs4(1,:);fvs;Pfs4(2:8,:);fvs;Pfs4(9,:)];
+
+t_st5 = [Tfs5(1,:);fvs;Tfs5(2:10,:)];
+s_st5 = [Sfs5(1,:);fvs;Sfs5(2:10,:)];
+p_st5 = [Pfs5(1,:);fvs;Pfs5(2:10,:)];
+
+t_st6 = [Tfs6(1,:);fvs;Tfs6(2:10,:)];
+s_st6 = [Sfs6(1,:);fvs;Sfs6(2:10,:)];
+p_st6 = [Pfs6(1,:);fvs;Pfs6(2:10,:)];
+
+%%% add NaN where instrument is missing
+Tstacked = stack_vars(t_st1,t_st2,t_st3,t_st4,t_st5,t_st6);
+Sstacked = stack_vars(s_st1,s_st2,s_st3,s_st4,s_st5,s_st6);
+Pstacked = stack_vars(p_st1,p_st2,p_st3,p_st4,p_st5,p_st6);
+
+save([grdatdir outputfile_stacked '.mat'],...
+    'Tstacked','Sstacked','Pstacked','JG','z_stacked')
+
+%% order the matrices at every time step to avoid too many NaNs creeping in
 % 2004 removed....
 P_sort = NaN .* ones(size(Pfs)); T_sort = NaN .* ones(size(Tfs)); S_sort = NaN .* ones(size(Sfs));
 j = 1;
@@ -613,10 +656,17 @@ for ijj=1:length(JG)
     end
 end
 end 
+
 %% Apply correction for 2017 data to EB mooring
 [wbfile,path] = uigetfile(grdatdir,'Select most recent version of WB merged') % select the most recent processing of the WB data
 [Tfs,Sfs,Pfs,TGfs,SGfs] = extrap_missing_data(pathosnap,wbfile,Tfs,Sfs,Pfs,TGfs,SGfs,JG,pgg);
 
+%% Apply correction for 2017 data to EB mooring
+[wbfile,path] = uigetfile(grdatdir,'Select most recent version of WB merged') % select the most recent processing of the WB data
+[Tfs,Sfs,Pfs,TGfs,SGfs] = extrap_missing_data(path,wbfile,Tfs,Sfs,Pfs,TGfs,SGfs,JG,pgg);
+
+TGfs(pgg>max_depth,:)=NaN;
+SGfs(pgg>max_depth,:)=NaN;
 %% Save data
 
 disp(['saving: ' outputfile '.mat']);
@@ -672,7 +722,18 @@ TG_east([1:I-1],:)=TGfs([1:I-1],:);
 %     i = 7; j = 7; % PG(7) = 120;
 %     i = 11; j = 11; % PG(11) = 120;
 
-i = I; j = I;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Kristin edit (implemented by Lewis 19th May 2023)
+% The error occurs when interpolating after despiking. 
+% I cannot see what â€œdepthminforhoriz_interpâ€? and â€œpggâ€? is. 
+% Looks like depthminforhoriz_interp is set manually(?), 
+% which I would try to avoid. I would add a simple control to interpolate
+% only over the data gaps it they are not too long (less than one month I guess?) 
+% as e.g. described here: https://de.mathworks.com/matlabcentral/answers/87165-how-to-i-interpolate-only-if-5-or-less-missing-data-next-to-each-other
+
+dt = 0.5 ;  %resolution, e.g. 0.5 for 12-hourly data
+threshold = 30/dt; % (max length for data gap = 30 days) can be shorter or longer
+
 for i = I: length(pgg) % for each depth
 
     % locate all non nan values in the despiked temperature
@@ -680,21 +741,65 @@ for i = I: length(pgg) % for each depth
     if length(it) < 2
         continue
     end
+
     % locate all non nan values in the despiked salinity
     is = find(~isnan(salinity(i,:)));
     % interpolate in time over the missing data
     SG_east(i,:) = interp1(JG(is), salinity(i, is), JG);
     % interpolate in time over the missing data
     TG_east(i,:) = interp1(JG(it), temp(i, it), JG);
+    
+    % set gaps longer then the threshold value to NaN again
+    index = isnan(temp(i,:));
+    [b,n]=RunLength(index)
+    longRun = RunLength(b & (n>threshold), n);
+    TG_east(I,longRun) = NaN;
+
+    index = isnan(salinity (i,:));
+    [b,n]=RunLength(index)
+    longRun = RunLength(b & (n>threshold), n);
+    SG_east (I,longRun) = NaN;
 
     %j = j + 1;
 end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% i = I; j = I;
+% for i = I: length(pgg) % for each depth
+% 
+%     % locate all non nan values in the despiked temperature
+%     it = find(~isnan(temp(i,:)));
+%     if length(it) < 2
+%         continue
+%     end
+%     % locate all non nan values in the despiked salinity
+%     is = find(~isnan(salinity(i,:)));
+%     % interpolate in time over the missing data
+%     SG_east(i,:) = interp1(JG(is), salinity(i, is), JG);
+%     % interpolate in time over the missing data
+%     TG_east(i,:) = interp1(JG(it), temp(i, it), JG);
+% 
+%     %j = j + 1;
+% end
+
+
+ % KB, 27/3/2024
+    % Added code to remove horizontal interpolation when mooring was knocked down 
+    % This was not needed before because data was vertical extrapolated to surface 
+    % first which is now done in later step.
+
+for i = 1:length(JG);
+    it = find(~isnan(TGfs(:,i)),1,'first');
+    is = find(~isnan(SGfs(:,i)),1,'first');
     
-figure;
-% spurious values created in the interpolation?
-hold on; grid on; box on;
-plot(SG_east,TG_east,'k')
-plot(SGfs,TGfs,'r--')
+    if pgg(it)<=500
+    TG_east(1:it-1,i)=nan;
+    end
+    if pgg(is)<=500
+    SG_east(1:is-1,i)=nan;
+    end
+end
+
+
 %% Duplicate values to the surface 
 % Originally writen by Neil Fraser for volume transport code, but moved upstream 
 % for simplicity.
@@ -719,11 +824,21 @@ RTEB_merg.SGfs2= SG_east;
 [NZ,NT] = size(RTEB_merg.SGfs2);
 
 % Duplicate SA and CT to surface
-for n = 1:NT
-    k_RTEB = find(~isnan(RTEB_merg.SGfs2(:,n)),1,'first');
-    RTEB_merg.TGfs2(1:k_RTEB-1,n) = RTEB_merg.TGfs2(k_RTEB,n);
-    RTEB_merg.SGfs2(1:k_RTEB-1,n) = RTEB_merg.SGfs2(k_RTEB,n);
+%for n = 1:NT
+%    k_RTEB = find(~isnan(RTEB_merg.SGfs2(:,n)),1,'first');
+%    RTEB_merg.TGfs2(1:k_RTEB-1,n) = RTEB_merg.TGfs2(k_RTEB,n);
+%    RTEB_merg.SGfs2(1:k_RTEB-1,n) = RTEB_merg.SGfs2(k_RTEB,n);
+%end
+
+
+%% FILL MISSING VALUES, incase of any missing values created by
+% depthminforhoriz_interp below real values
+for ii=1:length(JG)
+    RTEB_merg.TGfs2(:,ii)=fillmissing(RTEB_merg.TGfs2(:,ii),'linear','EndValues','none')
+    RTEB_merg.SGfs2(:,ii)=fillmissing(RTEB_merg.SGfs2(:,ii),'linear','EndValues','none')
 end
+
+
 % ALLOCATE VARIABLES AND SAVE
 
 RTEB_merg.comment{1,1}= 'JG -- julian day';
@@ -736,7 +851,7 @@ RTEB_merg.comment{7,1}= 'SGfs -- salinity interpolated onto the pressure grid (P
 RTEB_merg.comment{8,1}= 'TGfs2 -- temperature interpolated onto the time grid (JG) after despiking';  
 RTEB_merg.comment{9,1}= 'SGfs2 -- salinity interpolated onto the time grid (JG) after despiking';  
 
-save([grdatdir outputfile '_' datestr(now, 30)],'RTEB_merg');
+save([grdatdir outputfile],'RTEB_merg');
 %  6. PLOTTING THE GRIDDED AND MERGED PROFILES 
 % 
 
@@ -954,3 +1069,11 @@ for hh=1:numel(ax)
 end
 set(gcf,'units','centimeters','position',[5 5 width height])
 print('-dpng',[grdatdir outputfile])
+
+ 
+%% functions
+function Ustacked = stack_vars(U1,U2,U3,U4,U5,U6)
+    Ustacked = cat(3,U1,U2,U3,U4,U5,U6);
+    Ustacked = sum(Ustacked,3,'omitnan');
+    Ustacked(Ustacked==0)=NaN;
+end
