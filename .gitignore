@@ -6,39 +6,32 @@
 
 
 # data (or plot) file types, but not info file types
-*.raw
-*.use*
-*.png
-*.eps
-*.fig
-*.tiff
-*.ps
-*.log
+**/*.raw
+**/*.use*
+**/*.png
+**/*.eps
+**/*.fig
+**/*.tiff
+**/*.ps
+**/*.log
+**/*.nc
+**/*.mat
+**/*.mat.zip
+
+# sometimes keep (in metadata), sometimes ignore
+exec/gitrepo/**/*.dat
 
 # ignore oceansites_format folder
 exec/gitrepo/export_Oceansites/oceansites_format/
-
-# nc files
-*.nc
-*.mat
-
-# ignore gridded figures folder
 
 # temporary matlab file:
 *~**
 *.asv
 
 # other
-**.DS_Store
-**.ipynb_checkpoints
-
-#specific .dat files
-exec/gitrepo/stage3/gridding/CM/*.dat
-exec/gitrepo/stage3/gridding/MCAT/DAT/
-exec/gitrepo/stage3/gridding/MCAT/old_unused_files/
-exec/gitrepo/stage3/gridding/MCAT/rapid/*.dat
-exec/gitrepo/stage3/oldgridding/MCAT/*.dat
-exec/gitrepo/stage3/oldgridding/MCAT/rapid/*.dat
+**/.DS_Store
+**/.ipynb_checkpoints
+**/._*
 
 # exclude any cruise specific startup files
 startup*
