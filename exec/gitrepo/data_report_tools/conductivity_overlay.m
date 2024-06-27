@@ -1,6 +1,6 @@
 % function conductivity_overlay(moor,'procpath','proclvl','layout','plot_interval','unfiltered')
 %
-% Function for plotting conductivitys of a mooring overlayed on the same axes
+% Function for plotting conductivity from a mooring overlaid on the same axes
 %
 % required inputs:-
 %   moor: complete mooring name as string. e.g. 'wb1_1_200420'
@@ -22,7 +22,7 @@
 %   rodbload, julian, auto_filt
 % 
 % Routine written by Darren Rayner July 2006.
-% adapted from conductivity_overlay.m and conductivity_overlay.m
+% adapted from pressure_overlay.m and temperature_overlay.m
 
 function conductivity_overlay(moor,varargin)
 

@@ -72,8 +72,10 @@ lat                = p_insitucal.lat;
                           
 % ------ output / input files and directories ---------------
 
-if sensor_id(1) >= 332 & sensor_id(end) <= 337
+if sensor_id(1) >= 332 && sensor_id(end) <= 337
    sensor      = 'microcat';
+elseif sensor_id(1)==375
+   sensor = 'seaphox';
 elseif sensor_id(1) == 366
    sensor      = 'arg';
    cond_threshold = 10; % dbar
@@ -436,7 +438,7 @@ end
     bottle.datnum         = bottle.datnum - cnv_time_correction;
     bottle.start_time = bottle.start_time -cnv_time_correction;
 
-% --- MicroCAT -------
+% --- MicroCAT and Seaphox -------
 
 fprintf(1,'\n loading MicroCAT/CTD data ... \n\n')
 
@@ -446,12 +448,13 @@ ninst = length(instr);
 for mc = 1 : ninst
 
     fname = sprintf('%s%4.4d%s',mc_file,instr(mc),mc_ext);
-  [yy,mm,dd,hh,p,t,c]  = rodbload(fname,'YY:MM:DD:HH:P:T:C'); 
+  [yy,mm,dd,hh,p,t,c,s]  = rodbload(fname,'YY:MM:DD:HH:P:T:C:S'); 
   lyy                = length(yy);
   datnum(1:lyy,mc) = datenum(yy,mm,dd,hh,0,0);
   T(1:lyy,mc)        = t; 
   C(1:lyy,mc)        = c; 
   P(1:lyy,mc)        = p; 
+  S(1:lyy,mc)        = s;
 end
 
 datnum(datnum==0) = NaN;
@@ -472,6 +475,14 @@ end
 if isempty(find(~isnan(C)))
    cstat = 0;
 end   
+
+% Seaphox outputs salinity but not conductiity so back calculate
+% conductvity if salinity is a variable
+if sensor_id==375
+   if sum(~isnan(C))==0 && sum(~isnan(S))>0
+       C = gsw_C_from_SP(S,T,P);
+   end
+end
 
 % --------------------------------------------------------------------------
 % 2. ---- water impact times: determine time offsets between ctd and mc ----
