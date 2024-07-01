@@ -1,24 +1,25 @@
-% PROCESS_ADCPS_ZBS_RB1201 is a script to process the adcp data.
+% PROCESS_ADCPS is a script to process the adcp data.
+close all
+global MOORPROC_G
+clearvars -except MEXEC_G MOORPROC_G
+cruise   = MOORPROC_G.cruise;
+operator = MOORPROC_G.operator;
+moor = input('mooring deployment (e.g. ebh2_15_2022) to process:   ','s');
+plot_interval=[]; %automatic based on available times
 
-% 03.Apr.2010 ZB Szuts
+pd = moor_inoutpaths('adcp',moor);
 
-close all, clear all
-
-cruise   = 'dy120';
-operator = 'lad';
-moor  = 'ib5_01_2018';
-
-
-basedir  = '/local/users/pstar/osnap/data/moor/';
-inpath   = [basedir 'raw/' cruise '/adcp/'];
-procpath = [basedir 'proc/'];
-% outpath  = [procpath mooring '/adcp/'];
-outpath  = [procpath moor '/adcp/'];
 
 
 display('Starting stage 1 adcp2rodb_01')
-adcp2rodb_01(moor,'inpath',inpath,'outpath',outpath,'procpath',procpath)
 
-display('Stage 1 complete')
+if contains(moor,'ib')
+    % Flag bad data 
+    read_flag_raw_adcp(moor,pd)
+    adcp2rodb_01(moor,pd)
+elseif contains(moor,'rhadcp')
+    adcp2rodb_02(moor,pd)
+end
+
 display('Starting stage 2 adcp_raw2use')
-adcp_raw2use_01(moor,'inpath',inpath,'outpath',outpath,'procpath',procpath)
+adcp_raw2use_01(moor,pd,'plot_interval',plot_interval)

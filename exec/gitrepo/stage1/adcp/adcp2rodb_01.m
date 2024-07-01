@@ -1,4 +1,4 @@
-% function adcp2rodb_01(moor,'inpath','outpath','procpath')
+% function adcp2rodb(moor,varargin)
 % Function to convert RDI ADCP data to rodb format.
 % raw ADCP data in .mat format as exported by WINADCP
 %
@@ -21,87 +21,61 @@
 % Written for ADCPs with or without pressure sensor
 % Houpert Loic, 4/10/16, comment the subfunction for the bin remapping
 % using a different sound of speed as it didnt work
+%
+% Houpert Loic, 19/10/20,  correct bug in the code in case the instrument doesnt have a pressure
+% sensor and the depth is fixed. 
+
 
 function adcp2rodb_01(moor, varargin)
+
+global MOORPROC_G
+
+basedir = MOORPROC_G.moordatadir;
+cruise= MOORPROC_G.cruise;
 
 if nargin==0
     help adcp2rodb_01
     return
 end
-display(' ')
-display('------------------------------')
-display('Starting stage 1 adcp2rodb_01')
-display('------------------------------')
-display(' ')
 
-% check for optional arguments
-a=strmatch('procpath',varargin,'exact');
-if a>0
-    procpath=char(varargin(a+1));
+if nargin==1
+    pd = moor_inoutpaths('adcp',moor);
 else
-    procpath='/Users/hydrosea5/Desktop/RB1201/rapid/data/moor/proc';
+    pd = varargin{1};
 end
 
-a=strmatch('inpath',varargin,'exact');
-if a>0
-    inpath=char(varargin(a+1));
-else
-    inpath=['/Users/hydrosea5/Desktop/RB1201/rapid/data/moor/raw/' moor '/'];
-end
-
-a=strmatch('outpath',varargin,'exact');
-if a>0
-    outpath=char(varargin(a+1));
-else
-    outpath = './';
-end
-
-
-% --- get moring information from infofile 
-%infofile =[procpath '/' moor '/' moor 'info.dat'];
-infofile =[procpath moor '/' moor 'info.dat'];
-
-if isunix
-        [gash, operator]=system('whoami'); % This line will not work if run from a PC.
-        % % gash is not used, but a second variable needs to be specified for the system command
-else
-    operator=input('Enter opeartor name: ','s');
-end
+operator = MOORPROC_G.operator;
 
 % ----- read infofile / open logfile  ------------------------------------
 
 infovar = 'instrument:serialnumber:z:Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:WaterDepth'; 
-[id,sn,z,s_t,s_d,e_t,e_d,lat,lon,wd]  =  rodbload(infofile,infovar);
+[id,sn,z,s_t,s_d,e_t,e_d,lat,lon,wd]  =  rodbload(pd.infofile,infovar);
 
-fidlog   = fopen([outpath,moor,'_ADCP_stage1.log'],'a');
+fidlog   = fopen(pd.stage1log,'a');
 fprintf(fidlog,'Transformation of ADCP .mat data to rodb format \n');
 fprintf(fidlog,'Processing carried out by %s at %s\n\n\n',operator,datestr(clock));
 fprintf(fidlog,'Mooring   %s \n',moor);
 fprintf(fidlog,'Latitude  %6.3f \n',lat);
 fprintf(fidlog,'Longitude %6.3f \n\n\n',lon);
 
-e_d
-s_d
-
-
 bg = julian([s_d(:)' hms2h([s_t(:)' 0])]); %start
 ed = julian([e_d(:)' hms2h([e_t(:)' 0])]); %end
 
-
-
 vec=find((id>=319) & (id <=328)); % Possible ADCP codes - taken from IMP moorings package
 
+serial_nums=sn(vec)
 
 % -------- load data --------------
 for i = 1:length(vec)
-    infile=[inpath num2str(sn(vec((i)))) '_data.mat']
+    fprintf('Processing sn %d',serial_nums(i))
+    infile=fullfile(pd.rawpath,sprintf('%d_data.mat',serial_nums(i)));
     
     indep=z(vec(i));
     if length(indep)>1
         indep=indep(1);
     end
     fprintf(fidlog,'infile : %s\n',infile);
-    fprintf(fidlog,'ADCP serial number  : %d\n',sn(vec(i)));
+    fprintf(fidlog,'ADCP serial number  : %d\n',serial_nums(i));
 
     all_data=load(infile);
     month=all_data.SerMon; day=all_data.SerDay; year=all_data.SerYear+2000; % year is year since 2000 
@@ -134,10 +108,11 @@ for i = 1:length(vec)
     else
         correct_depth=eval(['input(''\nThe input depth during instrument setup was ' num2str(all_data.AnDepthmm(1)/1000) 'm\n If you want to use a new depth for bin-mapping and processing,\n enter it now in m (leave empty if not): '')']);
         if ~isempty(correct_depth)
-            ADCP_depth_m=correct_depth;
+            depth=all_data.AnDepthmm*0+ correct_depth;
         else
-            ADCP_depth_m=all_data.AnDepthmm/1000;
+            depth=all_data.AnDepthmm/1000;
         end
+        p=sw_pres(depth,sw_lat);        
     end
     
     
@@ -183,25 +158,18 @@ for i = 1:length(vec)
     remap_bins ='n';
     if (strcmp(remap_bins,'y')||strcmp(remap_bins,'Y')||strcmp(remap_bins,'yes')||strcmp(remap_bins,'Yes')||strcmp(remap_bins,'YES'))
         remap_bins=1;
-        if press_sensor==1
-            [new_bin_mids, sos_source]=remap_bins_for_sos(bin_depths_mid,p,lat,all_data.AnT100thDeg/100); %calls sub-function with series of pressure if ADCP has P sensor
-        else
-            [new_bin_mids, sos_source]=remap_bins_for_sos(bin_depths_mid,all_data.AnDepthmm(1)/1000,lat,all_data.AnT100thDeg/100); %calls sub-function with fixed depth as input to ADCP when setup
-        end
+        [new_bin_mids, sos_source]=remap_bins_for_sos(bin_depths_mid,p,lat,t); %calls sub-function with series of pressure if ADCP has P sensor
         sw_lat2=zeros(size(new_bin_mids))+lat;
         new_bin_mids=sw_pres(new_bin_mids,sw_lat2); % convert depths back to pressure for saving with rodb files
         new_bin_mids=new_bin_mids';
     end
     
-    
+
     % ----- save data to rodb -----------------
     
     for j=1:bins_to_process
-        if j<=9
-            outfile=[moor '_' num2str(sn(vec((i)))) '_bin0' num2str(j) '.raw'];
-        else
-            outfile=[moor '_' num2str(sn(vec((i)))) '_bin' num2str(j) '.raw'];
-        end
+        
+        outfile = fullfile(pd.stage1path,sprintf(pd.stage1form,serial_nums(i),j));
 
         columns = 'YY:MM:DD:HH:Z:T:U:V:W:HDG:PIT:ROL:CS:CD:BEAM1SS:BEAM2SS:BEAM3SS:BEAM4SS:BEAM1COR:BEAM2COR:BEAM3COR:BEAM4COR:EV:BEAM1PGP:BEAM2PGP:BEAM3PGP:BEAM4PGP';
         fort =('%4.4d %2.2d %2.2d  %6.4f  %4.2f  %4.2f %4.1f %4.1f %4.1f  %4.2f %4.2f %4.2f  %4.1f  %4.1f  %3.0f %3.0f %3.0f %3.0f   %3.0f %3.0f %3.0f %3.0f  %4.1f  %3.0f %3.0f %3.0f %3.0f');
@@ -209,16 +177,16 @@ for i = 1:length(vec)
             if j==1
                 fprintf(fidlog,'Bins remapped for changes in speed of sound using: %s\n',sos_source);
             end
-            data = [dat (all_data.AnDepthmm/1000)+up_down*new_bin_mids(:,j) t u(:,j) v(:,j) w(:,j) heading pitch roll spd(:,j) dir(:,j) Amp1(:,j) Amp2(:,j) Amp3(:,j) Amp4(:,j) Beam1Cor(:,j) Beam2Cor(:,j) Beam3Cor(:,j) Beam4Cor(:,j) err(:,j) PG1(:,j) PG2(:,j) PG3(:,j) PG4(:,j)];
+            data = [dat depth+up_down*new_bin_mids(:,j) t u(:,j) v(:,j) w(:,j) heading pitch roll spd(:,j) dir(:,j) Amp1(:,j) Amp2(:,j) Amp3(:,j) Amp4(:,j) Beam1Cor(:,j) Beam2Cor(:,j) Beam3Cor(:,j) Beam4Cor(:,j) err(:,j) PG1(:,j) PG2(:,j) PG3(:,j) PG4(:,j)];
         else
-            data = [dat (all_data.AnDepthmm/1000)+up_down*bin_depths_mid(:,j) t u(:,j) v(:,j) w(:,j) heading pitch roll spd(:,j) dir(:,j) Amp1(:,j) Amp2(:,j) Amp3(:,j) Amp4(:,j) Beam1Cor(:,j) Beam2Cor(:,j) Beam3Cor(:,j) Beam4Cor(:,j) err(:,j) PG1(:,j) PG2(:,j) PG3(:,j) PG4(:,j)];
+            data = [dat depth+up_down*bin_depths_mid(:,j) t u(:,j) v(:,j) w(:,j) heading pitch roll spd(:,j) dir(:,j) Amp1(:,j) Amp2(:,j) Amp3(:,j) Amp4(:,j) Beam1Cor(:,j) Beam2Cor(:,j) Beam3Cor(:,j) Beam4Cor(:,j) err(:,j) PG1(:,j) PG2(:,j) PG3(:,j) PG4(:,j)];
         end
         infovar = ['Mooring:Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:WaterDepth:' ...
                    'Columns:SerialNumber:InstrDepth']; 
-        rodbsave([outpath outfile],infovar,fort,moor,s_t,s_d,e_t,e_d,lat,lon,wd,columns,...
+        rodbsave(outfile,infovar,fort,moor,s_t,s_d,e_t,e_d,lat,lon,wd,columns,...
                  sn(vec(i)),indep,data);
-        eval(['disp(''Data written to ' outpath outfile ''')']);
-        fprintf(fidlog,'outfile: %s\n',outfile);
+        eval(['disp(''Data written to ' outfile ''')']);
+        fprintf(fidlog,'outfile: %s\n',sprintf(pd.stage1form,serial_nums(i),j));
     
     end
     % -------- generate logfile entries --------------
@@ -240,7 +208,7 @@ for i = 1:length(vec)
             m_rol = median(roll(valI,:));
             
             fprintf(fidlog,'Median heading / pitch / roll [deg]                 : %4.1f  %4.1f  %4.1f\n',m_hdg, m_pit, m_rol);
-            if press_sensor==1
+            if press_sensor==12 %
                 m_p = median(p(valI,:));
                 fprintf(fidlog,'Median pressure of instrument [dbar]                       : %4.1f\n',m_p);
             end
@@ -286,126 +254,3 @@ display('------------------')
 display(' ')
 
 end
-
-
-% need to modify this sub function the remapping did not seems to work
-%% Sub function to apply CTDcorrection for Speed of sound
-% %% Sub function to apply CTDcorrection for Speed of sound
-% % written assuming loading a ctd file from D279 which is in .mat format
-% % also assumes that no problems with primary temp, conductivity and pressure
-% % sensors
-% 
-% % outputs remapped bins mid-points in distance from sensor head
-% function [new_bin_mids, sos_source]=remap_bins_for_sos(bin_depths_mid,press_depth,lat,ADCP_t)
-%     load_ctd=input(['\nEnter ctd filename (file in .mat format) with full path to use a CTD profile to correct the bin \n'...
-%                    'depths or enter a number for a mean speed of sound correction for the whole range of the ADCP:\n'],'s');
-%     if isempty(str2num(load_ctd))
-%        if exist(load_ctd,'file')
-%            load(load_ctd);
-%            sos_source=load_ctd;
-%            a=who('ctd*');
-%            if isempty(a)
-%                disp('CTD file format not recognised. Stopping routine.')
-%                return
-%            end
-%            a=char(a); % to convert from cell
-%            a=a(4:end); % obtains number of CTD station
-%            sos=eval(['sw_svel(ctd' a '.salin,ctd' a '.temp*1.00024,ctd' a '.press)']);
-%            ctd_press=eval(['ctd' a '.press']);
-%            ctd_salin=eval(['ctd' a '.salin']);
-%            
-%            % find SOS at sensor head
-%            ctd_press2=ctd_press'*ones(1,length(press_depth));
-%            press_depth2=press_depth*ones(1,length(ctd_press));
-%            press_depth2=press_depth2';
-%            %ctd_press2=ctd_press2';
-%            press_diff=abs(ctd_press2-press_depth2);
-%            for ijk=1:length(press_diff)
-%             sensor_index(ijk)=find(press_diff(:,ijk) == min(press_diff(:,ijk))); % sensor_index and sos will be a vector when have p sensor
-%            end
-%            
-%            c_m=0;
-%            while c_m==0
-%                ctd_measured=input(['\nFor sos at sensor, use sos from ctd profile (c) or as measured by\n'...
-%                                    'ADCP temp sensor with salinity from ctd profile (m)?   c/m: '],'s');
-%                if (strcmp(ctd_measured,'c')||strcmp(ctd_measured,'C'))
-%                    sensor_sos=sos(sensor_index); % sensor_index and sos will be single value when don't have p sensor and using sos from ctd profile
-%                    c_m=1;
-%                elseif (strcmp(ctd_measured,'m')||strcmp(ctd_measured,'M'))
-%                    for ijk=1:length(sensor_index)
-%                        sensor_salin(ijk)=ctd_salin(sensor_index(ijk));
-%                    end
-%                    %sensor_salin=sensor_salin*ones(1,length(ADCP_t));
-%                    sensor_salin=sensor_salin';
-%                    %keyboard
-%                    %press_depth=press_depth*ones(size(sensor_salin)); % make vectors same length
-%                    adcp_lat=lat*ones(size(sensor_salin)); % make vectors same length
-%                    press_depth=sw_pres(press_depth,adcp_lat); % convert to pressure from depth
-%                    sensor_sos=sw_svel(sensor_salin,ADCP_t,press_depth);
-%                    c_m=2;
-%                else
-%                    disp('Enter "c" or "m".')
-%                    c_m=0;
-%                end
-%            end
-%            % convert ctd_press to ctd_depth in m
-%            adcp_lat2=lat*ones(size(ctd_press)); % first create vector of same size for latitude
-%            ctd_depth=sw_dpth(ctd_press,adcp_lat2);
-%        else
-%            disp('CTD file does not exist! Stopping routine.')
-%            return
-%        end
-%     else
-% 
-%         sos=str2double(load_ctd);
-%         sos_source=['Fixed value of ' load_ctd]; 
-%         sensor_sos=sos;
-%     end
-% 
-%     
-% %    remapped_bin_mid=zeros(length(press_depth),length(bin_depths_mid));
-% %    remapped_bin_mid=remapped_bin_mid*NaN;
-% %    remapped_bin_start=remapped_bin_mid;
-% %    remapped_bin_end=remapped_bin_mid;
-%     bin_depths_mid=bin_depths_mid';
-%     remapped_bin_mid=NaN*zeros(size(bin_depths_mid));
-%     remapped_bin_start=remapped_bin_mid;
-%     remapped_bin_end=remapped_bin_mid;
-%     remapped_bin_start(1,:)=bin_depths_mid(1,:)-(bin_depths_mid(2,:)-bin_depths_mid(1,:))/2; % remapped bin start depth for bin 1 is same as previously
-%     
-%     size_bin_depths_mid=size(bin_depths_mid);
-%     if length(sensor_sos)==1
-%         sensor_sos=sensor_sos*ones(1,size_bin_depths_mid(2));
-%     end
-%     20959
-%    
-%     for j=1:size_bin_depths_mid(2) %1:number of samples in adcp timeseries
-%         for i=1:size_bin_depths_mid(1) %1:number of bins to process
-%             oldLen=bin_depths_mid(2,1)-bin_depths_mid(1,1);
-%             if isempty(str2num(load_ctd))
-% 
-%                 if i==1
-%                     a=abs(ctd_depth-bin_depths_mid(i,j));
-%                     a=find(a==min(a));
-%                 else
-%                     a=abs(ctd_depth-remapped_bin_mid(i-1,j)+newLen);
-%                     a=find(a==min(a));
-%                 end
-%             
-%                 a=a(1); % in case mid-depth was exactly half way between two ctd depths
-%                 newLen=oldLen*(sensor_sos(j)/sos(a));
-%             else
-%                 newLen=oldLen*(sensor_sos(j)/sos);
-%             end
-% 
-%             %re-assign bins with new depths
-%             if i>1
-%                 remapped_bin_start(i,j) = remapped_bin_end(i-1,j);
-%             end
-%             remapped_bin_end(i,j)=remapped_bin_start(i,j) + newLen;
-%             remapped_bin_mid(i,j)=remapped_bin_start(i,j) + newLen/2;
-%             
-%         end
-%     end
-%     new_bin_mids=remapped_bin_start+(remapped_bin_end-remapped_bin_start)/2;
-% end

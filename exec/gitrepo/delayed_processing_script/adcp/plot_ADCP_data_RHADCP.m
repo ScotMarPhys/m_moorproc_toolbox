@@ -209,11 +209,10 @@ set(fig,'PaperUnits','centimeters','PaperOrientation','portrait',...
 subplot(2,1,1)
 hold on
 surf(ADCPdata(1).time, ADCPdata(1).z,ADCPdata(1).u);
-surf(ADCPdata(2).time, ADCPdata(2).z,ADCPdata(2).u);
 shading flat
 view([0 -90])
 caxis([-30 30])
-title(['U -- ' moor ' ADCPs '  num2str(sn(1)) ' (up) & ' num2str(sn(2)) ' (dn)'],'interpreter','none'  )
+title(['U -- ' moor ' ADCPs '  num2str(sn) ' (up) '],'interpreter','none'  )
 datetick('x','mmm yy')
 colormap(cmapvel)
 cb = colorbar;
@@ -223,16 +222,15 @@ ylabel('depth (m)')
 subplot(2,1,2)
 hold on
 surf(ADCPdata(1).time, ADCPdata(1).z,ADCPdata(1).v);
-surf(ADCPdata(2).time, ADCPdata(2).z,ADCPdata(2).v);
 shading flat
 view([0 -90])
 caxis([-30 30])
-title(['V -- ' moor ' ADCPs '  num2str(sn(1)) ' (up) & ' num2str(sn(2)) ' (dn)'],'interpreter','none'  )
+title(['V -- ' moor ' ADCPs '  num2str(sn(1)) ' (up) ' ],'interpreter','none'  )
 datetick('x','mmm yy')
 colormap(cmapvel)
 cb = colorbar;
 cb.Label.String='cm/s';
 ylabel('depth (m)')
 
-print(gcf,'-dpng',['adcp_' datatype '_data_' moor '_up_dn']);	
+print(gcf,'-dpng',['adcp_' datatype '_data_' moor '_up']);	
 
