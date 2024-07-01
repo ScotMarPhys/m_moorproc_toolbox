@@ -49,7 +49,6 @@ else
 end
 
 operator = MOORPROC_G.operator;
-
 [id,sn,z,s_t,s_d,e_t,e_d,lat,lon,wd,mr]  =  rodbload(pd.infofile,'instrument:serialnumber:z:Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:WaterDepth:Mooring');
 
 vec=find((id==368|id==370)); % Nortek id number
@@ -206,6 +205,7 @@ for proc = 1 : length(vec)
             '; Target Depth: ',num2str(indep)])
 
         orient tall
+
         %eval(['print -depsc2 -tiff ',outfile,'.eps'])
         eval(['print -dpng ',outfile,'.png'])
 
@@ -250,7 +250,6 @@ for proc = 1 : length(vec)
         legend({'beam1','beam2','beam3'})
 
 
-
         suptitle(['Nortek s/n: ',num2str(sn(proc)), ...
             '; Target Depth: ',num2str(indep)])
 
@@ -259,6 +258,7 @@ for proc = 1 : length(vec)
         eval(['print -dpng ',outfile,'_diagnostics.png'])
     end % if exist(infile)==0
 end  % for proc=1:length(combo_sn)+length(individual_sn) loop
+
 end % function
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -312,7 +312,6 @@ ylabel(str)
 grid on
 xlim([jdlim])
 datetick('x',12,'keeplimits')
-
 
 ok=1;
 
