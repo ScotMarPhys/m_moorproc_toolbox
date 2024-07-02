@@ -10,11 +10,10 @@
 
 clear all
 close all
+global MOORPROC_G
 
 % input - likely to be changed
-cruise = 'dy053';
-operator  = 'sa02sc';
-moor = 'rteb1_02_2015';
+moor = input('mooring deployment (e.g. ebh2_15_2022) to process:   ','s');
 
 % DY053 NOTE : It is much better to manually delete on-deck records
 % manually in the raw data file
@@ -26,14 +25,8 @@ cutoff2 = 1;   % Number of time steps (30 min) to cut off the record at the end 
 %      program and seagauge/bpr_clock_offset.dat by
 %      seagauge_processing_002.m  (zszuts)
 
-
+pd = moor_inoutpaths('bpr',moor);
 basedir = '/home/mstar/osnap/data/';
-
-
-inpath  = [basedir 'moor/raw/' cruise '/seagauge/'];
-outpath = [basedir 'moor/proc/' moor '/seagauge/'];
-info  = [basedir 'moor/proc/' moor '/' moor 'info.dat'];
-offsetfile = [basedir 'moor/raw/' cruise '/clock_offset.dat'];
 
 % There are 2 clock offset files for BPR instruments:
 % clock_offset.dat (in raw/oc459/) and BPR_clock_offset.dat in
@@ -53,14 +46,8 @@ wrap_correction= [47.7  47.7 47.7  47.7  47.7  79.4  79.4  79.4  47.7  79.4 79.4
 sg_code        = 465; % code for seagauge
 %toffset        = 0;  % time offset
 
-% load infodat
-% jym 22 April 2005: Request to all operators who change path names
-% for development purposes -
-% PLEASE change them back to work on the common computer, so that we do
-% not have to reinvent the changes over and over again.
-%
 [lat,lon,wd,sdate,stime,edate,etime,z,type,serial]= ...
-    rodbload(info,...
+    rodbload(pd.infofile,...
     'Latitude:Longitude:WaterDepth:StartDate:StartTime:EndDate:EndTime:z:instrument:serialnumber');
 
 
@@ -72,37 +59,31 @@ sn           = serial(sgI);
 % NB The seagauge dir in outpath must be created first
 
 
-logfile       = [outpath,'stage1_log'];
-disp(logfile);
-log           = fopen(logfile,'w');
+disp(pd.stage1log);
+log           = fopen(pd.stage1log,'w');
 fprintf(log,'Processing of SBE26s  from mooring %s \n Date: %s \n',moor,datestr(clock)');
-fprintf(log,'Operator: %s\n',operator');
-
+fprintf(log,'Operator: %s\n',MOORPROC_G.operator');
 
 
 for ins = 1 : length(sgI)
     
     serialnumber = sn(ins);
-    
     instrdepth   = z(sgI(ins));
     
-    outfile      = [outpath,moor,'_',sprintf('%5.5d',serialnumber),'.raw'];
-    
-    % ------ data input file and log file
-    
-    file         = [inpath,sprintf('%4.4d',serialnumber),'_data.tid'];
-    
+    outfile      = fullfile(pd.stage1path,sprintf(pd.stage1form,serialnumber));    
+    % ------ data input file and log file    
+    infile         = fullfile(pd.rawpath,sprintf(pd.rawform,serialnumber));  
     %disp(['SBE-26 instrument ',num2str(serialnumber),' has been found'])
     
     fprintf(log,'Serial number: %4.4d\n',serialnumber);
     fprintf(log,'Target Depth [m]: %4.4d\n',instrdepth);
-    fprintf(log,'Input file: %s\n',file);
+    fprintf(log,'Input file: %s\n',infile);
     fprintf(log,'Output file: %s\n',outfile);
     
     
     % load data and carry out basic checks
     
-    [P,T,C,S,jd,meas,sampling_rate,qflag] = load_seagauge(file,log);
+    [P,T,C,S,jd,meas,sampling_rate,qflag] = load_seagauge(infile,log);
     
     % ----------------------------------------------------------------
     % -------check data ----------------
@@ -114,7 +95,7 @@ for ins = 1 : length(sgI)
     % reset toffset to zero so don't carry over from previous iteration of
     % loop
     toffset=0;
-    fidoff = fopen(offsetfile,'r');
+    fidoff = fopen(pd.offsetfile,'r');
     
     if fidoff<0
         

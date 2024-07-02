@@ -1,4 +1,4 @@
-% function nortek2rodb_01(moor,'inpath','outpath','procpath')
+% function nortek2rodb_01(moor,varargin)
 % Function to convert Nortek Aquadopp Single Point CM data to rodb format.
 %
 % Requires a seperate text file containing the Nortek filenames as this
@@ -25,61 +25,30 @@
 
 function nortek2rodb_01(moor, varargin)
 
-%basedir='/noc/users/pstar/rpdmoc/';
-if exist('/Volumes/rpdmoc/rapid/data/exec/jc103/stage1/microcat/mc_call_caldip_jc103_v3.m','file')
-    % using DR Mac with mount to banba on JC103
-    basedir = '/Volumes/rpdmoc/rapid/data/';
-else
-    basedir = '/noc/mpoc/rpdmoc/users/dr400/osnap/data/';
-end
-cruise='pelagia2015';
+global MOORPROC_G
 
+basedir = MOORPROC_G.moordatadir;
+cruise= MOORPROC_G.cruise;
 
 if nargin==0
     help nortek2rodb_01
     return
 end
 
-% check for optional arguments
-a=strmatch('procpath',varargin,'exact');
-if a>0
-    procpath=char(varargin(a+1));
+if nargin==1
+    pd = moor_inoutpaths('nor',moor);
 else
-    %procpath='/Volumes/RB1201/rapid/data/moor/proc';
-    procpath=[basedir '/rapid/data/moor/proc'];
+    pd = varargin{1};
 end
 
-a=strmatch('inpath',varargin,'exact');
-if a>0
-    inpath=char(varargin(a+1));
-else
-    %inpath=['/Volumes/RB1201/rapid/data/moor/raw/' moor '/'];
-    inpath=[basedir '/rapid/data/moor/raw/' cruise '/nor/'];
-end
-
-a=strmatch('outpath',varargin,'exact');
-if a>0
-    outpath=char(varargin(a+1));
-else
-    %outpath = './';
-    outpath=[procpath '/' moor '/nor/'];
-end
-
-
-% --- get moring information from infofile 
-infofile =[procpath '/' moor '/' moor 'info.dat'];
-
-
-[gash, operator]=system('whoami'); % This line will not work if run from a PC. May need to edit it out.
-% % gash is not used, but a second variable needs to be specified for the system command
-
+operator = MOORPROC_G.operator;
 
 % ----- read infofile / open logfile  ------------------------------------
 
 infovar = 'instrument:serialnumber:z:Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:WaterDepth'; 
-[id,sn,z,s_t,s_d,e_t,e_d,lat,lon,wd]  =  rodbload(infofile,infovar);
+[id,sn,z,s_t,s_d,e_t,e_d,lat,lon,wd]  =  rodbload(pd.infofile,infovar);
 
-fidlog   = fopen([outpath,moor,'_Nortek_stage1.log'],'a');
+fidlog   = fopen(pd.stage1log,'a');
 fprintf(fidlog,'Transformation of Nortek ascii data to rodb format \n');
 fprintf(fidlog,'Processing carried out by %s at %s\n\n\n',operator,datestr(clock));
 fprintf(fidlog,'Mooring   %s \n',moor);
@@ -98,20 +67,27 @@ serial_nums=sn(vec)
 % should be filename. This is necessary as there is currently no standard
 % naming convention for Argonaut files. Do not include path though.
 
-textfile=[inpath moor '_filenames.txt'];
 %check if file exists
-if ~exist(textfile)
-    disp(textfile)
-    error('File containing filenames does not exist - stopping routine.')
-
+if ~exist(pd.listfile,'file')
+    error('Create list of S/Ns and data file names in %s and try again',pd.listfile)
 end
-[input_ser_nums filenames]=textread(textfile,'%d %s');
+
+[input_ser_nums, filenames]=textread(pd.listfile,'%d %s');
 
 % -------- load data --------------
 for i = 1:length(filenames)
-    infile=[inpath char(filenames(i))]
-    outfile=[moor '_' num2str(input_ser_nums(i)) '.raw'];
-    indep=find(sn==input_ser_nums(i));
+    infile=fullfile(pd.rawpath,filenames{i});
+    if ~exist(infile,'file')
+       checkans = input(['File for serial number ' serial_nums(i) 'not found. Do you want to continue to next? y/n [y]:'],'s');
+       if isempty(checkans)
+          reply = 'Y';
+       end
+       continue
+    else 
+        fprintf(1,'Processing file %d\n', serial_nums(i))
+    end
+    outfile=fullfile(pd.stage1path,sprintf(pd.stage1form,input_ser_nums(i)));
+    indep=sn==input_ser_nums(i);
     indep=z(indep);
     if length(indep)>1
         indep=indep(1);
@@ -168,12 +144,12 @@ for i = 1:length(filenames)
         fort =['%4.4d %2.2d %2.2d  %6.4f  %4.2f %7.3f  %4.1f %4.1f %4.1f  %4.1f %4.1f %4.1f  %2d %2d %2d  %2.1f  %4.1f %5.2f'];
         infovar = ['Mooring:Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:WaterDepth:' ...
                    'Columns:SerialNumber:InstrDepth']; 
-        rodbsave([outpath outfile],infovar,fort,moor,s_t,s_d,e_t,e_d,lat,lon,wd,columns,...
+        rodbsave(outfile,infovar,fort,moor,s_t,s_d,e_t,e_d,lat,lon,wd,columns,...
                  input_ser_nums(i),indep,data);
-        eval(['disp(''Data written to ' outpath outfile ''')']);
+        fprintf(1,'Data written to %s',outfile)
 
     else
-        disp(['Serial number does not match those in info.dat file - sn: ' num2str(input_ser_nums(i))])
+        fprintf(1,'Serial number does not match those in info.dat file - sn: %d',input_ser_nums(i))
         disp('Stopping routine')
         return
     end

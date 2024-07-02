@@ -21,7 +21,6 @@ p_insitucal.cruise           =  'jc238' ;%'ar304'; %'ar304' %'dy078';%'dy053';%'
 p_insitucal.cast             = 19;   
 p_insitucal.depl_period      = 'osnap6'; %'osnap2'    % move1; move2; rapid 1; rapid 2
 
-
 % ---- parameters ----------------------------------------------------
 p_insitucal.sensorselec      = 1;
 p_insitucal.sensor_id        = [332 337];  % MicroCAT ID range (in info.dat)

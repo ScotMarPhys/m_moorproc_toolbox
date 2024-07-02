@@ -30,83 +30,55 @@
 % 05/10/16 - Loic Houpert: added option to process lvl 3 data (.microcat and .edt files for nortek) and save plot
 %
 function pressure_overlay(moor,varargin)
+
+global MOORPROC_G
+
 if nargin <1
     help pressure_overlay
     return
 end
 
-% check for optional arguments
-a=strmatch('layout',varargin,'exact');
-if a>0
-    layout=char(varargin(a+1));
+%defaults
+layout = 'portrait';
+procpath = fullfile(MOORPROC_G.moordatadir,'proc');
+outpath = fullfile(MOORPROC_G.reportdir,'figs');
+non_verbose = 0;
+proclvl = 2;
+plot_interval = 0;
+unfilt = 0;
+%and optional inputs overwrite them
+n = 1; 
+while n<=nargin-1
+    if ischar(varargin{n}) 
+        if strcmp(varargin{n},'non-verbose')
+            non_verbose = 1;
+            n = n+1;
+        elseif strcmp(varargin{n},'unfiltered')
+            unfilt = 1;
+            n = n+1;
+        else
+            eval([varargin{n} ' = varargin{n+1};'])
+            n = n+2;
+        end
+    end
+end
+
+infofile = fullfile(procpath,moor,[moor 'info.dat']);
+
+proclvlstr0 = num2str(proclvl);
+if unfilt
+    proclvlstr = [proclvlstr0 '_unfilt'];
 else
-    layout='portrait';
+    proclvlstr = [proclvlstr0 '_lpfilt'];
 end
 
-a=strmatch('procpath',varargin,'exact');
-if a>0
-    procpath=char(varargin(a+1));
-else
-    data_report_tools_dir=which('data_report_tools');
-    b=strfind(data_report_tools_dir,'/');
-    data_report_tools_dir=data_report_tools_dir(1:b(end));
-    procpath=[data_report_tools_dir '../../../moor/proc/']; %DR changed to be relative paths now that data_report_tools are on the network 19/2/12
-end
-
-
-
-a=strmatch('proclvl',varargin,'exact');
-if a>0
-    proclvlstr0=char(varargin(a+1));
-    proclvl   = str2num(proclvlstr0);
-else
-    proclvl=2;
-    proclvlstr0 = num2str(proclvl);
-end
-
-a=strmatch('plot_interval',varargin,'exact');
-if a>0
-    plot_interval=eval(varargin{a+1});
-else
-    plot_interval=0;
-end
-
-a=strmatch('unfiltered',varargin,'exact');
-if a>0
-    unfilt=1;
-    proclvlstr = [proclvlstr0 '_unfilt'];    
-else
-    unfilt=0;
-     proclvlstr = [proclvlstr0 '_lpfilt'];       
-end
-
-
-if isunix
-    infofile=[procpath,moor,'/',moor,'info.dat'];
-elseif ispc
-    infofile=[procpath,moor,'\',moor,'info.dat'];
-end
 
 % Load vectors of mooring information
 % id instrument id, sn serial number, z nominal depth of each instrument
 % s_t, e_t, s_d, e_d start and end times and dates
-% lat lon mooring position, wd corrected water depth (m)
+% not used: lat lon mooring position, wd corrected water depth (m)
 % mr mooring name
-[id,sn,z,s_t,s_d,e_t,e_d,lat,lon,wd,mr]  =  rodbload(infofile,...
-    'instrument:serialnumber:z:Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:WaterDepth:Mooring');
-
-
-% JULIAN Convert Gregorian date to Julian day.
-% JD = JULIAN(YY,MM,DD,HH) or JD = JULIAN([YY,MM,DD,HH]) returns the Julian
-% day number of the calendar date specified by year, month, day, and decimal
-% hour.
-% JD = JULIAN(YY,MM,DD) or JD = JULIAN([YY,MM,DD]) if decimal hour is absent,
-% it is assumed to be zero.
-% Although the formal definition holds that Julian days start and end at
-% noon, here Julian days start and end at midnight. In this convention,
-% Julian day 2440000 began at 00:00 hours, May 23, 1968.
-jd_start = julian([s_d' hms2h([s_t;0]')]);
-jd_end   = julian([e_d' hms2h([e_t;0]')]);
+[id,sn,z,s_t,s_d,e_t,e_d]  =  rodbload(infofile,'instrument:serialnumber:z:Start_Time:Start_Date:End_Time:End_Date');
 
 disp('z : instrument id : serial number')
 for i = 1:length(id)
@@ -175,43 +147,8 @@ jd2 = julian(plot_interval(2,:));
 
 num_to_plot=2; % num_to_plot is the number of samples per day to plot and can be adjusted accordingly
 
-% find the index number of Microcats
-iiMC = find(id == 337 | id == 335);
-vecMC = sn(iiMC);
-% find the index number of RBRs
-iiRBR = find(id == 330);
-vecRBR = sn(iiRBR);
-% find the index number of Idronauts
-iiIDR = find(id == 339);
-vecIDR = sn(iiIDR);
-% find the index number of S4s
-iiS4 = find(id == 302);
-vecS4 = sn(iiS4);
-% and find index number of RCM11s
-iiRCM11 = find(id == 310);
-vecRCM11 = sn(iiRCM11);
-% and find index number of Sontek Argonauts
-iiARG = find(id == 366);
-vecARG = sn(iiARG);
-% and find index number of Nortek Aquadopps
-iiNOR = find((id == 368|id==370));
-vecNOR = sn(iiNOR);
-% and find index number of AADI Seaguards
-iiSG = find(id == 301);
-vecSG = sn(iiSG);
-
-depths(:,1) = id([iiMC;iiRBR;iiIDR;iiS4;iiRCM11;iiARG;iiNOR;iiSG]);
-depths(:,2) = z([iiMC;iiRBR;iiIDR;iiS4;iiRCM11;iiARG;iiNOR;iiSG]);
-depths=sortrows(depths,2);
-iiiMC=find(depths(:,1)==337 | depths(:,1)==335);
-iiiRBR=find(depths(:,1)==330);
-iiiIDR=find(depths(:,1)==339);
-iiiS4=find(depths(:,1)==302);  
-iiiRCM11=find(depths(:,1)==310);  
-iiiARG=find(depths(:,1)==366 | depths(:,1)==366337); 
-iiiNOR=find(depths(:,1)==368|depths(:,1)==370);
-iiiSG=find(depths(:,1)==301);
-iii=[iiiS4;iiiRCM11;iiiARG;iiiNOR;iiiMC;iiiRBR;iiiIDR;iiiSG];
+id_z_sn = all_inst_table(id, z, sn);
+id_z_sn.data_loaded = false(length(id),1);
 
 %set figure size on screen for better viewing
 bdwidth = 5;
@@ -221,458 +158,78 @@ scnsize = get(0,'ScreenSize');
 
 %set print area of figure
 pos1  = [1/8*scnsize(3),8*bdwidth,1/2*scnsize(3),(scnsize(4) - 30*bdwidth)];
-pressure_plot=figure('Position',pos1);
-set(pressure_plot,'PaperUnits','centimeters');
-set(pressure_plot, 'PaperType', 'A4');
-set(pressure_plot, 'PaperOrientation',layout);
-papersize = get(pressure_plot,'PaperSize');
+plot1=figure('Position',pos1);
+set(plot1,'PaperUnits','centimeters');
+set(plot1, 'PaperType', 'A4');
+set(plot1, 'PaperOrientation',layout);
+papersize = get(plot1,'PaperSize');
 width=17; height=26; left = (papersize(1)- width)/2; bottom = (papersize(2)- height)/2;
 figuresize = [left, bottom, width, height];
-set(pressure_plot, 'PaperPosition', figuresize);
+set(plot1, 'PaperPosition', figuresize);
 
 plot_string={};
 
 % -----------------------------------
 % START OF READING IN INSTRUMENT DATA
 % -----------------------------------
-%--------------------------------------
-% Now read in Microcat data if required
-%--------------------------------------
-if iiMC>0
-    j=1;
-    
-    % loop to read one file at a time
-
-    for i=1:length(vecMC);
-       serialno = vecMC(i);
-       disp('*************************************************************')
-       disp(['Reading MICROCAT - ',num2str(serialno)])
-       disp('*************************************************************')
-	if proclvl==2
-	       if isunix
-        	   infile = [procpath,moor,'/microcat/',moor,'_',sprintf('%0.4d',vecMC(i)),'.use'];
-       		elseif ispc
-        	   infile = [procpath,moor,'\microcat\',moor,'_',sprintf('%0.4d',vecMC(i)),'.use'];
-       		end
-	elseif proclvl==3
-	       if isunix
-        	   infile = [procpath,moor,'/microcat/',moor,'_',sprintf('%0.3d',i),'.microcat'];
-       		elseif ispc
-        	   infile = [procpath,moor,'\microcat\',moor,'_',sprintf('%0.3d',i),'.microcat'];
-       		end	
-	end
-	
-       % check if file exists
-       fileopen=fopen(infile,'r');
-       
-       if fileopen>0
-           % read data into vectors and then into structure array
-
-           [yy,mm,dd,hh,t,c,p] = ...
-               rodbload(infile,'yy:mm:dd:hh:t:c:p');
-           jd=julian(yy,mm,dd,hh);
-
-           bad_data=find(p==-9999); p(bad_data)=NaN;
-
-           eval_string(iiiMC(j))={['MC_' num2str(serialno)]};
-
-           eval([char(eval_string(iiiMC(j))) '.jd=jd;']);
-           eval([char(eval_string(iiiMC(j))) '.p=p;']);
-
-           if unfilt==0
-           % Apply a butterworth filter to the data using auto_filt and use for
-           % plots
-           sampling_rate = 1/median(diff(jd));
-
-            ii = eval(['find(~isnan(' char(eval_string(iiiMC(j))) '.p));']); 
-            eval([char(eval_string(iiiMC(j))) '.p(ii)=auto_filt(' char(eval_string(iiiMC(j)))...
-                  '.p(ii), sampling_rate, 1/2,''low'',4);']);
-           end
+for iid=1:length(id_z_sn.id)
+    if ~isempty(id_z_sn.dirs{iid}) && contains(id_z_sn.vars{iid},'p')
+        if ~non_verbose
+            disp('*************************************************************')
+            disp(['Reading ' id_z_sn.inst{iid} ' - ',num2str(id_z_sn.sn(iid))])
+            disp('*************************************************************')
         end
-       j=j+1;
+        iname = sprintf('%s_%d', id_z_sn.inst{iid}, id_z_sn.sn(iid));
+        infile = fullfile(procpath,moor,id_z_sn.dirs{iid},sprintf('%s_%0.4d%s.use',moor,id_z_sn.sn(iid),id_z_sn.suf{iid}));
+        if strcmp(id_z_sn.inst{iid},'SG')
+            infile = fullfile(procpath,moor,id_z_sn.dirs{iid},sprintf('%s_%3.3d%s.use',moor,id_z_sn.sn(iid),id_z_sn.suf{iid}));
+        end
+        if sum(strcmp({'MC' 'ODOMC'},id_z_sn.inst{iid})) && proclvl==3
+            infile1 = fullfile(procpath,moor,id_z_sn.dirs{iid},sprintf('%s_%0.4d%s.microcat',moor,id_z_sn.sn(iid),id_z_sn.suf{iid}));
+            if exist(infile1,'file')
+                infile = infile1;
+            end
+        end
+        %read data into structure array
+        fileopen=fopen(infile,'r');
+        if fileopen>0
+            [yy,mm,dd,hh,data.p] = rodbload(infile,'yy:mm:dd:hh:p');
+                        data.jd=julian(yy,mm,dd,hh);
+        else
+            disp('File does not exist!')
+            disp(['infile = ' infile])
+            data = [];
+        end
+
+        if ~isempty(data)
+            data.p(data.p<-999) = NaN;
+            if unfilt==0
+                sampling_rate = 1/median(diff(data.jd));
+                ii = find(~isnan(data.p));
+                data.p(ii) = auto_filt(data.p(ii),sampling_rate,1/2,'low',4);
+            end
+            alldata.(iname) = data;
+            id_z_sn.data_loaded(iid) = true;
+        end
     end
+
 end
-%--------------------------------------
-% Now read in Idronaut data if required
-%--------------------------------------
-if iiIDR>0
-    j=1;
-    
-    % loop to read one file at a time
-
-    for i=1:length(vecIDR);
-       serialno = vecIDR(i);
-       disp('*************************************************************')
-       disp(['Reading IDRONAUT - ',num2str(serialno)])
-       disp('*************************************************************')
-
-       if isunix
-           infile = [procpath,moor,'/idr/',moor,'_',sprintf('%0.4d',vecIDR(i)),'.use'];
-       elseif ispc
-           infile = [procpath,moor,'\idr\',moor,'_',sprintf('%0.4d',vecIDR(i)),'.use'];
-       end
-       % read data into vectors and then into structure array
-      
-       % check if file exists
-       fileopen=fopen(infile,'r');
-       
-       
-       if fileopen>0
-           
-           [yy,mm,dd,hh,t,c,p,] = ...
-               rodbload(infile,'yy:mm:dd:hh:t:c:p');
-           jd=julian(yy,mm,dd,hh);
-
-           bad_data=find(p==-9999); p(bad_data)=NaN;
-
-           eval_string(iiiIDR(j))={['IDR_' num2str(serialno)]};
-
-           eval([char(eval_string(iiiIDR(j))) '.jd=jd;']);
-           eval([char(eval_string(iiiIDR(j))) '.p=p;']);
-
-           if unfilt==0
-               % Apply a butterworth filter to the data using auto_filt and use for
-               % plots
-               sampling_rate = 1/median(diff(jd));
-
-               ii = eval(['find(~isnan(' char(eval_string(iiiIDR(j))) '.p));']); 
-               eval([char(eval_string(iiiIDR(j))) '.p(ii)=auto_filt(' char(eval_string(iiiIDR(j)))...
-                     '.p(ii), sampling_rate, 1/2,''low'',4);']);
-           end
-       end
-       j=j+1;
-    end
-end
-%--------------------------------------
-% Now read in RBR data if required
-%--------------------------------------
-if iiRBR>0
-    j=1;
-    
-    % loop to read one file at a time
-
-    for i=1:length(vecRBR);
-       serialno = vecRBR(i);
-       disp('*************************************************************')
-       disp(['Reading RBR - ',num2str(serialno)])
-       disp('*************************************************************')
-
-       if isunix
-           infile = [procpath,moor,'/rbr/',moor,'_',sprintf('%0.4d',vecRBR(i)),'.use'];
-       elseif ispc
-           infile = [procpath,moor,'\rbr\',moor,'_',sprintf('%0.4d',vecRBR(i)),'.use'];
-       end
-
-       % read data into vectors and then into structure array
-       
-       % check if file exists
-       fileopen=fopen(infile,'r');
-       
-       if fileopen>0
-           
-           [yy,mm,dd,hh,p,t,c] = ...
-               rodbload(infile,'yy:mm:dd:hh:p:t:c');
-           jd=julian(yy,mm,dd,hh);
-
-           bad_data=find(p==-9999); p(bad_data)=NaN;
-
-           eval_string(iiiRBR(j))={['RBR_' num2str(serialno)]};
-
-           eval([char(eval_string(iiiRBR(j))) '.jd=jd;']);
-           eval([char(eval_string(iiiRBR(j))) '.p=p;']);
-           if unfilt==0;
-               % Apply a butterworth filter to the data using auto_filt and use for
-               % plots
-               sampling_rate = 1/median(diff(jd));
-
-               ii = eval(['find(~isnan(' char(eval_string(iiiRBR(j))) '.p));']); 
-               eval([char(eval_string(iiiRBR(j))) '.p(ii)=auto_filt(' char(eval_string(iiiRBR(j)))...
-                     '.p(ii), sampling_rate, 1/2,''low'',4);']);
-           end
-       end
-       j=j+1;
-    end
-end
-
-% --------------------
-% Read in S4 data if required.
-% --------------------
-if iiS4>0 
-    
-    % loop to read one file at a time
-    j=1;
-    for i=1:length(vecS4);
-       serialno = vecS4(i);
-       disp('*************************************************************')
-       disp(['Reading S4 - ',num2str(serialno)])
-       disp('*************************************************************')
-       
-       if isunix
-           infile = [procpath,moor,'/s4/',moor,'_',sprintf('%4.4d',vecS4(i)),'.use'];
-       elseif ispc
-           infile = [procpath,moor,'\s4\',moor,'_',sprintf('%4.4d',vecS4(i)),'.use'];
-       end
-
-       % check if file exists
-       fileopen=fopen(infile,'r');
-       
-       if fileopen>0
-           % read data into vectors and then into structure array
-
-           [yy,mm,dd,hh,u,v,t,c,p,hdg] = rodbload(infile,'yy:mm:dd:hh:u:v:t:c:p:hdg');
-           jd=julian(yy,mm,dd,hh);
-
-           bad_data=find(p==-9999); p(bad_data)=NaN;
-
-           eval_string(iiiS4(j))={['S4_' num2str(serialno)]};
-
-           eval([char(eval_string(iiiS4(j))) '.jd=jd;']);
-           eval([char(eval_string(iiiS4(j))) '.p=p;']);
-           if unfilt==0
-               % Apply a butterworth filter to the data using auto_filt and use for
-               % plots
-               sampling_rate = 1/median(diff(jd));
-
-               ii = eval(['find(~isnan(' char(eval_string(iiiS4(j))) '.p));']); 
-               eval([char(eval_string(iiiS4(j))) '.p(ii)=auto_filt(' char(eval_string(iiiS4(j)))...
-                     '.p(ii), sampling_rate, 1/2,''low'',4);']);
-           end
-       end
-       j=j+1;
-       
-    end
-end
-
-%-----------------------------------
-% Now read in RCM11 data if required
-%-----------------------------------
-if iiRCM11>0
-    j=1;
-    
-    % loop to read one file at a time
-
-    for i=1:length(vecRCM11);
-       serialno = vecRCM11(i);
-       disp('*************************************************************')
-       disp(['Reading RCM11 - ',num2str(serialno)])
-       disp('*************************************************************')
-
-       if isunix
-           infile = [procpath,moor,'/rcm/',moor,'_',sprintf('%3.3d',vecRCM11(i)),'.use'];
-       elseif ispc
-           infile = [procpath,moor,'\rcm\',moor,'_',sprintf('%3.3d',vecRCM11(i)),'.use'];
-       end
-
-       % check if file exists
-       fileopen=fopen(infile,'r');
-       
-       if fileopen>0
-           % read data into vectors and then into structure array
-
-           [yy,mm,dd,hh,ref,u,v,t,c,p,tlt,mss] = rodbload(infile,'yy:mm:dd:hh:ref:u:v:t:c:p:tlt:mss');
-           jd=julian(yy,mm,dd,hh);
-
-           bad_data=find(p==-9999); p(bad_data)=NaN;
-
-           eval_string(iiiRCM11(j))={['RCM11_' num2str(serialno)]};
-
-           eval([char(eval_string(iiiRCM11(j))) '.jd=jd;']);
-           eval([char(eval_string(iiiRCM11(j))) '.p=p;']);
-
-           if unfilt==0
-               % Apply a butterworth filter to the data using auto_filt and use for
-               % plots
-               sampling_rate = 1/median(diff(jd));
-
-               ii = eval(['find(~isnan(' char(eval_string(iiiRCM11(j))) '.p));']); 
-               eval([char(eval_string(iiiRCM11(j))) '.p(ii)=auto_filt(' char(eval_string(iiiRCM11(j)))...
-                     '.p(ii), sampling_rate, 1/2,''low'',4);']);
-           end
-       end
-       j=j+1;
-    end
-end
-
-%--------------------------------------
-% Now read in Argonaut data if required
-%--------------------------------------
-if iiARG>0
-    j=1;
-    
-    % loop to read one file at a time
-
-    for i=1:length(vecARG);
-       serialno = vecARG(i);
-       disp('*************************************************************')
-       disp(['Reading ARGONAUT - ',num2str(serialno)])
-       disp('*************************************************************')
-
-       if isunix
-           infile = [procpath,moor,'/arg/',moor,'_',num2str(vecARG(i)),'.use'];
-           if exist(infile)==0  % older Arg files had 4 digit serial number starting with zero in filename
-               infile = [procpath,moor,'/arg/',moor,'_0',num2str(vecARG(i)),'.use'];
-           end
-       elseif ispc
-           infile = [procpath,moor,'\arg\',moor,'_',num2str(vecARG(i)),'.use'];
-           if exist(infile)==0  % older Arg files had 4 digit serial number starting with zero in filename
-               infile = [procpath,moor,'\arg\',moor,'_0',num2str(vecARG(i)),'.use'];
-           end
-       end
-
-       % check if file exists
-       fileopen=fopen(infile,'r');
-      
-       if fileopen>0
-           % read data into vectors and then into structure array
-
-           [yy,mm,dd,hh,t,tcat,p,pcat,c,u,v,w,hdg,pit,rol,usd,vsd,wsd,uss,vss,wss,hdgsd,pitsd,rolsd,ipow] = ...
-               rodbload(infile,'yy:mm:dd:hh:t:tcat:p:pcat:c:u:v:w:hdg:pit:rol:usd:vsd:wsd:uss:vss:wss:hdgsd:pitsd:rolsd:ipow');
-           jd=julian(yy,mm,dd,hh);
-
-           bad_data=find(p==-9999); p(bad_data)=NaN;
-
-           eval_string(iiiARG(j))={['ARG_' num2str(serialno)]};
-
-           eval([char(eval_string(iiiARG(j))) '.jd=jd;']);
-           eval([char(eval_string(iiiARG(j))) '.p=p;']);
-
-           if unfilt==0
-               % Apply a butterworth filter to the data using auto_filt and use for
-               % plots
-               sampling_rate = 1/median(diff(jd));
-
-               ii = eval(['find(~isnan(' char(eval_string(iiiARG(j))) '.p));']); 
-               eval([char(eval_string(iiiARG(j))) '.p(ii)=auto_filt(' char(eval_string(iiiARG(j)))...
-                     '.p(ii), sampling_rate, 1/2,''low'',4);']);
-           end
-       end
-       j=j+1;
-    end
-end
-%--------------------------------------
-% Now read in Aquadopp data if required
-%--------------------------------------
-if iiNOR>0
-    j=1;
-    
-    % loop to read one file at a time
-
-    for i=1:length(vecNOR);
-       serialno = vecNOR(i);
-       disp('*************************************************************')
-       disp(['Reading AQUADOPP - ',num2str(serialno)])
-       disp('*************************************************************')
-
-	if proclvl==2
-	       if isunix
-        	   infile = [procpath,moor,'/nor/',moor,'_',sprintf('%3.3d',vecNOR(i)),'.use'];
-       		elseif ispc
-        	   infile = [procpath,moor,'\nor\',moor,'_',sprintf('%3.3d',vecNOR(i)),'.use'];
-       		end
-	elseif proclvl==3
-	       if isunix
-        	   infile = [procpath,moor,'/nor/',moor,'_',sprintf('%3.3d',vecNOR(i)),'.edt'];
-       		elseif ispc
-        	   infile = [procpath,moor,'\nor\',moor,'_',sprintf('%3.3d',vecNOR(i)),'.edt'];
-       		end	
-	end       
-       
-       % check if file exists
-       fileopen=fopen(infile,'r');
-      
-       if fileopen>0
-           % read data into vectors and then into structure array
-
-           [yy,mm,dd,hh,t,p,u,v,w,hdg,pit,rol,uss,vss,wss,ipow,cs,cd] = ...
-               rodbload(infile,'yy:mm:dd:hh:t:p:u:v:w:hdg:pit:rol:uss:vss:wss:ipow:cs:cd');
-           jd=julian(yy,mm,dd,hh);
-
-           bad_data=find(p==-9999); p(bad_data)=NaN;
-
-           eval_string(iiiNOR(j))={['NOR_' num2str(serialno)]};
-
-           eval([char(eval_string(iiiNOR(j))) '.jd=jd;']);
-           eval([char(eval_string(iiiNOR(j))) '.p=p;']);
-           if unfilt==0
-               % Apply a butterworth filter to the data using auto_filt and use for
-               % plots
-               sampling_rate = 1/median(diff(jd));
-
-                ii = eval(['find(~isnan(' char(eval_string(iiiNOR(j))) '.p));']); 
-                eval([char(eval_string(iiiNOR(j))) '.p(ii)=auto_filt(' char(eval_string(iiiNOR(j)))...
-                      '.p(ii), sampling_rate, 1/2,''low'',4);']);
-           end
-       end
-       
-       j=j+1;
-    end
-end
-
-%--------------------------------------
-% Now read in Seagaurd data if required
-%--------------------------------------
-if iiSG>0
-    j=1;
-    
-    % loop to read one file at a time
-
-    for i=1:length(vecSG);
-       serialno = vecSG(i);
-       disp('*************************************************************')
-       disp(['Reading Seaguard - ',num2str(serialno)])
-       disp('*************************************************************')
-
-       if isunix
-           infile = [procpath,moor,'/seaguard/',moor,'_',sprintf('%3.3d',vecSG(i)),'.use'];
-       elseif ispc
-           infile = [procpath,moor,'\seaguard\',moor,'_',sprintf('%3.3d',vecSG(i)),'.use'];
-       end
-       
-       % check if file exists
-       fileopen=fopen(infile,'r');
-      
-       if fileopen>0
-           % read data into vectors and then into structure array
-           
-           [yy,mm,dd,hh,u,v,cs,cd,cssd,mss,hdg,pit,rol,t,c,tc,p,tp,ipow] = ...
-            rodbload(infile,'YY:MM:DD:HH:U:V:CS:CD:CSSD:MSS:HDG:PIT:ROL:T:C:TC:P:TP:IPOW');
-           jd=julian(yy,mm,dd,hh);
-
-           bad_data=find(p==-9999); p(bad_data)=NaN;
-
-           eval_string(iiiSG(j))={['SG_' num2str(serialno)]};
-
-           eval([char(eval_string(iiiSG(j))) '.jd=jd;']);
-           eval([char(eval_string(iiiSG(j))) '.p=p;']);
-           if unfilt==0
-               % Apply a butterworth filter to the data using auto_filt and use for
-               % plots
-               sampling_rate = 1/median(diff(jd));
-
-                ii = eval(['find(~isnan(' char(eval_string(iiiSG(j))) '.p));']); 
-                eval([char(eval_string(iiiSG(j))) '.p(ii)=auto_filt(' char(eval_string(iiiSG(j)))...
-                      '.p(ii), sampling_rate, 1/2,''low'',4);']);
-           end
-       end 
-       j=j+1;
-    end
-end
+%only keep the rows where we loaded data
+id_z_sn = id_z_sn(id_z_sn.data_loaded,:);
 
 
 % ------------------------------
 % Plotting section
 % ------------------------------
-colours = 'bkbkbkbkbkbkbkbkbkbkbkbkbkbkbkbkbkbkbkbkbkbkbkbkbkbk';
 
-emptycellcheck=cellfun('isempty',eval_string);
-eval_string(emptycellcheck)=[];  
-depths = depths(~emptycellcheck,:);
-for i=1:length(eval_string)
-    figure(pressure_plot); hold on
-    eval(['plot(' char(eval_string(i)) '.jd-jd1,' char(eval_string(i)) '.p,''' colours(i) ''');']);
+for iid = 1:length(id_z_sn.id)
+    figure(plot1); hold on
+    iname = sprintf('%s_%d', id_z_sn.inst{iid}, id_z_sn.sn(iid));
+    col = 'black'; if isodd(iid); col = 'blue'; end
+    plot(alldata.(iname).jd-jd1,alldata.(iname).p,'color',col);
 end
 
-figure(pressure_plot);
+figure(plot1);
 ylabel('pressure (dbar)');
 xlim([0 jd2-jd1]);
 limits=get(gca,'ylim');
@@ -702,12 +259,17 @@ end
 
 % label data with nominal instrument depth
 label_x_positions=(X_limits(2)-X_limits(1))*1.005+X_limits(1);
-
-for i=1:length(eval_string)
-    label_y_positions=eval(['nanmedian(' char(eval_string{i}) '.p);']); 
-    eval(['text(label_x_positions, label_y_positions,[num2str(depths(i,2)) ''m''],''FontSize'',8,''color'',''' colours(i) ''');'])
+for iid = 1:length(id_z_sn.id)
+    iname = sprintf('%s_%d', id_z_sn.inst{iid}, id_z_sn.sn(iid));
+    label_y_positions = nanmedian(alldata.(iname).p);
+    col = 'black'; if isodd(iid); col = 'blue'; end
+    text(label_x_positions,label_y_positions,sprintf('%d m',id_z_sn.z(iid)),'FontSize',8,'color',col);
 end
 
 %keyboard
-print('-dpng',[moor '_pressure_overlay_proclvl_' proclvlstr])
-savefig([moor '_pressure_overlay_proclvl_' proclvlstr])
+if ~exist(outpath,'dir')
+    mkdir(outpath)
+end
+outfile = fullfile(outpath,[moor '_pressure_overlay_proclvl_' proclvlstr]);
+print('-dpng',outfile)
+savefig(outfile)
