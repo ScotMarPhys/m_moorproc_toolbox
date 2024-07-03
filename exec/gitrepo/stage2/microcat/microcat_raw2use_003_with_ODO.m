@@ -355,7 +355,6 @@ for proc = 1 : length(sn)
         end
         orient tall
         print(gcf,'-dpng','-r300',fullfile(pd.stage2figpath,sprintf(pd.stage2form,sn(proc))));
-        disp('pause (press any key to continue)'); pause
 
         sampling_rate = 1/median(diff(jd));
         tf            = auto_filt(t, sampling_rate, 1/2,'low',4);
@@ -428,6 +427,7 @@ for proc = 1 : length(sn)
 
         orient tall
         print(gcf,'-dpng','-r300',fullfile(pd.stage2figpath,[sprintf(pd.stage2form,sn(proc)) '_lowpass']));
+        disp('pause (press any key to continue)'); pause
 
     end % if exist(infile)
 

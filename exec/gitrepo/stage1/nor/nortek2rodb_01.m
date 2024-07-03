@@ -70,8 +70,8 @@ serial_nums=sn(vec)
 %check if file exists
 if ~exist(pd.listfile,'file')
     error('Create list of S/Ns and data file names in %s and try again',pd.listfile)
-
 end
+
 [input_ser_nums, filenames]=textread(pd.listfile,'%d %s');
 
 % -------- load data --------------
@@ -96,6 +96,16 @@ for i = 1:length(filenames)
     fprintf(fidlog,'outfile: %s\n',outfile);
     fprintf(fidlog,'Nortek serial number  : %d\n',input_ser_nums(i));
 
+    if ~exist(infile,'file')==2;
+        checkans = input(['File for serial number ' serial_nums(i) 'not found. Do you want to continue? y/n [y]:'],'s');
+       if isempty(checkans)
+          reply = 'Y';
+       end
+       continue
+    else 
+        disp(['Processing file ' serial_nums(i)])
+    end
+    
     all_data=load(infile);
     month=all_data(:,1); day=all_data(:,2); year=all_data(:,3); 
     hour=all_data(:,4); minute=all_data(:,5); second=all_data(:,6);
