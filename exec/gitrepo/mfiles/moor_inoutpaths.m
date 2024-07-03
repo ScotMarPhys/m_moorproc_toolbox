@@ -4,6 +4,8 @@ function pd = moor_inoutpaths(datatype,loc)
 % predirs = moor_inoutpaths('microcat_cal_dip',cast)
 % predirs = moor_inoutpaths('microcat',moor)
 % predirs = moor_inoutpaths('nor',moor)
+% predirs = moor_inoutpaths('bpr',moor)
+% predirs = moor_inoutpaths('adcp',moor)
 %
 % set input and output directories and filename prefixes to be accessed by
 % successive stages of processing for each type of data given by datatype: 
@@ -54,6 +56,13 @@ switch datatype
         pd.stage2path = fullfile(mg.moordatadir, 'proc', moor, 'nor');
         pd.stage2log = fullfile(mg.reportdir, 'stats', ['stage2_log_Nortek_' moor]);
         pd.stage2form = [moor '_%d.use'];
+        pd.stage3path = fullfile(mg.moordatadir, 'proc', moor, 'nor');
+        pd.stage3form = [moor '_%d.edt'];
+        pd.stage3log = [moor '_%d.edt.log'];
+        pd.stage3formh = [moor '_%d.highedt'];
+        pd.stage3logh = [moor '_%d.highedt.log'];   
+        pd.stage3forml = [moor '_%d.lowedt'];
+        pd.stage3logl = [moor '_%d.lowedt.log'];
     case 'bpr'
         moor = loc;
         pd.rawpath = fullfile(mg.moordatadir, 'raw', mg.cruise, 'seagauge');
@@ -63,5 +72,24 @@ switch datatype
         pd.stage1path = fullfile(mg.moordatadir, 'proc', moor, 'seagauge');
         pd.stage1log = fullfile(pd.stage1path, [moor '_seaguard_stage1.log']);
         pd.stage1form = [moor '_%5.5d.raw'];
+    case 'adcp'
+        disp(datatype)
+        moor = loc;
+        pd.rawpath = fullfile(mg.moordatadir, 'raw', mg.cruise, datatype);
+        pd.infofile = fullfile(mg.moordatadir, 'proc', moor, [moor 'info.dat']);
+        pd.stage1path = fullfile(mg.moordatadir, 'proc', moor, datatype);
+        pd.stage1log = fullfile(pd.stage1path, [moor '_ADCP_stage1.log']);
+        pd.stage1form = [moor '_%d_bin%02.f.raw'];
+        pd.stage2inform = [moor '_%d_bin'];
+        pd.stage2path = fullfile(mg.moordatadir, 'proc', moor, datatype);
+        pd.stage2log = fullfile(pd.stage2path, [moor '_ADCP_stage2.log']);
+        pd.stage2form = [moor '_%d_bin%02.f.use'];
+        pd.stage3path = fullfile(mg.moordatadir, 'proc', moor, datatype);
+        pd.stage3form = [moor '_%d_bin%02.f.edt'];
+        pd.stage3log = [moor '_%d_bin%02.f.edt.log'];
+        pd.stage3formh = [moor '_%d_bin%02.f.highedt'];
+        pd.stage3logh = [moor '_%d_bin%02.f.highedt.log'];   
+        pd.stage3forml = [moor '_%d_bin%02.f.lowedt'];
+        pd.stage3logl = [moor '_%d_bin%02.f.lowedt.log'];
 
 end

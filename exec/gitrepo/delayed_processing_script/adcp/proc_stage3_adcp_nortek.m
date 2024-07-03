@@ -6,23 +6,12 @@
 
 
 close all
-clearvars -except MEXEC MEXEC_A MEXEC_G pathosnap;
+global MOORPROC_G
+clearvars -except MEXEC_G MOORPROC_G
+cruise   = MOORPROC_G.cruise;
+operator = MOORPROC_G.operator;
+moor = input('mooring deployment (e.g. ebh2_15_2022) to process:   ','s');
+plot_interval=[]; %automatic based on available times
 
-%moor = 'rtwb1_01_2014';
-%moor = 'rtwb2_04_2017';
-%moor = 'rtwb1_04_2017';
-%moor  = 'ib5_01_2018';
-moor  = 'ib3_01_2018';
-moor  = 'rteb1_05_2018';
-
-if exist('pathosnap','var')
-    basedir = [pathosnap filesep 'data' filesep];
-else
-    basedir = '/local/users/pstar/osnap/data/';
-end
-
-procpath = [basedir 'moor/proc/' ];
-
-
-cm_edit_NOCS(moor,'procpath',procpath)
+cm_edit_NOCS(moor)
 

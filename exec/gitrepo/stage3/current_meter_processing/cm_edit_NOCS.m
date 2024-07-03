@@ -69,62 +69,45 @@ function cm_edit_NOCS(moor,varargin)
 %                     - prescribe ALL filter types in embedded function: mfliter (see v3,4 for prevous code
 %
 
-if nargin <1
+global MOORPROC_G
+
+basedir = MOORPROC_G.moordatadir;
+cruise= MOORPROC_G.cruise;
+
+if nargin==0
     help cm_edit_NOCS
     return
 end
 
-varargin_string=varargin;
-for i=1:length(varargin) % need to change numeric values in varargin to string so can search with strmatch below
-    if isnumeric(varargin{i})
-        varargin_string{i}=num2str(varargin{i});
-    end
+if nargin==1
+    pd = moor_inoutpaths('adcp',moor);
+else
+    pd = varargin{1};
 end
 
 % check for optional arguments
+varargin_string=varargin;
 a=strmatch('filfac',varargin_string,'exact'); % check for filfac first
 if a>0
     filfac=str2double(varargin{a+1});
 else
     filfac=10; % --- filter factor for despiking
 end
-a=strmatch('procpath',varargin_string,'exact');
-if a>0
-    procpath=char(varargin{a+1});
-else
-    procpath= '/home/mstar/osnap/data/moor/proc/';
-end
 
-if isunix
-    infofile=[procpath,moor,'/',moor,'info.dat'];
-elseif ispc
-    infofile=[procpath,moor,'\',moor,'info.dat'];
-end
+operator = MOORPROC_G.operator;
+mg = MOORPROC_G;
 
-% Load vectors of mooring information
-% id instrument id, sn serial number, z nominal depth of each instrument
-% s_t, e_t, s_d, e_d start and end times and dates
-% lat lon mooring position, wd corrected water depth (m)
-% mr mooring name
-[id,sn,z,s_t,s_d,e_t,e_d,lat,lon,wd,mr,magdec]  =  rodbload(infofile,...
-    'instrument:serialnumber:z:Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:WaterDepth:Mooring:MagDeviation');
+% ----- read infofile / open logfile  ------------------------------------
 
-% JULIAN Convert Gregorian date to Julian day.
-% JD = JULIAN(YY,MM,DD,HH) or JD = JULIAN([YY,MM,DD,HH]) returns the Julian
-% day number of the calendar date specified by year, month, day, and decimal
-% hour.
-% JD = JULIAN(YY,MM,DD) or JD = JULIAN([YY,MM,DD]) if decimal hour is absent,
-% it is assumed to be zero.
-% Although the formal definition holds that Julian days start and end at
-% noon, here Julian days start and end at midnight. In this convention,
-% Julian day 2440000 began at 00:00 hours, May 23, 1968.
+infovar = ['instrument:serialnumber:z:Start_Time:Start_Date:End_Time:'...
+    'End_Date:Latitude:Longitude:WaterDepth:Mooring:MagDeviation']; 
+[id,sn,z,s_t,s_d,e_t,e_d,lat,lon,wd,mr,magdec]  =  rodbload(pd.infofile,infovar);
 
-%jd_start = julian([s_d' hms2h([s_t;0]')']);
-%jd_end   = julian([e_d' hms2h([e_t;0]')']);
 
-disp(['z : instrument id : serial number'])
+
 for i = 1:length(id)
-    disp([z(i),id(i),sn(i)])
+    fprintf('z=%d : instrument id=%d : serial number=%d\n',...
+        z(i),id(i),sn(i))
 end
 
 % find the index number of S4s
@@ -778,6 +761,7 @@ if 1
 if iiNOR>0
     
     % loop to read one file at a time
+    pd = moor_inoutpaths('nor',moor);
     j=1;
     clear s
     for i=1:length(vecNOR);
@@ -785,29 +769,19 @@ if iiNOR>0
        disp('*************************************************************')
        disp(['Reading NORTEK - ',num2str(serialno)])
        disp('*************************************************************')
-       
-
-       if isunix
-           infile = [procpath,moor,'/nor/',moor,'_',sprintf('%4.4d',vecNOR(i)),'.use'];
-           outfile = [procpath,moor,'/nor/',moor,'_',sprintf('%4.4d',vecNOR(i)),'.highedt'];
-           logfile = [procpath,moor,'/nor/',moor,'_',sprintf('%4.4d',vecNOR(i)),'.highedt.txt'];
-           outfile1 = [procpath,moor,'/nor/',moor,'_',sprintf('%4.4d',vecNOR(i)),'.lowedt'];
-           logfile1 = [procpath,moor,'/nor/',moor,'_',sprintf('%4.4d',vecNOR(i)),'.lowedt.txt'];
-           outfilenonfilt = [procpath,moor,'/nor/',moor,'_',sprintf('%4.4d',vecNOR(i)),'.edt'];           
-           logfilenonfilt = [procpath,moor,'/nor/',moor,'_',sprintf('%4.4d',vecNOR(i)),'.edt.txt'];
-       elseif ispc
-           infile = [procpath,moor,'\nor\',moor,'_',sprintf('%4.4d',vecNOR(i)),'.use'];
-           outfile = [procpath,moor,'\nor\',moor,'_',sprintf('%4.4d',vecNOR(i)),'.highedt'];          
-           logfile = [procpath,moor,'\nor\',moor,'_',sprintf('%4.4d',vecNOR(i)),'.highedt.txt'];
-           outfile1 = [procpath,moor,'\nor\',moor,'_',sprintf('%4.4d',vecNOR(i)),'.lowedt'];
-           logfile1 = [procpath,moor,'\nor\',moor,'_',sprintf('%4.4d',vecNOR(i)),'.lowedt.txt'];
-           outfilenonfilt = [procpath,moor,'\nor\',moor,'_',sprintf('%4.4d',vecNOR(i)),'.edt'];           
-           logfilenonfilt = [procpath,moor,'\nor\',moor,'_',sprintf('%4.4d',vecNOR(i)),'.edt.txt'];          
-       end
+              
+       infile = fullfile(pd.stage2path,sprintf(pd.stage2form,serialno));
+       outfile = fullfile(pd.stage3path,sprintf(pd.stage3formh,serialno));
+       logfile = fullfile(pd.stage3path,sprintf(pd.stage3logh,serialno));
+       outfile1 = fullfile(pd.stage3path,sprintf(pd.stage3forml,serialno));
+       logfile1 = fullfile(pd.stage3path,sprintf(pd.stage3logl,serialno));
+       outfilenonfilt = fullfile(pd.stage3path,sprintf(pd.stage3form,serialno));
+       logfilenonfilt = fullfile(pd.stage3path,sprintf(pd.stage3log,serialno));        
 
        % read data into vectors and then into structure array if required
        if exist(outfilenonfilt) == 2 
-         over = input([outfile,' exists already: do you want to overwrite it? y/n '],'s');  
+         fprintf('%s',outfile)
+         over = input(' \n exists already: do you want to overwrite it? y/n ','s');  
     
         if ~strcmp(over,'y')
          continue
@@ -816,8 +790,9 @@ if iiNOR>0
        [yy,mm,dd,hh,t,p,u,v,w,hdg,pit,rol,uss,vss,wss,ipow,cs,cd] = rodbload(infile,'yy:mm:dd:hh:t:p:u:v:w:hdg:pit:rol:uss:vss:wss:ipow:cs:cd');
        jd=julian(yy,mm,dd,hh);
 
-       if isempty(t)     
-         over = input(['No file ' infile ' \nDo you want to process the next currentmeter? y/n '],'s');  
+       if isempty(t)
+         fprintf('No file %s',outfile)  
+         over = input([' \nDo you want to process the next currentmeter? y/n '],'s');  
         if strcmp(over,'y')
          continue
         else
@@ -1241,8 +1216,8 @@ end
 if iiADCP>0 
     
     % -- set path for data input
-    inpath  = [procpath moor '/'];
-    
+    inpath  = fullfile(mg.moordatadir,'proc', moor);
+    pd = moor_inoutpaths('adcp',moor);
     % loop to read one file at a time
     j=1;
     for i= 1:length(vecADCP);
@@ -1253,8 +1228,9 @@ if iiADCP>0
       
        % first determine how many bin files are to be processed
        % trying to do automatically
-       num_bins=dir([inpath,'adp/*',num2str(serialno) '*.use'])
-       num_bins=length(num_bins)
+       num_bins=dir(fullfile(pd.stage1path,...
+        [sprintf(pd.stage2inform,serialno),'*.use']));
+       num_bins=length(num_bins);
        clear press_sensor corfac s
        
        pgoodselec = input(['\n Percent good for Teledyne RDI ADCPs: fail = PG1 + PG4 < 25 and suspect = PG1 + PG4 < 75 \n ' ...
@@ -1265,9 +1241,9 @@ if iiADCP>0
            pgoodlim = 75;
        end
        
-       outpath  = [procpath moor '/adp/'];
+       outpath  = pd.stage1path;
        outfileflag=[moor '_' num2str(vecADCP(i)) '_pg1pg4'];
-       matpgfourfile = [outpath outfileflag '_manualflag.mat'];
+       matpgfourfile = fullfile(outpath,[outfileflag '_manualflag.mat']);
        if exist(matpgfourfile)==2
         ierase=input('\n A mat file with the good data bin domain exists, do you want to load it ? y/n:  ','s');
           if (strcmp(ierase,'y')||strcmp(ierase,'Y')||strcmp(ierase,'yes')||strcmp(ierase,'Yes')||strcmp(ierase,'YES'))
@@ -1280,7 +1256,7 @@ if iiADCP>0
        
        manual_despike =  input('Are you planning to do an additional manual despiking of the data? 0=no, 1=yes: ');
        
-       num_bins
+       
        for j=1:num_bins % loop for total number of bins
        
        figure(spikes_u);clf;
@@ -1291,26 +1267,13 @@ if iiADCP>0
             columns = ['YY:MM:DD:HH:Z:T:U:V:W:HDG:PIT:ROL:CS:CD:BEAM1SS:BEAM2SS:BEAM3SS'...
                 ':BEAM4SS:BEAM1COR:BEAM2COR:BEAM3COR:BEAM4COR:EV:BEAM1PGP:BEAM2PGP:BEAM3PGP:BEAM4PGP'];
 
-         
-           if isunix
-               infile = [procpath,moor,'/adp/',moor,'_',num2str(serialno),'_bin',num2str(j,'%02d'),'.use'];
-               outfile = [procpath,moor,'/adp/',moor,'_',num2str(serialno),'_bin',num2str(j,'%02d'),'.highedt'];
-               logfile = [procpath,moor,'/adp/',moor,'_',num2str(serialno),'_bin',num2str(j,'%02d'),'.highedt.txt'];
-               outfile1 = [procpath,moor,'/adp/',moor,'_',num2str(serialno),'_bin',num2str(j,'%02d'),'.lowedt'];
-               logfile1 = [procpath,moor,'/adp/',moor,'_',num2str(serialno),'_bin',num2str(j,'%02d'),'.lowedt.txt'];
-               outfilenonfilt = [procpath,moor,'/adp/',moor,'_',num2str(serialno),'_bin',num2str(j,'%02d'),'.edt'];
-               logfilenonfilt = [procpath,moor,'/adp/',moor,'_',num2str(serialno),'_bin',num2str(j,'%02d'),'.edt.txt'];                          
-           elseif ispc
-               infile = [procpath,moor,'\adp\',moor,'_',num2str(serialno),'_bin',num2str(j,'%02d'),'.use'];
-               outfile = [procpath,moor,'\adp\',moor,'_',num2str(serialno),'_bin',num2str(j,'%02d'),'.highedt'];          
-               logfile = [procpath,moor,'\adp\',moor,'_',num2str(serialno),'_bin',num2str(j,'%02d'),'.highedt.txt'];
-               outfile1 = [procpath,moor,'\adp\',moor,'_',num2str(serialno),'_bin',num2str(j,'%02d'),'.lowedt'];
-               logfile1 = [procpath,moor,'\adp\',moor,'_',num2str(serialno),'_bin',num2str(j,'%02d'),'.lowedt.txt'];
-               outfilenonfilt = [procpath,moor,'\adp\',moor,'_',num2str(serialno),'_bin',num2str(j,'%02d'),'.edt'];
-               logfilenonfilt = [procpath,moor,'\adp\',moor,'_',num2str(serialno),'_bin',num2str(j,'%02d'),'.edt.txt'];                   
-           end
-            
-            
+       infile = fullfile(pd.stage2path,sprintf(pd.stage2form,serialno,j));
+       outfile = fullfile(pd.stage3path,sprintf(pd.stage3formh,serialno,j));
+       logfile = fullfile(pd.stage3path,sprintf(pd.stage3logh,serialno,j));
+       outfile1 = fullfile(pd.stage3path,sprintf(pd.stage3forml,serialno,j));
+       logfile1 = fullfile(pd.stage3path,sprintf(pd.stage3logl,serialno,j));
+       outfilenonfilt = fullfile(pd.stage3path,sprintf(pd.stage3form,serialno,j));
+       logfilenonfilt = fullfile(pd.stage3path,sprintf(pd.stage3log,serialno,j));
        
        % read data into vectors and then into structure array if required
        if exist(outfilenonfilt) == 2 
@@ -1375,7 +1338,7 @@ if iiADCP>0
        u(abs(u)>200) = nan;
        v(abs(v)>200) = nan;       
        
-       if isempty(find(~isnan(u)) | find(~isnan(v)))
+       if isempty(find(~isnan(u),1)) || isempty(find(~isnan(v),1))
            continue
        end
        % don't bother with current speed (cs) and current direction (cd) as
