@@ -136,7 +136,7 @@ sn = sn(ii);
 % --- create log file ---
 fidlog = fopen(pd.stage1log,'w');
 if fidlog==-1
-    error('could not open logfile %s',logf)
+    error('could not open logfile %s',pd.stage1log) % error('could not open logfile %s',logf)
 end
 legend_handle = ['[';'[';'['];
 legend_string = [];
@@ -183,7 +183,8 @@ for i = 1:length(sn)
     if exist(infile,'file')
         valid_sn(i)=true;
         %------------------------------------------------------------
-        % specific cases when microcat starting jday is >365
+        % specific cases when microcat time is "jd" (really year-day) or
+        % when an offset needs to be applied due to clock error
         if(contains(cruise,'ar30') && sn(i) == 11327 && contains(cast,'6'))
             dateoffsetmc = 2017;
         elseif  (contains(cruise,'ar30') && sn(i) == 9141 && contains(cast,'5'))
@@ -192,6 +193,8 @@ for i = 1:length(sn)
             dateoffsetmc=60/86400;
         elseif strcmp(cruise,'en705') && strcmp(cast,'2')
             dateoffsetmc=-1/24; %note: this is subtracted from mc times
+        elseif strcmp(cruise,'dy181') && strcmp(cast,'3') %after this, use seconds
+            dateoffsetmc=MOORPROC_G.YEAR;
         else
             dateoffsetmc = 0;
         end
