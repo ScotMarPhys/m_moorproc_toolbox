@@ -287,7 +287,7 @@ if sum(id2==335)>0
 end
 
 fprintf(fidlog,'%s \n','for mcats wi serial nos ')
-fprintf(fidlog,'%s \n',num2str(sn));
+fprintf(fidlog,'%s \n',num2str(sn'));
 fprintf(fidlog,'%s \n','mean p diff = ')
 fprintf(fidlog,'%s \n',pdiff);
 fprintf(fidlog,'%s \n','mean c diff = ')
