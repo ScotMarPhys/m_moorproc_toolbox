@@ -23,6 +23,11 @@ ctdnum = sprintf('%03d',str2double(cast));
 ctdsen = input('Which CTD sensors (1 or 2 [or blank to use already-selected primary])?) ','s');
 oxysen = input('Which CTD oxygen (1 or 2 [or blank to use already-selected primary])?' , 's');
 
+diff_max.p = 5; 
+diff_max.c = 0.02; 
+diff_max.t = 0.005; 
+diff_max.o = 20;
+
 % --- get paths for data input and output ---
 pd = moor_inoutpaths('microcat_cal_dip',cast);
 if ~exist(fileparts(pd.stage2log),'dir')
@@ -134,6 +139,7 @@ for i = 1:nvec
     if (i > 7 && i<=14)  lstr='--'; elseif i>14  lstr ='-.'; else lstr = '-'; end
     % Time variable
     dday = julian(yy,mm,dd,hh)-jd0;
+    sampint = round(nanmedian(diff(dday))*24*3600);
     % interpolate CTD onto microcat for a rough and ready mean diff
     pi = interp1(d.dday, d.press, dday);
     ti = interp1(d.dday, d.temp, dday);
@@ -141,45 +147,102 @@ for i = 1:nvec
     oi = interp1(d.dday, d.oxygen, dday);
 
     %% PLOT DATA AT BOTTLE STOPS
+    
     dobotstop=1; 
-    if dobotstop %***come back to this, only giving 0-1 dots per figure?
-        dp=gradient(p(i,:));
-        % i=find(dp<0.02 & dp>-0.02 & abs(ctdp(1,j)-p(1,j)) < 10);
+    
+    if dobotstop 
+        
+    % Edit ESDU, DY181 2024 - above plotting script not doing what it should
+        dp_=diff(pi);   
+        dp(1,1)=NaN; dp(2:length(pi),1)=dp_;
         if id2(i)==337
-            iis=find(dp<0.2 & dp>-0.2);
+            iis=find(dp<0.5 & dp>-0.5);
             nsubplot =3;
         elseif id2(i)==335
-            iis=find(dp<1 & dp>-1);
+            iis=find(dp<0.5 & dp>-0.5);
             nsubplot =4;
         end
+
+        % Work out CTD stops
+        diis = diff(iis);
+        ind_diis=find(diis>30/sampint); % detected stops > 30s apart
+        n_stops=length(ind_diis)+1;
+        stop_start(1)=iis(1); stop_end(1)=iis(ind_diis(1));
+        for ind_stop=2:n_stops
+            stop_start(ind_stop)=iis(ind_diis(ind_stop-1)+1);
+            if ind_stop==n_stops
+                stop_end(ind_stop)=iis(end);
+            else
+                stop_end(ind_stop)=iis(ind_diis(ind_stop));
+            end
+        end
+        % Calculate stop duration to select only caldip stops
+        stop_duration=(stop_end-stop_start)*sampint; 
+        stop_valid=find(stop_duration>300);
+        % Calculate offsets at each stop
+        off_p=p-pi;
+        off_t=t-ti;
+        off_c=c-ci;
+        off_o=o-oi;
+        stop_p=nan(1,n_stops); 
+        stop_off_p=nan(1,n_stops); 
+        stop_off_t=nan(1,n_stops); 
+        stop_off_c=nan(1,n_stops); 
+        stop_off_o=nan(1,n_stops);
+        for ind_stop=stop_valid
+            stop_p(ind_stop)=nanmean(pi(stop_start(ind_stop)+5:stop_end(ind_stop)-2)); 
+            if stop_p(ind_stop)<10; stop_p(ind_stop)=NaN; end % remove surface soak
+            stop_off_p(ind_stop)=nanmean(off_p(stop_start(ind_stop)+5:stop_end(ind_stop)-2));
+            stop_off_t(ind_stop)=nanmean(off_t(stop_start(ind_stop)+5:stop_end(ind_stop)-2));
+            stop_off_c(ind_stop)=nanmean(off_c(stop_start(ind_stop)+5:stop_end(ind_stop)-2));
+            stop_off_o(ind_stop)=nanmean(off_o(stop_start(ind_stop)+5:stop_end(ind_stop)-2));
+        end
+
         figure(10+i);clf;
+        % scrnsz=get(0,'screensize');
+        if id2(i)==337
+            set(figure(10+i),'Position',[1 1 1000 600]);
+        elseif id2(i)==335
+            set(figure(10+i),'Position',[1 1 1000 800]);
+        end
+
         subplot(nsubplot,1,1);hold on ; grid on;
-        plot(pi(iis),pi(iis)-p(iis),'ko');
-        xlim([0 max(pi)]); ylim([-5 5]);
+        plot([zmic(i) zmic(i)],[-100 100],'g--','linewidth',2)
+        plot(stop_p,stop_off_p,'bo');
+        xlim([0 max(pi)]); ylim([-1 1]*diff_max.p);yticks([-1:.2:1]*diff_max.p)
         xlabel('press [db]');ylabel('dp [db]');
-        title(['s/n : ',num2str(vec(i))]);
+        title(['s/n : ',num2str(vec(i)) ' - nominal depth ' num2str(zmic(i),'%.0f') 'm - cast ' cast ' - mean offset at each CTD stop (+/- 0.5m)']);
 
-        % subplot(nsubplot,1,2);hold on ; grid on;
-        % plot(ctdp(j,i),(ctdt2(j,i)-t(j,i)),'ko');
-        % xlim([0 max(ctdp(j,:))]); ylim([-0.01 0.01]);
-        % xlabel('press [db]');ylabel('dt [C]');
-        % 
-        % 
-        % subplot(nsubplot,1,3);hold on ; grid on;
-        % plot(ctdp(j,i),(ctdc2(j,i)-c(j,i)),'ko');
-        % xlim([0 max(ctdp(j,:))]); ylim([-0.01 0.01]);
-        % xlabel('press [db]');ylabel('dc [mS/cm]');
-        % 
-        % if id2(j)==335
-        %     subplot(nsubplot,1,4);hold on ; grid on;
-        %     plot(ctdp(j,i),(ctdo2(j,i)-o2(j,i)),'ko');
-        %     xlim([0 max(ctdp(j,:))]); ylim([-20 0]);
-        %     xlabel('press [db]');ylabel('do2 [umol/l]');
-        % end
+        subplot(nsubplot,1,2);hold on ; grid on;
+        plot([zmic(i) zmic(i)],[-100 100],'g--','linewidth',2)
+        plot(stop_p,stop_off_t,'bo');
+        xlim([0 max(pi)]); ylim([-1 1]*diff_max.t); yticks([-1:.2:1]*diff_max.t)
+        xlabel('press [db]');ylabel('dt [C]');
+        %title(['s/n : ',num2str(vec(i)) ' - mean offset at each CTD stop (+/- 0.5m)']);
 
+        subplot(nsubplot,1,3);hold on ; grid on;
+        plot([zmic(i) zmic(i)],[-100 100],'g--','linewidth',2)
+        plot(stop_p,stop_off_c,'bo');
+        xlim([0 max(pi)]); ylim([-1 1]*diff_max.c); yticks([-1:.2:1]*diff_max.c)
+        xlabel('press [db]');ylabel('dc [mS/cm]');
+        %title(['s/n : ',num2str(vec(i)) ' - mean offset at each CTD stop (+/- 0.5m)']);
+
+        if id2(i)==335
+            subplot(nsubplot,1,4);hold on ; grid on;
+            plot([zmic(i) zmic(i)],[-100 100],'g--','linewidth',2)
+            plot(stop_p,stop_off_o,'bo');
+            xlim([0 max(pi)]); ylim([-1 1]*diff_max.o); yticks([-1:.2:1]*diff_max.o)
+            xlabel('press [db]');ylabel('do2 [umol/l]');
+            %title(['s/n : ',num2str(vec(i)) ' - mean offset at each CTD stop (+/- 0.5m)']);
+        end
+
+        print('-dpng',[pd.stage1fig '/microcat_check_caldip_cast_' cast '_' num2str(vec(i))])
+
+        clear dp iis stop_* off_*
 end
+% end edit ESDU
 
-    % Select data from period when CTD kept at maximum depth
+    %% Select data from period when CTD kept at maximum depth
     impt = dday>tm1p & dday < tm2p;
     if sum(impt)==0
         warning('no data from %4.4d near pressure %d',vec(i),mxpi)
@@ -195,7 +258,7 @@ end
     odifx(i,1) = nanmean(o(impt) - oi(impt));
     vectx(i,:) = sprintf('%5i',vec(i));
 
-    % DIfferences of CTD sensors for comparison
+    % Differences of CTD sensors for comparison
     if i == 1
         tix = interp1(d.dday, d.temp2-d.temp1, dday);
         cix = interp1(d.dday, d.cond2-d.cond1, dday);
@@ -207,7 +270,8 @@ end
         o_ctd_m = nanmean(oix(impt));
         o_ctd_s = nanstd(oix(impt));
     end
-    % Select data close to microcats nominal deployment depth
+    
+    % Select data close to microcat's nominal deployment depth
     pbin = 2;
     pbstep = 200;
     ipx = find(pi >zmic(i)-(pbstep/pbin) & pi < zmic(i)+pbstep/pbin);
@@ -215,7 +279,20 @@ end
     nmhx = find(nh == max(nh));
     ptest(i) = px(nmhx(1));
     ipx2 = find(pi > ptest(i)-2*pbin & pi < ptest(i)+2*pbin);
-    ipx3 = ipx2(5:end-2);
+    while length(ipx2)<36 && pbstep<1000 %have to stop somewhere
+        % Edit DY181
+        % If the ctd stops are too far away from the nominal microcat depth the
+        % script will pick a single data point while the ctd is moving (later 
+        % returning NaNs for offsets calculations / producing gaps in plots).
+         pbstep = pbstep+100;
+         ipx = find(pi >zmic(i)-(pbstep/pbin) & pi < zmic(i)+pbstep/pbin);
+         [nh,px] = hist(pi(ipx),floor(pbstep/pbin));
+         nmhx = find(nh == max(nh));
+         ptest(i) = px(nmhx(1));
+         ipx2 = find(pi > ptest(i)-2*pbin & pi < ptest(i)+2*pbin);
+    end
+    % DY181 change: don't use first 5 minutes of stop***make this a cruise option?
+    ipx3 = ipx2(300/sampint:end-2); 
     nimpt(i,2) = length(ipx3);
     pstd(i,2) = nanstd(p(ipx3) - pi(ipx3)); % pi is ctd on microcat time base
     cstd(i,2) = nanstd(c(ipx3) - ci(ipx3));
@@ -326,7 +403,7 @@ fprintf(ilogf,'Stats for cast %s dday %7.3f to %7.3f with CTD sensor set %s \n '
     cast,tm1p,tm2p,ctdsen);
 fprintf(ilogf,'------------------------------------ \n');
 if pwarn
-    fprintf(ilogf,'At maximum overlap depth of CTD cast and MicroCATdata press = %6.1f db std = %4.1f \n',meanctdpr,stdctdpr );
+    fprintf(ilogf,'At maximum overlap depth of CTD cast and MicroCAT data press = %6.1f db std = %4.1f \n',meanctdpr,stdctdpr );
 else
     fprintf(ilogf,'At maximum depth of CTD cast press = %6.1f db std = %4.1f \n',meanctdpr,stdctdpr );
 end
@@ -382,6 +459,7 @@ if doplot
     % Finally save plotfile
     set(gcf,'PaperUnits','centimeters','PaperPosition',[-2 0 27 18 ])
     print('-depsc', pd.stage2fig)
+    print('-dpng', pd.stage2fig)
     % Display the results
 end
 
@@ -430,6 +508,6 @@ ylabel('[dbar]')
 
 % Finally save plotfile
 set(gcf,'PaperUnits','centimeters','PaperPosition',[-2 0 27 18 ])
-print('-dpng', pd.stage2fig)
+print('-dpng', [pd.stage2fig '2'])
 
 type(pd.stage2log)

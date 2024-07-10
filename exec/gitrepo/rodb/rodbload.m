@@ -305,7 +305,7 @@ for k = 1:ndir
             ind = find(varnumber(i) == headnumber);
             if ~isempty(ind)
               [dummy,headinfo] = strtok(allheaders(ind,:),'=');
-              mi = min(find(abs(headinfo(2:length(headinfo))) ~= 32));
+              mi = find(abs(headinfo(2:length(headinfo))) ~= 32, 1 );
               if isempty(mi)
                 mi = 2;
               end
@@ -318,6 +318,9 @@ for k = 1:ndir
                   varargout{i}(j) = sscanf(headinfo,varformat(i,:));
                 else
                   dummy = sscanf(headinfo,varformat(i,:));
+                  if isempty(dummy)
+                      warning('missing info from header?')
+                  end
                   if isstr(dummy)
                     varargout{i}{j} = dummy;
                   else

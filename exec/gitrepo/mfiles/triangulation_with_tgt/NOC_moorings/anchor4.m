@@ -14,7 +14,9 @@
 
 clear all ; close all ;
 
-addpath('../../carter_corr')
+% addpath('../../carter_corr') 
+addpath('/data/pstar/programs/gitvcd/m_moorproc_toolbox/other_software/carter_corr/')
+
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % LOAD DATA:
 % first row is target position

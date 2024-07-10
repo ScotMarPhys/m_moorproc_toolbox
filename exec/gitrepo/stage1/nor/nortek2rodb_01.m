@@ -48,6 +48,12 @@ operator = MOORPROC_G.operator;
 infovar = 'instrument:serialnumber:z:Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:WaterDepth'; 
 [id,sn,z,s_t,s_d,e_t,e_d,lat,lon,wd]  =  rodbload(pd.infofile,infovar);
 
+if ~exist(pd.stage1log,'file')
+    fp = fileparts(pd.stage1log);
+    if ~exist(fp,'dir')
+        mkdir(fp)
+    end
+end
 fidlog   = fopen(pd.stage1log,'a');
 fprintf(fidlog,'Transformation of Nortek ascii data to rodb format \n');
 fprintf(fidlog,'Processing carried out by %s at %s\n\n\n',operator,datestr(clock));
@@ -58,9 +64,10 @@ fprintf(fidlog,'Longitude %6.3f \n\n\n',lon);
 bg = julian([s_d(:)' hms2h([s_t(:)' 0])]); %start
 ed = julian([e_d(:)' hms2h([e_t(:)' 0])]); %end
 
-vec=find((id==368|id==370)); % Nortek instrument code
-
-serial_nums=sn(vec)
+mnor = (id==368 | id==370); % Nortek instrument code
+serial_nums=sn(mnor)
+z = z(mnor);
+id = id(mnor);
 
 % load text file containing serial numbers with related filenames. NB: No
 % header in this file, but column 1 should be serial number and column 2
@@ -72,39 +79,41 @@ if ~exist(pd.listfile,'file')
     error('Create list of S/Ns and data file names in %s and try again',pd.listfile)
 end
 
-[input_ser_nums, filenames]=textread(pd.listfile,'%d %s');
+[file_ser_nums, filenames]=textread(pd.listfile,'%d %s');
+%match up info.dat and list file entries
+[~,iinfo,ilist] = intersect(serial_nums,file_ser_nums,'stable');
+files_not_in_info = setdiff(file_ser_nums,serial_nums);
+sns_not_in_list = setdiff(serial_nums,file_ser_nums);
+if ~isempty(files_not_in_info)
+    warning('these Norteks in %s not found in %s will be skipped:\n',pd.infofile,pd.listfile)
+    for no = 1:length(files_not_in_info)
+        fprintf(1,'%d\n',files_not_in_info(no))
+    end
+end
+if ~isempty(sns_not_in_list)
+    warning('these Norteks from %s are not listed in %s:\n',pd.listfile,pd.infofile)
+    fprintf(1,'%d\n',sns_not_in_list(:))
+end
+serial_nums = serial_nums(iinfo); z = z(iinfo);
+file_ser_nums = file_ser_nums(ilist); filenames = filenames(ilist);
 
 % -------- load data --------------
 for i = 1:length(filenames)
     infile=fullfile(pd.rawpath,filenames{i});
-    if ~exist(infile,'file')
+    if exist(infile,'file')
+        fprintf(1,'Processing file %d\n', serial_nums(i))
+    else
        checkans = input(['File for serial number ' serial_nums(i) 'not found. Do you want to continue to next? y/n [y]:'],'s');
        if isempty(checkans)
           reply = 'Y';
        end
        continue
-    else 
-        fprintf(1,'Processing file %d\n', serial_nums(i))
     end
-    outfile=fullfile(pd.stage1path,sprintf(pd.stage1form,input_ser_nums(i)));
-    indep=sn==input_ser_nums(i);
-    indep=z(indep);
-    if length(indep)>1
-        indep=indep(1);
-    end
+    outfile=fullfile(pd.stage1path,sprintf(pd.stage1form,serial_nums(i)));
+
     fprintf(fidlog,'infile : %s\n',infile);
     fprintf(fidlog,'outfile: %s\n',outfile);
-    fprintf(fidlog,'Nortek serial number  : %d\n',input_ser_nums(i));
-
-    if ~exist(infile,'file')==2;
-        checkans = input(['File for serial number ' serial_nums(i) 'not found. Do you want to continue? y/n [y]:'],'s');
-       if isempty(checkans)
-          reply = 'Y';
-       end
-       continue
-    else 
-        disp(['Processing file ' serial_nums(i)])
-    end
+    fprintf(fidlog,'Nortek serial number  : %d\n',serial_nums(i));
     
     all_data=load(infile);
     month=all_data(:,1); day=all_data(:,2); year=all_data(:,3); 
@@ -137,31 +146,23 @@ for i = 1:length(filenames)
     % ----- save data to rodb -----------------
     
 
-    if find(intersect(input_ser_nums(i),serial_nums))
-        columns = 'YY:MM:DD:HH:T:P:U:V:W:HDG:PIT:ROL:USS:VSS:WSS:IPOW:CS:CD';
-        % errcode, statcode analogue1, analogue2 and soundspeed not saved in this version.
-        data = [dat temperature pressure u.*100 v.*100 w.*100 heading pitch roll Amp1 Amp2 Amp3 bat speed.*100 direction]; 
-        fort =['%4.4d %2.2d %2.2d  %6.4f  %4.2f %7.3f  %4.1f %4.1f %4.1f  %4.1f %4.1f %4.1f  %2d %2d %2d  %2.1f  %4.1f %5.2f'];
-        infovar = ['Mooring:Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:WaterDepth:' ...
-                   'Columns:SerialNumber:InstrDepth']; 
-        rodbsave(outfile,infovar,fort,moor,s_t,s_d,e_t,e_d,lat,lon,wd,columns,...
-                 input_ser_nums(i),indep,data);
-        fprintf(1,'Data written to %s',outfile)
+    columns = 'YY:MM:DD:HH:T:P:U:V:W:HDG:PIT:ROL:USS:VSS:WSS:IPOW:CS:CD';
+    % errcode, statcode analogue1, analogue2 and soundspeed not saved in this version.
+    data = [dat temperature pressure u.*100 v.*100 w.*100 heading pitch roll Amp1 Amp2 Amp3 bat speed.*100 direction];
+    fort =['%4.4d %2.2d %2.2d  %6.4f  %4.2f %7.3f  %4.1f %4.1f %4.1f  %4.1f %4.1f %4.1f  %2d %2d %2d  %2.1f  %4.1f %5.2f'];
+    infovar = ['Mooring:Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:WaterDepth:' ...
+        'Columns:SerialNumber:InstrDepth'];
+    rodbsave(outfile,infovar,fort,moor,s_t,s_d,e_t,e_d,lat,lon,wd,columns,...
+        serial_nums(i),z(i),data);
+    fprintf(1,'Data written to %s',outfile)
 
-    else
-        fprintf(1,'Serial number does not match those in info.dat file - sn: %d',input_ser_nums(i))
-        disp('Stopping routine')
-        return
-    end
 
-    
 
-     
     % -------- generate logfile entries --------------
 
     sz   =   size(data);
 
-    fprintf(fidlog,'Instrument Target Depth[m]  : %d\n',indep);
+    fprintf(fidlog,'Instrument Target Depth[m]  : %d\n',z(i));
     fprintf(fidlog,'Start date and time         : %s \n',datestr(gregorian(jd(1))));
     fprintf(fidlog,'End date and time           : %s \n',datestr(gregorian(jd(end))));
     sampling_rate = round(1./median(diff(jd)));
@@ -194,3 +195,4 @@ for i = 1:length(filenames)
     fprintf(fidlog,'Median power input level [V]                        : %4.1f\n\n\n',m_volt);
 
 end  % loop of serial numbers
+fclose(fidlog);
