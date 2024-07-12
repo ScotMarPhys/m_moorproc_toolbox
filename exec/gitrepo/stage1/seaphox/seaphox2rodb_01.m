@@ -44,28 +44,39 @@
 % been updated with new software 
 % LAD, 0ct 2020 udated to print .png 
 % LAD Oct, 2020 updated Xlim and Ylim
+% TSD Jul, 2024 modified to use global MOORPROC_G 
 
 function seaphox2rodb_01(moor, varargin)
 
-global basedir
+%global basedir
+%
+%if exist('basedir','var')==0
+%    if strfind(mfilename('fullpath'),'/Volumes/rpdmoc/rapid/data/exec/')
+%        % using Mac with mount to rpdmoc either on a cruise or at NOC
+%        basedir = '/Volumes/rpdmoc/rapid/data/';
+%    % else % using NOC network
+%    %     basedir = '/home/mstar/osnap/data/';
+%    else % on pstar machine
+%        basedir ='/local/users/pstar/osnap/'
+%    end
+%else
+%   
+%end
 
-if exist('basedir','var')==0
-    if strfind(mfilename('fullpath'),'/Volumes/rpdmoc/rapid/data/exec/')
-        % using Mac with mount to rpdmoc either on a cruise or at NOC
-        basedir = '/Volumes/rpdmoc/rapid/data/';
-    % else % using NOC network
-    %     basedir = '/home/mstar/osnap/data/';
-    else % on pstar machine
-        basedir ='/local/users/pstar/osnap/'
-    end
-else
-    
-end
+global MOORPROC_G
+
+basedir = MOORPROC_G.moordatadir;
+cruise= MOORPROC_G.cruise;
 
 if nargin==0
-    help(mfilename)
+    help nortek2rodb_01
     return
 end
+
+%if nargin==0
+%    help(mfilename)
+%    return
+%end
 
 % check for optional arguments
 if strcmpi(moor(1:4),'cast')

@@ -71,7 +71,7 @@ if despike %***track parameters (and whether used) for each cruise/record
     T_range = [-15 +15];
     C_range = [-30 +30];
     P_range = [-100 2000];
-    O_range = [50 550];
+    O_range = [-50 550];
     % change from one point to the next can be no larger than 18*standard deviation of time series (after range editing)
     dT_range = 18; 
     dC_range = 18; 
@@ -357,13 +357,41 @@ for proc = 1 : length(sn)
         print(gcf,'-dpng','-r300',fullfile(pd.stage2figpath,sprintf(pd.stage2form,sn(proc))));
 
         sampling_rate = 1/median(diff(jd));
-        tf            = auto_filt(t, sampling_rate, 1/2,'low',4);
-        cf            = auto_filt(c, sampling_rate, 1/2,'low',4);
-        pf            = auto_filt(p, sampling_rate, 1/2,'low',4);
+        
+        % ==== TSD modified here (11/Jul/2024) to exclude dummy for filtering 
+        % Caveat: this simple solution assumes that the gaps are small in
+        %         time, which is not real. If there is a long gap, the
+        %         filtering will propagate to next real value. The best
+        %         solution would be to break the time series in chunks
+        %         everytime we have a gap, and run the filter for each
+        %         chunk.
+
+        af  = find(t>-500);                                 % Find Dummy (-9999)
+        tf  = auto_filt(t(af), sampling_rate, 1/2,'low',4); % Filter without Dummy
+        tf2 = nan(length(t),1);                             % Create a new vector with NaNs
+        tf2(af) = tf; tf = tf2; clear tf2 af                % Substitute the filtered values into the new vector
+            
+        af  = find(c>-500);                                 % Find Dummy (-9999)
+        cf  = auto_filt(c(af), sampling_rate, 1/2,'low',4); % Filter without Dummy
+        cf2 = nan(length(c),1);                             % Create a new vector with NaNs
+        cf2(af) = cf; cf = cf2; clear cf2 af                % Substitute the filtered values into the new vector
+        
+        af  = find(p>-500);                                 % Find Dummy (-9999)
+        pf  = auto_filt(p(af), sampling_rate, 1/2,'low',4); % Filter without Dummy
+        pf2 = nan(length(p),1);                             % Create a new vector with NaNs
+        pf2(af) = pf; pf = pf2; clear pf2 af                % Substitute the filtered values into the new vector
 
     	if id(proc) == 335
-            otf            = auto_filt(ot, sampling_rate, 1/2,'low',4);
-            o2f            = auto_filt(o2, sampling_rate, 1/2,'low',4);
+            % ==== TSD modified here to exclude dummy from filtering 
+            af  = find(ot>-500);                                  % Find Dummy (-9999)
+            otf  = auto_filt(ot(af), sampling_rate, 1/2,'low',4); % Filter without Dummy
+            otf2 = nan(length(ot),1);                             % Create a new vector with NaNs
+            otf2(af) = otf; otf = otf2; clear otf2 af             % Substitute the filtered values into the new vector
+            
+            af   = find(o2>-500);                                 % Find Dummy (-9999)
+            o2f  = auto_filt(o2(af), sampling_rate, 1/2,'low',4); % Filter without Dummy
+            o2f2 = nan(length(o2),1);                             % Create a new vector with NaNs
+            o2f2(af) = o2f; o2f = o2f2; clear o2f2 af             % Substitute the filtered values into the new vector
     	end
 
         figure(2);clf
