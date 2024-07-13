@@ -10,7 +10,7 @@ function pd = moor_inoutpaths(datatype,loc)
 % set input and output directories and filename prefixes to be accessed by
 % successive stages of processing for each type of data given by datatype: 
 %   microcat_cal_dip (2nd argument is the CTD cast number as a scalar or a string, e.g. 5 or '5')
-%   microcat or nor (2nd argument is the mooring e.g. 'ebh3_15_2022')
+%   microcat or nortek (2nd argument is the mooring e.g. 'ebh3_15_2022')
 
 global MOORPROC_G
 mg = MOORPROC_G;
@@ -46,7 +46,7 @@ switch datatype
         pd.stage2log = fullfile(mg.reportdir, 'stats', ['stage2_log_' moor]);
         pd.stage2figpath = fullfile(mg.reportdir, 'figs');
     case {'nor','nortek'}
-        moor = loc;
+        if strcmp(mg.project,'RAPID'); moor = 'nor'; else; moor = 'nortek'; end
         pd.rawpath = fullfile(mg.moordatadir, 'raw', mg.cruise, datatype);
         pd.infofile = fullfile(mg.moordatadir, 'proc', moor, [moor 'info.dat']);
         pd.listfile = fullfile(pd.rawpath, [moor '_filenames.txt']);
