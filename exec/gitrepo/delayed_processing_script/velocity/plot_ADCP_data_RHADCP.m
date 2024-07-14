@@ -211,7 +211,7 @@ hold on
 surf(ADCPdata(1).time, ADCPdata(1).z,ADCPdata(1).u);
 shading flat
 view([0 -90])
-caxis([-30 30])
+caxis([-100 100])
 title(['U -- ' moor ' ADCPs '  num2str(sn) ' (up) '],'interpreter','none'  )
 datetick('x','mmm yy')
 colormap(cmapvel)
@@ -224,7 +224,7 @@ hold on
 surf(ADCPdata(1).time, ADCPdata(1).z,ADCPdata(1).v);
 shading flat
 view([0 -90])
-caxis([-30 30])
+caxis([-100 100])
 title(['V -- ' moor ' ADCPs '  num2str(sn(1)) ' (up) ' ],'interpreter','none'  )
 datetick('x','mmm yy')
 colormap(cmapvel)

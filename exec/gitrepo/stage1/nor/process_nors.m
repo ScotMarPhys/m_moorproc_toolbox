@@ -15,7 +15,7 @@ moor = input('mooring deployment (e.g. ebh2_15_2022) to process:   ','s');
 %plot_interval=[2023 02 07 0, 2023 07 21 0];
 plot_interval=[]; %automatic based on available times
 
-pd = moor_inoutpaths('nortek',moor);
+pd = moor_inoutpaths('nor',moor);
 if ~exist(pd.listfile,'file')
     fprintf(1,'make %s,\n where each row is \n SN filename\n and enter to continue',pd.listfile)
     pause
