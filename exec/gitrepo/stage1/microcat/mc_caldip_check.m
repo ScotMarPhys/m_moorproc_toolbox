@@ -192,10 +192,10 @@ for i = 1:nvec
         for ind_stop=stop_valid
             stop_p(ind_stop)=nanmean(pi(stop_start(ind_stop)+300/sampint:stop_end(ind_stop)-2)); 
             if stop_p(ind_stop)<10; stop_p(ind_stop)=NaN; end % remove surface soak
-            stop_off_p(ind_stop)=nanmean(off_p(stop_start(ind_stop)+5:stop_end(ind_stop)-2));
-            stop_off_t(ind_stop)=nanmean(off_t(stop_start(ind_stop)+5:stop_end(ind_stop)-2));
-            stop_off_c(ind_stop)=nanmean(off_c(stop_start(ind_stop)+5:stop_end(ind_stop)-2));
-            stop_off_o(ind_stop)=nanmean(off_o(stop_start(ind_stop)+5:stop_end(ind_stop)-2));
+            stop_off_p(ind_stop)=nanmean(off_p(stop_start(ind_stop)+300/sampint:stop_end(ind_stop)-2));
+            stop_off_t(ind_stop)=nanmean(off_t(stop_start(ind_stop)+300/sampint:stop_end(ind_stop)-2));
+            stop_off_c(ind_stop)=nanmean(off_c(stop_start(ind_stop)+300/sampint:stop_end(ind_stop)-2));
+            stop_off_o(ind_stop)=nanmean(off_o(stop_start(ind_stop)+300/sampint:stop_end(ind_stop)-2));
         end
 
         figure(10+i);clf;
