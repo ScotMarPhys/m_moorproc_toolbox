@@ -761,7 +761,7 @@ if 1
 if iiNOR>0
     
     % loop to read one file at a time
-    pd = moor_inoutpaths('nortek',moor);
+    pd = moor_inoutpaths('nor',moor);
     j=1;
     clear s
     for i=1:length(vecNOR);

@@ -45,8 +45,7 @@ switch datatype
         pd.stage2form = [moor '_%4.4d.use'];
         pd.stage2log = fullfile(mg.reportdir, 'stats', ['stage2_log_' moor]);
         pd.stage2figpath = fullfile(mg.reportdir, 'figs');
-    case {'nor','nortek'}
-        if strcmp(mg.project,'RAPID'); moor = 'nor'; else; moor = 'nortek'; end
+    case {'nor'}
         pd.rawpath = fullfile(mg.moordatadir, 'raw', mg.cruise, datatype);
         pd.infofile = fullfile(mg.moordatadir, 'proc', moor, [moor 'info.dat']);
         pd.listfile = fullfile(pd.rawpath, [moor '_filenames.txt']);
