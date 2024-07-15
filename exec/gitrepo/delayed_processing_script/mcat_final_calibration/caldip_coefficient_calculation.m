@@ -14,23 +14,24 @@ close all
 
 %========================================================================
 % Calculation of calibration coefficient
-% For cruise ar304, casts for IB moorings = [1,2]
-% For cruise dy120: cast= [1,3,4,5,8,9,10]
-% For cruise jc238: cast= [1,3,4,19,33,37,38,43]
-p_insitucal.cruise           =  'jc238' ;%'ar304'; %'ar304' %'dy078';%'dy053';%'pe400'; %'kn221-02'; %'pe399';       % campaign cd177 / cd170 / d304 / kn182, ...
-p_insitucal.cast             = 19;   
-p_insitucal.depl_period      = 'osnap6'; %'osnap2'    % move1; move2; rapid 1; rapid 2
+
+p_insitucal.cruise           =  MOORPROC_G.cruise;
+p_insitucal.cast = input('which cast number? ');
+p_insitucal.depl_period = input('which deployment period (e.g. osnap6) ','s');
 
 % ---- parameters ----------------------------------------------------
-p_insitucal.sensorselec      = 1;
-p_insitucal.sensor_id        = [332 337];  % MicroCAT ID range (in info.dat)
-p_insitucal.basedir          = pathosnap; % base directory for osnap mooring
-p_insitucal.datadir          = [p_insitucal.basedir filesep 'data']; % data directory 
-p_insitucal.coef_dir         = [pathgit '/data/moor/cal_coef/']; 
-p_insitucal.apply_offset   = 'n'; % if offset == 'y'/'n'/'i', time offset between CTD and MC 
+p_insitucal.sensorselec      = input('which CTD sensor? (1 or 2) ');
+p_insitucal.sensor_id        = [332 337];  % MicroCAT ID range (in info.dat) %***
+pd = moor_inoutpaths('cal_coef');
+p_insitucal.datadir          = pd.datadir;
+p_insitucal.coef_dir         = pd.coef_dir;
+p_insitucal.apply_offset   = input('apply time offset between CTD and MC (y/n/i) ','s');
+% if offset == 'y'/'n'/'i', time offset between CTD and MC 
                      % will / will not be applied / individual offsets
                      % applied  
-% Define the time interval in which data are selected for each bottle stop. The time selection is centered on the the bottle stop time defined in the rosfile                      
+% Define the time interval in which data are selected for each bottle stop.
+% The time selection is centered on the the bottle stop time defined in the
+% rosfile
 if strcmp(p_insitucal.cruise,'pe399') & (p_insitucal.cast == 17 | p_insitucal.cast == 38)   
     p_insitucal.interval_move  = [-100 -50];
 elseif strcmp(p_insitucal.cruise,'dy078') | strcmp(p_insitucal.cruise,'ar304') | strcmp(p_insitucal.cruise,'dy120')
@@ -251,8 +252,8 @@ p_insitucal.cond_threshold     = 30;  % [mS/cm] threshold to determine when inst
                           % use same threshold as in ctd_impact.m  
 p_insitucal.impact_var         = 'c'; % conductivity as variable in ctd_impact.m
  
-p_insitucal.bottlestop_tmin    = 60; %20 % minimum accepted range between 2 bottlestops [sec] 
-p_insitucal.bottlestop_dpmin   = 30;  % minimum accepted pressure difference of bottlestops [dbar] 
+p_insitucal.bottlestop_tmin    = 60; %20 % minimum accepted separation between 2 bottlestops [sec] 
+p_insitucal.bottlestop_dpmin   = 30;  % minimum accepted pressure difference between 2 bottlestops [dbar] 
 
 
 p_insitucal.cnv_time_correction=  0;  % time correction for CTD .CNV file (rel. GMT) 
@@ -268,7 +269,7 @@ p_insitucal.lat   = 58.0    % latitude to convert depths into pressures. Differe
                          
 %==========================================================================
 %-------- calibration of the coefficient ----------------------------------
-insitu_cal_osnap2
+insitu_cal_osnap2(p_insitucal)
 %--------------------------------------------------------------------------
 
 %=========================================================================
