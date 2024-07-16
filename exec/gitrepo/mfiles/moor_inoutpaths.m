@@ -35,7 +35,7 @@ switch datatype
             castn = cast;
             cast = num2str(cast);
         else
-            castn = str2num(cast);
+            castn = str2double(cast);
         end
         pd.rawpath = fullfile(mg.moordatadir, 'raw', mg.cruise, 'microcat_cal_dip', ['cast' cast]);
         pd.infofile = fullfile(mg.moordatadir, 'proc_calib', mg.cruise, 'cal_dip', ['cast' cast 'info.dat']);
@@ -61,6 +61,7 @@ switch datatype
         pd.stage2figpath = fullfile(mg.reportdir, 'figs');
 
     case {'nor'}
+        moor = loc;
         pd.rawpath = fullfile(mg.moordatadir, 'raw', mg.cruise, datatype);
         pd.infofile = fullfile(mg.moordatadir, 'proc', moor, [moor 'info.dat']);
         pd.listfile = fullfile(pd.rawpath, [moor '_filenames.txt']);
@@ -109,73 +110,77 @@ switch datatype
         pd.stage3logl = [moor '_%d_bin%02.f.lowedt.log'];
 
     case 'cal_coef' %***ctd path setting should be its own thing, same for microcat_cal_dip and for cal_coef?
+        cast = loc;
         pd.datadir = mg.moordatadir;
         fp = fileparts(which('moor_setup'));
         pd.coef_dir = fullfile(fp,'metadata','cal_coef',lower(mg.project));
         pd.mc_dir = fullfile(pd.datadir, 'proc_calib', mg.cruise, 'cal_dip','microcat');
-        pd.info_dir = fullfile(pd.datadir, 'proc_calib', mg.cruise, 'cal_dip');
-        pd.ctd_dir = fullfile(mg.ctddir);
-        pd.ctdraw_dir = fullfile(mg.ctddir,'ASCII_FILES'); %.cnv location
-        pd.btldir = fullfile(mg.ctddir,'ASCII_FILES');
-        pd.ctdfile = sprintf('ctd_%s_%3.3d_psal.nc');
-        pd.ctd_cnvfile = sprintf('%s_CTD_%3.3d.cnv',upper(mg.cruise),loc);
-        pd.bottle_file = sprintf('%s_CTD_%3.3d.ros',upper(mg.cruise),loc);
-        pd.mc_file = fullfile(sprintf('cast%d',loc),sprintf('cast%d_',loc));
-        pd.info_file = sprintf('cast%dinfo.dat',loc);
+        pd.ctd1hz_file = fullfile(mg.ctddir,sprintf('ctd_%s_%3.3d_psal.nc',mg.cruise,cast));
+        if ~exist(pd.ctd1hz_file,'file')
+            pd.ctd1hz_file = fullfile(mg.ctddir,sprintf('ctd_%s_%3.3d_1hz.nc',mg.cruise,cast));
+        end
+        pd.ctdcnv_file = fullfile(mg.ctddir,'ASCII_FILES',sprintf('%s_CTD_%3.3d.cnv',upper(mg.cruise),cast));
+        if ~exist(pd.ctdcnv_file,'file')
+            pd.ctdcnv_file = fullfile(mg.ctddir,'ASCII_FILES',sprintf('%s_CTD%3.3d.cnv',upper(mg.cruise),cast));
+            if ~exist(pd.ctdcnv_file,'file')
+                pd.ctdcnv_file = fullfile(mg.ctddir,'ASCII_FILES',sprintf('%s_%3.3d.cnv',upper(mg.cruise),cast));
+            end
+        end
+        pd.bottle_file = fullfile(mg.ctddir,'ASCII_FILES',sprintf('%s_CTD_%3.3d.ros',upper(mg.cruise),cast));
+        if ~exist(pd.bottle_file,'file')
+            pd.bottle_file = fullfile(mg.ctddir,'ASCII_FILES',sprintf('%s_CTD%3.3d.ros',upper(mg.cruise),cast));
+            if ~exist(pd.bottle_file,'file')
+                pd.bottle_file = fullfile(mg.ctddir,'ASCII_FILES',sprintf('%s_%3.3d.ros',upper(mg.cruise),cast));
+            end
+        end
+        pd.mc_file = fullfile(pd.mc_dir,sprintf('cast%d',cast),sprintf('cast%d_',cast));
+        pd.info_file = fullfile(pd.datadir,'proc_calib',mg.cruise,'cal_dip',sprintf('cast%dinfo.dat',cast));
+        pd.ctdformat = 'mstar';
+        pd.ctdcnv_cunit = 'S/m'; %***
+        pd.ctd1hz_cunit = 'mS/cm';
+        pd.mc_cunit = 'mS/cm';
+        pd.mc_ext = 'raw';
 
 end
 
-%now modify defaults if necessary (keep above defaults more readable)
-if mg.YEAR<2022
-
-    switch datatype
-        
-        case 'cal_coef'
+%now modify defaults if necessary
+% (keep above defaults more readable)
+switch datatype
+    case 'cal_coef'
+        defs = {'dy053' 'dy078' 'ar304' 'dy120' 'jc238' 'dy181'};
+        if ~ismember(mg.cruise,defs)
+        %cruise, ctdformat, ctdcnv_cunit, ctd1hz_cunit, mc_cunit, mc_ext
+        a = {'kn221-02' 'aoml' 'S/m' 'S/m' 'S/m' 'raw';...
+            'kn221-03' 'aoml' 'S/m' 'S/m' 'mS/cm' 'raw';...
+            'pe399' 'mstar' 'mS/cm' 'mS/cm' 'mS/cm' 'raw';...
+            };
+        m = strcmp(mg.cruise,a(:,1));
+        [pd.ctdformat,pd.ctdcnv_cunit,pd.ctd1hz_cunit,pd.mc_cunit,pd.mc_ext] = deal(a{m,2:end});
+        end
         switch mg.cruise %some are different
             case 'kn221-02'
-                pd.ctd_dir = fullfile(mg.ctddir,'..','CTD_FINAL','CTD','binavg_1Hz_mat');
-                pd.ctdraw_dir = fullfile(mg.ctddir,'..','CTD_FINAL','CTD','os1407_ctd_binavg_1Hz');
-                pd.btldir = fullfile(mg.ctddir,'..','ctd_uncalib','datcnv');
-                pd.ctdfile = 'ctd_cal_kn211_alsta_1Hz.mat';
-                pd.bottle_file = sprintf('OS1407_%3.3d.ros',loc);
-                pd.ctd_cnvfile = sprintf('OS1407_%3.3d.cnv',loc);
+                pd.ctd1hz_file = fullfile(mg.ctddir,'..','CTD_FINAL','CTD','binavg_1Hz_mat','ctd_cal_kn211_alsta_1Hz.mat');
+                pd.ctdcnv_file = fullfile(mg.ctddir,'..','CTD_FINAL','CTD','os1407_ctd_binavg_1Hz',sprintf('OS1407_%.3.3d.cnv',cast));
+                pd.bottle_file = fullfile(mg.ctddir,'..','ctd_uncalib','datcnv',sprintf('OS1407_%3.3d.ros',cast));
             case 'kn221-03'
-                pd.ctd_dir = fullfile(mg.ctddir,'..','1hz_bin_averaged_mat');
-                pd.ctdraw_dir = fullfile(mg.ctddir,'..','1hz_bin_averaged');
-                pd.btldir = fullfile(mg.ctddir,'..','ros_files');
-                pd.ctd_file    = 'ctd_cal_kn221-03_1Hz.mat' ; % ['ab1104_ctd_caldip_1Hz.mat'];
-                pd.bottle_file = ['kn221-03_',sprintf('%3.3d',calp.cast),'.ros'];
-                pd.ctd_cnvfile = ['kn221-03_',sprintf('%3.3d',calp.cast),'.cnv'];
+                pd.ctd1hz_file = fullfile(mg.ctddir,'..','1hz_bin_averaged_mat','ctd_cal_kn221-03_1Hz.mat');
+                pd.ctdcnv_file = fullfile(mg.ctddir,'..','1hz_bin_averaged',sprintf('kn221-03_%3.3d.cnv',cast));
+                pd.bottle_file = fullfile(mg.ctddir,'..','ros_files',sprintf('kn221-03_%3.3d.ros',cast));
             case 'pe400'
-                pd.ctd_dir = fullfile(mg.ctddir,'..','1hz_bin_averaged_mat');
-                pd.ctdraw_dir = fullfile(mg.ctddir,'..','1hz_bin_averaged');
-                pd.btldir = fullfile(mg.ctddir,'..','ros_files');
-                pd.ctd_file    = 'PE400_1Hz.mat' ; % ['ab1104_ctd_caldip_1Hz.mat'];
-                pd.bottle_file = ['PE400_',num2str(calp.cast),'.ros'];
-                pd.ctd_cnvfile = ['PE400_',num2str(calp.cast),'.cnv'];
+                pd.ctd1hz_file = fullfile(mg.ctddir,'..','1hz_bin_averaged_mat','PE400_1Hz.mat');
+                pd.ctdcnv_file = fullfile(mg.ctddir,'..','1hz_bin_averaged',sprintf('PE400_%d.cnv',cast));
+                pd.bottle_file = fullfile(mg.ctddir,'..','ros_files',sprintf('PE400_%d.ros',cast));
             case 'pe399'
-                pd.btldir = fullfile(pd.btldir,'CTD_Processed_by_Sven',sprintf('CTD-%2.2d',loc));
-                pd.ctd_file    = ['ctd_pe399_',sprintf('%3.3d',calp.cast),'_1hz.nc'];
-                dd=dir([pd.btldir '/*.ros']);
-                pd.bottle_file = dd.name;%['PE399_',sprintf('%3.3d',calp.cast),'.ros']; % .ros
-                pd.ctd_cnvfile = ['PE399_',sprintf('%3.3d',calp.cast),'_align_ctm.cnv'];
-            case 'dy053'
-                pd.ctd_file = sprintf('ctd_%s_%3.3d_1hz.nc',mg.cruise,loc);
-                pd.bottle_file = sprintf('%s_%3.3d.ros',upper(mg.cruise),loc);
-                pd.ctd_cnvfile = sprintf('%s_%3.3d.cnv',upper(mg.cruise),loc);
+                btldir = fullfile(pd.btldir,'CTD_Processed_by_Sven',sprintf('CTD-%2.2d',cast));
+                dd=dir([btldir '/*.ros']);
+                pd.bottle_file = fullfile(btldir,dd.name);%['PE399_',sprintf('%3.3d',calp.cast),'.ros']; % .ros
+                pd.ctdcnv_file = fullfile(mg.ctddir,'ASCII_FILES',sprintf('PE399_%3.3d_align_ctm.cnv',cast));
             case 'dy078'
-                pd.ctd_file = sprintf('ctd_%s_%3.3d_1hz.nc',mg.cruise,loc);
-                pd.bottle_file = sprintf('CTD%3.3d.ros',loc);
-                pd.ctd_cnvfile = sprintf('CTD%3.3d_align_actm.cnv',loc);
+                pd.bottle_file = fullfile(mg.ctddir,'ASCII_FILES',sprintf('CTD%3.3d.ros',cast));
+                pd.ctd_cnvfile = fullfile(mg.ctddir,'ASCII_FILES',sprintf('CTD%3.3d_align_actm.cnv',cast));
             case 'ar304'
-                pd.ctd_file = sprintf('ctd_%s_%3.3d_raw.nc',mg.cruise,loc);
-                pd.bottle_file = sprintf('ar30-04%3.3d.ros',loc);
-                pd.ctd_cnvfile = sprintf('ar30-04%3.3d.cnv',loc);
-            case 'dy120'
-                pd.bottle_file = sprintf('%s_%3.3d.ros',upper(mg.cruise),loc);
-                pd.ctd_cnvfile = sprintf('%s_%3.3d.cnv',upper(mg.cruise),loc);
+                pd.ctd_1hzfile = fullfile(mg.ctddir,sprintf('ctd_%s_%3.3d_raw.nc',mg.cruise,cast));
+                pd.bottle_file = fullfile(mg.ctddir,'ASCII_FILES',sprintf('ar30-04%3.3d.ros',cast));
+                pd.ctd_cnvfile = fullfile(mg.ctddir,'ASCII_FILES',sprintf('ar30-04%3.3d.cnv',cast));
         end
-
-    end
-
 end

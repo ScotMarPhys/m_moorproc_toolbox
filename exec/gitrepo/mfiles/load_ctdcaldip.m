@@ -1,7 +1,7 @@
-function [d, varargout] = load_ctddata(pd, cast, sensorselec)
+function [ctd, varargout] = load_ctddata(pd, cast, sensorselec, cnv_time_correction)
 %
-% d = load_ctddata(pd, cast, sensorselect);
-% [d, bottle] = load_ctddata(pd, cast, sensorselect);
+% ctd = load_ctddata(pd, cast, sensorselect);
+% [ctd, bottle] = load_ctddata(pd, cast, sensorselect);
 %
 % load CTD data from a cruise for microcat calibration
 % optionally load bottle data
@@ -25,33 +25,33 @@ switch pd.ctdformat
             if strcmp('pe400',mg.cruise)
             	strf = regexp(cnv_cor_save(i).file,'_','split');
             	if ~isempty(strfind(strf{2},num2str(cast)))
-                    d.cond  = cnv_cor_save(i).C; % better sensor
-                    d.temp  = cnv_cor_save(i).T;
-                    d.press = cnv_cor_save(i).P;
-                    d.time =  cnv_cor_save(i).JD0 + julian([2015 1 1 0 0 0]) - 1;
-                    d.datnum = d.time-jd_mdn; d = rmfield(d,'time');
+                    ctd.cond  = cnv_cor_save(i).C; % better sensor
+                    ctd.temp  = cnv_cor_save(i).T;
+                    ctd.press = cnv_cor_save(i).P;
+                    ctd.time =  cnv_cor_save(i).JD0 + julian([2015 1 1 0 0 0]) - 1;
+                    ctd.datnum = ctd.time-jd_mdn; ctd = rmfield(ctd,'time');
             	end
             else
                 if cnv_cor_save(i).station == cast
                     if strcmp('kn221-02',mg.cruise) || strcmp('kn221-03',mg.cruise)
-                        d.cond  = cnv_cor_save(i).c1S; % better sensor
-                        d.temp  = cnv_cor_save(i).t190C;
-                        d.press = cnv_cor_save(i).prDM;
+                        ctd.cond  = cnv_cor_save(i).c1S; % better sensor
+                        ctd.temp  = cnv_cor_save(i).t190C;
+                        ctd.press = cnv_cor_save(i).prDM;
 
                         ctd_time_ori = julian([cnv_cor_save(i).gtime(1:3) 0]);
                         jul_day_frac = cnv_cor_save(i).timeJ - floor(cnv_cor_save(i).timeJ);
-                        d.time = jul_day_frac + ctd_time_ori;
-                        d.datnum = d.time-jd_mdn; d = rmfield(d,'time');
+                        ctd.time = jul_day_frac + ctd_time_ori;
+                        ctd.datnum = ctd.time-jd_mdn; ctd = rmfield(ctd,'time');
                         ctd_time_ori = ctd_time_ori-jd_mdn;
                     else
-                        d.cond  = cnv_cor_save(i).conductivity;
-                        d.temp  = cnv_cor_save(i).temperature;
-                        d.press = cnv_cor_save(i).pressure;
+                        ctd.cond  = cnv_cor_save(i).conductivity;
+                        ctd.temp  = cnv_cor_save(i).temperature;
+                        ctd.press = cnv_cor_save(i).pressure;
                         %if strcmp(ctd_cunit,'S/m')
-                        d.cond = d.cond;%*10;
+                        ctd.cond = ctd.cond;%*10;
 
                         ctd_time_ori = datenum(cnv_cor_save(i).gtime(1:6));
-                        d.datnum = cnv_cor_save(i).elap_time_sec/86400 + ctd_time_ori;
+                        ctd.datnum = cnv_cor_save(i).elap_time_sec/86400 + ctd_time_ori;
                     end
                 end
             end
@@ -63,7 +63,7 @@ switch pd.ctdformat
     %%%%%%% PSTAR %%%%%%%
     case 'pstar'
     pd.ctd_file
-    [d, h]  = pload(pd.ctd_file,'press temp cond time','silent');
+    [ctd, h]  = pload(pd.ctd_file,'press temp cond time','silent');
 
     year   = floor(h.iymd/10000);
     month  = floor((h.iymd - year*10000)/100);
@@ -71,8 +71,8 @@ switch pd.ctdformat
     hour   = h.ihms;
 
     ctd_time_ori = datenum(year+h.icent, month, day,hour,0,0);
-    d.datnum       = d.time/86400 + ctd_time_ori; % ctd time in datenum
-    d = rmfield(d,'time');
+    ctd.datnum       = ctd.time/86400 + ctd_time_ori; % ctd time in datenum
+    ctd = rmfield(ctd,'time');
 
     %%%%%%% MSTAR %%%%%%%
     case 'mstar'
@@ -88,43 +88,43 @@ switch pd.ctdformat
                 hour   = dd.data_time_origin(4) + (dd.data_time_origin(5)+(dd.data_time_origin(6)/60))/60 ; %h.ihms;
 
                 ctd_time_ori = datenum(year,month,day,hour,0,0);
-                d.datnum       = d.time/86400 + ctd_time_ori; % ctd time in datenum
-                d = rmfield(d,'time');
+                ctd.datnum       = ctd.time/86400 + ctd_time_ori; % ctd time in datenum
+                ctd = rmfield(ctd,'time');
                 % if strcmp(mg.cruise,'jc064')
             case {'dy120','ar304','dy078','dy053','pe399'}
                 if sensorselec==1
-                    [d, h]=mload(pd.ctd_file,'time','press','temp1','cond1',' ','q');
-                    d.cond = d.cond1;
-                    d.temp = d.temp1;
+                    [ctd, h]=mload(pd.ctd_file,'time','press','temp1','cond1',' ','q');
+                    ctd.cond = ctd.cond1;
+                    ctd.temp = ctd.temp1;
                 elseif sensorselec == 2
-                    [d, h]=mload(pd.ctd_file,'time','press','temp2','cond2',' ','q');
-                    d.cond = d.cond2;
-                    d.temp = d.temp2;
+                    [ctd, h]=mload(pd.ctd_file,'time','press','temp2','cond2',' ','q');
+                    ctd.cond = ctd.cond2;
+                    ctd.temp = ctd.temp2;
                 end
-                d.datnum=datenum(h.data_time_origin)+d.time/86400;
-                d = rmfield(d,'time');
+                ctd.datnum=datenum(h.data_time_origin)+ctd.time/86400;
+                ctd = rmfield(ctd,'time');
             case 'jc238'
-                [d, h] = mload(pd.ctd_file,'time','press','temp','cond',' ','q');
-                d.datnum=datenum(h.data_time_origin)+d.time/86400;
-                d = rmfield(d,'time');
+                [ctd, h] = mload(pd.ctd_file,'time','press','temp','cond',' ','q');
+                ctd.datnum=datenum(h.data_time_origin)+ctd.time/86400;
+                ctd = rmfield(ctd,'time');
             otherwise
                 if MOORPRC_G.YEAR>=2024
-                    [d, h] = mload(pd.ctd_file,'time','press','temp','cond',' ','q');
-                    d.datnum = m_commontime(d, 'time', h, 'datenum');
-                    d = rmfield(d,'time');
+                    [ctd, h] = mload(pd.ctd_file,'time','press','temp','cond',' ','q');
+                    ctd.datnum = m_commontime(ctd, 'time', h, 'datenum');
+                    ctd = rmfield(ctd,'time');
                 else
                     dd  = netcdf(pd.ctd_file); %,'press temp cond time','silent');
                     d = struct('press',ncread(ctd_file,'press'),...
                         'temp',ncread(ctd_file,'temp'),...
                         'cond',ncread(ctd_file,'cond'),...
                         'time',ncread(ctd_file,'time'));
-                    d.temp=d.temp(:);
-                    d.cond=d.cond(:);
-                    d.press=d.press(:);
-                    d.time=d.time(:);
+                    ctd.temp=ctd.temp(:);
+                    ctd.cond=ctd.cond(:);
+                    ctd.press=ctd.press(:);
+                    ctd.time=ctd.time(:);
                     ctd_time_ori = datenum(dd.data_time_origin);
-                    d.datnum       = d.time/86400 + ctd_time_ori; % ctd time in datenum
-                    d = rmfield(d,'time');
+                    ctd.datnum       = ctd.time/86400 + ctd_time_ori; % ctd time in datenum
+                    ctd = rmfield(ctd,'time');
                 end
         end
 
@@ -145,7 +145,9 @@ if nargout>1
         bottle = [];
         disp('PATH TO BOTTLE FILES NOT DEFINED')
     end
-    
+
+bottle.datnum         = bottle.datnum - cnv_time_correction; %***what about for cnv?
+bottle.start_time = bottle.start_time - cnv_time_correction;    
     varargout{1} = bottle;
 
 end
