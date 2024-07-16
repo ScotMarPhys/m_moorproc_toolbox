@@ -61,8 +61,12 @@ switch datatype
         pd.stage2figpath = fullfile(mg.reportdir, 'figs');
 
     case {'nor','nortek'}
+        datatype = 'nor';
         moor = loc;
         pd.rawpath = fullfile(mg.moordatadir, 'raw', mg.cruise, datatype);
+        if ~exist(pd.rawpath,'dir')
+            pd.rawpath = fullfile(mg.moordatadir, 'raw', mg.cruise, 'nortek');
+        end
         pd.infofile = fullfile(mg.moordatadir, 'proc', moor, [moor 'info.dat']);
         pd.listfile = fullfile(pd.rawpath, [moor '_filenames.txt']);
         pd.stage1path = fullfile(mg.moordatadir, 'proc', moor, datatype);

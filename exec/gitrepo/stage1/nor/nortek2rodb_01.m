@@ -108,7 +108,7 @@ if ~isempty(fnmiss)
     warning('these S/Ns from info file do not have standard names and were not found in listfile:')
     fprintf(1,'%d\n',serial_nums(fnmiss))
     warning('Create list of S/Ns and data file names for these in %s and try again',pd.listfile)
-    c = input('or ''skip'' to continue processing skipping these S/Ns  ','s');
+    c = input('or ''skip'' to continue processing skipping these S/Ns (e.g. if data not downloaded)  ','s');
     if strcmp(c,'skip')
         serial_nums(fnmiss) = [];
         z(fnmiss) = [];
