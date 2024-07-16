@@ -60,7 +60,7 @@ switch datatype
         pd.stage2log = fullfile(mg.reportdir, 'stats', ['stage2_log_' moor]);
         pd.stage2figpath = fullfile(mg.reportdir, 'figs');
 
-    case {'nor'}
+    case {'nor','nortek'}
         moor = loc;
         pd.rawpath = fullfile(mg.moordatadir, 'raw', mg.cruise, datatype);
         pd.infofile = fullfile(mg.moordatadir, 'proc', moor, [moor 'info.dat']);
