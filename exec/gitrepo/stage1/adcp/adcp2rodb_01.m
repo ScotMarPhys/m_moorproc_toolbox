@@ -154,8 +154,8 @@ for i = 1:length(vec)
         return
     end
     
-    %remap_bins=input('\nDo you want to remap the bin depths using a different speed of sound? \n   y/n:  ','s');
-    remap_bins ='n';
+    remap_bins=input('\nDo you want to remap the bin depths using a different speed of sound? \n   y/n:  ','s');
+%     remap_bins ='n';
     if (strcmp(remap_bins,'y')||strcmp(remap_bins,'Y')||strcmp(remap_bins,'yes')||strcmp(remap_bins,'Yes')||strcmp(remap_bins,'YES'))
         remap_bins=1;
         [new_bin_mids, sos_source]=remap_bins_for_sos(bin_depths_mid,p,lat,t); %calls sub-function with series of pressure if ADCP has P sensor
