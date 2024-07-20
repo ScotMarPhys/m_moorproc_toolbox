@@ -14,7 +14,7 @@ pd = moor_inoutpaths('adcp',moor);
 display('Starting stage 1 adcp2rodb_01')
 
 if contains(moor,'ib')
-    % Flag bad data 
+    Flag bad data 
     read_flag_raw_adcp(moor,pd)
     adcp2rodb_01(moor,pd)
 elseif contains(moor,'rhadcp')

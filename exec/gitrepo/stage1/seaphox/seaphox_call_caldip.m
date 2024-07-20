@@ -10,6 +10,6 @@ basedir = MOORPROC_G.moordatadir;
 cruise= MOORPROC_G.cruise;
 
 % cruise = 'ar304';
-castnber = '6'; 
+castnber = '46'; 
 
 seaphox2rodb_01(['cast' castnber],'cruise',cruise)

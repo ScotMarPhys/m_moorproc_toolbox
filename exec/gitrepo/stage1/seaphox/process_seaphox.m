@@ -15,4 +15,7 @@ operator = MOORPROC_G.operator;
 moor = input('mooring deployment (e.g. ebh2_15_2022) to process:   ','s');
 
 
-seaphox2rodb_01_indev(moor,'cruise',cruise)
+seaphox2rodb_01(moor,'cruise',cruise)
+
+seaphox_raw2use_01(moor,'cruise',cruise)
+

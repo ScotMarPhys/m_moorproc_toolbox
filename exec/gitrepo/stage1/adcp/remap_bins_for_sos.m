@@ -33,7 +33,7 @@ function [new_bin_mids, sos_source]=remap_bins_for_sos(bin_depths_mid,press_dept
            press_depth2=press_depth*ones(1,length(ctd_press));
            press_depth2=press_depth2';
            %ctd_press2=ctd_press2';
-           press_diff=abs(ctd_press2-press_depth2);e bin remapping
+           press_diff=abs(ctd_press2-press_depth2); % bin remapping
             % to remap DY120 ADCP to new depth (instrument were setup with wrong depth)
            for ijk=1:length(press_diff)
             sensor_index(ijk)=find(press_diff(:,ijk) == min(press_diff(:,ijk))); % sensor_index and sos will be a vector when have p sensor

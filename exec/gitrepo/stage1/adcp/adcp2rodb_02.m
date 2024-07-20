@@ -160,6 +160,7 @@ for i = 1:length(vec)
         sw_lat2=zeros(size(new_bin_mids))+lat;
         new_bin_mids=sw_pres(new_bin_mids,sw_lat2); % convert depths back to pressure for saving with rodb files
         new_bin_mids=new_bin_mids';
+    elseif (strcmp(remap_bins,'n')||strcmp(remap_bins,'N')||strcmp(remap_bins,'no')||strcmp(remap_bins,'No')||strcmp(remap_bins,'NO'))
     end
     
 
@@ -219,31 +220,27 @@ for i = 1:length(vec)
             fprintf(fidlog,'Median temperature [deg C]              20959         : %4.2f\n',m_t);
         end
         
-        m_u = median(u(valI,k));
-        m_v = median(v(valI,k));
-        m_w = median(w(valI,k));
-        m_Beam1ss = median(Amp1(valI,k));
-        m_Beam2ss = median(Amp2(valI,k));
-        m_Beam3ss = median(Amp3(valI,k));
-        m_Beam4ss = median(Amp4(valI,k));
-        m_Beam1cor = median(Beam1Cor(valI,k));
-        m_Beam2cor = median(Beam2Cor(valI,k));
-        m_Beam3cor = median(Beam3Cor(valI,k));
-        m_Beam4cor = median(Beam4Cor(valI,k));
-        m_Beam1PGP = median(PG1(valI));
-        m_Beam2PGP = median(PG2(valI));
-        m_Beam3PGP = median(PG3(valI));
-        m_Beam4PGP = median(PG4(valI));
-        m_err = median(err(valI));
-        m_spd = median(spd(valI));
-        m_dir = median(dir(valI));
+        m_u = median(u(valI,k),"omitnan");
+        m_v = median(v(valI,k),"omitnan");
+        m_w = median(w(valI,k),"omitnan");
+        m_Beam1ss = median(Amp1(valI,k),"omitnan");
+        m_Beam2ss = median(Amp2(valI,k),"omitnan");
+        m_Beam3ss = median(Amp3(valI,k),"omitnan");
+        m_Beam4ss = median(Amp4(valI,k),"omitnan");
+        m_Beam1cor = median(Beam1Cor(valI,k),"omitnan");
+        m_Beam2cor = median(Beam2Cor(valI,k),"omitnan");
+        m_Beam3cor = median(Beam3Cor(valI,k),"omitnan");
+        m_Beam4cor = median(Beam4Cor(valI,k),"omitnan");
+
+        m_err = median(err(valI),"omitnan");
+        m_spd = median(spd(valI),"omitnan");
+        m_dir = median(dir(valI),"omitnan");
         
         
         fprintf(fidlog,'\nBin %d : nominally %3.2f m - %3.2f m from sensor head\n\n', k, bin_depths(1,k), bin_depths(2,k));
         fprintf(fidlog,'Median velocity u / v / w [cm/s]                                 : %4.1f  %4.1f  %4.1f\n',m_u, m_v, m_w);
         fprintf(fidlog,'Median signal strength Beam1 / Beam2 / Beam3 / Beam4 [counts]    : %3.0f  %3.0f  %3.0f  %3.0f\n',m_Beam1ss, m_Beam2ss, m_Beam3ss, m_Beam4ss);
         fprintf(fidlog,'Median correlation Beam1 / Beam2 / Beam3 / Beam4 [counts]        : %3.0f  %3.0f  %3.0f  %3.0f\n',m_Beam1cor, m_Beam2cor, m_Beam3cor, m_Beam4cor);
-        fprintf(fidlog,'Median percent good pings Beam1 / Beam2 / Beam3 / Beam4 [counts] : %3.0f  %3.0f  %3.0f  %3.0f\n',m_Beam1PGP, m_Beam2PGP, m_Beam3PGP, m_Beam4PGP);
         fprintf(fidlog,'Median velocity error [cm/s]                                     : %4.1f\n',m_err);
         fprintf(fidlog,'Median speed [cm/s]                                              : %4.1f\n',m_spd);
         fprintf(fidlog,'Median direction [cm/s]                                          : %5.2f\n',m_dir);
