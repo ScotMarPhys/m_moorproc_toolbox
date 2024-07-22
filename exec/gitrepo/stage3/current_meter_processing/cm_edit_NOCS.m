@@ -2520,11 +2520,11 @@ function [series,hf_series] = manual_spike_replace(series,jd_time,hf_series,fig_
             disp('Manually select data using data brushing tool and create variable "spike" from bad data.')
             brush(fig_handle)
             pause
-            for ij=1:size(spike),1
+            for ij=1:size(spike,1)
                 a=find(jd_time-jd_time(1)==spike(ij,1));
                 series(a)=NaN;
                 hf_series(a)=NaN;
-            end
+            endbrushedData
             figure(fig_handle)
             hold off
             plot(jd_time-jd_time(1),hf_series); 

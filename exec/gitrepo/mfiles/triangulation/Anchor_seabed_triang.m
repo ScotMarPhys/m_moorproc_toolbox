@@ -417,7 +417,7 @@ if length(im) > 1
 end
 tp_sh = tme_sh(im);
 
-if dptvl(1) < 0 & sum(~iabs) > 2
+if dptvl(1) < 0 && sum(~iabs) > 2
     wd_sh = dinterp1(dep.time(~iabs),dep.depthm(~iabs),tp_sh);
     corr_struct = mcarter(lat(1),lon(1),wd);
     wd_corr_sh = corr_struct.cordep;

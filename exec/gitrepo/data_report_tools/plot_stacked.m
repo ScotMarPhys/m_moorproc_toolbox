@@ -31,28 +31,40 @@ function plot_stacked(moor,varargin)
 % 05/10/16 - Loic Houpert: added option to process lvl 3 data (.microcat and .edt files for nortek) and save plot
 % 07/10/16 - Loic Houpert: cpy and adapted from currents_stacked.m
 
+close all
+
+global MOORPROC_G
+
+% clearvars -except MEXEC_G MOORPROC_G
+
+cruise   = MOORPROC_G.cruise;
+operator = MOORPROC_G.operator;
+procpath = [MOORPROC_G.moordatadir,'/proc/'];
+
 if nargin <1
     help  plot_stacked
     return
 end
 
+pd = moor_inoutpaths('microcat',moor);
+
 % check for optional arguments
-a=strmatch('layout',varargin,'exact');
+varargin_string=varargin;a=strmatch('layout',varargin,'exact');
 if a>0
-    layout=char(varargin(a+1));
+    layout='landscape';
 else
     layout='portrait';
 end
 
-a=strmatch('procpath',varargin,'exact');
-if a>0
-    procpath=char(varargin(a+1));
-else
-    data_report_tools_dir=which('data_report_tools');
-    b=strfind(data_report_tools_dir,'/');
-    data_report_tools_dir=data_report_tools_dir(1:b(end));
-    procpath=[data_report_tools_dir '../../../moor/proc/']; %DR changed to be relative paths now that data_report_tools are on the network 19/2/12
-end
+% a=strmatch('procpath',varargin,'exact');
+% if a>0
+%     procpath=char(varargin(a+1));
+% else
+%     data_report_tools_dir=which('data_report_tools');
+%     b=strfind(data_report_tools_dir,'/');
+%     data_report_tools_dir=data_report_tools_dir(1:b(end));
+%     procpath=[data_report_tools_dir '../../../moor/proc/']; %DR changed to be relative paths now that data_report_tools are on the network 19/2/12
+% end
 
 a=strmatch('proclvl',varargin,'exact');
 if a>0
@@ -80,9 +92,9 @@ else
 end
 
 if isunix
-    infofile=[procpath,moor,'/',moor,'info.dat'];
+    infofile=[MOORPROC_G.moordatadir,'/proc/',moor,'/',moor,'info.dat'];
 elseif ispc
-    infofile=[procpath,moor,'\',moor,'info.dat'];
+    infofile=[MOORPROC_G.moordatadir,'\proc\',moor,'\',moor,'info.dat'];
 end
 
 
@@ -100,14 +112,14 @@ ylabels={'db','deg','mS/cm','','kg/m^{-3}','deg'};
 yvalue={'p','t','c','s','pden1000','ptmp1000'};
 suptitle_label={'pressure','temperature','conductivity','salinity','pot. dens. rel 1000','pot. temp. rel 1000'};
 
-for iplot=1:length(plot_handle)
-        eval([ plot_handle{iplot} '=figure(' '''Position'',pos1)']);
-        eval(['set(' plot_handle{iplot} ',''PaperUnits'',''centimeters'',''PaperType'', ''A4'', ''PaperOrientation'',layout);' ]);
-        eval(['papersize = get('  plot_handle{iplot}  ',''PaperSize'');']);
-        width=20; height=30; left = (papersize(1)- width)/2; bottom = (papersize(2)- height)/2;
-        figuresize = [left, bottom, width, height];
-        eval(['set(' plot_handle{iplot} ',''PaperPosition'', figuresize);']);
-end
+% for iplot=1:length(plot_handle)
+%         eval([ plot_handle{iplot} '=figure(' '''Position'',pos1)']);
+%         eval(['set(' plot_handle{iplot} ',''PaperUnits'',''centimeters'',''PaperType'', ''A4'', ''PaperOrientation'',layout);' ]);
+%         eval(['papersize = get('  plot_handle{iplot}  ',''PaperSize'');']);
+%         width=20; height=30; left = (papersize(1)- width)/2; bottom = (papersize(2)- height)/2;
+%         figuresize = [left, bottom, width, height];
+%         eval(['set(' plot_handle{iplot} ',''PaperPosition'', figuresize);']);
+% end
 
 
 
@@ -258,7 +270,11 @@ if iiMC>0
        disp('*************************************************************')
        disp(['Reading MICROCAT - ',num2str(serialno)])
        disp('*************************************************************')
-	if proclvl==2
+	    
+       SN_MC{i} = num2str(serialno); 
+
+      
+     if proclvl==2
 	       if isunix
         	   infile = [procpath,moor,'/microcat/',moor,'_',sprintf('%0.4d',vecMC(i)),'.use'];
        		elseif ispc
@@ -418,20 +434,21 @@ eval_string(emptycellcheck)=[];
 depths = depths(~emptycellcheck,:);
     
 for k=1:length(plot_handle)
-    eval(['figure(' plot_handle{k} ')']);
+    %eval(['figure(' plot_handle{k} ')']);
     
     % setup subplot number of panels
-    subplot(length(depths(:,1)),1,1);
+%     subplot(length(depths(:,1)),1,1);
 
     % create axes
+    figure('pos',[0 0 800 900])
     for i=1:length(eval_string)
-        % create axes
-        axes_string=['axes' num2str(i)];
-        eval([axes_string '=subplot(length(depths(:,1)),1,i);']);
-        
+%         % create axes
+        %axes_string=['axes' num2str(i)];
+%         eval([axes_string '=subplot(length(depths(:,1)),1,i);']);
+        hold on
         % plot data
         eval(['plot((' eval_string{i} '.jd-jd1),' eval_string{i} '.' yvalue{k} ');']);
-        
+    end
         eval(['ylabel(''' ylabels{k} ''');']);
         xlim([0 jd2-jd1]);
         set(gca,'YMinorTick','on');
@@ -441,16 +458,17 @@ for k=1:length(plot_handle)
         Y_limits=get(gca,'ylim');
 %         Y_limits=(ylimits{k});
         ylim(Y_limits);
+       
         X_limits=xlim;
         set(gca,'YMinorTick','on');
         set(gca,'xTickLabel',xticklabels);
         set(gca,'XTick',(jdxticks-jd1));
         % Not using timeaxis function.
         
-        if k==2
-            set(gca,'ytick',[0 90 180 270 360])
-            set(gca,'yminortick','off')
-        end
+%         if k==2
+%             set(gca,'ytick',[0 90 180 270 360])
+%             set(gca,'yminortick','off')
+%         end
         
         % draw zero axis
         hold on
@@ -459,21 +477,22 @@ for k=1:length(plot_handle)
         % Label plots with serial numbers and depths
         % need to insert backslash into text string to prevent subscript in
         % labels
-        s = regexprep(eval_string(i), '_', '\nsn:');
-        text((X_limits(2)-X_limits(1))*1.005+X_limits(1), (Y_limits(2)-Y_limits(1))*0.75+Y_limits(1),s,'FontSize',8);
-
-        text((X_limits(2)-X_limits(1))*1.005+X_limits(1), (Y_limits(2)-Y_limits(1))*0.5+Y_limits(1),[num2str(depths(i,2)) 'm'],'FontSize',8);
-
+%         s = regexprep(eval_string(i), '_', '\nsn:');
+%         text((X_limits(2)-X_limits(1))*1.005+X_limits(1), (Y_limits(2)-Y_limits(1))*0.75+Y_limits(1),s,'FontSize',8);
+% 
+%         text((X_limits(2)-X_limits(1))*1.005+X_limits(1), (Y_limits(2)-Y_limits(1))*0.5+Y_limits(1),[num2str(depths(i,2)) 'm'],'FontSize',8);
+    if k==1 || k==5
+        set(gca,'ydir','reverse')
     end
+    legend(SN_MC,'location','southwest')
 
-    
     % Display year labels on bottom graph
-    eval(['axes(axes' num2str(i) ');']);
-    a=(Y_limits(1)-Y_limits(2))*1.5+Y_limits(2);
-    text(X_limits(1),a,num2str(xticks(1,1)),'FontSize',10);
-    for i=1:length(year_indexes)
-        text((jd2-jd1)*(year_indexes(i)-1)/(length(xticklabels)-1),a,num2str(xticks(year_indexes(i),1)),'FontSize',10);
-    end
+%     eval(['axes(axes' num2str(i) ');']);
+%     a=(Y_limits(1)-Y_limits(2))*1.5+Y_limits(2);
+%     text(X_limits(1),a,num2str(xticks(1,1)),'FontSize',10);
+%     for i=1:length(year_indexes)
+%         text((jd2-jd1)*(year_indexes(i)-1)/(length(xticklabels)-1),a,num2str(xticks(year_indexes(i),1)),'FontSize',10);
+%     end
 
     % Add title to top graph
     s = regexprep(moor,'_','\\_');
@@ -485,7 +504,7 @@ for k=1:length(plot_handle)
         suptitle(['Unfiltered ' suptitle_label{k} ' from mooring: ' s]);
     end
     
-    print('-dpng',[moor '_plot_stacked_' plot_handle{k} '_proclvl_' proclvlstr])
-    savefig([moor '_plot_stacked_' plot_handle{k} '_proclvl_' proclvlstr])
-
+    print('-dpng',[MOORPROC_G.reportdir '/figs/' moor '_plot_stacked_' plot_handle{k} '_proclvl_' proclvlstr])
+    savefig([MOORPROC_G.reportdir '/figs/' moor '_plot_stacked_' plot_handle{k} '_proclvl_' proclvlstr])
+end
 end
