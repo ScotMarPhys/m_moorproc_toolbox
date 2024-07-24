@@ -12,7 +12,7 @@
 % 22.03.2010 ZB Szuts: modified for Oceanus 459
 % 22/Nov/2015 : bim: DY039, updated to accept ODO oxygen temp and O2     
 
-global MOORPROC_Gdespike
+global MOORPROC_G
 clearvars -except MOORPROC_G
 
 % only mooring name and dates need to be modified, rest set in MOORPROC_G by
@@ -253,149 +253,66 @@ for proc = 1 : length(sn)
             jd2 = jd_e+7;
         end
 
-
-        % Conductivity
-        spikes_fig=figure;
-        figure(spikes_fig)
-        c2 = c; c2(c<-999) = nan;
-        plot(jd-jd1,c2)
-        fprintf('CONDUCTIVITY: Manual de-spike?\n');
-        finished=input('Further manual editing required? 0=no, 1=yes: ');
-        if finished==1
-            fprintf(' Manually select data using data brushing tool and create variable "spike" from bad data. \n Need to right-click after data selection and *export brushed* as "spike".\n To select more than one period, hold shift and select the other periods.');
-            brush(spikes_fig);
-            pause
-            for ij=1:size(spike,1)
-                 a=find(jd-jd1==spike(ij,1));
-                 c2(a)=nan;
-            end; clear a
-            c_num_spikes = size(spike,1);
-            figure(spikes_fig)       
-            hold on
-            plot(jd-jd1,c2,'k');
-            legend('with spikes','without spikes')
-            pause
-        else
-            c_num_spikes = 0;
-        end
-        c2(isnan(c2)) = dummy;
-        c = c2;
-        close(spikes_fig); clear c2
-
-        % Temperature
-        spikes_fig=figure;
-        figure(spikes_fig)
-        t2 = t; t2(t<-999) = nan;
-        plot(jd-jd1,t2)
-        fprintf('TEMPERATURE: Manual de-spike?\n');
-        finished=input('Further manual editing required? 0=no, 1=yes: ');
-        if finished==1
-            fprintf(' Manually select data using data brushing tool and create variable "spike" from bad data. \n Need to right-click after data selection and *export brushed* as "spike".\n To select more than one period, hold shift and select the other periods.');
-            brush(spikes_fig);
-            pause
-            for ij=1:size(spike,1)
-                 a=find(jd-jd1==spike(ij,1));
-                 t2(a)=nan;
-            end; clear a
-            t_num_spikes = size(spike,1);
-            figure(spikes_fig)       
-            hold on
-            plot(jd-jd1,t2,'k');
-            legend('with spikes','without spikes')
-            pause
-        else
-            t_num_spikes = 0;
-        end
-        t2(isnan(t2)) = dummy;
-        t = t2;
-        close(spikes_fig); clear t2
-
-        % Pressure
-        spikes_fig=figure;
-        figure(spikes_fig)
-        p2 = p; p2(p<-999) = nan;
-        plot(jd-jd1,p2)
-        fprintf('PRESSURE: Manual de-spike?\n');
-        finished=input('Further manual editing required? 0=no, 1=yes: ');
-        if finished==1
-            fprintf(' Manually select data using data brushing tool and create variable "spike" from bad data. \n Need to right-click after data selection and *export brushed* as "spike".\n To select more than one period, hold shift and select the other periods.');
-            brush(spikes_fig);
-            pause
-            for ij=1:size(spike,1)
-                 a=find(jd-jd1==spike(ij,1));
-                 p2(a)=nan;
-            end; clear a
-            p_num_spikes = size(spike,1);
-            figure(spikes_fig)       
-            hold on
-            plot(jd-jd1,p2,'k');
-            legend('with spikes','without spikes')
-            pause                fprintf(' Manually select data using data brushing tool and create variable "spike" from bad data. \n Need to right-click after data selection and *export brushed* as "spike".\n To select more than one period, hold shift and select the other periods.');
-
-        else
-            p_num_spikes = 0;
-        end
-        p2(isnan(p2)) = dummy;
-        p = p2;
-        close(spikes_fig); clear p2
-
-        % Oxygen
+        % manual editing with brush
+        n = 3; varnames = {'p','t','c'};
+        x = jd-jd1; xl = x([1 end]);
         if id(proc)==335
-            spikes_fig=figure;
-            figure(spikes_fig)
-            ot2 = ot; ot2(ot2<-999) = nan;
-            plot(jd-jd1,ot2)
-            fprintf('OXYGEN-temp: Manual de-spike?\n');
-            finished=input('Further manual editing required? 0=no, 1=yes: ');
-            if finished==1
-                fprintf(' Manually select data using data brushing tool and create variable "spike" from bad data. \n Need to right-click after data selection and *export brushed* as "spike".\n To select more than one period, hold shift and select the other periods.');
-                brush(spikes_fig);
-                pause
-                for ij=1:size(spike,1)
-                     a=find(jd-jd1==spike(ij,1));
-                     ot2(a)=nan;
-                end; clear a
-                ot_num_spikes = size(spike,1);
-                figure(spikes_fig)       
-                hold on
-                plot(jd-jd1,ot2,'k');
-                legend('with spikes','without spikes')
-                pause
-            else
-                ot_num_spikes = 0;
-            end
-            ot2(isnan(ot2)) = dummy;
-            ot = ot2;
-            close(spikes_fig); clear ot2
-
-
-            spikes_fig=figure;
-            figure(spikes_fig)
-            o2f = o2; o2f(o2f<-999) = nan;
-            plot(jd-jd1,o2f)
-            fprintf('OXYGEN: Manual de-spike?\n');
-            finished=input('Further manual editing required? 0=no, 1=yes: ');
-            if finished==1
-                fprintf(' Manually select data using data brushing tool and create variable "spike" from bad data. \n Need to right-click after data selection and *export brushed* as "spike".\n To select more than one period, hold shift and select the other periods.');
-                brush(spikes_fig);
-                pause
-                for ij=1:size(spike,1)
-                     a=find(jd-jd1==spike(ij,1));
-                     o2f(a)=nan;
-                end; clear a
-                o2_num_spikes = size(spike,1);
-                figure(spikes_fig)       
-                hold on
-                plot(jd-jd1,o2f,'k');
-                legend('with spikes','without spikes')
-                pause
-            else
-                o2_num_spikes = 0;
-            end
-            o2f(isnan(o2f)) = dummy;
-            o2 = o2f;
-            close(spikes_fig); clear o2f    
+            n = 5; varnames = [varnames,'ot','o2'];
         end
+        %set up variables and initial plot
+        editfig = figure;
+        estr = '';
+        for no = 1:n
+            dsplotdata.(varnames{no}) = eval(varnames{no});
+            dsplotdata.(varnames{no})(dsplotdata.(varnames{no})<-999) = nan;
+            numspikes.(varnames{no}) = 0;
+            ha(no) = subplot(n,1,no);
+            hl(no) = plot(x,dsplotdata.(varnames{no})); xlim(xl); grid on
+            ylabel(varnames{no})
+            estr = [estr sprintf('%d = %s,',no,varnames{no})];
+        end
+        estr = estr(1:end-1);
+        editing=input('Manual editing required? 0=no, 1=yes: ');
+        while editing==1
+            delete(hl); try delete(hle); catch; end
+            %replot -- this is necessary if looping more than once
+            for no = 1:n
+                axes(ha(no))
+                hl(no) = plot(x,dsplotdata.(varnames{no})); 
+                xlim(xl); grid on; ylabel(varnames{no})
+            end
+            zoomx = input('use figure buttons to zoom then type z to zoom all to current xlims, or enter to skip  ','s');
+            if ~isempty(zoomx) && strcmp(zoomx,'z')
+                xl = get(gca,'xlim');
+                set(ha(:),'xlim',xl)
+            end
+            varnum = input(sprintf('which variable do you want to edit (%s or enter to stop editing)? ',estr));
+            if isempty(varnum)
+                editing = 0; continue
+            end
+            fprintf([' Manually select data on subplot %d (from top) using data brushing tool \n...' ...
+                'and create variable "spike" from bad data. \n ...' ...
+                'Need to right-click after data selection and *export brushed* as "brushedData".\n ...' ...
+                'To select more than one period, hold shift and select the other periods.\n'],varnum);
+            clear brushedData
+            brush(editfig); pause
+            if exist('brushedData','var')
+                m = ismember(x,brushedData(:,1));
+                dat = dsplotdata.(varnames{varnum});
+                dat(ismember(x,brushedData(:,1))) = nan;
+                dsplotdata.(varnames{varnum}) = dat;
+                numspikes.(varnames{varnum}) = size(brushedData,1);
+                axes(ha(varnum)); hold on
+                hle = plot(x,dsplotdata.(varnames{varnum}),'k');
+                legend('before','edited')
+            end
+            editing = input('Make more edits?  0=no, 1=yes:  ');
+        end
+        for no = 1:n
+            dsplotdata.(varnames{no})(isnan(dsplotdata.(varnames{no}))) = dummy;
+            eval([varnames{no} ' = dsplotdata.(varnames{no});']);
+        end
+        close(spikes_fig); clear dsplotdata
 
 
         %-----------------------------------------------------
@@ -406,20 +323,20 @@ for proc = 1 : length(sn)
 
 
         fprintf(fid_stat,'T   %5.5d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d   %d         %d   %d   %5.2f   %5.2f   %5.2f   %5.2f \n',...
-            sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,t_num_spikes,tm,tsd,tmx,tmn');
+            sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,numspikes.t,tm,tsd,tmx,tmn');
 
         fprintf(fid_stat,'C   %5.5d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d   %d         %d   %d   %5.2f   %5.2f   %5.2f   %5.2f \n',...
-            sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,c_num_spikes,cm,csd,cmx,cmn');
+            sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,numspikes.c,cm,csd,cmx,cmn');
 
         if length(P) > 1
             fprintf(fid_stat,'P   %5.5d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d   %d         %d   %d   %5.1f   %5.2f   %5.2f   %5.2f \n',...
-                sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,p_num_spikes,pm,psd,pmx,pmn');
+                sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,numspikes.p,pm,psd,pmx,pmn');
         end
         if id(proc) == 335 % ODO
             fprintf(fid_stat,'OT  %5.5d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d   %d         %d   %d   %5.2f   %5.2f   %5.2f   %5.2f \n',...
-                sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,ot_num_spikes,otm,otsd,otmx,otmn');
+                sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,numspikes.ot,otm,otsd,otmx,otmn');
             fprintf(fid_stat,'O2  %5.5d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d   %d         %d   %d   %5.2f   %5.2f   %5.2f   %5.2f \n',...
-                sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,o2_num_spikes,o2m,o2sd,o2mx,o2mn');
+                sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,numspikes.o2,o2m,o2sd,o2mx,o2mn');
         end
         fprintf(fid_stat,'\n');
 
