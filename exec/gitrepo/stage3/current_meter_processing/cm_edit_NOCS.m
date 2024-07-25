@@ -1326,12 +1326,18 @@ if iiADCP>0
 
        
        if pgoodselec==1
+           if numel(find(~isnan(PG1)))+numel(find(~isnan(PG4)))>numel(u)/2
            uold = u;
            vold = v;
            wold = w;
            u((PG4+PG1)<pgoodlim)=NaN;
            v((PG4+PG1)<pgoodlim)=NaN;
            w((PG4+PG1)<pgoodlim)=NaN;
+           elseif numel(find(~isnan(PG1)))+numel(find(~isnan(PG4)))==0
+               fprintf(['No data in PG1+PG4. Assuming ADCP is Signature 55 \n',...
+                   'No PG threshold applied'])
+               pgoodlim=NaN;
+           end
        end
        
        % remove obvious outlier: > 2m.s-1
@@ -2529,6 +2535,7 @@ function [series,hf_series] = manual_spike_replace(series,jd_time,hf_series,fig_
             hold off
             plot(jd_time-jd_time(1),hf_series); 
             %clear spike
+            end
         end
     end
 end

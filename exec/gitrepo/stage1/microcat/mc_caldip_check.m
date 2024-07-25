@@ -148,7 +148,7 @@ for i = 1:nvec
 
     %% PLOT DATA AT BOTTLE STOPS
     
-    dobotstop=1; 
+    dobotstop=0; 
     
     if dobotstop 
         
@@ -477,8 +477,8 @@ ylabel('[mS/cm]');
 
 subplot(4,1,2);hold on;grid on;grid minor;
 errorbar(tdifx(:,1),tstd(:,1))
-%ylim([-0.004 0.001])
-ylim([min(tdifx(:,1)-max(tstd(:,1))) max(tdifx(:,1)+max(tstd(:,1)))])
+ylim([-0.004 0.002])
+% ylim([min(tdifx(:,1)-max(tstd(:,1))) max(tdifx(:,1)+max(tstd(:,1)))])
 
 set(gca,'xtick',1:1:length(vectx),'XTicklabel',vectx,'XTickLabelRotation',45)
 title('Temp diff @ pmax')
