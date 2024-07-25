@@ -37,6 +37,10 @@ function Anchor_seabed_triang(varargin)
 %
 % Saves results to moor_positions/{moor}_triangle.txt
 %
+% Optional a text file called targets_{cruise}.txt can be created to list
+% the target positions of the different moorings as decimal degree N and E:
+% {moor} {lat} {lon}
+%
 % This version uses calls to mrvdas/mtechsas/mscs to get data from ship
 % underway system, and uses m_map toolbox to use m_fdist and m_idist to
 % calculate distances on spheroid.
@@ -93,6 +97,32 @@ end
 if ~exist('td','var')
     td =input('Enter approximate transducer depth in metres: ');
 end
+
+target_fn = fullfile([dirout,'/targets_',MOORPROC_G.cruise,'.txt']);
+targ_loc=NaN(2,1);
+if exist(target_fn,'file')==2
+    fileID = fopen(target_fn,'r');
+    txt = textscan(fileID,'%s','delimiter','\n');
+    for i=1:length(txt{1})
+        if strfind(txt{1}{i},[loc_name,' '])
+            targ_loc = sscanf(txt{1}{i},[loc_name,' %f %f']);
+        end
+    end
+    fclose(fileID);
+end
+
+if numel(find(isnan(targ_loc)))>0      
+    fprintf('No target position found for %s \n',loc_name)
+    ta_str = input('Would you like to enter a target position? yes=1, no=0 (default=0) :');
+    if ta_str
+        targ_loc(1)=input('Please enter target latitude as decimal degrees N: ')
+        targ_loc(2)=input('Please enter target longitude as decimal degrees E: ')
+        fileID=fopen(target_fn,'w')
+        fprintf(fileID,'%s %f %f \n',loc_name,targ_loc(1), targ_loc(2));
+        fclose(fileID)
+    end
+end
+  
 
 if strmatch(loc_name, '')
     return
@@ -285,7 +315,7 @@ end
 
 titletext={sprintf('Triangulation Survey for: %s',loc_name);...
     sprintf('Corrected water depth: %5.0f m.',wd_corr);... 
-    sprintf('Release Height: %3.0f m. Transducer depth: %3.0f',rht,td)};
+    sprintf('Release Height: %3.1f m. Transducer depth: %3.1f',rht,td)};
 title(titletext);
 xlabel('Longitude'); ylabel('Latitude')
 
@@ -354,20 +384,27 @@ fallback=sprintf('%5.0f',fallback);
 fallbacknm = sw_dist([latD APlat],[lonD APlon],'nm');
 fallbacknm = sprintf('%5.2f',fallbacknm);
 
+if numel(~isnan(targ_loc))==2
+    dist2targ = sw_dist([targ_loc(1) APlat],[targ_loc(2) APlon],'km')*1000;
+else
+    dist2targ=NaN;
+end
+
 plot(APlon,APlat,'r+');
 plot(APlon,APlat,'ro');
 plot(lonD,latD,'g+');
 plot(lonD,latD,'go');
 title4 = sprintf('Latitude %i %5.2f %s, Longitude %i %5.2f %s',latdeg,latmin,latstr,londeg,lonmin,lonstr);
+title5 = sprintf('Distance from target: %3.0fm',dist2targ);
 titletext = [titletext;...
     title4;...
-    sprintf('Fall back = %s m = %s nm',fallback,fallbacknm)];
+    title5];
 title(titletext);
 
 % Text for plot
-text((east-west)*0.1+west,(north-south)*0.95+south,['Fallback = ' fallback 'm'],'color','k')
+text((east-west)*0.1+west,(north-south)*0.95+south,['Fallback = ' fallback 'm/' fallbacknm 'nm'],'color','k');
 text((east-west)*0.1+west,(north-south)*0.90+south,['Anchor drop'],'color','g');
-text((east-west)*0.1+west,(north-south)*0.85+south,['Anchor seabed location'],'color','r')
+text((east-west)*0.1+west,(north-south)*0.85+south,['Anchor seabed location'],'color','r');
 
 % Finish plot
 xlim([west east]);
@@ -427,23 +464,25 @@ else
     %     wd_corr_sh = 0;
 end
 
-fprintf(1,'\n Closest ship track to anchor was %6.1f m \n',dis_sh(im))
-fprintf(1,' at time %s \n',datestr(tp_sh))
-fprintf(1,' Where depth was %6.1f m \n',wd_corr_sh)
+fprintf(1,'\n Closest ship track to anchor was %6.1f m \n',dis_sh(im));
+fprintf(1,' at time %s \n',datestr(tp_sh));
+fprintf(1,' Where depth was %6.1f m \n',wd_corr_sh);
 
 
 % Now data that we save ni the output file
 fprintf(iout,'%s  %s \n',loc_name,datestr(tmeD,1));
 fprintf(iout,'Anchor drop at: %s %8.4f %8.4f Corr. water depth: %6.1f \n', ...
     datestr(tmeD,31),latD,lonD,wd_corr);
-fprintf(iout,'%s',swtx)
+fprintf(iout,'%s',swtx);
 fprintf(iout,'Date      Time       Lat   Lon  Slant range  Horiz range Residual \n');
 for i = 1:no_fixes
     fprintf(iout,'%s  %8.4f %8.4f %7.0f %7.0f %7.0f \n', ...
         datestr(tme(i),31),lat(i),lon(i),range(i),rangeh(i),reser(i));
 end
+fprintf(iout,'Release Height: %3.1f m. Transducer depth: %3.1f \n',rht,td);
 fprintf(iout,'Trilaterated position \n');
 fprintf(iout,'%8.4f %8.4f \n',APlat,APlon);
 fprintf(iout,'%s \n',title4);
 fprintf(iout,'Fallback  %s m \n',fallback);
+fprintf(iout,'%s \n', title5);
 fprintf(iout,'Comments: %s \n',us_com);
