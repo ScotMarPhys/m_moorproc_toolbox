@@ -532,8 +532,8 @@ end
   orient tall; grid on
 
 fprintf(fidlog,'Instrument Target Depth[m]: %d\n',z);
-fprintf(fidlog,'Start date and time: %s \n',datestr(gregorian(jd(1))));
-fprintf(fidlog,'End date and time:   %s \n',datestr(gregorian(jd(end))));
+fprintf(fidlog,'Start date and time: %s \n',datestr(jd(1)));
+fprintf(fidlog,'End date and time:   %s \n',datestr(jd(end)));
 sampling_rate = round(1./median(diff(jd)));
 ex_samples = round((jd(end)-jd(1))*sampling_rate+1);
 fprintf(fidlog,'Sampling Frequency [per jd]: %d \n',sampling_rate);
