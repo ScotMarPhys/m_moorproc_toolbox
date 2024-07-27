@@ -6,7 +6,7 @@ function varargout=stats_table(moor,varargin)
 % required inputs:-
 %   moor: complete mooring name as string. e.g. 'wb1_1_200420'
 %
-% optional inputs:-
+% optional inputs (parameter-value):-
 %   layout: orientation of figure portrait/lanscape (default = portrait)
 %           input of 'landscape' or 'portrait'
 %           e.g. pressure_overlay('wb1_1_200420','layout','landscape')
@@ -17,6 +17,7 @@ function varargout=stats_table(moor,varargin)
 %           saving an ascii file. If called in this mode there will be an
 %           output to the function consisiting of the Microcat serial
 %           numbers and statistics
+%   dummy: value to replace with NaN (default -9999)
 %
 %   output: an ascii text file containing the summary statistics for the
 %   mooring - naming convention is moor_stats.asc where moor is the mooring
@@ -51,12 +52,13 @@ end
 
 %defaults
 layout = 'portrait';
+dummy = -9999;
 procpath = fullfile(MOORPROC_G.moordatadir,'proc');
 outpath = fullfile(MOORPROC_G.reportdir,'stats');
 non_verbose = 0;
 %and optional inputs overwrite them
-n = 2; 
-while n<=nargin
+n = 1; 
+while n+1<=nargin
     if ischar(varargin{n}) 
         if strcmp(varargin{n},'non-verbose')
             non_verbose = 1;
@@ -80,17 +82,8 @@ infofile = fullfile(procpath,moor,[moor 'info.dat']);
     'instrument:serialnumber:z:Start_Time:Start_Date:End_Time:End_Date');
 
 
-% JULIAN Convert Gregorian date to Julian day.
-% JD = JULIAN(YY,MM,DD,HH) or JD = JULIAN([YY,MM,DD,HH]) returns the Julian
-% day number of the calendar date specified by year, month, day, and decimal
-% hour.
-% JD = JULIAN(YY,MM,DD) or JD = JULIAN([YY,MM,DD]) if decimal hour is absent,
-% it is assumed to be zero.
-% Although the formal definition holds that Julian days start and end at
-% noon, here Julian days start and end at midnight. In this convention,
-% Julian day 2440000 began at 00:00 hours, May 23, 1968.
-jd_start = julian([s_d' hms2h([s_t;0]')]);
-jd_end   = julian([e_d' hms2h([e_t;0]')]);
+dd_start = datenum([s_d' s_t' 0])-datenum(MOORPROC_G.YEAR,1,1);
+dd_end = datenum([e_d' e_t' 0])-datenum(MOORPROC_G.YEAR,1,1);
 
 if non_verbose==0
     disp('z : instrument id : serial number')
@@ -129,7 +122,7 @@ for iid=1:length(id_z_sn.id)
             for no = 1:length(vars)
                 data.(vars{no}) = a(no).a;
             end
-            data.jd=julian(yy,mm,dd,hh);
+            data.dd = datenum(yy,mm,dd,hh,zeros(size(hh)),zeros(size(hh))) - datenum(MOORPROC_G.YEAR,1,1);
         else
             disp('File does not exist!')
             disp(['infile = ' infile])
@@ -138,21 +131,21 @@ for iid=1:length(id_z_sn.id)
 
         if ~isempty(data)
             %calculate stats
-            %actually calculate the stats, which are the same for all fields other than
-            %jd no matter the instrument***
+            %actually calculate the stats, which are done the same way for
+            %all fields other than dd no matter the instrument***
             fn = fieldnames(data);
-            fn = setdiff(fn,'jd');
+            fn = setdiff(fn,'dd');
             for no = 1:length(fn)
                 vnam = fn{no};
-                data.(vnam)(data.(vnam)==-9999) = NaN;
+                data.(vnam)(data.(vnam)==dummy) = NaN;
                 data.([vnam 'mean']) = nanmean(data.(vnam));
                 data.([vnam 'std']) = nanstd(data.(vnam));
                 data.([vnam 'max']) = max(data.(vnam));
                 data.([vnam 'min']) = min(data.(vnam));
             end
-            data.samples = length(data.jd);
-            data.start_date = gregorian(data.jd(1));
-            data.end_date = gregorian(data.jd(end));
+            data.samples = length(data.dd);
+            data.start_date = data.dd(1);
+            data.end_date = data.dd(end);
 
             if isfield(data,'u')
                 % calculate speed and direction
@@ -207,7 +200,7 @@ while check==0
 end
 fid=fopen(outfile,'w');
 
-fprintf(fid,'%s Moorig Array. \n%s %s \n',MOORPROC_G.project,'Simple Statisctics for Mooring:- ',moor);
+fprintf(fid,'%s Mooring Array. \n%s %s \n',MOORPROC_G.project,'Simple Statistics for Mooring:- ',moor);
 fprintf(fid,'%s %0.2i/%0.2i/%i %0.2i:%0.2i\n','Mooring deployment - start: ',s_d(3),s_d(2),s_d(1),s_t(1),s_t(2));
 fprintf(fid,'%s %0.2i/%0.2i/%i %0.2i:%0.2i\n\n','                       end: ',e_d(3),e_d(2),e_d(1),e_t(1),e_t(2));
 fprintf(fid,'%s\n','-----------------------------------------------------------------------------------------');
@@ -253,7 +246,7 @@ for iid=1:size(id_z_sn,1)
 
     % Use automatic detection of first and last useable record
     % NB: this works on the assumption that bad data has been replaced with
-    % -9999 values - which are then replaced with NaNs during loading
+    % NaNs by now
     j2=size(variables,1);
     for j=1:j2
         norexist = isfield(alldata,iname);
@@ -267,10 +260,8 @@ for iid=1:size(id_z_sn,1)
             firstRec(j)=validRecs(1);
             lastRec(j)=validRecs(end);
             numRecs(j)=length(validRecs);
-            firstRecJD = data.jd(firstRec(j));
-            lastRecJD = data.jd(lastRec(j));
-            firstRecGREG(j,:)=gregorian(firstRecJD);
-            lastRecGREG(j,:)=gregorian(lastRecJD);
+            firstRecDnum = data.dd(firstRec(j))+datenum(MOORPROC_G.YEAR,1,1);
+            lastRecDnum = data.dd(lastRec(j))+datenum(MOORPROC_G.YEAR,1,1);
 
             % combine mean, max, min and std into columns for all variables per
             % instrument
@@ -279,16 +270,12 @@ for iid=1:size(id_z_sn,1)
             minRec(j) = data.([vname 'min']);
             maxRec(j) = data.([vname 'max']);
 
-            short_year1=num2str(firstRecGREG(j,1));
-            short_year2=num2str(lastRecGREG(j,1));
-            short_year1=short_year1(3:4);
-            short_year2=short_year2(3:4);
+            ds1 = datestr(firstRecDnum,'dd/mm/yy HH:MM');
+            ds2 = datestr(lastRecDnum,'dd/mm/yy HH:MM');
             % write data to file
-            fprintf(fid,' %8s  %s  %02.0f/%02.0f/%s %02.0f:%02.0f  %02.0f/%02.0f/%s %02.0f:%02.0f  %7.0f  %6.1f  %6.1f  %6.1f  %6.1f\n',...
+            fprintf(fid,' %8s  %s  %s  %s  %d  %6.1f  %6.1f  %6.1f  %6.1f\n',...
                 char(SN{j}),variables(j,:),...
-                firstRecGREG(j,3),firstRecGREG(j,2), ...
-                short_year1,firstRecGREG(j,4),firstRecGREG(j,5),...
-                lastRecGREG(j,3),lastRecGREG(j,2),short_year2,lastRecGREG(j,4),lastRecGREG(j,5),...
+                ds1,ds2, ...
                 numRecs(j),meanRec(j),stdRec(j),minRec(j),maxRec(j));
         else
             fprintf(fid,' %8s  %s  No valid data \n',char(SN{j}),variables(j,:));

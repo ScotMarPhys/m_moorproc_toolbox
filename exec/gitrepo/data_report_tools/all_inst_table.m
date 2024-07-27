@@ -41,19 +41,19 @@ iiSG = find(id == 301);
 iiSP = find(id == 375);
 
 %instrument abbreviation
-id_z_sn.inst = cell(length(id),1); id_z_sn.instl = id_z_sn.inst;
-id_z_sn.inst(iiMC) = {'MC'}; id_z_sn.instl(iiMC) = 'microcat';
-id_z_sn.inst(iiODOMC) = {'ODOMC'}; id_z_sn.instl(iiMC) = 'microcat';
-id_z_sn.inst(iiRBR) = {'RBR'}; id_z_sn.instl(iiMC) = 'rbr';
-id_z_sn.inst(iiIDR) = {'IDR'}; id_z_sn.instl(iiMC) = 'idr';
-id_z_sn.inst(iiS4) = {'S4'}; id_z_sn.instl(iiMC) = 's4';
-id_z_sn.inst(iiRCM11) = {'RCM11'}; id_z_sn.instl(iiMC) = 'rcm11';
-id_z_sn.inst(iiARG) = {'ARG'}; id_z_sn.instl(iiMC) = 'argonaut';
-id_z_sn.inst(iiNOR) = {'NOR'}; id_z_sn.instl(iiMC) = 'nor';
-id_z_sn.inst(iiDVS) = {'DVS'}; id_z_sn.instl(iiMC) = 'dvs';
-id_z_sn.inst(iiBPR) = {'BPR'}; id_z_sn.instl(iiMC) = 'bpr';
-id_z_sn.inst(iiSG) = {'SG'}; id_z_sn.instl(iiMC) = 'seaguard';
-id_z_sn.insts(iiSP) = {'SP'}; id_z_sn.instl(iiMC) = 'seaphox';
+id_z_sn.inst = repmat({' '},size(id)); id_z_sn.instl = id_z_sn.inst;
+id_z_sn.inst(iiMC) = {'MC'}; id_z_sn.instl(iiMC) = {'microcat'};
+id_z_sn.inst(iiODOMC) = {'ODOMC'}; id_z_sn.instl(iiMC) = {'microcat'};
+id_z_sn.inst(iiRBR) = {'RBR'}; id_z_sn.instl(iiMC) = {'rbr'};
+id_z_sn.inst(iiIDR) = {'IDR'}; id_z_sn.instl(iiMC) = {'idr'};
+id_z_sn.inst(iiS4) = {'S4'}; id_z_sn.instl(iiMC) = {'s4'};
+id_z_sn.inst(iiRCM11) = {'RCM11'}; id_z_sn.instl(iiMC) = {'rcm11'};
+id_z_sn.inst(iiARG) = {'ARG'}; id_z_sn.instl(iiMC) = {'argonaut'};
+id_z_sn.inst(iiNOR) = {'NOR'}; id_z_sn.instl(iiMC) = {'nor'};
+id_z_sn.inst(iiDVS) = {'DVS'}; id_z_sn.instl(iiMC) = {'dvs'};
+id_z_sn.inst(iiBPR) = {'BPR'}; id_z_sn.instl(iiMC) = {'bpr'};
+id_z_sn.inst(iiSG) = {'SG'}; id_z_sn.instl(iiMC) = {'seaguard'};
+id_z_sn.insts(iiSP) = {'SP'}; id_z_sn.instl(iiMC) = {'seaphox'};
 
 %variables (not all, just those used by stats_table and *_overlay.m)
 id_z_sn.vars = repmat({'t:c:p'},length(id),1);

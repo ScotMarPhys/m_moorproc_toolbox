@@ -57,7 +57,7 @@ switch datatype
         pd.stage1log = fullfile(pd.stage1path,'stage1_log');
         pd.stage2path = fullfile(mg.moordatadir, 'proc', moor, 'microcat');
         pd.stage2form = [moor '_%4.4d.use'];
-        pd.stage2log = fullfile(mg.reportdir, 'stats', ['stage2_log_' moor]);
+        pd.stage2log = fullfile(pd.stage2path, ['stage2_log_' moor,'.log']);
         pd.stage2figpath = fullfile(mg.reportdir, 'figs');
 
     case {'nor','nortek'}
@@ -73,7 +73,7 @@ switch datatype
         pd.stage1log = fullfile(pd.stage1path, [moor '_Nortek_stage1.log']);
         pd.stage1form = [moor '_%d.raw'];
         pd.stage2path = fullfile(mg.moordatadir, 'proc', moor, datatype);
-        pd.stage2log = fullfile(mg.reportdir, 'stats', ['stage2_log_Nortek_' moor]);
+        pd.stage2log = fullfile(pd.stage2path, ['stage2_log_Nortek_' moor]);
         pd.stage2form = [moor '_%d.use'];
         pd.stage3path = fullfile(mg.moordatadir, 'proc', moor, datatype);
         pd.stage3form = [moor '_%d.edt'];

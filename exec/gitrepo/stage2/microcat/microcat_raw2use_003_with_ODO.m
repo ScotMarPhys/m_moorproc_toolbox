@@ -58,12 +58,15 @@ id     = id(zx);
 
 
 fid_stat = fopen(pd.stage2log,'w');
+
 fprintf(fid_stat,'Processing steps taken by %s:\n',mfilename);
 fprintf(fid_stat,'  1. eliminate lauching and recovery period\n');
-fprintf(fid_stat,'  2. save data to rdb file\n');
+fprintf(fid_stat,'  2. Despike data and fill time gaps with dummy\n');
+fprintf(fid_stat,'  3. save data to rdb file\n');
 fprintf(fid_stat,'\n Operated by:%s on %s\n',operator,datestr(clock));
 fprintf(fid_stat,['        MicroCAT in Mooring ',moor,'\n\n\n']);
-fprintf(fid_stat,'     ID    Depth   Start         End      Cycles  Spikes_Auto  Gaps Spikes_Manual  Mean     STD     Max     Min\n');
+
+manual_despiking='No spikes were removed manually \n';
 
 % ---- despike parameters
 despike = 1; %***prompt
@@ -142,7 +145,6 @@ for proc = 1 : length(sn)
             %--- despike ------------------------------
             %------------------------------------------
             disp('ddspike')
-
             [t,tdx,tndx] = ddspike(t,T_range,dT_range,nloop,'y',dummy);
             [c,cdx,cndx] = ddspike(c,C_range,dC_range,nloop,'y',dummy);
             if length(p) > 1
@@ -153,53 +155,86 @@ for proc = 1 : length(sn)
                [ot,otdx,otndx] = ddspike(ot,T_range,dT_range,nloop,'y',dummy);
             end
 
-            % -----------------------------------------
-            % ---  basic statistics -------------------
-            % -----------------------------------------
-            tstat = t ~= dummy;
-            cstat = c ~= dummy;
-            tstat = t(tstat);
-            cstat = c(cstat);
-            if id(proc)==335
-                o2stat = o2 ~= dummy;
-                o2stat = o2(o2stat);
-            end
         end
 
         close(989)
 
 
-        % -----------------------------------------
-        % ---  basic statistics -------------------
-        % -----------------------------------------
- 
-        tm = meannan(t);
-        cm = meannan(c);
 
-        tsd= stdnan(t);
-        csd= stdnan(c);
+        % ----------------------------------------
+        % ---  Manual De-spike -------------------
+        % ----------------------------------------
+        
+        if exist('plot_interval','var') && ~isempty(plot_interval)
+            jd1 = julian(plot_interval(1,:));
+            jd2 = julian(plot_interval(2,:));
+        else
+            jd1 = jd_s-7;
+            jd2 = jd_e+7;
+        end
 
-        tmx = max(t);
-        cmx = max(c);
-        tmn = min(t);
-        cmn = min(c);
-
-        if length(P) > 1
-            if despike
-                pstat = find(p ~= dummy);
+        % manual editing with brush
+        n = 3; varnames = {'p','t','c'};
+        x = jd-jd1; xl = x([1 end]);
+        if id(proc)==335
+            n = 5; varnames = [varnames,'ot','o2'];
+        end
+        %set up variables and initial plot
+        editfig = figure;
+        estr = '';
+        for no = 1:n
+            dsplotdata.(varnames{no}) = eval(varnames{no});
+            dsplotdata.(varnames{no})(dsplotdata.(varnames{no})<-999) = nan;
+            numspikes.(varnames{no}) = 0;
+            ha(no) = subplot(n,1,no);
+            hl(no) = plot(x,dsplotdata.(varnames{no})); xlim(xl); grid on
+            ylabel(varnames{no})
+            estr = [estr sprintf('%d = %s,',no,varnames{no})];
+        end
+        estr = estr(1:end-1);
+        editing=input('Manual editing for plotting required? 0=no, 1=yes: ');
+        while editing==1
+            delete(hl); try delete(hle); catch; end
+            %replot -- this is necessary if looping more than once
+            for no = 1:n
+                axes(ha(no))
+                hl(no) = plot(x,dsplotdata.(varnames{no})); 
+                xlim(xl); grid on; ylabel(varnames{no})
             end
-            pm  = meannan(p);
-            psd = stdnan(p);
-            pmx = max(p);
-            pmn = min(p);
+            zoomx = input('use figure buttons to zoom then type z to zoom all to current xlims, or enter to skip  ','s');
+            if ~isempty(zoomx) && strcmp(zoomx,'z')
+                xl = get(gca,'xlim');
+                set(ha(:),'xlim',xl)
+            end
+            varnum = input(sprintf('which variable do you want to edit (%s or enter to stop editing)? ',estr));
+            if isempty(varnum)
+                editing = 0; continue
+            end
+            fprintf([' Manually select data on subplot %d (from top) using data brushing tool \n...' ...
+                'and create variable "spike" from bad data. \n ...' ...
+                'Need to right-click after data selection and *export brushed* as "brushedData".\n ...' ...
+                'To select more than one period, hold shift and select the other periods.\n'],varnum);
+            clear brushedData
+            brush(editfig); pause
+            if exist('brushedData','var')
+                m = ismember(x,brushedData(:,1));
+                dat = dsplotdata.(varnames{varnum});
+                dat(ismember(x,brushedData(:,1))) = nan;
+                dsplotdata.(varnames{varnum}) = dat;
+                numspikes.(varnames{varnum}) = size(brushedData,1);
+                axes(ha(varnum)); hold on
+                hle = plot(x,dsplotdata.(varnames{varnum}),'k');
+                legend('before','edited')
+            end
+            editing = input('Make more edits?  0=no, 1=yes:  ');
+            manual_despiking = 'Manual despiking applied \n';
         end
+        for no = 1:n
+            dsplotdata.(varnames{no})(isnan(dsplotdata.(varnames{no}))) = dummy;
+            eval([varnames{no} ' = dsplotdata.(varnames{no});']);
+        end
+        close(editfig); clear dsplotdata
 
-        if id(proc) == 335 % ODO
-            otm  = meannan(ot); otsd = stdnan(ot);
-            otmx = max(ot); otmn = min(ot);
-            o2m  = meannan(o2); o2sd = stdnan(o2);
-            o2mx = max(o2); o2mn = min(o2);
-        end
 
         %------------------------------------------
         %---- fill time gaps  with dummy
@@ -240,106 +275,18 @@ for proc = 1 : length(sn)
             o2 = [o2;dummy*ones(ngap,1)]; o2 = o2(xx);
         end
 
-
-        % ----------------------------------------
-        % ---  Manual De-spike -------------------
-        % ----------------------------------------
-        
-        if exist('plot_interval','var') && ~isempty(plot_interval)
-            jd1 = julian(plot_interval(1,:));
-            jd2 = julian(plot_interval(2,:));
-        else
-            jd1 = jd_s-7;
-            jd2 = jd_e+7;
-        end
-
-        % manual editing with brush
-        n = 3; varnames = {'p','t','c'};
-        x = jd-jd1; xl = x([1 end]);
-        if id(proc)==335
-            n = 5; varnames = [varnames,'ot','o2'];
-        end
-        %set up variables and initial plot
-        editfig = figure;
-        estr = '';
-        for no = 1:n
-            dsplotdata.(varnames{no}) = eval(varnames{no});
-            dsplotdata.(varnames{no})(dsplotdata.(varnames{no})<-999) = nan;
-            numspikes.(varnames{no}) = 0;
-            ha(no) = subplot(n,1,no);
-            hl(no) = plot(x,dsplotdata.(varnames{no})); xlim(xl); grid on
-            ylabel(varnames{no})
-            estr = [estr sprintf('%d = %s,',no,varnames{no})];
-        end
-        estr = estr(1:end-1);
-        editing=input('Manual editing required? 0=no, 1=yes: ');
-        while editing==1
-            delete(hl); try delete(hle); catch; end
-            %replot -- this is necessary if looping more than once
-            for no = 1:n
-                axes(ha(no))
-                hl(no) = plot(x,dsplotdata.(varnames{no})); 
-                xlim(xl); grid on; ylabel(varnames{no})
-            end
-            zoomx = input('use figure buttons to zoom then type z to zoom all to current xlims, or enter to skip  ','s');
-            if ~isempty(zoomx) && strcmp(zoomx,'z')
-                xl = get(gca,'xlim');
-                set(ha(:),'xlim',xl)
-            end
-            varnum = input(sprintf('which variable do you want to edit (%s or enter to stop editing)? ',estr));
-            if isempty(varnum)
-                editing = 0; continue
-            end
-            fprintf([' Manually select data on subplot %d (from top) using data brushing tool \n...' ...
-                'and create variable "spike" from bad data. \n ...' ...
-                'Need to right-click after data selection and *export brushed* as "brushedData".\n ...' ...
-                'To select more than one period, hold shift and select the other periods.\n'],varnum);
-            clear brushedData
-            brush(editfig); pause
-            if exist('brushedData','var')
-                m = ismember(x,brushedData(:,1));
-                dat = dsplotdata.(varnames{varnum});
-                dat(ismember(x,brushedData(:,1))) = nan;
-                dsplotdata.(varnames{varnum}) = dat;
-                numspikes.(varnames{varnum}) = size(brushedData,1);
-                axes(ha(varnum)); hold on
-                hle = plot(x,dsplotdata.(varnames{varnum}),'k');
-                legend('before','edited')
-            end
-            editing = input('Make more edits?  0=no, 1=yes:  ');
-        end
-        for no = 1:n
-            dsplotdata.(varnames{no})(isnan(dsplotdata.(varnames{no}))) = dummy;
-            eval([varnames{no} ' = dsplotdata.(varnames{no});']);
-        end
-        close(spikes_fig); clear dsplotdata
-
-
         %-----------------------------------------------------
         %  write output to logfile ---------------------------
         %-----------------------------------------------------
 
         disp(' write output to logfile')
-
-
-        fprintf(fid_stat,'T   %5.5d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d   %d         %d   %d   %5.2f   %5.2f   %5.2f   %5.2f \n',...
-            sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,numspikes.t,tm,tsd,tmx,tmn');
-
-        fprintf(fid_stat,'C   %5.5d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d   %d         %d   %d   %5.2f   %5.2f   %5.2f   %5.2f \n',...
-            sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,numspikes.c,cm,csd,cmx,cmn');
-
-        if length(P) > 1
-            fprintf(fid_stat,'P   %5.5d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d   %d         %d   %d   %5.1f   %5.2f   %5.2f   %5.2f \n',...
-                sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,numspikes.p,pm,psd,pmx,pmn');
-        end
-        if id(proc) == 335 % ODO
-            fprintf(fid_stat,'OT  %5.5d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d   %d         %d   %d   %5.2f   %5.2f   %5.2f   %5.2f \n',...
-                sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,numspikes.ot,otm,otsd,otmx,otmn');
-            fprintf(fid_stat,'O2  %5.5d  %4.4d  %2.2d/%2.2d/%2.2d   %2.2d/%2.2d/%2.2d   %d         %d   %d   %5.2f   %5.2f   %5.2f   %5.2f \n',...
-                sn(proc),z(proc),Start_Date,End_Date,cycles,ngap,numspikes.o2,o2m,o2sd,o2mx,o2mn');
-        end
+	    fprintf(fid_stat,'Serialnumber %d \n',sn(proc));
+        fprintf(fid_stat,'Infile %s \n',infile);
+        fprintf(fid_stat,'Outfile %s \n',outfile);
+	    fprintf(fid_stat,'Operation interval: %s  to  %s\n', ...
+            datestr(gregorian(jd(1))),datestr(gregorian(jd(end)) ));
+        fprintf(fid_stat,'%s',manual_despiking);
         fprintf(fid_stat,'\n');
-
         %-----------------------------------
         %--- write data to rodb format -----
         %-----------------------------------
@@ -543,7 +490,7 @@ for proc = 1 : length(sn)
         orient tall
         print(gcf,'-dpng','-r300',fullfile(pd.stage2figpath,[sprintf(pd.stage2form,sn(proc)) '_lowpass.png']));
         disp('pause (press any key to continue)'); pause
-
+        close all
     end % if exist(infile)
 
 end % for proc = 1 : length(sn),
