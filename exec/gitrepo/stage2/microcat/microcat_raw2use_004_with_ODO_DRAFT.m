@@ -68,6 +68,9 @@ fprintf(fid_stat,['        MicroCAT in Mooring ',moor,'\n\n\n']);
 
 manual_despiking='No spikes were removed manually \n';
 
+% ---- ODO temperature sensor check parameters
+dT_odo_tol = 0.01; % Tolerance for diff between sbe63 and sbe37 temp sensors
+dT_odo_pct_bad_tol = 1; % How many percent bad points (diff above tolerance) will trigger warning
 % ---- despike parameters
 despike = 1; %***prompt
 if despike %***track parameters (and whether used) for each cruise/record
@@ -116,6 +119,46 @@ for proc = 1 : length(sn)
             [YY,MM,DD,HH,C,T,P] = rodbload(infile,'YY:MM:DD:HH:C:T:P');
         end
 
+        %-----------------------------------------------
+        %----- ODOs only: check offset between sbe37 
+        %----- and sbe63 temp sensors, and ask if values
+        %----- should be recalculated using sbe37 temp
+        %-----------------------------------------------
+        if id(proc) == 335
+            
+            dT_odo = OT - T;
+
+            figure;
+            plot(jd,dT_odo)
+            hold on; grid on;
+            title(['Temperature difference sbe63-sbe37; MicroCAT-ODO s/n: ',num2str(sn(proc)),'; Target Depth: ',num2str(z(proc))])
+            xlabel('Days since deployment'); ylabel('Temperature difference [deg C]');
+
+            ind_dT_odo_bad = find(abs(dT_odo)>=dT_odo_tol);
+            pct_bad_dT_odo = length(ind_dT_odo_bad)/length(dT_odo)*100;
+
+            if pct_bad_dT_odo>dT_odo_pct_bad_tol/100
+                disp(['WARNING : large difference between sbe37 and sbe63 temperatures detected for ODO s/n ' num2str(sn(proc)) ' (' num2str(pct_bad_dT_odo,'%2.0f') '% of points over ' num2str(dT_odo_tol) ' degC difference theshold)'])
+                redo_odo = input('Do you want to recaculate oxygen concentrations using sbe37 temperature (y/n)? [note: instrument raw data file will need to contain SBE63 phase delay voltage]    ','s');
+                if redo_odo=='y'
+                    % Backup original oxygen values for comparison
+                    O2_original = O2;
+                    clear O2;
+                    % Recalculate oxygen
+                    infile_raw = fullfile(pd.rawpath,[num2str(sn(proc)) '_data.cnv']);
+                    O2 = microcat_odo_recalculate_oxy(infile_raw);
+                    % Check plot
+                    figure;
+                    plot(jd,O2_original,'r')
+                    hold on; grid on;
+                    plot(jd,O2,'g')
+                    title(['Oxygen concentration, original (red) vs recalculated (green); MicroCAT-ODO s/n: ',num2str(sn(proc)),'; Target Depth: ',num2str(z(proc))])
+                    xlabel('Days since deployment'); ylabel('O_2 [/mumol/kg]');
+                end
+            end
+
+        end
+
         %------------------------------------------
         %----- cut off launching and recovery period
         %------------------------------------------
@@ -139,6 +182,9 @@ for proc = 1 : length(sn)
         Start_Time = HH(1);
         End_Date = [YY(cycles) MM(cycles) DD(cycles)];
         End_Time = HH(cycles);
+
+        
+
 
         if despike %***also plot with and without! 
             %------------------------------------------

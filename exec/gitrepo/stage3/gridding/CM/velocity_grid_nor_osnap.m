@@ -6,7 +6,26 @@
 % clear all ; close all ;
 
 % basedir      = '/home/sa02lh/Data/Dropbox/Work/Postdoc_OSNAP/OSNAP_mooring/backup_mdrive';
-basedir = pathosnap;
+% basedir = pathosnap;
+
+global MOORPROC_G
+clearvars -except MOORPROC_G
+
+% only mooring name and dates need to be modified, rest set in MOORPROC_G by
+% startup{cruise}.m
+
+moor = input('mooring deployment (e.g. ebh2_15_2022) to process:   ','s');
+%moor = 'ebh2_15_2022';
+% the start and end times of the time axis for plotting
+%plot_interval = [2023 03 05; 2023 07 21];
+%plot_interval = [2022 02 24; 2024 03 30];
+
+cruise = MOORPROC_G.cruise;
+operator = MOORPROC_G.operator;
+
+% get paths to files
+pd = moor_inoutpaths('nor',moor);
+basedir = MOORPROC_G.moordatadir;
 
 for iyear=1 %1:3
 switch(iyear)
@@ -22,6 +41,8 @@ switch(iyear)
         year = '_05_2018'; jg_start = datenum(2018,7,9,00,00,00); jg_end = datenum(2020,10,10,00,00,00);    
     case(6)
         year = '_06_2020'; jg_start = datenum(2020,10,10,00,00,00); jg_end = datenum(2022,7,15,00,00,00);
+    case(7)
+        year = '_07_2022'; jg_start = datenum(2022,07,22,00,00,00); jg_end = datenum(2024,7,17,00,00,00);
 end
 
  for imoor=1:3
