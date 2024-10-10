@@ -3,7 +3,8 @@
 /users
 /matlab_diaries
 **.
-
+/osnap
+/rpdmoc
 
 # data (or plot) file types, but not info file types
 **/*.raw

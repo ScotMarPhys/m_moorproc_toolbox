@@ -20,9 +20,9 @@ p_insitucal.cast = input('which cast number? ');
 p_insitucal.depl_period = input('which deployment period (e.g. osnap6) ','s');
 
 % ---- parameters ----------------------------------------------------
-p_insitucal.sensorselec      = input('which CTD sensor? (1 or 2) ');
+p_insitucal.sensorselect      = input('which CTD sensor? (1 or 2) ');
 p_insitucal.sensor_id        = [332 337];  % MicroCAT ID range (in info.dat) %***
-pd = moor_inoutpaths('cal_coef');
+pd = moor_inoutpaths('cal_coef',3);
 p_insitucal.datadir          = pd.datadir;
 p_insitucal.coef_dir         = pd.coef_dir;
 p_insitucal.apply_offset   = input('apply time offset between CTD and MC (y/n/i) ','s');
@@ -223,6 +223,12 @@ elseif strcmp(p_insitucal.cruise,'dy120') & p_insitucal.cast == 10
     p_insitucal.p_interval       = [0  3000];
     p_insitucal.average_interval = [1500 2950];% [1000 2150];
 elseif strcmp(p_insitucal.cruise,'jc238') & p_insitucal.cast == 19
+    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0  1200];
+    p_insitucal.average_interval = [1500 2950];% [1000 2150];
+elseif strcmp(p_insitucal.cruise,'dy181') & p_insitucal.cast == 3
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
     p_insitucal.dp_interval    = [-10 10];   

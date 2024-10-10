@@ -41,7 +41,7 @@ jd_mdn = 1721058.5; %offset from julian (as calculated by matlab's juliandate) a
 % ------ output / input files and directories ---------------
 
 id_z_sn = all_inst_table(calp.sensor_id(1),-999,-999);
-sensortype = id_z_sn.instl(1);
+sensortype = char(id_z_sn.instl(1));
 if isempty(sensortype)
     disp('Sensor type unknown - return')
     return
@@ -65,13 +65,13 @@ pd = moor_inoutpaths('cal_coef',calp.cast);
 %-------------------------------------
 
 % ----MicroCAT ID -----------
-[~,typ,instr,sn1] = rodbload(info_file,'z:instrument:serialnumber:deployment');
-m = (typ>=sensor_id(1) & typ<=sensor_id(end));
+[~,typ,instr,sn1] = rodbload(pd.info_file,'z:instrument:serialnumber:deployment');
+m = (typ>=calp.sensor_id(1) & typ<=calp.sensor_id(end));
 instr = instr(m);
 sn1 = sn1(m);
 						
 % --- deployment depths --------
-ein = fullfile(ein_dir,[depl_period '_deploymentdepths.dat']);
+ein = fullfile(pd.coef_dir,[calp.depl_period '_deploymentdepths.dat']);
 [dep,typ,ssn] = rodbload(ein,'z:instrument:serialnumber');
 if isempty(dep)
     error(['!! MAKE sure the file ' ein ' exists or edit the filepath !!' ])    
@@ -89,7 +89,7 @@ instr = instr(ib); clear sn1
 
 % ---- CTD and Bottle data ----------------
 fprintf(1,'\n Loading CTD  and bottle data ...\n')
-[ctd, bottle] = load_ctdcaldip(pd, calp.cast, calp.sensorselec, calp.cnv_time_correction);
+[ctd, bottle] = load_ctdcaldip(pd, calp.cast, calp.sensorselect, calp.cnv_time_correction);
 
 
 % --- MicroCAT and Seaphox -------
@@ -127,7 +127,7 @@ if sum(missdat)
     error(['MAKE SURE THAT FILES cast%d_%d.raw (etc.) exist ...' ...
         'in cal_dip/microcat/cast%d/ \nor remove these instruments ...' ...
         'from moor/proc_calib/%s/cal_dip/cast%dinfo.dat', ...
-        calp.cast,instm1,calp.cast,MOORPROC_G.cruise,calp.cast);
+        calp.cast,instm1,calp.cast,MOORPROC_G.cruise,calp.cast]);
 end
 % MicroCAT units
 if strcmp(pd.mc_cunit,'S/m')

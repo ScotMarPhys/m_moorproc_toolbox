@@ -76,11 +76,11 @@ switch pd.ctdformat
 
     %%%%%%% MSTAR %%%%%%%
     case 'mstar'
-        pd.ctd_file
+        ctd_file=pd.ctd1hz_file
 
         switch mg.cruise
             case {'d344','d359'}
-                dd  = netcdf(pd.ctd_file); %,'press temp cond time','silent');
+                dd  = netcdf(pd.ctd1hz_file); %,'press temp cond time','silent');
                 d = struct('press',dd{'press'}(:),'temp',dd{'temp'}(:),'cond',dd{'cond'}(:),'time',dd{'time'}(:));
                 year   = dd.data_time_origin(1); %floor(h.iymd/10000);
                 month  = dd.data_time_origin(2); %floor((h.iymd - year*10000)/100);
@@ -93,27 +93,27 @@ switch pd.ctdformat
                 % if strcmp(mg.cruise,'jc064')
             case {'dy120','ar304','dy078','dy053','pe399'}
                 if sensorselec==1
-                    [ctd, h]=mload(pd.ctd_file,'time','press','temp1','cond1',' ','q');
+                    [ctd, h]=mload(pd.ctd1hz_file,'time','press','temp1','cond1',' ','q');
                     ctd.cond = ctd.cond1;
                     ctd.temp = ctd.temp1;
                 elseif sensorselec == 2
-                    [ctd, h]=mload(pd.ctd_file,'time','press','temp2','cond2',' ','q');
+                    [ctd, h]=mload(pd.ctd1hz_file,'time','press','temp2','cond2',' ','q');
                     ctd.cond = ctd.cond2;
                     ctd.temp = ctd.temp2;
                 end
                 ctd.datnum=datenum(h.data_time_origin)+ctd.time/86400;
                 ctd = rmfield(ctd,'time');
             case 'jc238'
-                [ctd, h] = mload(pd.ctd_file,'time','press','temp','cond',' ','q');
+                [ctd, h] = mload(pd.ctd1hz_file,'time','press','temp','cond',' ','q');
                 ctd.datnum=datenum(h.data_time_origin)+ctd.time/86400;
                 ctd = rmfield(ctd,'time');
             otherwise
-                if MOORPRC_G.YEAR>=2024
-                    [ctd, h] = mload(pd.ctd_file,'time','press','temp','cond',' ','q');
+                if MOORPROC_G.YEAR>=2024
+                    [ctd, h] = mload(pd.ctd1hz_file,'time','press','temp','cond',' ','q');
                     ctd.datnum = m_commontime(ctd, 'time', h, 'datenum');
                     ctd = rmfield(ctd,'time');
                 else
-                    dd  = netcdf(pd.ctd_file); %,'press temp cond time','silent');
+                    dd  = netcdf(pd.ctd1hz_file); %,'press temp cond time','silent');
                     d = struct('press',ncread(ctd_file,'press'),...
                         'temp',ncread(ctd_file,'temp'),...
                         'cond',ncread(ctd_file,'cond'),...
