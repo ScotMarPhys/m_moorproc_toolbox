@@ -36,7 +36,7 @@ function insitu_cal_osnap2(calp)
 
 global MOORPROC_G
 warning off
-jd_mdn = 1721058.5; %offset from julian (as calculated by matlab's juliandate) and matlab datenum
+calp.jd_mdn = 1721058.5; %offset from julian (as calculated by matlab's juliandate) and matlab datenum
 
 % ------ output / input files and directories ---------------
 
@@ -89,7 +89,7 @@ instr = instr(ib); clear sn1
 
 % ---- CTD and Bottle data ----------------
 fprintf(1,'\n Loading CTD  and bottle data ...\n')
-[ctd, bottle] = load_ctdcaldip(pd, calp.cast, calp.sensorselect, calp.cnv_time_correction);
+[ctd, bottle] = load_ctdcaldip(pd, calp.cast, calp.sensorselect, calp.cnv_time_correction,calp.jd_mdn);
 
 
 % --- MicroCAT and Seaphox -------

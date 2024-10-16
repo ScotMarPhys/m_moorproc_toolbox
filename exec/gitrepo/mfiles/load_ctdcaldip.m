@@ -1,4 +1,4 @@
-function [ctd, varargout] = load_ctddata(pd, cast, sensorselec, cnv_time_correction)
+function [ctd, varargout] = load_ctddata(pd, cast, sensorselec, cnv_time_correction,jd_mdn)
 %
 % ctd = load_ctddata(pd, cast, sensorselect);
 % [ctd, bottle] = load_ctddata(pd, cast, sensorselect);

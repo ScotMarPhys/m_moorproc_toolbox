@@ -32,7 +32,7 @@ end
 if path_choose==0 || path_choose==2
     % setup for mooring procssing
     % setup for using m_moorproc_toolbox since en705
-    pathgit = fullfile(progdir,'m_moorproc_toolbox');
+    pathgit = fullfile(progdir,'m_moorproc_toolbox\exec');
     addpath(genpath(pathgit))
     if isempty(which('moor_setup'))
         warning('add m_moorproc_toolbox containing moor_setup to path, enter to continue',MEXEC_G.MSCRIPT_CRUISE_STRING)
