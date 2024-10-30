@@ -22,7 +22,7 @@ p_insitucal.depl_period = input('which deployment period (e.g. osnap6) ','s');
 % ---- parameters ----------------------------------------------------
 p_insitucal.sensorselect      = input('which CTD sensor? (1 or 2) ');
 p_insitucal.sensor_id        = [332 337];  % MicroCAT ID range (in info.dat) %***
-pd = moor_inoutpaths('cal_coef',3);
+pd = moor_inoutpaths('cal_coef',p_insitucal.cast);
 p_insitucal.datadir          = pd.datadir;
 p_insitucal.coef_dir         = pd.coef_dir;
 p_insitucal.apply_offset   = input('apply time offset between CTD and MC (y/n/i) ','s');

@@ -143,7 +143,7 @@ switch datatype
         pd.ctdcnv_cunit = 'S/m'; %***
         pd.ctd1hz_cunit = 'mS/cm';
         pd.mc_cunit = 'mS/cm';
-        pd.mc_ext = 'raw';
+        pd.mc_ext = '.raw';
 
 end
 
@@ -154,9 +154,9 @@ switch datatype
         defs = {'dy053' 'dy078' 'ar304' 'dy120' 'jc238' 'dy181'};
         if ~ismember(mg.cruise,defs)
         %cruise, ctdformat, ctdcnv_cunit, ctd1hz_cunit, mc_cunit, mc_ext
-        a = {'kn221-02' 'aoml' 'S/m' 'S/m' 'S/m' 'raw';...
+        a = {'kn221-02' 'aoml' 'S/m' 'S/m' 'S/m' '.raw';...
             'kn221-03' 'aoml' 'S/m' 'S/m' 'mS/cm' 'raw';...
-            'pe399' 'mstar' 'mS/cm' 'mS/cm' 'mS/cm' 'raw';...
+            'pe399' 'mstar' 'mS/cm' 'mS/cm' 'mS/cm' '.raw';...
             };
         m = strcmp(mg.cruise,a(:,1));
         [pd.ctdformat,pd.ctdcnv_cunit,pd.ctd1hz_cunit,pd.mc_cunit,pd.mc_ext] = deal(a{m,2:end});

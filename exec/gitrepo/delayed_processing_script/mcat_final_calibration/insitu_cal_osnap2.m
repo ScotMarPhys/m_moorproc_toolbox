@@ -77,14 +77,14 @@ if isempty(dep)
     error(['!! MAKE sure the file ' ein ' exists or edit the filepath !!' ])    
     return
 end
-%make sure they are in the same order
-[~,ia,ib] = intersect(ssn,sn1,'stable');
-if length(ia)<length(ssn)
-    warning('some instruments in deployment file not in info.dat file')
-end
-dep = dep(ia); typ = typ(ia); ssn = ssn(ia);
-instr = instr(ib); clear sn1
-%now ssn, dep, typ, instr all match; saves looping later
+% %make sure they are in the same order
+% [~,ia,ib] = intersect(ssn,sn1,'stable');
+% if length(ia)<length(ssn)
+%     warning('some instruments in deployment file not in info.dat file')
+% end
+% dep = dep(ia); typ = typ(ia); ssn = ssn(ia);
+% instr = instr(ib); clear sn1
+% % now ssn, dep, typ, instr all match; saves looping later
 
 
 % ---- CTD and Bottle data ----------------
@@ -95,15 +95,15 @@ fprintf(1,'\n Loading CTD  and bottle data ...\n')
 % --- MicroCAT and Seaphox -------
 fprintf(1,'\n loading MicroCAT data ... \n\n')
 ninst = length(instr);
-for mc = 1 : ninst
-    fname = sprintf('%s%4.4d%s',pd.mc_file,instr(mc),pd.mc_ext);
+for mct = 1 : ninst
+    fname = sprintf('%s%4.4d%s',pd.mc_file,instr(mct),pd.mc_ext);
     [yy,mm,dd,hh,p,t,c,s]  = rodbload(fname,'YY:MM:DD:HH:P:T:C:S'); 
     lyy                = length(yy);
-    mc.datnum(1:lyy,mc) = datenum(yy,mm,dd,hh,0,0);
-    mc.T(1:lyy,mc)        = t; 
-    mc.C(1:lyy,mc)        = c; 
-    mc.P(1:lyy,mc)        = p; 
-    mc.S(1:lyy,mc)        = s;
+    mc.datnum(1:lyy,mct) = datenum(yy,mm,dd,hh,0,0);
+    mc.T(1:lyy,mct)        = t; 
+    mc.C(1:lyy,mct)        = c; 
+    mc.P(1:lyy,mct)        = p; 
+    mc.S(1:lyy,mct)        = s;
 end
 mc.datnum(mc.datnum==0) = NaN;
 m = isnan(mc.datnum);
