@@ -143,7 +143,7 @@ end
 % 2. ---- water impact times: determine time offsets between ctd and mc ----
 % --------------------------------------------------------------------------
 % CTD water impact time
-[wit_ctd,~] = ctd_impact(pd.ctd_cnvfile,calp.impact_var,calp.cond_threshold*ctd_cscale,MOORPROC_G.cruise);
+[wit_ctd,~] = ctd_impact(pd.ctdcnv_file,calp.impact_var,calp.cond_threshold*ctd_cscale,MOORPROC_G.cruise);
 wit_ctd(4)  = wit_ctd(4) - pd.cnv_time_correction*24;
 if size(wit_ctd,2)==4
     wit_ctd = [wit_ctd 0 0];
