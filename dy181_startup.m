@@ -6,6 +6,9 @@ basedir = 'C:\Users\sa01ld\m_moorproc_toolbox'; %contains osnap, or rpdmoc
 progdir = 'C:\Users\sa01ld'; %contains m_moorproc_toolbox
 use_mexec = 0;
 cruise = 'dy181';
+
+% addpath to gsw toolbox 
+addpath(genpath('C:\Users\sa01ld\OneDrive - SAMS\MATLAB\my_toolbox\gsw_matlab_v3_06_11'))
 if use_mexec
     MEXEC_G_user.other_programs_root = '/data/pstar/programs/others/'; %gsw, etc.
     MEXEC_G_user.mexec_data_root = '/data/pstar/cruise/data'; %mexec hydro data

@@ -37,7 +37,7 @@ function insitu_cal_osnap2(calp)
 global MOORPROC_G
 warning off
 calp.jd_mdn = 1721058.5; %offset from julian (as calculated by matlab's juliandate) and matlab datenum
-
+lat = 57; % set latitude for calculating pressure to set mc's to deployment depths 
 % ------ output / input files and directories ---------------
 
 id_z_sn = all_inst_table(calp.sensor_id(1),-999,-999);
@@ -196,23 +196,24 @@ fprintf(1,'  %d: %d  %d  %d\n',[instr';oh;om;round(os)]);
 
 % -------- allocate sensors to deployment depths ----
 mcdep = NaN+zeros(1,ninst); mcdep2 = mcdep;
-m = typ>=sensor_id(1) & typ<=sensor_id(end);
+m = typ>=calp.sensor_id(1) & typ<=calp.sensor_id(end);
 mcdep2(m) = dep(m);
-mcdep(m) = sw_pres(mcdep2(m),lat);
+mcdep(m) = gsw_p_from_z(-mcdep2(m),lat);
 
 % --- compute dc, dt, dp
 
 bottle.p0av    =  ctd.pav'*ones(1,ninst);
-dp          = mc.pav - (bottle.p0av) ;           
-pproblem    = find(rms(dp) > calp.dp_tol);
+mc.dp          = mc.pav - (bottle.p0av) ;           
 bottle.t0av    = ctd.tav'*ones(1,ninst);
-dt          = mc.tav - (bottle.t0av);   
+mc.dt          = mc.tav - (bottle.t0av);   
+
+pproblem    = find(rms(mc.dp) > calp.dp_tol);
 kompx       = find(isnan(mc.P(1,:)));   % index of sensors without own pressure sensor
 cavc        = mc_concorr(mc.cav(:,kompx),bottle.p0av(:,kompx),0); 
-cav(:,kompx)= cavc;      % insert corrected C    
+mc.cav(:,kompx)= cavc;      % insert corrected C    
 cav_problem = mc_concorr(mc.cav(:,pproblem),bottle.p0av(:,pproblem),mc.pav(:,pproblem));
 bottle.c0av    = ctd.cav'*ones(1,ninst);
-dc          = cav - (bottle.c0av );  
+mc.dc          = mc.cav - (bottle.c0av );  
 dc_pproblem  = cav_problem - bottle.c0av(:,pproblem);
 average_interval = calp.average_interval(1):20:calp.average_interval(2);
  

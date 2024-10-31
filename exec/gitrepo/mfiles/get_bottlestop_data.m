@@ -124,7 +124,7 @@ for stop = 1 : nstop
     ii_move2 = find(ctd.time<=ctdbotend(stop)+ooo...
         & ctd.time>= ctdbotstart(stop)-2*ooo);
     figure(10+stop)
-    if cstat == 1
+    if calp.cstat == 1
         if strcmp('d334',calp.cruise)
             plot((ctd.time(ii_move2)-mc.datnum(1,1))*24*60,ctd.cond(ii_move2)*10,'r')
             plot((ctd.time(ii_move)-mc.datnum(1,1))*24*60,ctd.cond(ii_move)*10,'b')
