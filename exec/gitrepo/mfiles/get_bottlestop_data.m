@@ -1,4 +1,4 @@
-function [mc, ctd] = get_bottlestop_data(bottle, ctd, mc, pd, calp)
+function [mc, ctd] = get_bottlestop_data(bottle, ctd, mc, pd, calp, ninst)
 %
 % extract MC and CTD data at bottle stops (stored in bottle)
 % calp contains tolerances
@@ -104,6 +104,8 @@ if rms(calp.interval_move) ~= 0
   else 
     ctd.time =  ctd.datnum;
   end
+end
+
 if calp.ctd_latestart_offset ~=0
     ctd.time = ctd.time + calp.ctd_latestart_offset/86400;
     fprintf(1,'CTD LATESTART OFFSET HAS BEEN APPLIED !!!\n')

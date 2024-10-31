@@ -149,7 +149,9 @@ if size(wit_ctd,2)==4
     wit_ctd = [wit_ctd 0 0];
 end
 wit_ctd_mdn = datenum(wit_ctd(1:6));
-wit_mc_mdn = NaN+mc.C(:,1);
+% wit_mc_mdn = NaN+mc.C(:,1); % produces array of data sample size not
+% instrument size
+wit_mc_mdn = nan(1,ninst);
 if strcmp(calp.impact_var,'c')
     m = mc.C>calp.cond_threshold;
 elseif strcmp(calp.impact_var,'p')
@@ -185,7 +187,7 @@ fprintf(1,'  %d: %d  %d  %d\n',[instr';oh;om;round(os)]);
 %-------------------------------------------------------
 % 3. ---- extract data from bottle stops ---------------
 %-------------------------------------------------------
-[mc, ctd] = get_bottlestop_data(bottle, mc, ctd, pd, calp);
+[mc, ctd] = get_bottlestop_data(bottle, ctd, mc, pd, calp, ninst);
 
 
 % --------------------------------------------------------------------
