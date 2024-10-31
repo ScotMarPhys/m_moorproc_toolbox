@@ -150,9 +150,9 @@ if size(wit_ctd,2)==4
 end
 wit_ctd_mdn = datenum(wit_ctd(1:6));
 wit_mc_mdn = NaN+mc.C(:,1);
-if strcmp(impact_var,'c')
+if strcmp(calp.impact_var,'c')
     m = mc.C>calp.cond_threshold;
-elseif strcmp(impact_var,'p')
+elseif strcmp(calp.impact_var,'p')
     m = mc.P>calp.cond_threshold; %***
 end
 for inst = 1 : ninst
