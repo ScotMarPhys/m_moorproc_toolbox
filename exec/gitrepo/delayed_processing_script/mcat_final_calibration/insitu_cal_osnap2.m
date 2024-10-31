@@ -144,7 +144,7 @@ end
 % --------------------------------------------------------------------------
 % CTD water impact time
 [wit_ctd,~] = ctd_impact(pd.ctdcnv_file,calp.impact_var,calp.cond_threshold*ctd_cscale,MOORPROC_G.cruise);
-wit_ctd(4)  = wit_ctd(4) - pd.cnv_time_correction*24;
+wit_ctd(4)  = wit_ctd(4) - calp.cnv_time_correction*24;
 if size(wit_ctd,2)==4
     wit_ctd = [wit_ctd 0 0];
 end
