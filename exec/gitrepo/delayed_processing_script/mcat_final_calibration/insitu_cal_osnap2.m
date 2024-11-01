@@ -196,9 +196,11 @@ fprintf(1,'  %d: %d  %d  %d\n',[instr';oh;om;round(os)]);
 
 % -------- allocate sensors to deployment depths ----
 mcdep = NaN+zeros(1,ninst); mcdep2 = mcdep;
-m = typ>=calp.sensor_id(1) & typ<=calp.sensor_id(end);
-mcdep2(m) = dep(m);
-mcdep(m) = gsw_p_from_z(-mcdep2(m),lat);
+for ii=1:length(instr)
+    m = find(typ>=calp.sensor_id(1) & typ<=calp.sensor_id(end) & ssn == instr(ii));
+    mcdep2(ii) = dep(m);
+    mcdep(ii) = gsw_p_from_z(-mcdep2(ii),lat);
+end
 
 % --- compute dc, dt, dp
 
@@ -264,6 +266,10 @@ average_interval = calp.average_interval(1):20:calp.average_interval(2);
 % ---- INTERNAL SUBROUTINES ----------------------
 
 % ------ save ----------------------------------
+%identify numbr of stops (copied out of get_bottlestop_data.m subroutine)
+bst2 = [1; find(diff(bottle.p)<-calp.bottlestop_dpmin)+1];
+bot_start = bottle.datnum(bst2);
+nstop = length(bot_start);
 
 instr_id = repmat(instr(:)',nstop,1);
 
@@ -279,7 +285,7 @@ lin  = ['----------------------------'];
 
 % ----------  Graphics  ----------------------
  
-if sum(~isnan(dp))
+if sum(~isnan(mc.dp))
     sub = 3; 
     figure(2);subplot(sub,1,1);hold off;subplot(sub,1,2);hold off;
              subplot(sub,1,3);hold off;hold off; 
@@ -329,7 +335,7 @@ subplot(1,sub,2)
    set(gca,'Fontsize',12,'xlim',calp.p_interval,'ylim',calp.c_interval)
    xlabel('pressure [dbar]')
    ylabel('cond. diff. [mS/cm]') 
-   title(['Cruise: ',cruise,'  Cast: ',num2str(calp.cast)]) 
+   title(['Cruise: ',calp.cruise,'  Cast: ',num2str(calp.cast)]) 
    set(gca,'color',[.7 .7 .7])
 
    subplot(1,sub,3)
@@ -371,20 +377,22 @@ if ~isempty(pproblem)
     
 end   
 % -- TEXT OUTPUT ---------
-fid = fopen(fullfile(pd.mc_dir,['cast',num2str(calp.cast)],[output_name '.txt']),'w');
+outfile=fullfile(pd.mc_dir,['cast',num2str(calp.cast)],[output_name '.txt']);
+disp(['Printing cal coefs to ' outfile])
+fid = fopen(outfile,'w');
 fprintf(fid,['%s',calp.cruise,'  cast:',num2str(calp.cast),' MicroCAT - CTD // processing date: ',date,' \n'],'%');
 
-fprintf(fid,'%sID   CAST   DEPTH RANGE  DEPTH   dt  dt_sd     dc  dc_sd       dp    |  dp_ext | dc_pproblem\n','%'); 
-fprintf(fid,'%sID   CAST    T/C [m]     P [m]   [K]   [K] [mS/cm]   [ms/cm]  [dbar] |  [dbar] |   [mS/cm] \n','%'); 
+fprintf(fid,'%sID   CAST   DEPTH RANGE  DEPTH   dt  dt_sd     dc  dc_sd       dp    |  dp_ext | dc_pproblem\n','%');
+fprintf(fid,'%sID   CAST    T/C [m]     P [m]   [K]   [K] [mS/cm]   [ms/cm]  [dbar] |  [dbar] |   [mS/cm] \n','%');
 
 caldata = [instr repmat([calp.cast average_interval([1 end])],ninst,1) ...
            mcdep2' dt_av' dt_sd' dc_av' dc_sd' dp_mcdep' dp_mcdep_ext' dc_av_pproblem'];
 
-fprintf(fid,' %4.4d  %2.2d    %4.4d-%4.4d  %4.4d    %5.4f %5.4f   %5.4f  %5.4f   %3.1f  |  %3.1f  | %5.4f\n',caldata');   
+fprintf(fid,' %4.4d  %2.2d    %4.4d-%4.4d  %4.4d    %5.4f %5.4f   %5.4f  %5.4f   %3.1f  |  %3.1f  | %5.4f\n',caldata');
 
 fprintf(fid,['\n At nominal depth of instrument \n' ],'%');
-fprintf(fid,'%sID   CAST   DEPTH   dt   dc     dp    |  dp_ext \n','%'); 
-fprintf(fid,'%sID   CAST   P [m]   [K]  [mS/cm]  [dbar] |  [dbar] \n','%'); 
+fprintf(fid,'%sID   CAST   DEPTH   dt   dc     dp    |  dp_ext \n','%');
+fprintf(fid,'%sID   CAST   P [m]   [K]  [mS/cm]  [dbar] |  [dbar] \n','%');
 
 caldata2     = ...
               [instr repmat(calp.cast,ninst,1) ...
