@@ -8,7 +8,7 @@ use_mexec = 0;
 cruise = 'dy181';
 if use_mexec
     MEXEC_G_user.other_programs_root = '/data/pstar/programs/others/'; %gsw, etc.
-    MEXEC_G_user.mexec_data_root = '/Volumes/mpoc/osnap/moorings/osnap/cruise_data/dy181/mcruise/data'; %mexec hydro data
+    MEXEC_G_user.mexec_data_root = '/Volumes/mpoc/osnap/dy181/backup_20240729112645/data'; %mexec hydro data
 end
 %example other paths for NOCS Linux machines
 %basedir = '/noc/mpoc/';
