@@ -97,7 +97,7 @@ for proc = 1 : length(sn_mc)
         disp(['Instrument header depth: ', num2str(idp)])
         
         replace = input('Do you want to change nominal depth of instrument? ','s');
-        if strcmp(replace, 'y')
+        if strncmp(replace, 'y', 1)
             changed = 1;
             depth_replace = input('Input new instrument depth: ');
             z_mc(proc) = depth_replace;
