@@ -150,7 +150,9 @@ if nargout>1
     end
 
 bottle.datnum         = bottle.datnum - cnv_time_correction; %***what about for cnv?
-bottle.start_time = bottle.start_time - cnv_time_correction;    
+if isfield(bottle,'start_time')
+bottle.start_time = bottle.start_time - cnv_time_correction;
+end
     varargout{1} = bottle;
     else
         disp('PATH TO BOTTLE FILES NOT DEFINED')
