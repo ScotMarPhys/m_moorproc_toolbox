@@ -24,14 +24,15 @@
 %
 
 
-function ctd_instrdpth2(moor,pathprocess,varargin)
+function ctd_instrdpth2(moor,varargin)
+global MOORPROC_G
 
 if nargin>2
     sensor_id = varargin{1};
 else
     sensor_id = 337;
 end
-info_dir  = fullfile(pathprocess, 'data', 'moor', 'proc', moor);
+info_dir  = fullfile(MOORPROC_G.moordatadir, 'proc', moor);
 infofile  = fullfile(info_dir, [moor 'info.dat']);
 if sensor_id == 337
     datadir = fullfile(info_dir, 'microcat');
