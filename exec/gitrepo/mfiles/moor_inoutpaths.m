@@ -135,10 +135,6 @@ switch datatype
             pd.bottle_file = fullfile(mg.ctddir,'ASCII_FILES',sprintf('%s_CTD%3.3d.ros',upper(mg.cruise),cast));
             if ~exist(pd.bottle_file,'file')
                 pd.bottle_file = fullfile(mg.ctddir,'ASCII_FILES',sprintf('%s_%3.3d.ros',upper(mg.cruise),cast));
-                if ~exist(pd.bottle_file,'file')
-                    warning('CTD bottle file not being defined')
-                    pd = rmfield(pd,'bottle_file');
-                end
             end
         end
         pd.mc_file = fullfile(pd.mc_dir,sprintf('cast%d',cast),sprintf('cast%d_',cast));
@@ -190,5 +186,7 @@ switch datatype
                 pd.ctd_1hzfile = fullfile(mg.ctddir,sprintf('ctd_%s_%3.3d_raw.nc',mg.cruise,cast));
                 pd.bottle_file = fullfile(mg.ctddir,'ASCII_FILES',sprintf('ar30-04%3.3d.ros',cast));
                 pd.ctd_cnvfile = fullfile(mg.ctddir,'ASCII_FILES',sprintf('ar30-04%3.3d.cnv',cast));
+            case 'dy181'
+                pd.bottle_file = fullfile(mg.ctddir,sprintf('fir_%s_%03d.nc',mg.cruise,cast));
         end
 end
