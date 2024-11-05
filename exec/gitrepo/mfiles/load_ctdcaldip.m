@@ -132,6 +132,7 @@ end
 
 if nargout>1
 
+    if isfield(pd, 'bottle_file')
     if contains(pd.bottle_file,'.btl')
         bottle = read_botfile(pd.bottle_file);
         for jjj=1:length(bottle)
@@ -141,13 +142,19 @@ if nargout>1
     elseif contains(pd.bottle_file,'.ros')
         bottle            = read_rosfile(pd.bottle_file);
         bottle.datnum = bottle.jd - jd_mdn;
-    else
-        bottle = [];
-        disp('PATH TO BOTTLE FILES NOT DEFINED')
+    elseif contains(pd.bottle_file,'fir_')
+        [db, hb] = mload(pd.bottle_file,'/');
+        %bottle = read_blfile(pd.bottle_file); %***create?
+        bottle.datnum = m_commontime(db, 'utime', hb, 'datenum');
+        bottle.p = db.upress;
     end
 
 bottle.datnum         = bottle.datnum - cnv_time_correction; %***what about for cnv?
 bottle.start_time = bottle.start_time - cnv_time_correction;    
     varargout{1} = bottle;
+    else
+        disp('PATH TO BOTTLE FILES NOT DEFINED')
+        varargout{1} = [];
+    end
 
 end
