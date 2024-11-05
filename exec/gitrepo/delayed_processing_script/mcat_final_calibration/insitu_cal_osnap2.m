@@ -237,27 +237,27 @@ average_interval = calp.average_interval(1):20:calp.average_interval(2);
                                 [mc.dc(1,i) mc.dc(oknan,i)'],mcdep(i));
     dp_mcdep(i) =  interp1([MP bottle.p0av(oknan,1)'],...
                                 [mc.dp(1,i) mc.dp(oknan,i)'],mcdep(i));
-                            
+
     if isnan(dp_mcdep(i)) % extrapolate if deployment pressure > max. pressure of cast
         pol             = polyfit([bottle.p0av(:,1)'],[mc.dp(:,i)'],3);  
         dp_mcdep_ext(i) = polyval(pol,mcdep(i));
     end    
     
     dt_av(i)  =  mean(interp1([MP bottle.p0av(oknan,1)'],...
-                              [mc.dt(1,i) mc.dt(oknan,i)'],average_interval));
+                              [mc.dt(1,i) mc.dt(oknan,i)'],average_interval),'omitnan');
     dc_av(i)  =  mean(interp1([MP bottle.p0av(oknan,1)'],...
-                              [mc.dc(1,i) mc.dc(oknan,i)'],average_interval));
+                              [mc.dc(1,i) mc.dc(oknan,i)'],average_interval),'omitnan');
     dp_av(i)  =  mean(interp1([MP bottle.p0av(oknan,1)'],...
-                              [mc.dp(1,i) mc.dp(oknan,i)'],average_interval));
+                              [mc.dp(1,i) mc.dp(oknan,i)'],average_interval),'omitnan');
 
     dt_sd(i)  =  std(interp1([MP bottle.p0av(oknan,1)'],...
-                              [mc.dt(1,i) mc.dt(oknan,i)'],average_interval));
+                              [mc.dt(1,i) mc.dt(oknan,i)'],average_interval),'omitnan');
     dc_sd(i)  =  std(interp1([MP bottle.p0av(oknan,1)'],...
-                              [mc.dc(1,i) mc.dc(oknan,i)'],average_interval)); 
+                              [mc.dc(1,i) mc.dc(oknan,i)'],average_interval),'omitnan'); 
                           
     if ismember(i,pproblem) % if MC press. bad, use ctd press. to correct conduct.
        dc_av_pproblem(i) = mean(interp1([MP bottle.p0av(oknan,1)'],...
-                    [dc_pproblem(1,pp_count) dc_pproblem(oknan,pp_count)'],average_interval));
+                    [dc_pproblem(1,pp_count) dc_pproblem(oknan,pp_count)'],average_interval),'omitnan');
        pp_count = pp_count + 1; 
     end    
 

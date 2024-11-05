@@ -228,12 +228,12 @@ elseif strcmp(p_insitucal.cruise,'jc238') & p_insitucal.cast == 19
     p_insitucal.dp_interval    = [-10 10];   
     p_insitucal.p_interval       = [0  1200];
     p_insitucal.average_interval = [1500 2950];% [1000 2150];
-elseif strcmp(p_insitucal.cruise,'dy181') & p_insitucal.cast == 3
+elseif strcmp(p_insitucal.cruise,'dy181') && ismember(p_insitucal.cast,[3 76])
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
     p_insitucal.dp_interval    = [-10 10];   
-    p_insitucal.p_interval       = [0  1200];
-    p_insitucal.average_interval = [1500 2950];% [1000 2150];
+    p_insitucal.p_interval       = [0  4000];
+    p_insitucal.average_interval = [1500 4000];
 else
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
