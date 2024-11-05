@@ -73,10 +73,11 @@ if ~isfield(MOORPROC_G,'operator')
 end
 
 % Define where to find the mooring and other data (formerly pathdata)
-if ~isfield(MOORPROC_G,'datadir') || isempty(MOORPROC_G.datadir)
-    MOORPROC_G.datadir = input('base data directory (e.g. /data/pstar/projects/osnap, or D:\osnap) containing subdirectories data and documents ','s');
-end
-if ~isfield(MOORPROC_G,'moordatadir')
+if ~isfield(MOORPROC_G,'moordatadir') || ~isfield(MOORPROC_G,'reportdir') || ~isfield(MOORPROC_G,'ctddir')
+    %define or request these directories
+    if ~isfield(MOORPROC_G,'datadir') || isempty(MOORPROC_G.datadir)
+        MOORPROC_G.datadir = input('base data directory (e.g. /data/pstar/projects/osnap, or D:\osnap) containing subdirectories data and documents ','s');
+    end
     MOORPROC_G.moordatadir = fullfile(MOORPROC_G.datadir,'data','moor');
     MOORPROC_G.reportdir = fullfile(MOORPROC_G.datadir,'documents','datareports'); %for RAPID
     if ~exist(MOORPROC_G.reportdir,'dir')
@@ -92,8 +93,6 @@ if ~isfield(MOORPROC_G,'moordatadir')
     if ~strcmp(d1,MOORPROC_G.cruise)
         MOORPROC_G.reportdir = fullfile(MOORPROC_G.reportdir,MOORPROC_G.cruise);
     end
-end
-if ~isfield(MOORPROC_G,'ctddir')
     MOORPROC_G.ctddir = fullfile(fileparts(MOORPROC_G.datadir),MOORPROC_G.cruise,'mcruise','data','ctd'); %RAPID
     if ~exist(MOORPROC_G.ctddir,'dir')
         MOORPROC_G.ctddir = fullfile(MOORPROC_G.datadir,'cruise_data',MOORPROC_G.cruise,'data','ctd'); %OSNAP
