@@ -228,9 +228,9 @@ if isempty(calp.p_interval)
     calp.p_interval = [0 ceil(round(MP/100)*100)];
 end
 
-dt_mcdep = interp1(p0, [mc.dt(1,:); mc.dt(oknan,:)], mcdep(:))';
-dc_mcdep = interp1(p0, [mc.dc(1,:); mc.dc(oknan,:)], mcdep(:))';
-dp_mcdep = interp1(p0, [mc.dp(1,:); mc.dp(oknan,:)], mcdep(:))';
+dt_mcdep = diag(interp1(p0, [mc.dt(1,:); mc.dt(oknan,:)], mcdep(:)))';
+dc_mcdep = diag(interp1(p0, [mc.dc(1,:); mc.dc(oknan,:)], mcdep(:)))';
+dp_mcdep = diag(interp1(p0, [mc.dp(1,:); mc.dp(oknan,:)], mcdep(:)))';
 ti = interp1(p0, [mc.dt(1,:); mc.dt(oknan,:)], average_interval(:));
 ci = interp1(p0, [mc.dc(1,:); mc.dc(oknan,:)], average_interval(:));
 dt_av = mean(ti, 'omitnan'); dt_sd = std(ti, 'omitnan');
