@@ -37,7 +37,6 @@ function insitu_cal_osnap2(calp)
 global MOORPROC_G
 warning off
 calp.jd_mdn = 1721058.5; %offset from julian (as calculated by matlab's juliandate) and matlab datenum
-lat = 57; % set latitude for calculating pressure to set mc's to deployment depths
 % ------ output / input files and directories ---------------
 
 id_z_sn = all_inst_table(calp.sensor_id(1),-999,-999);
@@ -198,8 +197,15 @@ fprintf(1,'  %d: %d  %d  %d\n',[instr';oh;om;round(os)]);
 mcdep = NaN+zeros(1,ninst); mcdep2 = mcdep;
 for ii=1:length(instr)
     m = find(typ>=calp.sensor_id(1) & typ<=calp.sensor_id(end) & ssn == instr(ii));
-    mcdep2(ii) = dep(m);
-    mcdep(ii) = gsw_p_from_z(-mcdep2(ii),lat);
+    % need loop for instruments that were cal-dip'd but nit deployed hence
+    % do are not listed in deployment depth file
+    if isempty(m)
+        mcdep2(ii)=NaN;
+        mcdep(ii)=NaN;
+    else
+        mcdep2(ii) = dep(m);
+        mcdep(ii) = gsw_p_from_z(-mcdep2(ii),calp.lat);
+    end
 end
 
 % --- compute dc, dt, dp

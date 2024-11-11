@@ -93,7 +93,7 @@ for stop = 1 : nstop    % bottle_stops loop
          plot((mc.datnum(ii_move,inst)-mc.datnum(1,1))*24*60,mc.P(ii_move,inst),'b')          
        end    
    end
-   title([calp.cruise,'   calp.cast',num2str(calp.cast),'  depth: ',num2str(round(bottle.p(stop)))])
+   title([calp.cruise,'   calp.cast',num2str(calp.cast),'  depth: ',num2str(round(bottle.p(bst2(stop))))])
 end
 
 % ------  extract bottlestop values from ctd 

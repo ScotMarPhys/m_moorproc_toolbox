@@ -37,7 +37,7 @@ if strcmp(p_insitucal.cruise,'pe399') & (p_insitucal.cast == 17 | p_insitucal.ca
 elseif strcmp(p_insitucal.cruise,'dy078') | strcmp(p_insitucal.cruise,'ar304') | strcmp(p_insitucal.cruise,'dy120')
     p_insitucal.interval_move  = [-600 600]*2; % bottlestop can be up to 20 mins for 02 sensors   
 else
-    p_insitucal.interval_move  = [-600 600];    
+    p_insitucal.interval_move  = [-480 480];    
 end
 %[-220 -260] % originally: [-100 -50];  %[-100 -50] move0bottlestop averaging interval [begin end] [seconds]  
                         % to reach the best positioning of interval within the bottlestops  
@@ -232,14 +232,32 @@ elseif strcmp(p_insitucal.cruise,'dy181')
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
     p_insitucal.dp_interval    = [-10 10];   
-    p_insitucal.p_interval       = []; % let insitu_cal_osnap2 determine plot limits using CTD max press
-    p_insitucal.average_interval = [1500 4000];
-else
+    p_insitucal.p_interval       = [0  1200];
+    p_insitucal.average_interval = [1500 2950];% [1000 2150];
+elseif strcmp(p_insitucal.cruise,'dy181') & p_insitucal.cast == 4
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
     p_insitucal.dp_interval    = [-10 10];   
-    p_insitucal.p_interval       = []; % let insitu_cal_osnap2 determine plot limits using CTD max press
-    p_insitucal.average_interval = [1000 4000];        
+    p_insitucal.p_interval       = [0  1200];
+    p_insitucal.average_interval = [1500 2950];% [1000 2150];
+elseif strcmp(p_insitucal.cruise,'dy181') & p_insitucal.cast == 5
+    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0 2000];
+    p_insitucal.average_interval = [1000 2000];% [1000 2150];
+elseif strcmp(p_insitucal.cruise,'dy181') & p_insitucal.cast == 46
+    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0 2000];
+    p_insitucal.average_interval = [1200 1700];% [1000 2150];
+else
+    p_insitucal.c_interval     = [-0.025 0.025]; % plotting only
+    p_insitucal.t_interval     = [-.02 .02]; % plotting only
+    p_insitucal.dp_interval    = [-10 10];    % plotting only
+    p_insitucal.p_interval       = [0  2000]; % plotting only
+    p_insitucal.average_interval = [1000 2000];        
 end
     
 % % --- futhers parameters (unlikely to be changed) -------------------
