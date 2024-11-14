@@ -133,27 +133,39 @@ end
 if nargout>1
 
     if isfield(pd, 'bottle_file')
-    if contains(pd.bottle_file,'.btl')
-        bottle = read_botfile(pd.bottle_file);
-        for jjj=1:length(bottle)
-            bottle(jjj).p = bottle(jjj).pav;
+        if isfile(pd.bottle_file)
+            if contains(pd.bottle_file,'.btl')
+                bottle = read_botfile(pd.bottle_file);
+                for jjj=1:length(bottle)
+                    bottle(jjj).p = bottle(jjj).pav;
+                end
+                bottle.datnum = [datenum(bottle.yy,bottle.mm,bottle.dd,bottle.hh)]';
+            elseif contains(pd.bottle_file,'.ros')
+                bottle            = read_rosfile(pd.bottle_file);
+                bottle.datnum = bottle.jd - jd_mdn;
+            elseif contains(pd.bottle_file,'fir_')
+                [db, hb] = mload(pd.bottle_file,'/');
+                %bottle = read_blfile(pd.bottle_file); %***create?
+                bottle.datnum = m_commontime(db, 'utime', hb, 'datenum');
+                bottle.p = db.upress;
+            end
+            bottle.firing='BottlesFired';
+        else
+            btlcont=input('No bottle file found. Proceed using CTD stop time only? (Y/N) ','s')
+            if strcmpi(btlcont,'y')
+                bottle.datnum =[];
+                bottle.start_time=[];
+                bottle.firing='NoBottleFired';
+            else
+                return
+            end
         end
-        bottle.datnum = [datenum(bottle.yy,bottle.mm,bottle.dd,bottle.hh)]';
-    elseif contains(pd.bottle_file,'.ros')
-        bottle            = read_rosfile(pd.bottle_file);
-        bottle.datnum = bottle.jd - jd_mdn;
-    elseif contains(pd.bottle_file,'fir_')
-        [db, hb] = mload(pd.bottle_file,'/');
-        %bottle = read_blfile(pd.bottle_file); %***create?
-        bottle.datnum = m_commontime(db, 'utime', hb, 'datenum');
-        bottle.p = db.upress;
-    end
 
-bottle.datnum         = bottle.datnum - cnv_time_correction; %***what about for cnv?
-if isfield(bottle,'start_time')
-bottle.start_time = bottle.start_time - cnv_time_correction;
-end
-    varargout{1} = bottle;
+        bottle.datnum         = bottle.datnum - cnv_time_correction; %***what about for cnv?
+        if isfield(bottle,'start_time')
+        bottle.start_time = bottle.start_time - cnv_time_correction;
+        end
+        varargout{1} = bottle;
     else
         disp('PATH TO BOTTLE FILES NOT DEFINED')
         varargout{1} = [];

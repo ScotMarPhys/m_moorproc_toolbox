@@ -2,13 +2,16 @@
 
 %%% change the next lines to reflect your directory structure %%%
 project = 'OSNAP';
-basedir = '/Users/tiadot/Library/CloudStorage/OneDrive-NOC/WORK/DATA'; %contains osnap, or rpdmoc
-progdir = '/Users/tiadot/Library/CloudStorage/OneDrive-NOC/WORK/PROGRAMS'; %contains m_moorproc_toolbox
+basedir = 'C:\Users\sa01ld\m_moorproc_toolbox'; %contains osnap, or rpdmoc
+progdir = 'C:\Users\sa01ld'; %contains m_moorproc_toolbox
 use_mexec = 0;
 cruise = 'dy181';
+
+% addpath to gsw toolbox 
+addpath(genpath('C:\Users\sa01ld\OneDrive - SAMS\MATLAB\my_toolbox\gsw_matlab_v3_06_11'))
 if use_mexec
     MEXEC_G_user.other_programs_root = '/data/pstar/programs/others/'; %gsw, etc.
-    MEXEC_G_user.mexec_data_root = '/Volumes/mpoc/osnap/dy181/backup_20240729112645/data'; %mexec hydro data
+    MEXEC_G_user.mexec_data_root = '/data/pstar/cruise/data'; %mexec hydro data
 end
 %example other paths for NOCS Linux machines
 %basedir = '/noc/mpoc/';
@@ -27,14 +30,12 @@ else
     path_choose = 2;
     MOORPROC_G.cruise = 'dy181';
     MOORPROC_G.cruise_ctd = 'dy181';
-end
-MOORPROC_G.YEAR = 2024;
-MOORPROC_G.ctddir = '/Volumes/mpoc/osnap/dy181/backup_20240729112645/data/ctd';
+end    
 
 if path_choose==0 || path_choose==2
     % setup for mooring procssing
     % setup for using m_moorproc_toolbox since en705
-    pathgit = fullfile(progdir,'m_moorproc_toolbox');
+    pathgit = fullfile(progdir,'m_moorproc_toolbox\exec');
     addpath(genpath(pathgit))
     if isempty(which('moor_setup'))
         warning('add m_moorproc_toolbox containing moor_setup to path, enter to continue',MEXEC_G.MSCRIPT_CRUISE_STRING)
@@ -55,3 +56,4 @@ if path_choose==0 || path_choose==2
     end
 
 end
+

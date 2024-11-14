@@ -277,7 +277,7 @@ p_insitucal.cond_threshold     = 30;  % [mS/cm] threshold to determine when inst
 p_insitucal.impact_var         = 'c'; % conductivity as variable in ctd_impact.m
  
 p_insitucal.bottlestop_tmin    = 60; %20 % minimum accepted separation between 2 bottlestops [sec] 
-p_insitucal.bottlestop_dpmin   = 30;  % minimum accepted pressure difference between 2 bottlestops [dbar] 
+p_insitucal.bottlestop_dpmin   = 20;  % minimum accepted pressure difference between 2 bottlestops [dbar] 
 
 
 p_insitucal.cnv_time_correction=  0;  % time correction for CTD .CNV file (rel. GMT) 
@@ -286,7 +286,7 @@ p_insitucal.cnv_time_correction=  0;  % time correction for CTD .CNV file (rel. 
                           % cnv,btl,ros or microcats. Normally 1 hour out.
                           
                           % !! Do not apply changes here, but below where input is defined 
-p_insitucal.lat   = 58.0    % latitude to convert depths into pressures. Difference between 
+p_insitucal.lat   = 58.0;    % latitude to convert depths into pressures. Difference between 
                          % pressures using 23.5N or 28N are <2dbar (upto
                          % depths of 6000m)
                           

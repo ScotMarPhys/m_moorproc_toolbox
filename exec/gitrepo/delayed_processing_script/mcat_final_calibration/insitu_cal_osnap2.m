@@ -186,7 +186,7 @@ fprintf(1,'  %d: %d  %d  %d\n',[instr';oh;om;round(os)]);
 %-------------------------------------------------------
 % 3. ---- extract data from bottle stops ---------------
 %-------------------------------------------------------
-[mc, ctd] = get_bottlestop_data(bottle, ctd, mc, pd, calp, ninst);
+[mc, ctd, nstop] = get_bottlestop_data(bottle, ctd, mc, pd, calp, ninst);
 
 
 % --------------------------------------------------------------------
@@ -261,11 +261,6 @@ end
 % ---- INTERNAL SUBROUTINES ----------------------
 
 % ------ save ----------------------------------
-%identify numbr of stops (copied out of get_bottlestop_data.m subroutine)
-bst2 = [1; find(diff(bottle.p)<-calp.bottlestop_dpmin)+1];
-bot_start = bottle.datnum(bst2);
-nstop = length(bot_start);
-
 instr_id = repmat(instr(:)',nstop,1);
 
 % -------------------------------------------------
