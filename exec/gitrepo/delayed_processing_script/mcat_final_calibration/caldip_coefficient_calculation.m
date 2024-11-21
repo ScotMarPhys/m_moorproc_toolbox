@@ -228,7 +228,7 @@ elseif strcmp(p_insitucal.cruise,'jc238') & p_insitucal.cast == 19
     p_insitucal.dp_interval    = [-10 10];   
     p_insitucal.p_interval       = [0  1200];
     p_insitucal.average_interval = [1500 2950];% [1000 2150];
-elseif strcmp(p_insitucal.cruise,'dy181')
+elseif strcmp(p_insitucal.cruise,'dy181')  & p_insitucal.cast == 3
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
     p_insitucal.dp_interval    = [-10 10];   
@@ -244,20 +244,38 @@ elseif strcmp(p_insitucal.cruise,'dy181') & p_insitucal.cast == 5
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
     p_insitucal.dp_interval    = [-10 10];   
-    p_insitucal.p_interval       = [0 2000];
-    p_insitucal.average_interval = [1000 2000];% [1000 2150];
+    p_insitucal.p_interval       = [0 2200];
+    p_insitucal.average_interval = [1600 2200];% [1000 2150];
 elseif strcmp(p_insitucal.cruise,'dy181') & p_insitucal.cast == 46
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
     p_insitucal.dp_interval    = [-10 10];   
     p_insitucal.p_interval       = [0 2000];
     p_insitucal.average_interval = [1200 1700];% [1000 2150];
+elseif strcmp(p_insitucal.cruise,'dy181') & p_insitucal.cast == 63
+    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0 1000];
+    p_insitucal.average_interval = [0 1000];% [1000 2150];
 elseif strcmp(p_insitucal.cruise,'dy181') & p_insitucal.cast == 66
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
     p_insitucal.dp_interval    = [-10 10];   
     p_insitucal.p_interval       = [0 2000];
     p_insitucal.average_interval = [100 2200];% [1000 2150];
+elseif strcmp(p_insitucal.cruise,'dy181') & p_insitucal.cast == 67
+    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0 3000];
+    p_insitucal.average_interval = [1500 3100];% [1000 2150];
+elseif strcmp(p_insitucal.cruise,'dy181') & p_insitucal.cast == 76
+    p_insitucal.c_interval     = [-0.025 0.07]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0 3000];
+    p_insitucal.average_interval = [1200 3100];% [1000 2150];
 else
     p_insitucal.c_interval     = [-0.025 0.025]; % plotting only
     p_insitucal.t_interval     = [-.02 .02]; % plotting only
