@@ -246,7 +246,10 @@ dp_mcdep_ext = NaN+dp_mcdep;
 dc_av_pproblem = dp_mcdep_ext;
 for i = 1:ninst
     if isnan(dp_mcdep(i)) % extrapolate if deployment pressure > max. pressure of cast
-        pol             = polyfit([bottle.p0av(:,1)'],[mc.dp(:,i)'],3);
+        %remove nans - these occur when there are stops that are noT cal
+        %stops  but are recorded in bottle file
+        nocalstops      = find(~isnan(mc.dp(:,i)));
+        pol             = polyfit([bottle.p0av(nocalstops,1)'],[mc.dp(nocalstops,i)'],3);
         dp_mcdep_ext(i) = polyval(pol,mcdep(i));
     end
 
