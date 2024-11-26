@@ -438,22 +438,34 @@ for mc = 1 : ninst
 
   [yy,mm,dd,hh,p,t,c,s]  = rodbload([mc_file,sprintf('%4.4d',instr(mc)),mc_ext],...
                                    'YY:MM:DD:HH:P:T:C:S'); 
+  %convert to h,m,s
+  decm=hh-fix(hh);
+  [~,mins,secs]=hms(hours(decm));
+  secs=fix(secs);
+  hours=fix(hh);
+
+
   lyy                = length(yy);
   YY(1:lyy,mc)       = yy; 
   MM(1:lyy,mc)       = mm; 
   DD(1:lyy,mc)       = dd; 
-  HH(1:lyy,mc)       = hh; 
+  HH(1:lyy,mc)       = hours; 
+  M(1:lyy,mc)        = mins; 
+  SS(1:lyy,mc)       = secs; 
   T(1:lyy,mc)        = t; 
   C(1:lyy,mc)        = c; 
   P(1:lyy,mc)        = p; 
   S(1:lyy,mc)        = s; 
+
+  JD(1:lyy,mc)     = juliandate(yy,mm,dd,hours,mins,secs);                    % julian day mc time 
+
 end
 
 ii    = find(YY == 0);
-YY(ii)=NaN; MM(ii)=NaN; DD(ii)=NaN; HH(ii)=NaN; T(ii)=NaN; C(ii)=NaN;
-decstr=datestr(HH/24,'HH:MM:SS');
-[~,~,~,HH,M,SS]=datevec(decstr);
-JD    = juliandate(YY,MM,DD,HH,M,SS);                    % julian day mc time 
+YY(ii)=NaN; MM(ii)=NaN; DD(ii)=NaN; HH(ii)=NaN; T(ii)=NaN; C(ii)=NaN;JD(ii)=NaN;
+% decstr=datestr(HH/24,'HH:MM:SS');
+% [~,~,~,HH,M,SS]=datevec(decstr);
+% JD    = julian(YY,MM,DD,HH);                    % julian day mc time 
 
 % check which variables have been measured by sensor  
 pstat = 1;tstat = 1;cstat = 1;
@@ -515,12 +527,12 @@ for inst = 1 : ninst
           'moor/proc_calib/' p_insitucal.cruise '/cal_dip/cast' num2str(p_insitucal.cast) 'info.dat' ]) 
   end
   ii = ii(1); 
-  wit_mc_jd(inst)  = julian([YY(ii,inst),MM(ii,inst),DD(ii,inst),HH(ii,inst)]);
+  wit_mc_jd(inst)  = juliandate([YY(ii,inst),MM(ii,inst),DD(ii,inst),HH(ii,inst), mins(ii,inst),secs(ii,inst)]);
 end
 
 wit_mc_jd    =  wit_mc_jd'; 
 wit_mc       = gregorian(wit_mc_jd);  % 
-start_mc_jd  = julian([YY(1,:)' MM(1,:)' DD(1,:)' HH(1,:)']); 
+start_mc_jd  = juliandate([YY(1,:)' MM(1,:)' DD(1,:)' HH(1,:)', mins(1,:)',secs(1,:)' ]); 
 
 
 % time difference between start of instrument and ocean surface impact [s]
@@ -555,7 +567,7 @@ fprintf(1,'  %d: %d  %d  %d\n',[instr';oh';om';round(os')]);
 
 bot_start     = bottle.jd;
 % % istop = find(diff(bot_start)
-% bot_end       = bot_start + bottlestop_average/3600/24;
+bot_end       = bot_start + bottlestop_average/3600/24;
 
 % correct ctd bottle stop time for offset
 
@@ -943,7 +955,7 @@ fprintf(fid,'%sID   CAST    T/C [m]     P [m]   [K]   [K] [mS/cm]   [ms/cm]  [db
 
 caldata     = ...
               [instr cast*ones(ninst,1) ones(ninst,1)*average_interval([1 end])...
-               mcdep2' dt_av' dt_sd' dc_av' dc_sd' dp_mcdep' dp_mcdep_ext' dc_av_pproblem'];
+               mcdep2' dt_av' dt_sd' dc_av' dc_sd' dp_av' dp_mcdep_ext' dc_av_pproblem'];
 
 fprintf(fid,' %4.4d  %2.2d    %4.4d-%4.4d  %4.4d    %5.4f %5.4f   %5.4f  %5.4f   %3.1f  |  %3.1f  | %5.4f\n',caldata');   
 

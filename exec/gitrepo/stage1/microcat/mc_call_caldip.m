@@ -73,7 +73,7 @@ else
     ctddir = [basedir cruise_ctd filesep ];
 end
 
-cast = '1'; dateoffsetmcdefault = 2020; % origin of the julian day in the matlab cnv files
+cast = '1'; dateoffsetmcdefault = 2022; % origin of the julian day in the matlab cnv files
 
 doctd = 1;% 1; % whether to load and plot CTD data: 1 if mstar format, 99 if native cnv file (without header)
 jd0 = julian(dateoffsetmcdefault,1,0,0); % set to current year
