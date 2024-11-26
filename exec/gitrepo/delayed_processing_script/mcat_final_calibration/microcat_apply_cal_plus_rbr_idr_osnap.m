@@ -20,9 +20,9 @@ global basedir datadir execdir pathgit pathosnap
 
 % path of the mooring data define in the startup file under osnap/
 
-% moor = 'rteb1_06_2020';
-% moor = 'rtwb1_06_2020';
-moor = 'rtwb2_06_2020';
+moor = 'rteb1_07_2022';
+% moor = 'rtwb1_07_2022';
+%moor = 'rtwb2_07_2022';
 
 
 %=========================================================================
@@ -30,22 +30,22 @@ moor = 'rtwb2_06_2020';
 % constant offsets, and conductivity pressure correction
 p_applycal.operator  = 'LD';
 p_applycal.mooring  = moor;   
-p_applycal.sensortyp = 'seaphox';%'microcat';   % arg / microcat / rbr / idr
+p_applycal.sensortyp = 'microcat';%'microcat';   % seaphox / arg / microcat / rbr / idr
 p_applycal.delim = ',';
 
 % input directories & files
-p_applycal.mooring_dir         = [pathosnap '/data/moor/proc/'];
-p_applycal.mooring_outdir      = [pathosnap '/data/moor/proc/'];
-p_applycal.coef_dir            = [pathgit '/data/moor/cal_coef/']; 
-p_applycal.external_ctd_dir    = [pathosnap '/cruise_data/'];
+p_applycal.mooring_dir         = [basedir '/data/moor/proc/'];
+p_applycal.mooring_outdir      = [basedir '/data/moor/proc/'];
+p_applycal.coef_dir            = [basedir '/metadata/cal_coef/osnap/']; 
+p_applycal.external_ctd_dir    = [basedir '/cruise_data/'];
 p_applycal.ctd_ref_cruises     = {''};%{'pe400'}; %{'kn221-02';'pe399'}; % references cruises for the QC
 p_applycal.distrangectd        = 100e3; % distance of the reference ctd from the mooring
-p_applycal.strformat.mctemptxt = repmat('%s',1,35);
-p_applycal.strformat.mctempnum = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,8)];
-p_applycal.strformat.mcsaltxt  = repmat('%s',1,35);
-p_applycal.strformat.mcsalnum  = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,8)];
-p_applycal.strformat.mcprestxt = repmat('%s',1,77);
-p_applycal.strformat.mcpresnum = ['%f' repmat('%s%f%s%s',1,19)];
+p_applycal.strformat.mctemptxt = repmat('%s',1,38);
+p_applycal.strformat.mctempnum = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,9)];
+p_applycal.strformat.mcsaltxt  = repmat('%s',1,38);
+p_applycal.strformat.mcsalnum  = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,9)];
+p_applycal.strformat.mcprestxt = repmat('%s',1,81);
+p_applycal.strformat.mcpresnum = ['%f' repmat('%s%f%s%s',1,20)];
 
 loclegend = 'north';
 
