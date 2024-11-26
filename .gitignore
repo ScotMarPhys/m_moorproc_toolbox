@@ -3,7 +3,7 @@
 /users
 /matlab_diaries
 **.
-
+/cruise_data
 
 # data (or plot) file types, but not info file types
 *.raw
