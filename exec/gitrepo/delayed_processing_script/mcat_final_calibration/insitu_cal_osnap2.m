@@ -247,7 +247,8 @@ dc_av_pproblem = dp_mcdep_ext;
 for i = 1:ninst
     if isnan(dp_mcdep(i)) % extrapolate if deployment pressure > max. pressure of cast
         %remove nans - these occur when there are stops that are noT cal
-        %stops  but are recorded in bottle file
+        %stops  but are recorded in bottle file and when instrument nominal
+        %depth of deployment is shallower than first bottle stop
         nocalstops      = find(~isnan(mc.dp(:,i)));
         pol             = polyfit([bottle.p0av(nocalstops,1)'],[mc.dp(nocalstops,i)'],3);
         dp_mcdep_ext(i) = polyval(pol,mcdep(i));
@@ -371,26 +372,34 @@ if ~isempty(pproblem)
 end
 % -- TEXT OUTPUT ---------
 outfile=fullfile(pd.mc_dir,['cast',num2str(calp.cast)],[output_name '.txt']);
-disp(['Printing cal coefs to ' outfile])
+disp(['Printing cal coefs to ' outfile]);
 fid = fopen(outfile,'w');
-fprintf(fid,['%s',calp.cruise,'  cast:',num2str(calp.cast),' MicroCAT - CTD // processing date: ',date,' \n'],'%');
-
-fprintf(fid,'%sID   CAST   DEPTH RANGE  DEPTH   dt  dt_sd     dc  dc_sd       dp    |  dp_ext | dc_pproblem\n','%');
-fprintf(fid,'%sID   CAST    T/C [m]     P [m]   [K]   [K] [mS/cm]   [ms/cm]  [dbar] |  [dbar] |   [mS/cm] \n','%');
 
 caldata = [instr repmat([calp.cast average_interval([1 end])],ninst,1) ...
-    mcdep2' dt_av' dt_sd' dc_av' dc_sd' dp_mcdep' dp_mcdep_ext' dc_av_pproblem'];
-
-fprintf(fid,' %4.4d  %2.2d    %4.4d-%4.4d  %4.4d    %5.4f %5.4f   %5.4f  %5.4f   %3.1f  |  %3.1f  | %5.4f\n',caldata');
-
-fprintf(fid,['\n At nominal depth of instrument \n' ],'%');
-fprintf(fid,'%sID   CAST   DEPTH   dt   dc     dp    |  dp_ext \n','%');
-fprintf(fid,'%sID   CAST   P [m]   [K]  [mS/cm]  [dbar] |  [dbar] \n','%');
-
+    mcdep2' dt_av' dt_sd' dc_av' dc_sd' dc_av_pproblem'];
 caldata2     = ...
     [instr repmat(calp.cast,ninst,1) ...
     mcdep2' dt_mcdep' dc_mcdep' dp_mcdep' dp_mcdep_ext' ];
 
-fprintf(fid,' %4.4d  %2.2d   %4.4d    %5.4f    %5.4f  %3.1f  |  %3.1f  \n',caldata2');
+fprintf(fid,['%s',calp.cruise,'  cast:',num2str(calp.cast),' MicroCAT - CTD // processing date: ',date,' \n'],'%');
+fprintf(['\n Average across deth range \n' ],'%')
+fprintf(fid,'%sID       CAST        DEPTH RANGE    DEPTH      dt          dt_sd       dc          dc_sd       |   dc_pproblem\n','%');
+fprintf(fid,'%s                     T/C [m]        P [m]      [K]         [K]         [mS/cm]     [ms/cm]     |   [mS/cm] \n','%');
+fprintf(fid,' %4.4d     %2.2d       %4.4d-%4.4d     %4.4d       %5.4f       %5.4f       %5.4f       %5.4f     |   %5.4f\n',caldata');
+fprintf(fid,['\n At nominal depth of instrument \n' ],'%');
+fprintf(fid,'%sID   CAST   DEPTH        dt      dc          dp        |  dp_ext \n','%');
+fprintf(fid,'%sID   CAST   P [m]        [K]     [mS/cm]     [dbar]    |  [dbar] \n','%');
+fprintf(fid,' %4.4d  %2.2d   %4.4d    %5.4f    %5.4f  %3.1f           |  %3.1f  \n',caldata2');
+
+% print to screen for quick review
+fprintf(['%s',calp.cruise,'  cast:',num2str(calp.cast),' MicroCAT - CTD // processing date: ',date,' \n'],'%');
+fprintf('%sID       CAST        DEPTH RANGE    DEPTH      dt          dt_sd       dc          dc_sd       |   dc_pproblem\n','%');
+fprintf('%s                     T/C [m]        P [m]      [K]         [K]         [mS/cm]     [ms/cm]     |   [mS/cm] \n','%');
+fprintf(' %4.4d     %2.2d       %4.4d-%4.4d     %4.4d       %5.4f       %5.4f       %5.4f       %5.4f     |   %5.4f\n',caldata');
+fprintf(['\n At nominal depth of instrument \n' ],'%')
+fprintf('%sID   CAST   DEPTH    dt      dc          dp          |  dp_ext \n','%')
+fprintf('%sID   CAST   P [m]    [K]     [mS/cm]     [dbar]      |  [dbar] \n','%')
+fprintf(' %4.4d  %2.2d   %4.4d    %5.4f    %5.4f    %3.1f       |  %3.1f  \n',caldata2')
+
 fclose(fid);
 
