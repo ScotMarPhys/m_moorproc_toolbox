@@ -12,16 +12,14 @@
 % edited by lewis Drysdale Dec 2020
 % edited by Loic Houpert Jan 2021
 
-close all
-% clearvars  -except pathosnap pathgit
-warning off
+close all; warning off
 
 global basedir datadir execdir pathgit pathosnap
 
 % path of the mooring data define in the startup file under osnap/
 
-moor = 'rteb1_07_2022';
-% moor = 'rtwb1_07_2022';
+% moor = 'rteb1_07_2022';
+moor = 'rtwb1_07_2022';
 %moor = 'rtwb2_07_2022';
 
 %=========================================================================
@@ -269,12 +267,13 @@ typ     = typ(mcI);
 
 for mc = 1: length(serial)
   close all
+  nextmcat='';
   mcfile_out = [mooring_outdir,mooring,'/',sensortyp,'/',mooring,'_',sprintf('%3.3d',mc),ext]; 
   mcfig_out = [mooring_outdir,mooring,'/',sensortyp,'/',mooring,'_',sprintf('%3.3d',mc)]; 
   if exist(mcfile_out,'file')  
     answer = questdlg(sprintf('%s',['\fontsize{16}File ' [sprintf('%3.3d',mc) ext] ' for instrument ' num2str(serial(mc)) ' exists already: do you want to overwrite it? ']), ...
         'Existing calibrated data file', ...
-        'Yes','Yes, but make a dated copy',opts);
+        'Yes','Yes, but make a dated copy','No, skip to next sensor',opts);
     switch answer
        case 'Yes'
             writefile=1;
@@ -282,9 +281,14 @@ for mc = 1: length(serial)
             [succ1,mess1] =copyfile(mcfile_out,[mcfile_out,date]);
             [succ2,mess2] =copyfile([mcfile_out,'.txt'],[mcfile_out,'.txt',date]);
             writefile=0;
+        case 'No, skip to next sensor'
+            nextmcat='skip';
     end
-
   end  
+
+  if strcmpi(nextmcat,'skip')
+      continue
+  end
   
   % default is no calibration data 
   skipC  = 1;skipT  = 1;skipP  = 1;
@@ -327,7 +331,7 @@ for mc = 1: length(serial)
   if isempty(cinI)           
      corrC    =  0;
      answer = questdlg(sprintf('%s',['\fontsize{16}No conductivity coeffecient found for serial number ',num2str(serial0)]), ...
-	    'Conductivity coefficient entry', ...
+	    [num2str(serial(mc)) ' conductivity coefficient'], ...
 	    'Skip','Save with cal applied','Or, break here',opts);
         % Handle response
         switch answer
@@ -335,7 +339,7 @@ for mc = 1: length(serial)
                 postC(cinI) = NaN;
                 disp('Skipping')
                 skipC = 0;
-           case 'Save with cal applied'
+           case 'Save with no cal applied'
                 preC(cinI) = NaN;
                 disp('Saving without calibration!!')
                 skipC = 1;
@@ -343,18 +347,19 @@ for mc = 1: length(serial)
                 disp('Breaking')
                 return
         end
-
   else
-    cal1     =  preC(cinI);
+    
+    % transfer coefs to temprary variables
+    cal1        =  preC(cinI);
     cal1comment = preCcomment(cinI);
-    cal2     =  postC(cinI);       
+    cal2        =  postC(cinI);       
     cal2comment = postCcomment(cinI);
 
     answer = questdlg(sprintf('%s\n%s\n%s\n%s',['\fontsize{16}Conductivity pre-cruise calibration: ' num2str(cal1)], ...
                 ['\fontsize{16}Comment: ' cal1comment{1}],...
                 ['\fontsize{16}Conductivity post-cruise calibration: ' num2str(cal2)],...
                 ['\fontsize{16}Comment: ' cal2comment{1}]), ...
-	'Conductivity coefficient selection', ...
+	[num2str(serial(mc)) ' conductivity coefficient selection'], ...
 	'Use both','Just pre-cruise','Or, just post-cruise',opts);
     % Handle response
     switch answer
@@ -371,14 +376,14 @@ for mc = 1: length(serial)
             keep = 0;
     end
 
-    % calibration offsets for conductivity
+    % update calibration offsets for conductivity
     cal1     =  preC(cinI);
     cal2     =  postC(cinI);       
       
     % IF one of the offsets is a nan, we can use a general trend
     if isnan(cal1)
         answer = questdlg('\fontsize{16}Should general trend generated from all sensors be applied?', ...
-	    'Conductivity pre-cruise', ...
+	    [num2str(serial(mc)) ' conductivity pre-cruise'], ...
 	    'Yes','No',opts);
         % Handle response
         switch answer
@@ -392,7 +397,7 @@ for mc = 1: length(serial)
 
     if isnan(cal2)
         answer = questdlg('\fontsize{16}Should general trend generated from all sensors be applied?', ...
-	    'Conductivity post-cruise', ...
+	    [num2str(serial(mc)) ' conductivity post-cruise'], ...
 	    'Yes','No',opts);
         % Handle response
         switch answer
@@ -406,7 +411,7 @@ for mc = 1: length(serial)
 
     if keep == 0
         answer = questdlg('\fontsize{16}Should average of conductivity coeffecients be applied?', ...
-	    'Conductivity', ...
+	    [num2str(serial(mc)) ' conductivity'], ...
 	    'Yes','No',opts);
         % Handle response
         switch answer
@@ -425,7 +430,7 @@ for mc = 1: length(serial)
     
     if isempty(find(~isnan(corrC)))
         corrC=0;
-        answer = questdlg(sprintf('%s',['\fontsize{16}No conductivity calibration data found for serial number ',num2str(serial0)]), ...
+        answer = questdlg(sprintf('%s',['\fontsize{16}Conductivity calibration for serial number ',num2str(serial0) ' is empty!']), ...
 	        'Conductivity calibration', ...
 	        'Skip','Save without cal applied','Or, break here',opts);
             % Handle response
@@ -562,7 +567,7 @@ if strcmp(p_exist,'y')
     if isempty(pinI)
         corrP   =  0;
         answer = questdlg(sprintf('%s',['\fontsize{16}No Pressure coeffecient found for serial number ',num2str(serial0)]), ...
-	    'Pressure coefficient entry', ...
+	    [num2str(serial(mc))  'pressure coefficient entry'], ...
 	    'Skip','Save with cal applied','Or, break here',opts);
         % Handle response
         switch answer
@@ -586,7 +591,7 @@ if strcmp(p_exist,'y')
                     ['\fontsize{16}Comment: ' cal1comment{1}],...
                     ['\fontsize{16}Pressure post-cruise calibration: ' num2str(cal2)],...
                     ['\fontsize{16}Comment: ' cal2comment{1}]), ...
-	    'Pressure coefficient selection', ...
+	    [num2str(serial(mc)) ' pressure coefficient selection'], ...
 	    'Use both','Just pre-cruise','Or, just post-cruise',opts);
         % Handle response
         switch answer
@@ -610,7 +615,7 @@ if strcmp(p_exist,'y')
     % IF one of the offsets is a nan, we can use a general trend
     if isnan(cal1)
         answer = questdlg('\fontsize{16}Should general trend generated from all sensors be applied?', ...
-	    'Pressure pre-cruise', ...
+	    [num2str(serial(mc)) ' pressure pre-cruise'], ...
 	    'Yes','No',opts);
         % Handle response
         switch answer
@@ -624,7 +629,7 @@ if strcmp(p_exist,'y')
 
     if isnan(cal2)
         answer = questdlg('\fontsize{16}Should general trend generated from all sensors be applied?', ...
-	    'Pressure post-cruise', ...
+	    [num2str(serial(mc)) ' pressure post-cruise'], ...
 	    'Yes','No',opts);
         % Handle response
         switch answer
@@ -638,7 +643,7 @@ if strcmp(p_exist,'y')
 
     if keep == 0
         answer = questdlg('\fontsize{16}Should average of Pressure coeffecients be applied?', ...
-            'Pressure', ...
+            [num2str(serial(mc)) ' pressure'], ...
             'Yes','No',opts);
         switch answer
             case 'Yes'
@@ -655,7 +660,7 @@ if strcmp(p_exist,'y')
         if isempty(find(~isnan(corrP)))
         corrP=0;
         answer = questdlg(sprintf('%s',['\fontsize{16}No Pressure calibration data found for serial number ',num2str(serial0)]), ...
-            'Pressure calibration', ...
+            [num2str(serial(mc)) ' pressure calibration'], ...
             'Skip','Save without cal applied','Or, break here',opts);
             % Handle response
             switch answer
@@ -677,23 +682,20 @@ if strcmp(p_exist,'y')
 end
 
 %% 2 apply offsets to T and C and plot
-
-  tn       = t - corrT;      
-  cn       = c - corrC;
-  
-  %find dummy data and apply to corrected data
-  spikeT   = find(t<-900);tn(spikeT) = dum;
-  spikeC   = find(c<-900);cn(spikeC) = dum; 
-  spikeP   = find(p<-0); pn(spikeP) = dum;
-
-  %index of depsiked data
-  cidx=cn>dum;
-  tidx=tn>dum;
-  pidx=pn>dum;
-
-  % index of cond and temp dummy values
-  ctidx = cidx & tidx; 
-
+    
+    tn       = t - corrT;      
+    cn       = c - corrC;
+    
+    %find dummy data and apply to corrected data
+    spikeT   = find(t<-900);tn(spikeT) = dum;
+    spikeC   = find(c<-900);cn(spikeC) = dum; 
+    spikeP   = find(p<-0); pn(spikeP) = dum;
+    
+    %index of depsiked data
+    cidx=cn>dum;
+    tidx=tn>dum;
+    pidx=pn>dum; 
+    
     figure(1);sgt = sgtitle([mooring '  ' p_applycal.sensortyp ' sn',num2str(serial0) ' at ' num2str(nanmean(p),'%4.0f') ' m'],...
       'Color','black', 'Interpreter', 'none');
     sgt.FontSize = 20;
@@ -707,43 +709,38 @@ end
     ax7=subplot(4,3,11);
     ax8=subplot(4,3,12);
 
-
-  axes(ax1);
-  plot(jd0(tidx),t(tidx),'k')
-  hold on
-  plot(jd0(tidx),tn(tidx),'b')
-  grid on;  xlim(xli);
-  ylabel('Temperature [deg C]')
-  legend('Temperature raw','Temperature plus offset','location','best');
-  title('1. Temperature');
-  ax1.TitleHorizontalAlignment = 'left';
-  
-  axes(ax2);
-  plot(jd0(cidx),c(cidx),'k')
-  hold on
-  plot(jd0(cidx),cn(cidx),'r')
-  grid on;xlim(xli);
-  ylabel('Conductivity [mS/cm]')
-  legend('Conductivity raw','Conductivity plus offset','location','best');
-  title('2. Conductivity');
-  ax2.TitleHorizontalAlignment = 'left';
-
-  if strcmp(p_exist,'y')
-    axes(ax3);
-    plot(jd0(pidx),p(pidx),'k')
+    axes(ax1);
+    plot(jd0(tidx),t(tidx),'k')
     hold on
-    plot(jd0(pidx),pn(pidx),'green')
-    grid on; xlim(xli);
-    ylabel('Pressure [db]')
-    legend('Pressure raw','Pressure plus offset','location','best');
-    title('3. Pressure');
-    ax3.TitleHorizontalAlignment = 'left';
-  end
-
-  hold off
-
-
-  if warn == 0
+    plot(jd0(tidx),tn(tidx),'b')
+    grid on;  xlim(xli);
+    ylabel('Temperature [deg C]')
+    legend('Temperature raw','Temperature plus offset','location','best');
+    title('1. Temperature');
+    ax1.TitleHorizontalAlignment = 'left';
+    
+    axes(ax2);
+    plot(jd0(cidx),c(cidx),'k')
+    hold on
+    plot(jd0(cidx),cn(cidx),'r')
+    grid on;xlim(xli);
+    ylabel('Conductivity [mS/cm]')
+    legend('Conductivity raw','Conductivity plus offset','location','best');
+    title('2. Conductivity');
+    ax2.TitleHorizontalAlignment = 'left';
+    
+    if strcmp(p_exist,'y')
+        axes(ax3);
+        plot(jd0(pidx),p(pidx),'k')
+        hold on
+        plot(jd0(pidx),pn(pidx),'green')
+        grid on; xlim(xli);
+        ylabel('Pressure [db]')
+        legend('Pressure raw','Pressure plus offset','location','best');
+        title('3. Pressure');
+        ax3.TitleHorizontalAlignment = 'left';
+    end
+    
     axes(ax6);
     plot(jd0([1 end]),corrT([1 end]),'bo-')
     legend('T drift')
@@ -751,191 +748,164 @@ end
     plot(jd0([1 end]),corrC([1 end]),'ro-')
     legend('C drift')
     if strcmp(p_exist,'y')
-    axes(ax6);
-      plot(jd0([1 end]),corrP([1 end]),'go-')
-    legend('P drift')
-    end
-  elseif warn ==1
-    axes(ax6);
-    pl1=plot(jd0([1 end]),corrT([1 end]),'--',jd0(end),corrT(end),'bo');
-    legend('T drift')
-    axes(ax7);
-    pl2=plot(jd0([1 end]),corrC([1 end]),'r--',jd0(end),corrC(end),'ro');
-    legend('C drift')
-    if strcmp(p_exist,'y')
-    axes(ax8);
-      pl3=plot(jd0([1 end]),corrP([1 end]),'g-',jd0(end),corrP(end),'go');
-      legend('P drift')
-    end
-  elseif warn ==2
-    axes(ax6);
-    pl1=plot(jd0([1 end]),corrT([1 end]),'--',jd0(1),corrT(1),'bo');
-    legend('T drift'); grid on;
-    axes(ax7);
-    pl2=plot(jd0([1 end]),corrC([1 end]),'r--',jd0(1),corrC(1),'ro');
-    legend('C drift');grid on;
-    axes(ax8);
-   if strcmp(p_exist,'y')
-      pl3=plot(jd0([1 end]),corrP([1 end]),'g-',jd0(1),corrP(1),'go');
-      legend('P drift');grid on;
-    end
-  elseif warn ==3
-    axes(ax6);
-    plot(jd0([1 end]),corrT([1 end]),'bo-')
-    legend('T drift','location','best');grid on;
-    axes(ax7);
-    plot(jd0([1 end]),corrC([1 end]),'ro-')
-    legend('C drift','location','best');grid on;
+        axes(ax6);
+        plot(jd0([1 end]),corrP([1 end]),'go-')
+        legend('P drift')
+    end 
+    
+    % index of cond and temp dummy values
+    % need to meake ctpidx
+    ctidx = cidx & tidx & pidx;
+
+    % Salinity from cndr, T, P
+    % GSW update
+    %SP from conductivity ratio(PSS‐78),  sw_salt(R,t,p), gsw_SP_from_R(R,t,p) 
+    sn(ctidx) = gsw_SP_from_R(cn(ctidx)/c3515,tn(ctidx)*t90_68,pn(ctidx));
+    s = gsw_SP_from_R(c/c3515,t*t90_68,p);
+    
+    axes(ax4);
+    plot(jd(ctidx)-jd(1),s(ctidx),'k');
+    hold on
+    plot(jd(ctidx)-jd(1),sn(ctidx),'r');
+    legend('Pre-cal','post-cal','Location','Best')
+    ylabel('Salinity')
+    title('4. Post-calibration Salinity');
     grid on
-    axes(ax8);
-    if strcmp(p_exist,'y')
-      plot(jd0([1 end]),corrP([1 end]),'go-')
-      legend('P drift','location','best'); grid on
-    end
-  end 
- 
-  % Salinity from cndr, T, P
-  % GSW update
-  %SP from conductivity ratio(PSS‐78),  sw_salt(R,t,p), gsw_SP_from_R(R,t,p) 
-  sn(ctidx) = gsw_SP_from_R(cn(ctidx)/c3515,tn(ctidx)*t90_68,pn(ctidx));
-  s = gsw_SP_from_R(c/c3515,t*t90_68,p);
-  
-  axes(ax4);
-  plot(jd(ctidx)-jd(1),s(ctidx),'k');
-  hold on
-  plot(jd(ctidx)-jd(1),sn(ctidx),'r');
-  legend('Pre-cal','post-cal','Location','Best')
-  ylabel('Salinity')
-  title('4. Post-calibration Salinity');
-  grid on
-  ax4.TitleHorizontalAlignment = 'left';
-
-  axes(ax5);
-  plot(s(ctidx),t(ctidx),'k.');
-  hold on
-  plot(sn(ctidx),t(ctidx),'r.');
-  grid on
-  title('5. Salinity offset applied')
-  legend('pre-cal','post-cal','location','best');
-  xlabel('Salinity')
-  ylabel('Temperature')
-  ax5.TitleHorizontalAlignment = 'left';
-  hold off
+    ax4.TitleHorizontalAlignment = 'left';
+    
+    axes(ax5);
+    plot(s(ctidx),t(ctidx),'k.');
+    hold on
+    plot(sn(ctidx),t(ctidx),'r.');
+    grid on
+    title('5. Salinity offset applied')
+    legend('pre-cal','post-cal','location','best');
+    xlabel('Salinity')
+    ylabel('Temperature')
+    ax5.TitleHorizontalAlignment = 'left';
+    hold off
 %%  3 conductivity pressure correction (optional)
-% only required for instruments withour pressure sensor
-  if strcmp(p_exist,'n')
-    acc_cpcor = input('Is a pressure dependant correction is required for the conductivity (see Fig. 1)? y/n ','s');
-    if strcmp(acc_cpcor,'y')
-      pref = input('Insert reference pressure [dbar] ');
-      invalcpcor = input('Insert time interval where correction is required, e.g. [3 56] denotes days 3-56 ');
-      dumI = find(cn == dum);
-      for i = 1 : length(invalcpcor)/2  
-        corI = find(jd0>= invalcpcor(i*2-1) & jd0 <= invalcpcor(i*2));    
-        cn(corI) = mc_concorr(cn(corI),pref,pn(corI));
+    % only required for instruments withour pressure sensor
+      if strcmp(p_exist,'n')
+        acc_cpcor = input('Is a pressure dependant correction is required for the conductivity (see Fig. 1)? y/n ','s');
+        if strcmp(acc_cpcor,'y')
+          pref = input('Insert reference pressure [dbar] ');
+          invalcpcor = input('Insert time interval where correction is required, e.g. [3 56] denotes days 3-56 ');
+          dumI = find(cn == dum);
+          for i = 1 : length(invalcpcor)/2  
+            corI = find(jd0>= invalcpcor(i*2-1) & jd0 <= invalcpcor(i*2));    
+            cn(corI) = mc_concorr(cn(corI),pref,pn(corI));
+          end
+          cn(dumI) = dum;
+          figure(2)
+            sn = gsw_SP_from_R(cn(ctidx)/c3515,tn(ctidx)*t90_68,pref*ones(length(ctidx),1));
+            plot(jd(ctidx)-jd(1),sn,'r')
+            grid on
+            legend('raw','P corr.')
+        elseif strcmp(acc_cpcor,'n')
+          disp('No pressure conductivity correction applied')
+        elseif ~strcmp(acc_cpcor,'y') & ~strcmp(acc_cpcor,'n')
+          disp('Answer not defined - no pressure conductivity correction applied')  
+          acc_cpcor = 'n';      
+        end
       end
-      cn(dumI) = dum;
-      figure(2)
-        sn = gsw_SP_from_R(cn(ctidx)/c3515,tn(ctidx)*t90_68,pref*ones(length(ctidx),1));
-        plot(jd(ctidx)-jd(1),sn,'r')
+    %% 4 pressure drift removal 
+    group = "Updates";
+    pref = "Conversion";
+    boxtitle = "Pressure drift removal";
+    quest = ["Does the pressure record require drift removal?"];
+    pbtns = ["Yes","No"];
+    [pval,tf] = uigetpref(group,pref,boxtitle,quest,pbtns,opts);
+    
+    switch pval
+        case 'yes'
+            acc_drift   =  1;
+        case 'no'
+            acc_drift   =  0;
+    end
+    
+    if acc_drift==1
+        [coef,fit]= exp_lin_fit2(jd,pn,[1 1 1 1]);
+        if warn == 1
+        pp = pn - fit + fit(end);
+        elseif warn == 2
+        pp = pn - fit + fit(1);
+        else 
+        pp = pn - fit + mean(fit);
+        end
+        
+        so = gsw_SP_from_R(cn(ctidx)/c3515,tn(ctidx)*t90_68,pn(ctidx));
+        sn = gsw_SP_from_R(cn(ctidx)/c3515,tn(ctidx)*t90_68,pp(ctidx));
+        
+        deltaS = std(sn)-std(so)
+        fprintf(1,'\n\n Salinity standard deviation should decrease with dedrifted pressure \n')
+    
+        if deltaS > 0
+            fprintf(1,' Salinity standard deviation has INCREASED instead  by %4.4f \n\n',deltaS)
+        elseif deltaS < 0
+            fprintf(1,' WARNING: Salinity standard deviation has DECREASED by %4.4f \n\n',-deltaS)
+        end
+        
+        figure(1);axes(ax3); hold off;
+        plot(jd0,pn)
+        hold on
+        plot(jd0,pp,'g')
+        plot(jd0,fit,'r','Linewidth',2);
         grid on
-        legend('raw','P corr.')
-    elseif strcmp(acc_cpcor,'n')
-      disp('No pressure conductivity correction applied')
-    elseif ~strcmp(acc_cpcor,'y') & ~strcmp(acc_cpcor,'n')
-      disp('Answer not defined - no pressure conductivity correction applied')  
-      acc_cpcor = 'n';      
-    end
-  end
- 
-%% 4 pressure drift removal 
-group = "Updates";
-pref = "Conversion";
-boxtitle = "Pressure drift removal";
-quest = ["Does the pressure record require drift removal?"];
-pbtns = ["Yes","No"];
-[pval,tf] = uigetpref(group,pref,boxtitle,quest,pbtns,opts);
-
-switch pval
-    case 'yes'
-        acc_drift   =  1;
-    case 'no'
-        acc_drift   =  0;
-end
-
-if acc_drift==1
-  [coef,fit]= exp_lin_fit2(jd,pn,[1 1 1 1]);
-  
-  figure(3);clf;
-  plot(jd0,pn)
-  hold on
-  plot(jd0,fit,'r','Linewidth',2)
-  grid on
-  legend('depsiked + offset','exponential linear fit applied','location','best');
-
-  if warn == 1
-    pp = pn - fit + fit(end);
-  elseif warn == 2
-    pp = pn - fit + fit(1);
-  else 
-    pp = pn - fit + mean(fit);
-  end
-  
-  so = gsw_SP_from_R(cn(ctidx)/c3515,tn(ctidx)*t90_68,pn(ctidx));
-  sn = gsw_SP_from_R(cn(ctidx)/c3515,tn(ctidx)*t90_68,pp(ctidx));
-  deltaS = std(sn)-std(so)
-    fprintf(1,'\n\n Salinity standard deviation should decrease with dedrifted pressure \n')
-  if deltaS > 0
-    fprintf(1,' Salinity standard deviation has INCREASED instead  by %4.4f \n\n',deltaS)
-  elseif deltaS < 0
-    fprintf(1,' WARNING: Salinity standard deviation has DECREASED by %4.4f \n\n',-deltaS)
-  end
-  plot(jd0,pp,'g')
-  
-  figure(3);clf;hold on
-    plot(so,tn(ctidx),'b.')
-    plot(sn,tn(ctidx),'r.')
-    grid on
-    xlabel('S')
-    ylabel('T')
-    drawnow
-    legend('P raw','P dedrifted')
+        xlim(xli);
+        ylabel('Pressure [db]')
+        title('3. Pressure');
+        legend('depsiked + offset','exponential linear fit applied',...
+          'data minus fit','location','best');
     
-    acc = input('Do you accept the the drift removal y/n ','s');
-    answer = questdlg('\fontsize{16}Do you accept the the drift removal?', ...
-    'Pressure pre-cruise', ...
-    'Yes','No',opts);
-    % Handle response
-    switch answer
-        case 'Yes'
-            acc   =  1;
-        case 'No'
-            acc   =  0;
+        figure(1);axes(ax5);hold on
+        plot(so,tn(ctidx),'b.')
+        plot(sn,tn(ctidx),'r.')
+        grid on; xlabel('S'); ylabel('T')
+        legend('P raw','P dedrifted')
+        title('5. Pressure drift applid to salinity and pressure');
+        hold off
+        group = "Updates";
+        pref = "Conversion";
+        boxtitle = "Pressure drift removal";
+        quest = ["Do you accept the the drift removal??"];
+        pbtns = ["Yes","No"];
+        [pval,tf] = uigetpref(group,pref,boxtitle,quest,pbtns,opts);
+        
+        switch pval
+            case 'yes'
+                acc   =  1;
+            case 'no'
+                acc   =  0;
     end
-
-  if acc == 1
-    disp('drift removal accepted')
     
-    figure(1)
-    axes(ax3)
-    plot(jd0(ctidx),pn(ctidx),'w')
-    plot(jd0(ctidx),pp(ctidx),'r')
-    pn =pp;
-    axes(ax4)
-    plot(jd(ctidx)-jd(1),sn,'r')
-    legend('raw','P corr')
-    pn(spikeP)=dum;
-  else
-    disp('drift removal discarded')
-    acc_drift = 'n';
-  end    
+      if acc == 1
+        disp('drift removal accepted')
+        
+        figure(1); axes(ax3); hold off
+        plot(jd0(ctidx),pn(ctidx),'k')
+        hold on
+        plot(jd0(ctidx),pp(ctidx),'g')    
+        legend('no fit applierd','P corrected with linear exp fit')
+        grid on
+        pn =pp;
+        axes(ax4)
+        plot(jd(ctidx)-jd(1),sn,'r')
+        
+        % apply correction
+        pn(spikeP)=dum;
+      else
+        disp('drift removal discarded')
+        acc_drift = 'n';
+      end    
+    
+    elseif acc_drift==0
+      disp('No drift correction applied')
+      
+    end    
 
-elseif acc_drift==0
-  disp('No drift correction applied')
-  
-end    
-
-  %% 5  set suspicious data to dummies
-  % set default 
+    %% 5  set suspicious data to dummies
+    % set default 
     invalT = 0; invalC = 0; invalP = 0;
 
     % TEMPERATURE----------------------------------------------------------
@@ -1044,7 +1014,7 @@ end
         end
 
         figure(1)
-        axes(ax1); hold off
+        axes(ax3); hold off
         ii = find(p>dum);
         plot(jd0(ii),t(ii),'k')
         hold on
@@ -1055,12 +1025,12 @@ end
         legend('Pre-cal','post-cal','Location','Best')
     end 
 
-  %% 4a)  apply constant offset to section of data
+  %% 6 apply constant offset to section of data
     % set default values
     invalTc = 0; invalCc = 0; invalPc = 0;
     invalofft = 0;  invaloffc = 0;  invaloffp = 0;
     
-    % TEMPERATURE
+    % 6.1 TEMPERATURE
     group = "Updates";
     pref = "Conversion";
     boxtitle = "Offset";
@@ -1103,7 +1073,7 @@ end
         legend('Pre-cal','post-cal','Location','Best')
     end
 
-    % CONDUCTIVITY
+    % 6.2 CONDUCTIVITY
     group = "Updates";
     pref = "Conversion";
     boxtitle = "Offset";
@@ -1157,17 +1127,15 @@ end
           end
          plot(jd(ii)-jd(1),sn,'r')
          grid on
-
     end
    
-    % PRESSURE
+    % 6.3 PRESSURE
     group = "Updates";
     pref = "Conversion";
     boxtitle = "Offset";
     quest = ["Does an offset need to be applied to part of the pressure series?"];
     pbtns = ["Yes","No"];
     [pval,~] = uigetpref(group,pref,boxtitle,quest,pbtns,opts);
-
 
     if strcmpi(pval,'yes')
           answer = inputdlg({'Enter interval where correction is required e.g. 200 230 400 480',...
@@ -1206,8 +1174,7 @@ end
 
     end
   
-%% 5) interactive despiking
-  
+%% 7 interactive despiking
   cn(cn==dum)=NaN;
   pn(pn==dum)=NaN;
   tn(tn==dum)=NaN;
@@ -1228,8 +1195,7 @@ end
   
   val=find(tn(spidx));
   % plot T-S 
-  figure(1);hold off 
-  axes(ax5);
+  figure(1); axes(ax5);
   plot(sn,tn(val),'.r');grid on; hold on
   title('5. De-spike: Non-Nan index of salinity and pressure');
   xlabel('Salinity'); ylabel('In-situ Temperature');
@@ -1258,7 +1224,7 @@ end
           plot(sn(elim),tn(val(elim)),'.w')
         case 'No'
           figure(1)
-          axes(ax3)
+          axes(ax2)
           cn(val(ELIM)) = NaN;
           sn(ELIM)      = NaN;
           ii = find(~isnan(cn));
@@ -1266,13 +1232,12 @@ end
           grid on
           xlim(xli);  ylabel('Conductivity [mS/cm]')
           legend('Pre-cal','post-cal','Location','Best')
-          f = msgbox([' Data points eliminated = ',num2str(length(ELIM))],"Despike");
           fprintf(1,'%d data points eliminated \n\n\n',length(ELIM)) 
           break
     end  
   end
   
-%% automatic de-spiking
+%% 8 automatic de-spiking
     val   = find(cn> dum &pn>dum);
     if isempty(val)
       val = find(cn>dum);
@@ -1316,16 +1281,17 @@ end
         ELIM2 = [];
       end  
     end
- %% ---  replace NaN by dummy
- ii     = find(isnan(pn));pn(ii) = dum;
- ii     = find(isnan(cn));cn(ii) = dum;
- ii     = find(isnan(tn));tn(ii) = dum;
 
-%% save figure
- fprintf(1,[' Name of the figure '  mcfig_out  '.png' '\n\n'])
+ % replace any NaNs with dummy
+ ii     = isnan(pn);pn(ii) = dum;
+ ii     = isnan(cn);cn(ii) = dum;
+ ii     = isnan(tn);tn(ii) = dum;
+
+%% 10 save data and figure 
  print(figure(1),[mcfig_out, '.png'],'-dpng');
-%% 6) save data ------%%%%%%%%%%% 
-if skipT == 1 & skipC == 1 & skipP == 1    
+ print(figure(1),[mcfig_out, '.fig']);
+
+if skipT == 1 && skipC == 1 && skipP == 1    
     if isempty(find(~isnan(p)))
       dat = [yy mm dd hh tn cn];   
       rodbsave(mcfile_out,head,fort,moo,serial0,wd,id,sd,st,ed,et,lt,ln,cols,dat)
@@ -1353,25 +1319,27 @@ end
  fprintf(fidtxt,'Average conductivity applied? %s\n',applytrendc);
  end
  if exist('applytrendcg')
- fprintf(fidtxt,'General conductivity trend applied? %s\n',applytrendcg);
+    fprintf(fidtxt,'General conductivity trend applied? %s\n',applytrendcg);
  end
  if exist('applytrendt')
- fprintf(fidtxt,'Average temperature applied? %s\n',applytrendt);
+    fprintf(fidtxt,'Average temperature applied? %s\n',applytrendt);
  end
  if exist('applytrendtg')
- fprintf(fidtxt,'General temperature trend applied? %s\n',applytrendtg);
+    fprintf(fidtxt,'General temperature trend applied? %s\n',applytrendtg);
  end
  if exist('applytrendp')
- fprintf(fidtxt,'Average pressure applied? %s\n',applytrendp);
+    fprintf(fidtxt,'Average pressure applied? %s\n',applytrendp);
  end
  if exist('applytrendpg')
- fprintf(fidtxt,'General pressure trend applied? %s\n',applytrendpg);
+    fprintf(fidtxt,'General pressure trend applied? %s\n',applytrendpg);
  end
  fprintf(fidtxt,'Pressure drift removal? %s\n',acc_drift);
+
  if strcmp(acc_drift,'y')
      fprintf(fidtxt,'Equation of pressure drift fit: yfit = a1*(1-exp(-a2*(x-x(1)))) + a3*(x-x(1)) + a4\n');
      fprintf(fidtxt,'Coefficients of pressure drift fit: a1 = %5.6f, a2 = %5.6f, a3 = %5.6f, a4 = %5.6f\n',coef(1),coef(2),coef(3),coef(4));
  end
+
  if strcmp(p_exist,'n')
      fprintf(fidtxt,'Conductivity pressure correction redone? %s\n',acc_cpcor);
      if strcmp(acc_cpcor,'y')
@@ -1379,27 +1347,40 @@ end
       fprintf(fidtxt,'Time interval to which correction was applied: [%s]\n',num2str(invalcpcor));
      end
  end
+
  fprintf(fidtxt,'Skipped conductivity intervals: [%s]\n',num2str(invalC));
  fprintf(fidtxt,'Skipped temperature intervals : [%s]\n',num2str(invalT));
  fprintf(fidtxt,'Skipped pressure intervals    : [%s]\n',num2str(invalP));
- if exist('invaloffc')
+
+ if exist('invaloffc','var')
      for i=1:length(invaloffc)/2
- fprintf(fidtxt,'Offset of %5.4f applied to conductivity interval [%s]\n',invalCc(i),num2str(invaloffc(i*2-1:i*2)));
+        fprintf(fidtxt,'Offset of %5.4f applied to conductivity interval [%s]\n',invalCc(i),num2str(invaloffc(i*2-1:i*2)));
      end
  end
+
  if exist('invalofft','var')
      for i=1:length(invalofft)/2
- fprintf(fidtxt,'Offset of %5.4f applied to temperature interval [%s]\n',invalTc(i),num2str(invalofft(i*2-1:i*2)));
+        fprintf(fidtxt,'Offset of %5.4f applied to temperature interval [%s]\n',invalTc(i),num2str(invalofft(i*2-1:i*2)));
      end
  end
  if exist('invaloffp','var')
      for i=1:length(invaloffp)/2
- fprintf(fidtxt,'Offset of %5.4f applied to pressure interval [%s]\n',invalPc(i),num2str(invaloffp(i*2-1:i*2)));
+        fprintf(fidtxt,'Offset of %5.4f applied to pressure interval [%s]\n',invalPc(i),num2str(invaloffp(i*2-1:i*2)));
      end
  end
  fprintf(fidtxt,'Number of additional C points skipped interactively: [%d]\n',length(ELIM));
  fprintf(fidtxt,'Number of additional C points skipped automatically: [%d]\n',length(ELIM2));
-
+ if mc<length(serial)
+    answer = questdlg(sprintf('%s',['\fontsize{16}Instrument ' num2str(serial(mc)) ' processed. Move to ' num2str(serial(mc+1)) '? ']), ...
+        'Process', ...
+        'Yes','No, stop here',opts);
+    switch answer
+       case 'Yes'
+            continue
+       case 'No, stop here'
+            break
+    end
+ end
 end
 
-fclose all;
+fclose all; close('all');
