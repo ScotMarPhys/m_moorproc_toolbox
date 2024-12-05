@@ -23,7 +23,7 @@ end
 if isunix
     infofile=[procpath,moor,'/',moor,'info.dat'];
 elseif ispc
-    infofile=[procpath,moor,'\',moor,'info.dat'];
+    infofile=fullfile(procpath,moor,[moor 'info.dat']);
 end
 
 ncdir = 'oceansites_format'; %outpudirectory for oceansites netcdf
@@ -146,11 +146,6 @@ if iiMC>0
                 timeref =  datenum(yy,mm,dd,hh,0*hh,0*hh);
                 mcatdata.time(j,:) = datenum(yy,mm,dd,hh,0*hh,0*hh); %julian(YY,MM,DD,HH);
                 goodtimeindex = j; % SJ: rarely needed except first instrument missing
-                
-                p(find(isnan(p))) = 99999;
-                t(find(isnan(t))) = 99999;
-                c(find(isnan(c))) = 99999;
-                
                 mcatdata.p(j,:) = p;
                 mcatdata.t(j,:) = t;
                 mcatdata.c(j,:) = c;
@@ -161,10 +156,6 @@ if iiMC>0
                     %mcatdata.time(j,:) = datenum(yy,mm,dd,hh,0*hh,0*hh); %julian(YY,MM,DD,HH);
                     goodtimeindex = j; % SJ: rarely needed except first instrument missing
                     clear needtime
-                    p(find(isnan(p))) = 99999;
-                    t(find(isnan(t))) = 99999;
-                    c(find(isnan(c))) = 99999;
-                    
                     mcatdata.p(j,:) = p;
                     mcatdata.t(j,:) = t;
                     mcatdata.c(j,:) = c;
@@ -177,17 +168,17 @@ if iiMC>0
                 if length(p(~isnan(p)))>2
                     pint = interp1(timeinst(~isnan(p)),p(~isnan(p)),timeref);
                 else
-                    pint = timeref*0 + 99999;
+                    pint = NaN;
                 end
                 if length(t(~isnan(t)))>2
                     tint = interp1(timeinst(~isnan(t)),t(~isnan(t)),timeref);
                 else
-                    tint = timeref*0 + 99999;
+                    tint = NaN;
                 end
                 if length(c(~isnan(c)))>2
                     cint = interp1(timeinst(~isnan(c)),c(~isnan(c)),timeref);
                 else
-                    cint = timeref*0 + 99999;
+                    cint = NaN;
                 end
                 
                 baddatamaskp = interp1(timeinst,single(isnan(p)),timeref,'nearest');
@@ -200,11 +191,7 @@ if iiMC>0
                 pint(logical(baddatamaskp))= nan;
                 tint(logical(baddatamaskt))= nan;
                 cint(logical(baddatamaskc))= nan;
-                
-                pint(find(isnan(pint))) = 99999;
-                tint(find(isnan(tint))) = 99999;
-                cint(find(isnan(cint))) = 99999;
-                
+
                 mcatdata.p(j,:)    = pint;
                 mcatdata.t(j,:)    = tint;
                 mcatdata.c(j,:)    = cint;
@@ -237,9 +224,11 @@ if iiMC>0
     mcatinfo = moorinfo.mcat;
     mcatinfo.serial_num = mcatdata.serialnum;
     instrdepth = mcatdata.instrdpth; % nominal depth of the bin
-    mcatdata.s = sw_salt( mcatdata.c/ sw_c3515,  mcatdata.t,  mcatdata.p);
-    mcatdata.s(mcatdata.c==99999) = 99999;
-    
+    mcatdata.s = gsw_SP_from_R( mcatdata.c/ gsw_C3515,  mcatdata.t,  mcatdata.p);
+    mcatdata.s(isnan(mcatdata.s))=99999;
+    mcatdata.p(isnan(mcatdata.p))=99999;
+    mcatdata.t(isnan(mcatdata.t))=99999;
+
     %cd export_Oceansites % SJ
     write_MCTD_to_NetCDF(netcdffilepath, moor, lat, lon, mcatinfo, instrdepth, mcatdata.time(goodtimeindex,:),  mcatdata.p, mcatdata.s, mcatdata.t, mcatdata.c)
     

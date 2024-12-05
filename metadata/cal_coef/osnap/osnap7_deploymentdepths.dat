@@ -7,6 +7,7 @@ Mooring    = ib3_03_2022
 Mooring    = ib4_03_2022
 Mooring    = ib5_03_2022
 Mooring    = DM
+Mooring	   = rhadcp1_02_2022
 Columns    = z:instrument:serialnumber
 51      337     4608
 52      375     2002
@@ -97,3 +98,5 @@ Columns    = z:instrument:serialnumber
 700	337	3264
 919	337	6123
 925	370	11992
+1068	324	200044
+1070	337	9378

@@ -1,37 +1,21 @@
 %clear
 close all
-%addpath(genpath('~/Dropbox/Work/function_MATLAB/Mooring_Processing_toolbox'))
-
+global pathgit pathosnap basedir
 %-------------------------------------
 % Definition of the different path
 %pathosnap = pwd;
-
-%basedir  = '~/Dropbox/Work/Dataproc/Postdoc_OSNAP/OSNAP_mooring/'; %
-basedir = [pathgit filesep 'exec/gitrepo/export_Oceansites'];
+workingdir = [basedir  '\exec\gitrepo\export_Oceansites'];
 % directory with the processed mooring data
-% procpath = '/media/SAMS/m/Mar_Phys/OSNAP_mooring_data_processing/osnap/data/moor/proc/' % NEED TO BE UPDATE:[basedir 'backup_mdrive/proc/'];	
-%procpath = '~/osnap/data/moor/proc/' % NEED TO BE UPDATE:[basedir 'backup_mdrive/proc/'];	
-procpath = [pathosnap '/data/moor/proc/'];
+procpath = [basedir '\osnap\data\moor\proc\'];
 % output directory for the netcdf
-%outpath = [basedir 'OSNAP_oceanSITES_format_conversion_matlab_scripts_for_SAMSNOC/oceansites_format/'];
-outpath = [basedir 'gitrepo/export_Oceansites/oceansites_format'];
+outpath = [basedir 'exec\gitrepo\export_Oceansites\oceansites_format'];
 %-------------------------------------
 % Selection of the deployment year
-%depyear ='01_2014';
-%depyear ='02_2015';
-%  depyear = '03_2016';
-% depyear = '04_2017';
-% depyear='05_2018';
-depyear='06_2020';
+depyear='07_2022';
 %-------------------------------------
 %% Selection of the mooring to process
-%moorlist ={'nocm1','nocm2','nocm3','nocm4','nocm5'};
-%moorlist ={'nocm2'};
 moorlist = {'rteb1','rtwb1','rtwb2'};
-%moorlist = {'rtadcp1'};%
- 		
-% eval(['cd ' basedir]);
-cd(basedir)
+cd(workingdir)
 
 for ijk= 1:length(moorlist)
     moor = [moorlist{ijk} '_' depyear];
@@ -63,7 +47,7 @@ for ijk= 1:length(moorlist)
  
        % Microcat
             moorinfo.mcat.principal_investigator = 'Stuart Cunningham';	% CHANGE
-            moorinfo.mcat.principal_investigator_email = 'stuart.cunningham@sams.ac.uk';	% CHANGE
+            moorinfo.mcat.principal_investigator_email = '';	% CHANGE
             moorinfo.mcat.principal_investigator_url = 'http://www.sams.ac.uk';	% CHANGE
             moorinfo.mcat.institution = 'Scottish Association for Marine Science, SAMS';	% CHANGE
             moorinfo.mcat.contributor_name = 'Sam Jones; Lewis Drysdale';	% CHANGE
@@ -72,12 +56,12 @@ for ijk= 1:length(moorlist)
             
        % Nortek
             moorinfo.nortek.principal_investigator = 'Stuart Cunningham';	% CHANGE
-            moorinfo.nortek.principal_investigator_email = 'stuart.cunningham@sams.ac.uk';	% CHANGE
+            moorinfo.nortek.principal_investigator_email = '';	% CHANGE
             moorinfo.nortek.principal_investigator_url = 'http://www.sams.ac.uk';	% CHANGE
             moorinfo.nortek.institution = 'Scottish Association for Marine Science, SAMS';	% CHANGE
-            moorinfo.nortek.contributor_name = 'Lewis Drysdale; Sam Diabate';	% CHANGE
+            moorinfo.nortek.contributor_name = 'Sam Jones; Lewis Drysdale';	% CHANGE
             moorinfo.nortek.contributor_role = 'data processing and interpretation';	% CHANGE
-            moorinfo.nortek.contributor_email = 'lewis.drysdale@sams.ac.uk';	% CHANGE      
+            moorinfo.nortek.contributor_email = 'sam.jones@sams.ac.uk; lewis.drysdale@sams.ac.uk';	% CHANGE      
             
         case {'nocm1','nocm2','nocm3','nocm4','nocm5'};
             
@@ -135,7 +119,7 @@ for ijk= 1:length(moorlist)
     moorinfo.nortek.proclvl             = 'calibrated;good data';
     moorinfo.nortek.sensor_model        = 'Aquadopp current meter';
     moorinfo.nortek.sensor_manufacturer = 'Nortek AS';	
-    moorinfo.nortek.sensor_ref          = 'http://www.nortek-as.com/lib/brochures/Aquadopp%2006%20b.pdf';
+    moorinfo.nortek.sensor_ref          = 'https://www.nortekgroup.com/products/aquadopp2-500m/pdf';
     moorinfo.nortek.presaccuracy         = '0.5%';
     moorinfo.nortek.presresolution       = '0.005% of full scale';     
     moorinfo.nortek.sensor_mount        = 'mounted_on_mooring_line';
@@ -151,9 +135,9 @@ for ijk= 1:length(moorlist)
     moorinfo.mcat.processing_level = 'calibration using pre- and post- deployment calibration casts; data manually reviewed';
     moorinfo.mcat.QC_indicator = 'excellent';
     moorinfo.mcat.proclvl             = 'calibrated;good data';
-    moorinfo.mcat.sensor_model        = 'SBE37-SM Microcat';
+    moorinfo.mcat.sensor_model        = 'SBE37-SMP Microcat';
     moorinfo.mcat.sensor_manufacturer = 'Sea-Bird Electronics Inc';	
-    moorinfo.mcat.sensor_ref          = 'http://www.seabird.com/sbe37sm-microcat-ctd';
+    moorinfo.mcat.sensor_ref          = 'https://www.seabird.com/asset-get.download.jsa?id=66339519258';
     moorinfo.mcat.sensor_mount        = 'mounted_on_mooring_line';
     moorinfo.mcat.sens_orientation    = 'vertical'; 
     moorinfo.mcat.presuncertainty     = ' ';

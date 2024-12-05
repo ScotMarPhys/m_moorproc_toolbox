@@ -18,10 +18,10 @@ global basedir datadir execdir pathgit pathosnap
 
 % path of the mooring data define in the startup file under osnap/
 
-% moor = 'rteb1_07_2022';
+moor = 'rteb1_07_2022';
 moor = 'rtwb1_07_2022';
 %moor = 'rtwb2_07_2022';
-
+moor = 'rhadcp_02_2022';
 %=========================================================================
 % Apply calibration coefficients to series, removes bad data. If required, applies
 % constant offsets, and conductivity pressure correction
@@ -738,19 +738,28 @@ end
         ylabel('Pressure [db]')
         legend('Pressure raw','Pressure plus offset','location','best');
         title('3. Pressure');
+        ylabel('Number of days since deployment')
         ax3.TitleHorizontalAlignment = 'left';
     end
     
     axes(ax6);
     plot(jd0([1 end]),corrT([1 end]),'bo-')
-    legend('T drift')
-    axes(ax6);
+    grid on;
+    ylabel('Temperature [deg C]')
+    title('6. Temperature correction');
+    ax6.TitleHorizontalAlignment = 'left';
+    axes(ax7);
     plot(jd0([1 end]),corrC([1 end]),'ro-')
-    legend('C drift')
+    ylabel('Conductivity [mS/cm]');
+    grid on
+    title('7. Conductivity correction');
+    ax7.TitleHorizontalAlignment = 'left';
     if strcmp(p_exist,'y')
-        axes(ax6);
+        axes(ax8);
         plot(jd0([1 end]),corrP([1 end]),'go-')
-        legend('P drift')
+        ylabel('Pressure [db]'); grid on;
+        title('8. Pressure correction');
+        ax8.TitleHorizontalAlignment = 'left';
     end 
     
     % index of cond and temp dummy values
@@ -810,12 +819,15 @@ end
         end
       end
     %% 4 pressure drift removal 
+    % need to sort out the inclsion of dummy values in here
+    % only deals with exponential drift and is potentially skewed by
+    % knockdown. perhaps we need something that deals with linear drift
     group = "Updates";
     pref = "Conversion";
     boxtitle = "Pressure drift removal";
-    quest = ["Does the pressure record require drift removal?"];
+    quest = "Does the pressure record require drift removal?";
     pbtns = ["Yes","No"];
-    [pval,tf] = uigetpref(group,pref,boxtitle,quest,pbtns,opts);
+    [pval,~] = uigetpref(group,pref,boxtitle,quest,pbtns,opts);
     
     switch pval
         case 'yes'
@@ -827,17 +839,17 @@ end
     if acc_drift==1
         [coef,fit]= exp_lin_fit2(jd,pn,[1 1 1 1]);
         if warn == 1
-        pp = pn - fit + fit(end);
+            pp = pn - fit + fit(end);
         elseif warn == 2
-        pp = pn - fit + fit(1);
+            pp = pn - fit + fit(1);
         else 
-        pp = pn - fit + mean(fit);
+            pp = pn - fit + mean(fit);
         end
         
         so = gsw_SP_from_R(cn(ctidx)/c3515,tn(ctidx)*t90_68,pn(ctidx));
         sn = gsw_SP_from_R(cn(ctidx)/c3515,tn(ctidx)*t90_68,pp(ctidx));
         
-        deltaS = std(sn)-std(so)
+        deltaS = std(sn)-std(so);
         fprintf(1,'\n\n Salinity standard deviation should decrease with dedrifted pressure \n')
     
         if deltaS > 0
@@ -887,7 +899,10 @@ end
         hold on
         plot(jd0(ctidx),pp(ctidx),'g')    
         legend('no fit applierd','P corrected with linear exp fit')
-        grid on
+        grid on        
+        title('3. Pressure (drift correction applied)');
+        ylabel('Number of days since deployment')
+        ax3.TitleHorizontalAlignment = 'left';
         pn =pp;
         axes(ax4)
         plot(jd(ctidx)-jd(1),sn,'r')
@@ -897,11 +912,20 @@ end
       else
         disp('drift removal discarded')
         acc_drift = 'n';
+        axes(ax3);
+        plot(jd0(pidx),p(pidx),'k')
+        hold on
+        plot(jd0(pidx),pn(pidx),'green')
+        grid on; xlim(xli);
+        ylabel('Pressure [db]')
+        legend('Pressure raw','Pressure plus offset','location','best');
+        title('3. Pressure (no drift removal)');
+        ylabel('Number of days since deployment')
+        ax3.TitleHorizontalAlignment = 'left';        
       end    
     
     elseif acc_drift==0
-      disp('No drift correction applied')
-      
+        disp('No drift correction applied')
     end    
 
     %% 5  set suspicious data to dummies
@@ -1220,8 +1244,13 @@ end
           y = [y ;y(1)];
           elim = find(inpolygon(sn,tn(val),x,y) == 1);
           ELIM = [ELIM;elim];
-          figure(1);axes(ax5) 
-          plot(sn(elim),tn(val(elim)),'.w')
+          cn(val(ELIM)) = NaN;
+          sn(ELIM)      = NaN;
+          figure(1);axes(ax5) ; hold off;
+          plot(sn,tn(val),'.r')
+          grid on;
+          title('5. De-spike: Non-Nan index of salinity and pressure');
+          xlabel('Salinity'); ylabel('In-situ Temperature');
         case 'No'
           figure(1)
           axes(ax2)
@@ -1240,52 +1269,61 @@ end
 %% 8 automatic de-spiking
     val   = find(cn> dum &pn>dum);
     if isempty(val)
-      val = find(cn>dum);
-      sn  = gsw_SP_from_R(cn(val)/c3515,tn(val)*t90_68,pref*ones(length(val),1));
+        val = find(cn>dum);
+        sn  = gsw_SP_from_R(cn(val)/c3515,tn(val)*t90_68,pref*ones(length(val),1));
     else    
-      sn =  gsw_SP_from_R(cn(val)/c3515,tn(val)*t90_68,pn(val));
+        sn =  gsw_SP_from_R(cn(val)/c3515,tn(val)*t90_68,pn(val));
     end 
-       ELIM2 = [];
+
+    ELIM2 = [];
     if ~isempty(val) 
-      Tlim  = [min(tn(val)) max(tn(val))];
-      dTlim = diff(Tlim); 
-      Tstep = 15;
-      Tgrid = linspace(Tlim(1),Tlim(2),Tstep);
-      
-      for i = 1 : Tstep -1
-        ii     = find(tn(val)>=Tgrid(i) & tn(val)<=Tgrid(i+1));
-        if ii < 3
-          ssd(i) = ssd(i-1);  
-        else
-          ssd(i) = std(sn(ii));
-        end  
-        
-        smd(i) = median(sn(ii));
-        elim  =          find(sn(ii) > (smd(i)+6*ssd(i)) | sn(ii) < (smd(i) - 6*ssd(i)));
-        ELIM2 = [ELIM2 ii(elim)'];
-      end
-      Tgrid = mean([Tgrid(1:end-1);Tgrid(2:end)]);
-      axes(ax5)
-      hold on
-      plot(smd+6*ssd,Tgrid,'m--','Linewidth',2)
-      plot(smd-6*ssd,Tgrid,'m--','Linewidth',2)
-    answer = questdlg('\fontsize{16}Do you want to exclude all the values outside the 6 sigma area?', ...
+        Tlim  = [min(tn(val)) max(tn(val))];
+        dTlim = diff(Tlim); 
+        Tstep = 15;
+        Tgrid = linspace(Tlim(1),Tlim(2),Tstep);
+        for i = 1 : Tstep -1
+            ii     = find(tn(val)>=Tgrid(i) & tn(val)<=Tgrid(i+1));
+            if ii < 3
+                ssd(i) = ssd(i-1);  
+            else
+                ssd(i) = std(sn(ii));
+            end  
+            smd(i) = median(sn(ii));
+            elim  =          find(sn(ii) > (smd(i)+6*ssd(i)) | sn(ii) < (smd(i) - 6*ssd(i)));
+            ELIM2 = [ELIM2 ii(elim)'];
+        end
+
+        Tgrid = mean([Tgrid(1:end-1);Tgrid(2:end)]);
+        axes(ax5)
+        hold on
+        plot(smd+6*ssd,Tgrid,'m--','Linewidth',2)
+        plot(smd-6*ssd,Tgrid,'m--','Linewidth',2)
+        answer = questdlg('\fontsize{16}Do you want to exclude all the values outside the 6 sigma area?', ...
         'Spike removal', ...
         'Yes','No',opts);    
-      if strcmpi(answer,'yes')
-        disp(['Automatic despiking accepted - ',num2str(length(ELIM2)),' values discarded']);  
-        cn(val(ELIM2)) = dum;
-        plot(sn(ELIM2),tn(val(ELIM2)),'w.')
-      elseif strcmpi(answer,'no')
-        disp('Automatic despiking rejected')    
-        ELIM2 = [];
-      end  
+        if strcmpi(answer,'yes')
+            disp(['Automatic despiking accepted - ',num2str(length(ELIM2)),' values discarded']);  
+            cn(val(ELIM2)) = NaN;
+            sn(ELIM)      = NaN;
+        elseif strcmpi(answer,'no')
+            disp('Automatic despiking rejected')    
+            ELIM2 = [];
+        end  
+        figure(1);axes(ax5) ; hold off;
+        plot(sn,tn(val),'.r')
+        grid on;
+        text('Units', 'Normalized', 'Position', [0.05, 0.05],...
+            'string',['Automatic despiking accepted - ',num2str(length(ELIM2)),' values discarded'])   ;     
+        text('Units', 'Normalized', 'Position', [0.05, 0.1],...
+            'string',['Manual despike ' num2str(length(ELIM)) ' data points eliminated']);
+        title('5. De-spike: Non-Nan index of salinity and pressure');
+        xlabel('Salinity'); ylabel('In-situ Temperature');
     end
-
- % replace any NaNs with dummy
- ii     = isnan(pn);pn(ii) = dum;
- ii     = isnan(cn);cn(ii) = dum;
- ii     = isnan(tn);tn(ii) = dum;
+    
+    % replace any NaNs with dummy
+    ii     = isnan(pn);pn(ii) = dum;
+    ii     = isnan(cn);cn(ii) = dum;
+    ii     = isnan(tn);tn(ii) = dum;
 
 %% 10 save data and figure 
  print(figure(1),[mcfig_out, '.png'],'-dpng');

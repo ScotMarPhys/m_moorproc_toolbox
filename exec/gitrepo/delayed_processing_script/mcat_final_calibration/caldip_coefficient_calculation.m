@@ -11,10 +11,8 @@ close all
 % NEED to reprocess station 6 and 45, look for problem in detection of
 % bottle stop (diff mcat-ctd = nan)
 
-
 %========================================================================
 % Calculation of calibration coefficient
-
 p_insitucal.cruise           =  MOORPROC_G.cruise;
 p_insitucal.cast = input('which cast number? ');
 p_insitucal.depl_period = input('which deployment period (e.g. osnap6) ','s');
