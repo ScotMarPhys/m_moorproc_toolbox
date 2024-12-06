@@ -1,13 +1,30 @@
-function [mc, ctd] = get_bottlestop_data(bottle, ctd, mc, pd, calp, ninst)
+function [mc, ctd, nstop] = get_bottlestop_data(bottle, ctd, mc, pd, calp, ninst)
 %
 % extract MC and CTD data at bottle stops (stored in bottle)
 % calp contains tolerances
 
-
+if contains(bottle.firing,'NoBottleFired')
+    % get times from ctd
+    ix=diff(ctd.press)>-0.25 & diff(ctd.press)<0.25;
+    btpres=ctd.press;btpres(~ix)=NaN;
+    figure(111);plot(ctd.datnum, ctd.press);hold on; plot(ctd.datnum,btpres,'*');
+    xlabel('ctd.datnum');ylabel('ctd.press');grid on;axis ij;
+    numnstops=input('How many calibration stops were there? ')
+    disp('Use the cursor to select single START value for each calibration stop')
+    [x1,y1,~] = ginput(numnstops);
+    disp('Use the cursor to select single END value for each calibration stop')
+    [x2,y2,~] = ginput(numnstops);
+    bot_start=(x1+x2)/2;
+    bot_pres=(y1+y2)/2;
+    nstop = length(bot_start);
+    bstp=(round(bot_pres));
+else
 %identify single value for each bottle stop
-bst2 = [1; find(diff(bottle.p)<-calp.bottlestop_dpmin)+1];
-bot_start = bottle.datnum(bst2);
-nstop = length(bot_start);
+    bst2 = [1; find(diff(bottle.p)<-calp.bottlestop_dpmin)+1];
+    bot_start = bottle.datnum(bst2);
+    nstop = length(bot_start);
+    bstp = round(bottle.p)
+end
 
 if strcmp(calp.apply_offset,'y')
   bot_start = bot_start - calp.offset;
@@ -93,7 +110,7 @@ for stop = 1 : nstop    % bottle_stops loop
          plot((mc.datnum(ii_move,inst)-mc.datnum(1,1))*24*60,mc.P(ii_move,inst),'b')          
        end    
    end
-   title([calp.cruise,'   calp.cast',num2str(calp.cast),'  depth: ',num2str(round(bottle.p(bst2(stop))))])
+   title([calp.cruise,'   calp.cast',num2str(calp.cast),'  depth: ',num2str(bstp(stop))])
 end
 
 % ------  extract bottlestop values from ctd 

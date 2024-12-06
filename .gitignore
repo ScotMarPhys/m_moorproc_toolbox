@@ -35,5 +35,5 @@ exec/gitrepo/export_Oceansites/oceansites_format/
 **/._*
 
 # exclude any cruise specific startup files
-startup*
+*startup*
 *startup.m

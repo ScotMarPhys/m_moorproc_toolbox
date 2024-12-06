@@ -11,10 +11,8 @@ close all
 % NEED to reprocess station 6 and 45, look for problem in detection of
 % bottle stop (diff mcat-ctd = nan)
 
-
 %========================================================================
 % Calculation of calibration coefficient
-
 p_insitucal.cruise           =  MOORPROC_G.cruise;
 p_insitucal.cast = input('which cast number? ');
 p_insitucal.depl_period = input('which deployment period (e.g. osnap6) ','s');
@@ -228,7 +226,7 @@ elseif strcmp(p_insitucal.cruise,'jc238') & p_insitucal.cast == 19
     p_insitucal.dp_interval    = [-10 10];   
     p_insitucal.p_interval       = [0  1200];
     p_insitucal.average_interval = [1500 2950];% [1000 2150];
-elseif strcmp(p_insitucal.cruise,'dy181')
+elseif strcmp(p_insitucal.cruise,'dy181')  & p_insitucal.cast == 3
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
     p_insitucal.dp_interval    = [-10 10];   
@@ -238,20 +236,44 @@ elseif strcmp(p_insitucal.cruise,'dy181') & p_insitucal.cast == 4
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
     p_insitucal.dp_interval    = [-10 10];   
-    p_insitucal.p_interval       = [0  1200];
-    p_insitucal.average_interval = [1500 2950];% [1000 2150];
+    p_insitucal.p_interval       = [0 2500];
+    p_insitucal.average_interval = [1000 1600];% [1000 2150];
 elseif strcmp(p_insitucal.cruise,'dy181') & p_insitucal.cast == 5
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
     p_insitucal.dp_interval    = [-10 10];   
-    p_insitucal.p_interval       = [0 2000];
-    p_insitucal.average_interval = [1000 2000];% [1000 2150];
+    p_insitucal.p_interval       = [0 2200];
+    p_insitucal.average_interval = [1600 2200];% [1000 2150];
 elseif strcmp(p_insitucal.cruise,'dy181') & p_insitucal.cast == 46
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
     p_insitucal.dp_interval    = [-10 10];   
     p_insitucal.p_interval       = [0 2000];
     p_insitucal.average_interval = [1200 1700];% [1000 2150];
+elseif strcmp(p_insitucal.cruise,'dy181') & p_insitucal.cast == 63
+    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0 1000];
+    p_insitucal.average_interval = [0 1000];% [1000 2150];
+elseif strcmp(p_insitucal.cruise,'dy181') & p_insitucal.cast == 66
+    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0 2000];
+    p_insitucal.average_interval = [100 2200];% [1000 2150];
+elseif strcmp(p_insitucal.cruise,'dy181') & p_insitucal.cast == 67
+    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0 3000];
+    p_insitucal.average_interval = [1500 3100];% [1000 2150];
+elseif strcmp(p_insitucal.cruise,'dy181') & p_insitucal.cast == 76
+    p_insitucal.c_interval     = [-0.025 0.07]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0 3000];
+    p_insitucal.average_interval = [1200 3100];% [1000 2150];
 else
     p_insitucal.c_interval     = [-0.025 0.025]; % plotting only
     p_insitucal.t_interval     = [-.02 .02]; % plotting only
@@ -277,7 +299,7 @@ p_insitucal.cond_threshold     = 30;  % [mS/cm] threshold to determine when inst
 p_insitucal.impact_var         = 'c'; % conductivity as variable in ctd_impact.m
  
 p_insitucal.bottlestop_tmin    = 60; %20 % minimum accepted separation between 2 bottlestops [sec] 
-p_insitucal.bottlestop_dpmin   = 30;  % minimum accepted pressure difference between 2 bottlestops [dbar] 
+p_insitucal.bottlestop_dpmin   = 20;  % minimum accepted pressure difference between 2 bottlestops [dbar] 
 
 
 p_insitucal.cnv_time_correction=  0;  % time correction for CTD .CNV file (rel. GMT) 
@@ -286,7 +308,7 @@ p_insitucal.cnv_time_correction=  0;  % time correction for CTD .CNV file (rel. 
                           % cnv,btl,ros or microcats. Normally 1 hour out.
                           
                           % !! Do not apply changes here, but below where input is defined 
-p_insitucal.lat   = 58.0    % latitude to convert depths into pressures. Difference between 
+p_insitucal.lat   = 58.0;    % latitude to convert depths into pressures. Difference between 
                          % pressures using 23.5N or 28N are <2dbar (upto
                          % depths of 6000m)
                           
