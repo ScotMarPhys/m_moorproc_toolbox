@@ -93,12 +93,15 @@ if ~isfield(MOORPROC_G,'moordatadir') || ~isfield(MOORPROC_G,'reportdir') || ~is
     if ~strcmp(d1,MOORPROC_G.cruise)
         MOORPROC_G.reportdir = fullfile(MOORPROC_G.reportdir,MOORPROC_G.cruise);
     end
-    MOORPROC_G.ctddir = fullfile(fileparts(MOORPROC_G.datadir),MOORPROC_G.cruise,'mcruise','data','ctd'); %RAPID
+    MOORPROC_G.ctddir = fullfile(MOORPROC_G.datadir,'cruise_data',MOORPROC_G.cruise,'data','ctd');
     if ~exist(MOORPROC_G.ctddir,'dir')
-        MOORPROC_G.ctddir = fullfile(MOORPROC_G.datadir,'cruise_data',MOORPROC_G.cruise,'data','ctd'); %OSNAP
+        MOORPROC_G.ctddir = fullfile(MOORPROC_G.datadir,'cruise_data',MOORPROC_G.cruise,'mcruise','data','ctd');
     end
     if ~exist(MOORPROC_G.ctddir,'dir')
-        MOORPROC_G.ctddir = fullfile(MOORPROC_G.datadir,'cruise_data',MOORPROC_G.cruise,'mcruise','data','ctd'); %OSNAP
+        MOORPROC_G.ctddir = fullfile(MOORPROC_G.datadir,'..','cruise_data',MOORPROC_G.cruise,'mcruise','data','ctd');
+    end
+    if ~exist(MOORPROC_G.ctddir,'dir')
+        MOORPROC_G.ctddir = fullfile(MOORPROC_G.datadir,'..','cruise_data',MOORPROC_G.cruise,'data','ctd');
     end
     if ~exist(MOORPROC_G.ctddir,'dir')
         MOORPROC_G.ctddir = input('directory containing CTD data (e.g. /data/pstar/projects/osnap/cruise_data/jc238/mcruise/data/ctd ','s');
