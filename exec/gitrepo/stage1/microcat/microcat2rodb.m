@@ -182,6 +182,9 @@ if iscell(mo)
 end
 
 ii = find(SerialNumber == sn & ( id >= 333 & id <= 337 ) );
+if ~isscalar(ii)
+    error('more than one entry in info.dat file for S/N %d',SerialNumber)
+end
 z  = z(ii)         % instrument depth
 
 

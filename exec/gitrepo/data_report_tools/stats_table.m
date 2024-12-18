@@ -53,8 +53,10 @@ end
 %defaults
 layout = 'portrait';
 dummy = -9999;
+pd = moor_inoutpaths('reports');
 procpath = fullfile(MOORPROC_G.moordatadir,'proc');
-outpath = fullfile(MOORPROC_G.reportdir,'stats');
+infofile = fullfile(procpath,moor,[moor 'info.dat']);
+outpath = pd.statsdir;
 non_verbose = 0;
 %and optional inputs overwrite them
 n = 1; 
@@ -70,7 +72,6 @@ while n+1<=nargin
     end
 end
 
-infofile = fullfile(procpath,moor,[moor 'info.dat']);
 
 %-----------------------------------------------------
 % Load vectors of mooring information

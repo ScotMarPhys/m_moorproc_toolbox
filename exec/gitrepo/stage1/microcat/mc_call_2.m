@@ -12,10 +12,6 @@
 %          overwriting
 % 12/11/12 DR added check on whether infile exists and clearly highlights
 %          it for the operator with the option of stopping the routine.
-% This will need functionality for oxygen MicroCATs added prior to the
-% recovery of instruments on Autumn 2015 cruise. microcat2rodb_3.m already
-% has the functionality and mc_call_caldip_jc103 too so use them as a
-% template.
 
 close all
 global MOORPROC_G
@@ -26,8 +22,7 @@ clearvars -except MOORPROC_G
 
 moor = input('mooring deployment (e.g. ebh2_15_2022) to process:   ','s');
 %moor            = 'ebh2_15_2022';
-ii = strfind(moor,'_');
-YEAR = str2double(moor(ii(end)+1:ii(end)+4)); % year of the first measurement
+YEAR = strsplit(moor,'_'); YEAR = str2double(YEAR{end});
 dateoffset = 0;
 
 cruise          = MOORPROC_G.cruise;
@@ -67,30 +62,9 @@ for i = 1:length(vec)
     fprintf(fidlog,'\n\n');
     disp(['processing microcat serial number ' num2str(vec(i)) ])
 
-    infiles = {sprintf('%4.4d%s',vec(i),'rec2.asc')
-        sprintf('%4.4d%s',vec(i),'rec.asc')
-        sprintf('%3.3d%s',vec(i),'rec.asc')
-        sprintf('%4.4d%s',vec(i),'REC.asc')
-        sprintf('%3.3d%s',vec(i),'REC.asc')
-        fullfile('data',sprintf('%4.4d%s',vec(i),'_2.asc'))
-        fullfile('data',sprintf('%4.4d%s',vec(i),'.asc'))
-        sprintf('%4.4d%s',vec(i),'.asc')
-        sprintf('%4.4d%s',vec(i),'_data.cnv')
-        sprintf('%4.4d%s',vec(i),'_Data.cnv')
-        sprintf('%4.4d%s',vec(i),'_data.asc')
-        };
-    for n = 1:length(infiles)
-        infile = fullfile(pd.rawpath,infiles{n});
-        if exist(infile,'file')
-            datfileinfo = dir(infile);
-            if datfileinfo.bytes>0
-               %found it
-               break
-            end
-        end
-    end
-    infile = fullfile(pd.rawpath,infiles{n});
+    infile = mc_raw_filenames(vec(i),pd); %this tries lots of possible filename patterns
     if ~exist(infile,'file')
+        %one more try
         ssname = regexp(moor,'_','split');
         mcatfname = [ssname{1} '_' sprintf('%4.4d',vec(i)) '_' ...
             num2str(YEAR+1,'%4.0f') '.cnv'];

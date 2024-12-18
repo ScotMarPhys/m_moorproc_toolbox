@@ -1,4 +1,5 @@
 % mc_caldip_check reads microcat caldip data from raw rodb file
+% generated in stage1 processing, 
 % and compares data with the lowered CTD data
 %
 % DAS created this file based on mc_call_caldip

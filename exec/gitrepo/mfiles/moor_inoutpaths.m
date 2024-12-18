@@ -42,11 +42,11 @@ switch datatype
         pd.stage1path = fullfile(mg.moordatadir, 'proc_calib', mg.cruise, 'cal_dip', 'microcat', ['cast' cast]);
         pd.stage1form = ['cast' cast '_%4.4d.raw'];
         pd.stage1log = fullfile(pd.stage1path,'microcat2rodb.log');
-        pd.stage1fig = fullfile(mg.reportdir,'figs','caldip');
+        pd.stage1fig = fullfile(mg.reportdir,'datareports',mg.cruise,'figs','caldip');
         pd.ctdfile = fullfile(mg.ctddir,sprintf('ctd_%s_%03d_psal.nc',mg.cruise_ctd,castn));
         pd.stage2path = fullfile(mg.moordatadir, 'proc_calib'); %***
-        pd.stage2fig = fullfile(mg.reportdir,'figs','caldip',['microcat_check_cast_' cast '_plot']);
-        pd.stage2log = fullfile(mg.reportdir,'stats',['microcat_check' cast '.log']);
+        pd.stage2fig = fullfile(mg.reportdir,'datareports',mg.cruise,'figs','caldip',['microcat_check_cast_' cast '_plot']);
+        pd.stage2log = fullfile(mg.reportdir,'datareports',mg.cruise,'stats','caldip',['microcat_check' cast '.log']);
 
     case 'microcat'
         moor = loc;
@@ -58,7 +58,7 @@ switch datatype
         pd.stage2path = fullfile(mg.moordatadir, 'proc', moor, 'microcat');
         pd.stage2form = [moor '_%4.4d.use'];
         pd.stage2log = fullfile(pd.stage2path, ['stage2_log_' moor,'.log']);
-        pd.stage2figpath = fullfile(mg.reportdir, 'figs');
+        pd.stage2figpath = fullfile(mg.reportdir, 'datareports', mg.cruise, 'figs');
 
     case {'nor','nortek'}
         datatype = 'nor';
@@ -86,12 +86,14 @@ switch datatype
     case 'bpr'
         moor = loc;
         pd.rawpath = fullfile(mg.moordatadir, 'raw', mg.cruise, 'seagauge');
-        pd.rawform = [moor '_%4.4d_data.tid'];
         pd.infofile = fullfile(mg.moordatadir, 'proc', moor, [moor 'info.dat']);
         pd.offsetfile = fullfile(mg.moordatadir, 'raw', mg.cruise, 'clock_offset.dat');
         pd.stage1path = fullfile(mg.moordatadir, 'proc', moor, 'seagauge');
         pd.stage1log = fullfile(pd.stage1path, [moor '_seaguard_stage1.log']);
         pd.stage1form = [moor '_%5.5d.raw'];
+        pd.stage2path = pd.stage1path;
+        pd.stage2form = [moor '_%4.4d.use'];
+        pd.stage2log = fullfile(pd.stage2path, [moor '_seaguard_stage2.log']);
 
     case 'adcp'
         disp(datatype)
@@ -144,6 +146,12 @@ switch datatype
         pd.ctd1hz_cunit = 'mS/cm';
         pd.mc_cunit = 'mS/cm';
         pd.mc_ext = 'raw';
+
+    case 'reports'
+        pd.targetdir = fullfile(MOORPROC_G.reportdir,'moor_positions','tables');
+        pd.trilatdir = fullfile(MOORPROC_G.reportdir,'moor_positions',mg.cruise);
+        pd.statsdir = fullfile(MOORPROC_G.reportdir,'datareports',mg.cruise,'stats');
+        pd.figsdir = fullfile(MOORPROC_G.reportdir,'datareports',mg.cruise,'figs');
 
 end
 

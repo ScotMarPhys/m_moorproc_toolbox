@@ -147,7 +147,7 @@ if nargin >= 3
 end
 
 % Will save plots here so do not need to replot bathymetry each time
-work_dir = MOORPROC_G.logdir;
+work_dir = fullfile(MOORPROC_G.moordatadir,'..','working','rapid_widgit_plots');
 web_dir = fullfile(fileparts(which(mfilename)),'web_server_home');
 
 % Read in info from file

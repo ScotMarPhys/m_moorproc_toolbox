@@ -8,9 +8,9 @@
 % first instrument on a mooring the same offset would get carried over to
 % the second instrument too if no seperate value was present for that one.
 
-clear all
 close all
 global MOORPROC_G
+clearvars -except MOORPROC_G
 
 % input - likely to be changed
 moor = input('mooring deployment (e.g. ebh2_15_2022) to process:   ','s');
@@ -26,7 +26,6 @@ cutoff2 = 1;   % Number of time steps (30 min) to cut off the record at the end 
 %      seagauge_processing_002.m  (zszuts)
 
 pd = moor_inoutpaths('bpr',moor);
-basedir = '/home/mstar/osnap/data/';
 
 % There are 2 clock offset files for BPR instruments:
 % clock_offset.dat (in raw/oc459/) and BPR_clock_offset.dat in
@@ -57,7 +56,10 @@ sgI          = find(type==sg_code);
 sn           = serial(sgI);
 
 % NB The seagauge dir in outpath must be created first
-
+if ~exist(pd.stage1path,'dir')
+    warning('creating directory %s',pd.stage1path)
+    mkdir(pd.stage1path)
+end
 
 disp(pd.stage1log);
 log           = fopen(pd.stage1log,'w');
@@ -72,7 +74,13 @@ for ins = 1 : length(sgI)
     
     outfile      = fullfile(pd.stage1path,sprintf(pd.stage1form,serialnumber));    
     % ------ data input file and log file    
-    infile         = fullfile(pd.rawpath,sprintf(pd.rawform,serialnumber));  
+    infile = dir(fullfile(pd.rawpath,sprintf('%4.4d*.tid',serialnumber)));
+    if isscalar(infile)
+        infile = fullfile(infile.folder,infile.name);
+    else
+        warning('no file or more than one file for seagauge %d',serialnumber)
+        keyboard
+    end
     %disp(['SBE-26 instrument ',num2str(serialnumber),' has been found'])
     
     fprintf(log,'Serial number: %4.4d\n',serialnumber);
@@ -102,7 +110,7 @@ for ins = 1 : length(sgI)
         %fprintf(fidlog,['Time offset file NOT found, \n NO check for ',...
         %    'potential offset in recorded time applied \n'],offsetfile)
         fprintf(1,['Time offset file  NOT found, \n NO check for ',...
-            'potential offset in recorded time applied \n'],offsetfile)
+            'potential offset in recorded time applied \n'],pd.offsetfile)
     else
         
         while 1

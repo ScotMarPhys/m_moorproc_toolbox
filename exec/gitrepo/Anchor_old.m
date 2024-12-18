@@ -69,6 +69,8 @@ switch MEXEC_G.Mshipdatasystem
 
 end
 
+pd = moor_inoutpaths('meta_doc');
+
 mcruise = MOORPROC_G.cruise;
 opt1 = 'ship'; opt2 = 'datasys_best'; get_cropt %default_navstream
 nav_stream = default_navstream;
@@ -123,7 +125,8 @@ if numel(find(isnan(targ_loc)))>0
     end
 end
   
-
+dirin = pd.trilattimdir;
+dirout = pd.trilatposdir;
 if strmatch(loc_name, '')
     return
 else
@@ -131,7 +134,7 @@ else
         warning('making directory %s', dirout)
         mkdir(dirout)
     end
-    filein = fullfile(dirout, [loc_name '_times.txt']);
+    filein = fullfile(dirin, [loc_name '_times.txt']);
     fileout = fullfile(dirout, [loc_name '_triangle.txt']);
     disp(['Reading times from ' filein]);
     if exist(filein,'file')

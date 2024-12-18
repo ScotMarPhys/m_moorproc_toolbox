@@ -1,4 +1,4 @@
-function varargout = rodbload(ident,variables)
+function [v1,varargout] = rodbload(ident,variables)
 %RODBLOAD Load RO database files.
 %  [V1,V2,...,VN] = RODBLOAD(IDENT,VARIABLES)
 %
@@ -25,6 +25,8 @@ function varargout = rodbload(ident,variables)
 %
 % Update LOH, 04/12/2017, to add compatbility for windows system path (see
 % line 115)
+% Update YLF, 18/12/2024, to enable all output in single cell array rather
+% than listing names of output variables
 
 % initial coding                 C. Mertens, Sep 1995,   0.0.1-->0.2.6
 % new keyword recognition        G.Krahmann, Oct 1995,   0.2.6-->0.3.0
@@ -56,7 +58,13 @@ global allkeys allkeys1 nall
 %
 %-------------------------------------------------------------------------------
 
-varargout = cell(1,nargout);
+varssplit = split(variables,':');
+if nargout==1 && length(varssplit)>1
+    %allow output as a single cell array (rather than [var1,var2,var3])
+    dataout = cell(1,length(varssplit));
+else
+    dataout = cell(1,nargout);
+end
 
 % delimiter for tokens in `ident' and `variables'
 d = ':,';
@@ -133,8 +141,8 @@ for k = 1:ndir
   % prepare output arrays
   for i = 1:length(varnumber)
     if varnumber(i) >= 0
-      m = max(size(varargout{i},1),1000);
-      varargout{i} = [varargout{i} NaN*ones(m,nfiles)];
+      m = max(size(dataout{i},1),1000);
+      dataout{i} = [dataout{i} NaN*ones(m,nfiles)];
     end
   end
 
@@ -312,19 +320,19 @@ for k = 1:ndir
               headinfo = headinfo(mi:length(headinfo));
 
               if strcmp(deblank(varformat(i,:)),'pos')
-                varargout{i}(j) = str2pos(headinfo);
+                dataout{i}(j) = str2pos(headinfo);
               else
                 if varlength(i) == 1
-                  varargout{i}(j) = sscanf(headinfo,varformat(i,:));
+                  dataout{i}(j) = sscanf(headinfo,varformat(i,:));
                 else
                   dummy = sscanf(headinfo,varformat(i,:));
                   if isempty(dummy)
                       warning('missing info from header?')
                   end
                   if isstr(dummy)
-                    varargout{i}{j} = dummy;
+                    dataout{i}{j} = dummy;
                   else
-                    varargout{i}(1:varlength(i),j) = dummy;
+                    dataout{i}(1:varlength(i),j) = dummy;
                   end
                 end
               end
@@ -332,13 +340,13 @@ for k = 1:ndir
               ind = find(varnumber(i) == datanumber);
               if ~isempty(ind)
                 nlines = size(data,1);
-                nv = size(varargout{i},1);
+                nv = size(dataout{i},1);
                 if nv < nlines
-                  varargout{i}(nv+1:nlines,1:j) = NaN*ones(nlines-nv,j);
+                  dataout{i}(nv+1:nlines,1:j) = NaN*ones(nlines-nv,j);
                 else
-                  varargout{i}(nlines+1:nv,j) = NaN*ones(nv-nlines,1);
+                  dataout{i}(nlines+1:nv,j) = NaN*ones(nv-nlines,1);
                 end
-                varargout{i}(1:nlines,j) = data(:,ind);
+                dataout{i}(1:nlines,j) = data(:,ind);
                 rowmax(i) = max([rowmax(i),nlines]);
               end
             end
@@ -358,6 +366,14 @@ end
 % remove spare NaNs
 for i = 1:length(varnumber)
   if varnumber(i) >= 0
-    varargout{i} = varargout{i}(1:rowmax(i),1:j);
+    dataout{i} = dataout{i}(1:rowmax(i),1:j);
   end
+end
+
+if nargout==1
+    v1 = dataout;
+    varargout = {};
+else
+    v1 = dataout{1};
+    varargout = dataout(2:end);
 end
