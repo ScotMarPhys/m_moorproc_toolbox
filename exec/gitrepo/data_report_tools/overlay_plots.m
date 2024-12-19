@@ -172,10 +172,10 @@ for iid=1:length(id_z_sn.id)
         end
         infile = fullfile(plotpar.procpath,moor,id_z_sn.dirs{iid},sprintf('%s_%0.4d%s.use',moor,id_z_sn.sn(iid),id_z_sn.suf{iid}));
         if ~exist(infile,'file')
-            infile = fullfile(procpath,moor,id_z_sn.dirs{iid},sprintf('%s_%3.3d%s.use',moor,id_z_sn.sn(iid),id_z_sn.suf{iid}));
+            infile = fullfile(plotpar.procpath,moor,id_z_sn.dirs{iid},sprintf('%s_%3.3d%s.use',moor,id_z_sn.sn(iid),id_z_sn.suf{iid}));
         end
         if sum(strcmp({'MC' 'ODOMC'},id_z_sn.inst{iid})) && plotpar.proclvl==3
-            infile1 = fullfile(procpath,moor,id_z_sn.dirs{iid},sprintf('%s_%0.4d%s.microcat',moor,id_z_sn.sn(iid),id_z_sn.suf{iid}));
+            infile1 = fullfile(plotpar.procpath,moor,id_z_sn.dirs{iid},sprintf('%s_%0.4d%s.microcat',moor,id_z_sn.sn(iid),id_z_sn.suf{iid}));
             if exist(infile1,'file')
                 infile = infile1;
             end
@@ -187,6 +187,7 @@ for iid=1:length(id_z_sn.id)
         if fileopen>0
             varstr = ['yy:mm:dd:hh:' id_z_sn.vars{iid}];
             d = rodbload(infile,varstr);
+            clear data
             data.jd=julian(d{1},d{2},d{3},d{4});
             vars = split(id_z_sn.vars{iid},':');
             for no = 1:length(vars)
@@ -301,6 +302,9 @@ end
 %actually plot
 for iid = 1:length(id_z_sn.id)
     iname = sprintf('%s_%d', id_z_sn.inst{iid}, id_z_sn.sn(iid));
+    if strcmp(plots.(plot_types{no}).var,'o2') && ~strncmp('ODO',iname,3)
+        continue
+    end
     b = length(alldata.(iname).jd); a = plotpar.subsamp;
     for no = 1:length(plot_types)
         if isfield(alldata.(iname),plots.(plot_types{no}).var)
