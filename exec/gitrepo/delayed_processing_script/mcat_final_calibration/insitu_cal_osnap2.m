@@ -442,14 +442,14 @@ for mc = 1 : ninst
   decm=hh-fix(hh);
   [~,mins,secs]=hms(hours(decm));
   secs=fix(secs);
-  hours=fix(hh);
+  hrs=fix(hh);
 
 
   lyy                = length(yy);
   YY(1:lyy,mc)       = yy; 
   MM(1:lyy,mc)       = mm; 
   DD(1:lyy,mc)       = dd; 
-  HH(1:lyy,mc)       = hours; 
+  HH(1:lyy,mc)       = hrs; 
   M(1:lyy,mc)        = mins; 
   SS(1:lyy,mc)       = secs; 
   T(1:lyy,mc)        = t; 
@@ -457,7 +457,7 @@ for mc = 1 : ninst
   P(1:lyy,mc)        = p; 
   S(1:lyy,mc)        = s; 
 
-  JD(1:lyy,mc)     = juliandate(yy,mm,dd,hours,mins,secs);                    % julian day mc time 
+  JD(1:lyy,mc)     = juliandate(yy,mm,dd,hrs,mins,secs);                    % julian day mc time 
 
 end
 
@@ -527,12 +527,12 @@ for inst = 1 : ninst
           'moor/proc_calib/' p_insitucal.cruise '/cal_dip/cast' num2str(p_insitucal.cast) 'info.dat' ]) 
   end
   ii = ii(1); 
-  wit_mc_jd(inst)  = juliandate([YY(ii,inst),MM(ii,inst),DD(ii,inst),HH(ii,inst), mins(ii,inst),secs(ii,inst)]);
+  wit_mc_jd(inst)  = juliandate([YY(ii,inst),MM(ii,inst),DD(ii,inst),HH(ii,inst), M(ii,inst),SS(ii,inst)]);
 end
 
 wit_mc_jd    =  wit_mc_jd'; 
 wit_mc       = gregorian(wit_mc_jd);  % 
-start_mc_jd  = juliandate([YY(1,:)' MM(1,:)' DD(1,:)' HH(1,:)', mins(1,:)',secs(1,:)' ]); 
+start_mc_jd  = juliandate([YY(1,:)' MM(1,:)' DD(1,:)' HH(1,:)', M(1,:)',SS(1,:)' ]); 
 
 
 % time difference between start of instrument and ocean surface impact [s]
@@ -609,7 +609,7 @@ for stop = 1 : nstop    % bottle_stops loop
             % find nearest time in MC record to bottle stop satrt time
             [~,indstop] = nearest(bot_start(stop),JD(:,mc));
             % match that time with a pressure
-            presstop = P(indstop,mc);
+            presstop = P(indstop(1),mc);
             imcatbotok00 = find(P(:,mc)>presstop-3 & P(:,mc)<presstop+3 & JD(:,mc)>bot_start(stop)+interval_move1(1) & JD(:,mc)<bot_start(stop)+interval_move1(2));% & abs(dcond)<0.02 );               
 
             % Add a condition to remove the first  30sec of the bottle stop.

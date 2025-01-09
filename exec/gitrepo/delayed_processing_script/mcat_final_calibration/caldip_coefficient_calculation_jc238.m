@@ -10,7 +10,7 @@ close all
 % Calculation of calibration coefficient
 % For cruise jc238: cast= [1,3,4,19,33,37,38,43]
 p_insitucal.cruise           =  'jc238' ;
-p_insitucal.cast             = 1;   
+p_insitucal.cast             = 33;   
 p_insitucal.depl_period      = 'osnap7';
 
 % ---- parameters ----------------------------------------------------
@@ -18,7 +18,7 @@ p_insitucal.sensorselec      = 1;
 p_insitucal.sensor_id        = [332 337];  % MicroCAT ID range (in info.dat)
 p_insitucal.basedir          = pathosnap; % base directory for osnap mooring
 p_insitucal.datadir          = [p_insitucal.basedir filesep 'data']; % data directory 
-p_insitucal.coef_dir         = [pathgit '/data/moor/cal_coef/']; 
+p_insitucal.coef_dir         = [pathgit '/osnap/data/moor/cal_coef/']; 
 p_insitucal.apply_offset   = 'n'; % if offset == 'y'/'n'/'i', time offset between CTD and MC 
                      % will / will not be applied / individual offsets
                      % applied  

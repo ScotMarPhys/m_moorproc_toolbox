@@ -4,7 +4,7 @@
 /matlab_diaries
 **.
 /cruise_data
-
+/osnap
 # data (or plot) file types, but not info file types
 *.raw
 *.use*
