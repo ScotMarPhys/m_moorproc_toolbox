@@ -438,6 +438,10 @@ for mc = 1 : ninst
 
   [yy,mm,dd,hh,p,t,c,s]  = rodbload([mc_file,sprintf('%4.4d',instr(mc)),mc_ext],...
                                    'YY:MM:DD:HH:P:T:C:S'); 
+  % 13/01/2025 time stamp ~ 1 hour out on MC ODO 12906  
+  if instr(mc)==12906
+     hh=hh-1;
+  end
   %convert to h,m,s
   decm=hh-fix(hh);
   [~,mins,secs]=hms(hours(decm));

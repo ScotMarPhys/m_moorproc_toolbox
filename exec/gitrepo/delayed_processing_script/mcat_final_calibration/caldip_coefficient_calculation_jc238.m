@@ -10,7 +10,7 @@ close all
 % Calculation of calibration coefficient
 % For cruise jc238: cast= [1,3,4,19,33,37,38,43]
 p_insitucal.cruise           =  'jc238' ;
-p_insitucal.cast             = 33;   
+p_insitucal.cast             = 38;   
 p_insitucal.depl_period      = 'osnap7';
 
 % ---- parameters ----------------------------------------------------
@@ -28,7 +28,7 @@ if strcmp(p_insitucal.cruise,'pe399') & (p_insitucal.cast == 17 | p_insitucal.ca
 elseif strcmp(p_insitucal.cruise,'dy078') | strcmp(p_insitucal.cruise,'ar304') | strcmp(p_insitucal.cruise,'dy120')
     p_insitucal.interval_move  = [-600 600]*2; % bottlestop can be up to 20 mins for 02 sensors   
 elseif strcmp(p_insitucal.cruise,'jc238') % try 5 mins either side of bot time
-    p_insitucal.interval_move  = [-600 600]; % bottlestop can be up to 20 mins for 02 sensors 
+    p_insitucal.interval_move  = [-300 300]; % bottlestop can be up to 20 mins for 02 sensors 
 else
     % this is completely wrong, I think! Would always through up an error
     p_insitucal.interval_move  = [-280 -320];    
