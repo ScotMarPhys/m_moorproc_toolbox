@@ -14,25 +14,25 @@
 
 close all; warning off
 
-global basedir datadir execdir pathgit pathosnap
+global basedir datadir execdir pathgit pathosnap progdir
 
 % path of the mooring data define in the startup file under osnap/
 
-moor = 'rteb1_07_2022';
-moor = 'rtwb1_07_2022';
+% moor = 'rteb1_07_2022';
+% moor = 'rtwb1_07_2022';
 %moor = 'rtwb2_07_2022';
-moor = 'rhadcp_02_2022';
+moor = 'ib3_03_2022';
 %=========================================================================
 % Apply calibration coefficients to series, removes bad data. If required, applies
 % constant offsets, and conductivity pressure correction
-p_applycal.operator  = 'LD';
+p_applycal.operator  = 'TSD';
 p_applycal.mooring  = moor;   
 p_applycal.sensortyp = 'microcat';%'microcat';   % seaphox / arg / microcat / rbr / idr
 p_applycal.delim = ',';
 % input directories & files
 p_applycal.mooring_dir         = [basedir '/osnap/data/moor/proc/'];
 p_applycal.mooring_outdir      = [basedir '/osnap/data/moor/proc/'];
-p_applycal.coef_dir            = [basedir '/metadata/cal_coef/osnap/']; 
+p_applycal.coef_dir            = [progdir '/m_moorproc_toolbox/metadata/cal_coef/osnap/']; 
 p_applycal.external_ctd_dir    = [basedir '/cruise_data/'];
 p_applycal.ctd_ref_cruises     = {''};%{'pe400'}; %{'kn221-02';'pe399'}; % references cruises for the QC
 p_applycal.distrangectd        = 100e3; % distance of the reference ctd from the mooring
