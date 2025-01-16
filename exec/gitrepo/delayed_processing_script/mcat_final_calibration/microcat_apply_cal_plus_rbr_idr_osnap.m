@@ -18,9 +18,9 @@ global basedir datadir execdir pathgit pathosnap
 
 % path of the mooring data define in the startup file under osnap/
 
-%moor = 'rteb1_07_2022';
+moor = 'rteb1_07_2022';
 %moor = 'rtwb1_07_2022';
-moor = 'rtwb2_07_2022';
+% moor = 'rtwb2_07_2022';
 %moor = 'rhadcp_02_2022';
 %=========================================================================
 % Apply calibration coefficients to series, removes bad data. If required, applies
