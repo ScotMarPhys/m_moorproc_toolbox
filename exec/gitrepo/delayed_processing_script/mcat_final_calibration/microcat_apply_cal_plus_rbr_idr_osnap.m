@@ -11,10 +11,12 @@
 % edited by Loic Houpert 21/10/2015
 % edited by lewis Drysdale Dec 2020
 % edited by Loic Houpert Jan 2021
+% edited by Tiago Dotto Jan 2025 - added the progdir in global, modified
+%     the pathway of p_applycal.coef_dir, changed the save mode of .fig
 
 close all; warning off
 
-global basedir datadir execdir pathgit pathosnap
+global basedir datadir execdir pathgit pathosnap progdir % 14/01/2025
 
 % path of the mooring data define in the startup file under osnap/
 
@@ -25,14 +27,14 @@ moor = 'rteb1_07_2022';
 %=========================================================================
 % Apply calibration coefficients to series, removes bad data. If required, applies
 % constant offsets, and conductivity pressure correction
-p_applycal.operator  = 'LD';
+p_applycal.operator  = 'TSD';
 p_applycal.mooring  = moor;   
 p_applycal.sensortyp = 'microcat';%'microcat';   % seaphox / arg / microcat / rbr / idr
 p_applycal.delim = ',';
 % input directories & files
 p_applycal.mooring_dir         = [basedir '/osnap/data/moor/proc/'];
 p_applycal.mooring_outdir      = [basedir '/osnap/data/moor/proc/'];
-p_applycal.coef_dir            = [basedir '/metadata/cal_coef/osnap/']; 
+p_applycal.coef_dir            = [progdir '/m_moorproc_toolbox/metadata/cal_coef/osnap/']; % 14/01/2025
 p_applycal.external_ctd_dir    = [basedir '/cruise_data/'];
 p_applycal.ctd_ref_cruises     = {''};%{'pe400'}; %{'kn221-02';'pe399'}; % references cruises for the QC
 p_applycal.distrangectd        = 100e3; % distance of the reference ctd from the mooring
@@ -265,7 +267,7 @@ dep     = dep(mcI);
 serial  = serial(mcI);
 typ     = typ(mcI);
 
-for mc = 1: length(serial)
+for mc = 1:length(serial)
   close all
   nextmcat='';
   mcfile_out = [mooring_outdir,mooring,'/',sensortyp,'/',mooring,'_',sprintf('%3.3d',mc),ext]; 
@@ -1326,8 +1328,9 @@ end
     ii     = isnan(tn);tn(ii) = dum;
 
 %% 10 save data and figure 
- print(figure(1),[mcfig_out, '.png'],'-dpng');
- print(figure(1),[mcfig_out, '.fig']);
+ print(figure(1),[mcfig_out, ''],'-dpng');
+ % print(figure(1),[mcfig_out, '.fig']);
+ saveas(figure(1),[mcfig_out, '.fig']); % 14/01/2025
 
 if skipT == 1 && skipC == 1 && skipP == 1    
     if isempty(find(~isnan(p)))
