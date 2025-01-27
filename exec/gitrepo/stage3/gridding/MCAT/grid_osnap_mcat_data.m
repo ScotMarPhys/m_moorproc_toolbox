@@ -110,7 +110,6 @@ switch sec_seg
             'ib3_03_2022';...
             'ib4_03_2022';...
             'ib5_03_2022'};
-        moorings = moorings(end-2:end);
 end
 end
 
@@ -237,7 +236,7 @@ switch gridans
                 end
 
                 % change file naming convention for .dat files by inclduing 'osnap' in
-                % file name and removing number after rteb
+                % file name and removing deployment number
                 for ii=1:numel(moor)
                     moor{ii}=[moor{ii}(1:4) '_osnap' moor{ii}(6:end)];
                 end
@@ -251,9 +250,9 @@ switch gridans
                     case 'Continue'
                         disp([answer ' Merging.'])
                         if ismember(moor{1}(3:4),'eb')
-                            run merge_osnap_data_east.m
+                            merge_osnap_data_east
                         else
-                            run merge_osnap_data_west.m
+                            merge_osnap_data_west
                         end
                     case 'Cancel'
                     case 'Wrong moorings'
@@ -275,9 +274,9 @@ switch gridans
                         disp([answer ' Merging.'])
 
                         if ismember(moor{1}(3:4),'eb')
-                            run merge_osnap_data_east.m
+                            merge_osnap_data_east
                         else
-                            run merge_osnap_data_west.m
+                            merge_osnap_data_west
                         end
 
                 end
