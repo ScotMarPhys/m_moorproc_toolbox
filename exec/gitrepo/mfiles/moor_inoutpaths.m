@@ -145,6 +145,12 @@ switch datatype
         pd.mc_cunit = 'mS/cm';
         pd.mc_ext = '.raw';
 
+    case 'mcgrid'
+        pd.hydrodir = fullfile(mg.moordatadir,'proc','hydro_grid');
+        pd.grdatdir = fullfile(mg.moordatadir,'proc','hydro_grid_merged');
+        pd.figdir = fullfile(mg.moordatadir,'Figures');
+        pd.mooringpath = fullfile(mg.moordatadir,'proc');
+
 end
 
 %now modify defaults if necessary

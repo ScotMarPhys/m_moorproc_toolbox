@@ -15,9 +15,6 @@ function moor_setup(varargin)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 global MEXEC_G MOORPROC_G
-if isempty(MOORPROC_G)
-    clear MOORPROC_G
-end
 
 %parameters input to function
 if nargin>0
@@ -33,6 +30,8 @@ end
 % Add to the path mooring functions to go with this file:
 pathgit = fileparts(which(mfilename));
 addpath(genpath(fullfile(pathgit,'exec','gitrepo')))
+pathgsw = input('path to gsw software: ','s'); %cannot just be part of git repo because gsw_SAAR relies on a .mat lookup table, and .mat files are .gitignored here
+addpath(genpath(pathgsw))
 
 %cruise, cruise_ctd, YEAR, project, operator
 if isstruct(MEXEC_G)

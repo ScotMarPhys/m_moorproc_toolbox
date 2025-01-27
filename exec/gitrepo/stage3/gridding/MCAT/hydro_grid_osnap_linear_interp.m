@@ -1,4 +1,4 @@
-function [SGfs,TGfs,p_grid] = hydro_grid_osnap_linear_interp(p_hydrogrid)
+function [SGfs,TGfs,p_grid] = hydro_grid_osnap_linear_interp(ph)
 %% HYDRO_GRID_OSNAP_LINEAR_INTERP *function [SGfs,TGfs,p_grid] = hydro_grid_osnap_linear_interp(p_hydrogrid)*
 %% 
 % * convert C into S and TEOS-10
@@ -16,34 +16,38 @@ function [SGfs,TGfs,p_grid] = hydro_grid_osnap_linear_interp(p_hydrogrid)
 % Author list: T. Kanzow, Nov 2005,  GDM, Sept 2011,  Loic Houpert October 2015, 
 % Lewis Drysdale, 2020
 warning off
+
 % Load all the structure paths and paramter options
-use p_hydrogrid
+use ph
+
 %  Load data
-info       = [info_path,moor,'info.dat'];
-[sn_info,id_info,wd,lt,ln,start_date,start_time,end_date,end_time] = ...
-    rodbload(info,'serialnumber:instrument:Waterdepth:Latitude:Longitude:Start_Date:Start_Time:End_Date:End_Time');
+[sn,inst,z,wd,lt,ln,start_date,start_time,end_date,end_time] = ...
+    rodbload(fullfile(ph.mooringpath,moor,[moor 'info.dat']),'serialnumber:instrument:z:Waterdepth:Latitude:Longitude:Start_Date:Start_Time:End_Date:End_Time');
 start = [start_date' start_time(1)+start_time(2)/60];
 stop  = [end_date' end_time(1)+end_time(2)/60];
 % Read microcat data
-% Loop option to bypass the calibration stage for shipboard processsing to look 
-% at data
-% if ~isempty(mc_int)
-%     mc_path = [mooringpath,':',moor,':microcat:[',num2str(mc_int),']'];  
-%     [yy_mc,mm,dd,hh,t,c,p,sn_mc,depth_mc] = ...
-%         rodbload(mc_path,'yy:mm:dd:hh:t:c:p:SerialNumber:Instrdepth');
-%     jd_mc     = julian(yy_mc,mm,dd,hh);
-%     t_mc      = dum2nan(t,dum);
-%     c_mc      = dum2nan(c,dum);
-%     p_mc      = dum2nan(p,dum);
-% else
-    mc_path = [mooringpath,':',moor,':microcat:[',num2str(mc_ind),']'];  
-    [yy_mc,mm,dd,hh,t,c,p,sn_mc,depth_mc] = ...
-        rodbload(mc_path,'yy:mm:dd:hh:t:c:p:SerialNumber:Instrdepth');
-    jd_mc     = julian(yy_mc,mm,dd,hh);
-    t_mc      = dum2nan(t,dum);
-    c_mc      = dum2nan(c,dum);
-    p_mc      = dum2nan(p,dum);    
-% end
+if ~isfield(ph,'mc_ind')
+    %figure out which to use, in order, skipping duplicate ODOs
+ismc = ismember(inst,ph.mcat); 
+z = z(ismc); sn = sn(ismc); inst = inst(ismc);
+%look for duplicates (ODO at same nominal depth as MC)
+mc0 = inst==337;
+iio = find(inst==335); %***what about 332 etc.?
+if ~isempty(iio)
+    nmc = min(abs(z(mc0)-z(iio)'))<=10; %within 10 m nominally (in info.dat)
+    inst(iio(nmc)) = [];
+end
+mc_ind = 1:length(inst);
+end
+
+mc_path = [mooringpath,':',moor,':microcat:[',num2str(mc_ind),']'];  
+[yy_mc,mm,dd,hh,t,c,p,sn_mc,depth_mc] = ...
+    rodbload(mc_path,'yy:mm:dd:hh:t:c:p:SerialNumber:Instrdepth');
+jd_mc     = julian(yy_mc,mm,dd,hh);
+t_mc      = dum2nan(t,dum);
+c_mc      = dum2nan(c,dum);
+p_mc      = dum2nan(p,dum);    
+
 % Interpolate T and C onto pressure time grid
 jd_grid = ceil(julian(start)):1/iss:floor(julian(stop));
 tres    = diff(jd_grid(1:2)); % get temporal resolution of new grid
@@ -55,10 +59,11 @@ if exist('mc_ind','var')
         T    = [T; interp1(jd_mc(val,inst),t_mc(val,inst),jd_grid)];
         C    = [C; interp1(jd_mc(val,inst),c_mc(val,inst),jd_grid)];
         P    = [P; interp1(jd_mc(val,inst),p_mc(val,inst),jd_grid)];
-        instrdepth = [depth_mc];
-        sn         = [sn_mc];
+        instrdepth = depth_mc;
+        sn         = sn_mc;
     end
 end
+
 % Repair pressures 
 %% 
 % # Where parts of timeseries are ok
@@ -67,7 +72,7 @@ P_nan   = isnan(P);
 cnt_nan = sum(P_nan');
 P_std   = nanstd(P');
 for prep = 1 : m  
-    if cnt_nan(prep) > 0 & cnt_nan(prep) < n & find(cnt_nan == 0)
+    if cnt_nan(prep) > 0 && cnt_nan(prep) < n && find(cnt_nan == 0)
         index_good = find(~isnan(P(prep,:)));
         index_bad  = find(isnan(P(prep,:)));
         comp       = nearest(prep,find(cnt_nan==0));
@@ -78,8 +83,8 @@ for prep = 1 : m
         
         P(prep,index_bad) = P(comp,index_bad)-val;
         
-        if(~isempty(find(P(prep,index_bad) <= 0)))
-            a = find(P(prep,index_bad) <= 0);
+        a = P(prep,index_bad) <= 0;
+        if sum(a)
             P(prep,index_bad(a))=NaN;
         end
     end
@@ -92,8 +97,8 @@ P_std   = nanstd(P');
 % work if mc_P0 is not set in ini/*moor*.m script. Could add an error if mc_P0 
 % is empty?)_
 for prep = 1 : m 
-    if cnt_nan(prep) == n & sum(cnt_nan == 0) > 0
-        p0I    = find(sn(prep)== mc_p0(:,1));
+    if cnt_nan(prep) == n && sum(cnt_nan == 0) > 0
+        p0I    = sn(prep)== mc_p0(:,1);
         P0     = mc_p0(p0I,2);
         if isempty(P0)
             disp(['Starting pressure for sensor #',num2str(sn(prep)),' needs to be defined in ini file'])
@@ -117,8 +122,8 @@ for prep = 1 : m
           
     end
     
-    if cnt_nan(prep) == n & sum(cnt_nan == 0) == 0
-        p0I    = find(sn(prep)== mc_p0(:,1));
+    if cnt_nan(prep) == n && sum(cnt_nan == 0) == 0
+        p0I    = sn(prep)== mc_p0(:,1);
         P0     = mc_p0(p0I,2);
         if isempty(P0)
             disp(['Starting pressure for sensor #',num2str(sn(prep)),' needs to be defined in ini file'])
@@ -143,7 +148,7 @@ for i = 1 : m
         % save de-spike plots
         ylabel('S_{A} (g kg^{-1})');
         title(['intrument' num2str(i)]);
-        savename=[basedir '/Figures/' moor '/despike_instrument' num2str(i)];
+        savename=fullfile(ph.figdir, moor, ['despike_instrument' num2str(i)]);
         print(figure(989),'-dpng',savename);
     end
     close('all')
@@ -335,7 +340,7 @@ else
     c=colorbar;
     ylabel('Instrument number');
     ylabel(c,'\celsius C')
-    savename=[basedir '/Figures/' moor '/T'];
+    savename=fullfile(ph.figdir,moor,'T');
     print(gcf, '-dpng',savename);
     
     figure;
@@ -344,14 +349,14 @@ else
     c=colorbar;
     ylabel('Instrument number');
     ylabel(c,'g kg^{-1}')
-    savename=[basedir '/Figures/' moor '/SA'];
+    savename=fullfile(ph.figdir,moor,'SA');
     print(gcf, '-dpng',savename);
     
     figure;    
     plot(Pfs'); title('Pressure');
     ylabel('db')
     axis ij;
-    savename=[basedir '/Figures/' moor '/P'];
+    savename=fullfile(ph.figdir,moor,'P');
     print(gcf, '-dpng',savename);
     
     figure;
@@ -361,7 +366,7 @@ else
     c=colorbar;
     ylabel('Instrument number');
     ylabel(c,'kg m^{3}')      
-    savename=[basedir '/Figures/' moor '/rho'];
+    savename=fullfile(ph.figdir,moor,'rho');
     print(gcf, '-dpng',savename);
     
 end
@@ -377,7 +382,7 @@ for ijj=1:length(jd)
 end
     
 % Save data
-save([out_path outname],'Tfs','Sfs', 'Pfs', 'TGfs', 'SGfs', 'jd',...
+save(fullfile(ph.hydrodir,outname),'Tfs','Sfs', 'Pfs', 'TGfs', 'SGfs', 'jd',...
     'p_grid','co', 'T', 'C', 'SA', 'P', 'jd_grid', 'Pf', 'Tf', 'Sf');
 % Add interpolated data to graphics 
 [~,n] = size(TGfs);
@@ -402,8 +407,9 @@ grid on
 xlabel('S_{A} (g kg^{-1})');
 ylabel('CT (\celsius C)')
 title('\Theta-S_{A}')
-print([out_path filesep 'hydro_grid_' moor '_theta_s'],'-dpng')
-savename=[basedir '/Figures/' moor '/_theta_s'];
+pname = fullfile(ph.hydrodir,['hydro_grid_' moor '_theta_s']);
+print(pname,'-dpng')
+savename = fullfile(ph.figdir,moor,'_theta_s');
 print(gcf, '-dpng',savename);
     
 % Plot anomalies of non-gridded data
@@ -454,9 +460,10 @@ if size(Tf,1) >1
     
     orient landscape
     
-    print([out_path filesep 'hydro_grid_' moor '_ta_sa'],'-dpng')
+    pname = fullfile(ph.hydrodir,['hydro_grid_' moor '_ta_sa']);
+    print(pname,'-dpng')
         
-    savename=[basedir '/Figures/' moor '/TS_ANOM'];
+    savename=fullfile(ph.figdir,moor,'TS_ANOM');
     print(gcf, '-dpng',savename);
 end
 %% *Sub routines*
