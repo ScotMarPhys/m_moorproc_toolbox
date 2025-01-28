@@ -292,11 +292,11 @@ maxtime = jd_end;
            bad_data=find(w==-9999/100); w(bad_data)=nan;
 
            if min(timeok) < mintime
-	   	mintime = min(jd(timeok));
-	   end
-	   if  max(timeok) < maxtime
-	   	maxtime = max(jd(timeok));
-	   end
+	   	    mintime = min(jd(timeok));
+	       end
+	       if  max(timeok) < maxtime
+	   	    maxtime = max(jd(timeok));
+	       end
 	     
        else
            
@@ -416,16 +416,16 @@ maxtime = jd_end;
 
 
     % for instrument without data
-    for i=1:length(ibad);
-       serialno = vecNOR(ibad(i));
-            nortekdata.serialnum(jbad(i)) = serialno;
-            nortekdata.instrdpth(jbad(i)) = zNOR(ibad(i));          
-            nortekdata.p(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));
-            nortekdata.t(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));         
-            nortekdata.u(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));      
-            nortekdata.v(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));    
-            nortekdata.w(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));      
-    end
+%     for i=1:length(ibad);
+%        serialno = vecNOR(ibad(i));
+%             nortekdata.serialnum(jbad(i)) = serialno;
+%             nortekdata.instrdpth(jbad(i)) = zNOR(ibad(i));          
+%             nortekdata.p(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));
+%             nortekdata.t(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));         
+%             nortekdata.u(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));      
+%             nortekdata.v(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));    
+%             nortekdata.w(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));      
+%     end
 
    % export oceansite format
    nortekinfo = moorinfo.nortek;

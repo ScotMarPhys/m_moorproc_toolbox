@@ -21,9 +21,10 @@ global basedir datadir execdir pathgit pathosnap progdir % 14/01/2025
 % path of the mooring data define in the startup file under osnap/
 
 moor = 'rteb1_07_2022';
-%moor = 'rtwb1_07_2022';
+% moor = 'rtwb1_07_2022';
 % moor = 'rtwb2_07_2022';
 %moor = 'rhadcp_02_2022';
+moor = 'ib3_03_2022'
 %=========================================================================
 % Apply calibration coefficients to series, removes bad data. If required, applies
 % constant offsets, and conductivity pressure correction
@@ -712,33 +713,39 @@ end
     ax8=subplot(4,3,12);
 
     axes(ax1);
-    plot(jd0(tidx),t(tidx),'k')
+    plot(jd0(tidx),t(tidx),'k.',...
+            'MarkerSize',0.1);
     hold on
-    plot(jd0(tidx),tn(tidx),'b')
+    plot(jd0(tidx),tn(tidx),'b.',...
+            'MarkerSize',0.1);
     grid on;  xlim(xli);
     ylabel('Temperature [deg C]')
-    legend('Temperature raw','Temperature plus offset','location','best');
+    legend('Pre-cal','post-cal','Location','Best')
     title('1. Temperature');
     ax1.TitleHorizontalAlignment = 'left';
     
     axes(ax2);
-    plot(jd0(cidx),c(cidx),'k')
+    plot(jd0(cidx),c(cidx),'k.',...
+            'MarkerSize',0.1);
     hold on
-    plot(jd0(cidx),cn(cidx),'r')
+    plot(jd0(cidx),cn(cidx),'r.',...
+            'MarkerSize',0.1);
     grid on;xlim(xli);
     ylabel('Conductivity [mS/cm]')
-    legend('Conductivity raw','Conductivity plus offset','location','best');
+    legend('Pre-cal','post-cal','Location','Best')
     title('2. Conductivity');
     ax2.TitleHorizontalAlignment = 'left';
     
     if strcmp(p_exist,'y')
         axes(ax3);
-        plot(jd0(pidx),p(pidx),'k')
+        plot(jd0(pidx),p(pidx),'k.',...
+            'MarkerSize',0.1);
         hold on
-        plot(jd0(pidx),pn(pidx),'green')
+        plot(jd0(pidx),pn(pidx),'g.',...
+            'MarkerSize',0.1);
         grid on; xlim(xli);
         ylabel('Pressure [db]')
-        legend('Pressure raw','Pressure plus offset','location','best');
+        legend('Pre-cal','post-cal','Location','Best')
         title('3. Pressure');
         ylabel('Number of days since deployment')
         ax3.TitleHorizontalAlignment = 'left';
@@ -964,10 +971,12 @@ end
         figure(1)
         axes(ax1); hold off
         ii = find(t>dum);
-        plot(jd0(ii),t(ii),'k')
+        plot(jd0(ii),t(ii),'k.',...
+            'MarkerSize',0.1);
         hold on
         ii = find(tn>dum);
-        plot(jd0(ii),tn(ii),'b')
+        plot(jd0(ii),tn(ii),'b.',...
+            'MarkerSize',0.1);
         grid on
         xlim(xli);  ylabel('Temperature [deg C]')
         legend('Pre-cal','post-cal','Location','Best')
@@ -1003,10 +1012,12 @@ end
         figure(1)
         axes(ax2); hold off
         ii = find(c>dum);
-        plot(jd0(ii),t(ii),'k')
+        plot(jd0(ii),c(ii),'k.',...
+            'MarkerSize',0.1);
         hold on
         ii = find(cn>dum);
-        plot(jd0(ii),cn(ii),'r')
+        plot(jd0(ii),cn(ii),'r.',...
+            'MarkerSize',0.1);
         grid on
         xlim(xli);  ylabel('Conductivity [mS/cm]')
         legend('Pre-cal','post-cal','Location','Best')
@@ -1042,10 +1053,12 @@ end
         figure(1)
         axes(ax3); hold off
         ii = find(p>dum);
-        plot(jd0(ii),t(ii),'k')
+        plot(jd0(ii),t(ii),'k.',...
+            'MarkerSize',0.1);
         hold on
         ii = find(pn>dum);
-        plot(jd0(ii),tn(ii),'g')
+        plot(jd0(ii),tn(ii),'g.',...
+            'MarkerSize',0.1);
         grid on
         xlim(xli);    ylabel('Pressure [db]')
         legend('Pre-cal','post-cal','Location','Best')
@@ -1091,9 +1104,11 @@ end
         axes(ax1)
         hold off
         ii = find(tn>dum);
-        plot(jd0(ii),t(ii),'k')
+        plot(jd0(ii),t(ii),'k.',...
+            'MarkerSize',0.1);
         hold on
-        plot(jd0(ii),tn(ii),'b')
+        plot(jd0(ii),tn(ii),'b.',...
+            'MarkerSize',0.1);
         grid on
         xlim(xli);  ylabel('Temperature [deg C]')
         legend('Pre-cal','post-cal','Location','Best')
@@ -1134,12 +1149,14 @@ end
         figure(1)
         axes(ax4)
         hold off
-        ii = find(cn>dum);
-        plot(jd0(ii),c(ii),'k')
+        ii = find(sn>dum);
+        plot(jd0(ii),s(ii),'k.',...
+            'MarkerSize',0.1);
         hold on
-        plot(jd0(ii),cn(ii),'r')
+        plot(jd0(ii),sn(ii),'r.',...
+            'MarkerSize',0.1);
         grid on
-        xlim(xli);    ylabel('Conductivity [mS/cm]')
+        xlim(xli);    ylabel('Salinity')
         legend('Pre-cal','post-cal','Location','Best')
         title('Post-calibration Salinity');
         
@@ -1190,9 +1207,11 @@ end
         axes(ax3)
         hold off
         ii = find(pn>dum);
-        plot(jd0(ii),p(ii),'k')
+        plot(jd0(ii),p(ii),'k.',...
+            'MarkerSize',0.1);
         hold on
-        plot(jd0(ii),pn(ii),'g')
+        plot(jd0(ii),pn(ii),'g.',...
+            'MarkerSize',0.1);
         grid on
         xlim(xli);    ylabel('Pressure [db]')
         legend('Pre-cal','post-cal','Location','Best')      
@@ -1322,6 +1341,20 @@ end
         xlabel('Salinity'); ylabel('In-situ Temperature');
     end
     
+    figure(1)
+    axes(ax4)
+    hold off
+    ii = find(sn>dum);
+    plot(jd0(ii),s(ii),'k.',...
+    'MarkerSize',0.1);
+    hold on
+    plot(jd0(ii),sn(ii),'r.',...
+    'MarkerSize',0.1);
+    grid on
+    xlim(xli);    ylabel('Salinity')
+    legend('Pre-cal','post-cal','Location','Best')
+    title('Post-calibration Salinity');
+
     % replace any NaNs with dummy
     ii     = isnan(pn);pn(ii) = dum;
     ii     = isnan(cn);cn(ii) = dum;

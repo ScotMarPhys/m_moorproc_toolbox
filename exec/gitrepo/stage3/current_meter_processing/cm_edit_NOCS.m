@@ -556,7 +556,6 @@ if iiRCM11>0
        def=find(~isnan(u));
        ghi=find(~isnan(v));
        % high pass data for spike identification
-       
        uhf=u*NaN;
        uhf(def)=sqrt(mfilter(u(def),1,0,1/nt).^2);
        vhf=v*NaN;
@@ -980,8 +979,74 @@ if iiNOR>0
 
        % NEED TO REMOVE NANS BEFORE FILTERING. OTHERWISE REPLACES WHOLE SERIES WITH NaNs.
        abc=find(~isnan(u));
+  
+       % low pass product again
+       uf=mfilter(u(abc),1,1/nt,0);
+       vf=mfilter(v(abc),1,1/nt,0);
+       pf=mfilter(p(abc),1,1/nt,0);
+       tf=mfilter(t(abc),1,1/nt,0);
+       wf=mfilter(w(abc),1,1/nt,0);
+       ussf=mfilter(uss(abc),1,1/nt,0);
+       vssf=mfilter(vss(abc),1,1/nt,0);
+       wssf=mfilter(wss(abc),1,1/nt,0);
+       pitf=mfilter(pit(abc),1,1/nt,0);
+       rolf=mfilter(rol(abc),1,1/nt,0);
+       ipowf=mfilter(ipow(abc),1,1/nt,0);
+       hdgf=mfilter(hdg(abc),1,1/nt,0);
+       
+       % 12h resolution
+       tim=[fix(jd(1)):0.5:fix(jd(end))];
+       vf1=interp1(jd(abc),vf,tim);
+       uf1=interp1(jd(abc),uf,tim);
+       pf1=interp1(jd(abc),pf,tim);
+       tf1=interp1(jd(abc),tf,tim);
+       wf1=interp1(jd(abc),wf,tim);
+       ussf1=interp1(jd(abc),ussf,tim);
+       vssf1=interp1(jd(abc),vssf,tim);
+       wssf1=interp1(jd(abc),wssf,tim);
+       pitf1=interp1(jd(abc),pitf,tim);
+       rolf1=interp1(jd(abc),rolf,tim);
+       ipowf1=interp1(jd(abc),ipowf,tim);
+       hdgf1=interp1(jd(abc),hdgf,tim);
 
-       figure(fig)
+      %% cruise dy181, mooring rteb1, instrum sn 6273
+      % data from instrumnet sn 6273 in 2022-24 was invalid due to compass
+      % errror
+      if strcmp(cruise,'dy181') & strcmp(moor,'rteb1_07_2022') & serialno==6273
+           t=t*NaN;
+           p=p*NaN;
+           u=u*NaN;
+           v=v*NaN;
+           w=w*NaN;
+           uss=uss*NaN;
+           vss=vss*NaN;
+           wss=wss*NaN;
+           pit=pit*NaN;
+           rol=rol*NaN;
+           ipow=ipow*NaN;
+           hdg=hdg*NaN;
+      end
+
+            %% cruise dy181, mooring rteb1, instrum sn 6273
+      % data from instrumnet sn 6273 in 2022-24 was invalid due to compass
+      % errror
+      if strcmp(cruise,'dy181') & strcmp(moor,'rteb1_07_2022') & serialno==6273
+           tf1=tf1*NaN;
+           pf1=pf1*NaN;
+           uf1=uf1*NaN;
+           vf1=vf1*NaN;
+           wf1=wf1*NaN;
+           ussf1=ussf1*NaN;
+           vssf1=vssf1*NaN;
+           wssf1=wssf1*NaN;
+           pitf1=pitf1*NaN;
+           rolf1=rolf1*NaN;
+           ipowf1=ipowf1*NaN;
+           hdgf1=hdgf1*NaN;
+      end
+
+
+             figure(fig)
        subplot(2,1,1)
        plot(jd-jd(1),uhf);
        xlim([0 jd2-jd1]);      
@@ -1010,9 +1075,7 @@ if iiNOR>0
        end
        hold off;
        title(['NORTEK SN: ',sprintf('%4.4d',vecNOR(i)), ' High-pass filtered V Component'])
-       
-%        eval(['print -depsc2 -tiff ',outfile , '.eps' ])
-%        eval(['print -dpng ',outfile, '.png' ])     
+           
        print([outfile , '.eps'],'-depsc2','-tiff');
        print([outfile , '.png'],'-dpng')     
        %--------------------------------------------------------------------------------------------
@@ -1046,42 +1109,10 @@ if iiNOR>0
        end
        hold off;
        title(['NORTEK SN: ',sprintf('%4.4d',vecNOR(i)), ' Non-filtered V Component'])
-       
-%        eval(['print -depsc2 -tiff ',outfilenonfilt , '.eps' ])
-%        eval(['print -dpng ',outfilenonfilt, '.png' ])     
+     
        print([outfilenonfilt , '.eps'],'-depsc2','-tiff');
        print([outfilenonfilt , '.png'],'-dpng')              
                         
-       
-       % low pass product again
-       uf=mfilter(u(abc),1,1/nt,0);
-       vf=mfilter(v(abc),1,1/nt,0);
-       pf=mfilter(p(abc),1,1/nt,0);
-       tf=mfilter(t(abc),1,1/nt,0);
-       wf=mfilter(w(abc),1,1/nt,0);
-       ussf=mfilter(uss(abc),1,1/nt,0);
-       vssf=mfilter(vss(abc),1,1/nt,0);
-       wssf=mfilter(wss(abc),1,1/nt,0);
-       pitf=mfilter(pit(abc),1,1/nt,0);
-       rolf=mfilter(rol(abc),1,1/nt,0);
-       ipowf=mfilter(ipow(abc),1,1/nt,0);
-       hdgf=mfilter(hdg(abc),1,1/nt,0);
-       
-       % 12h resolution
-       tim=[fix(jd(1)):0.5:fix(jd(end))];
-       vf1=interp1(jd(abc),vf,tim);
-       uf1=interp1(jd(abc),uf,tim);
-       pf1=interp1(jd(abc),pf,tim);
-       tf1=interp1(jd(abc),tf,tim);
-       wf1=interp1(jd(abc),wf,tim);
-       ussf1=interp1(jd(abc),ussf,tim);
-       vssf1=interp1(jd(abc),vssf,tim);
-       wssf1=interp1(jd(abc),wssf,tim);
-       pitf1=interp1(jd(abc),pitf,tim);
-       rolf1=interp1(jd(abc),rolf,tim);
-       ipowf1=interp1(jd(abc),ipowf,tim);
-       hdgf1=interp1(jd(abc),hdgf,tim);
-
 
        figure(low_pass_fig)
        plot(tim-jd1,uf1); hold on;
@@ -1099,11 +1130,11 @@ if iiNOR>0
        end
        hold off;
        title(['NORTEK SN: ',sprintf('%4.4d',vecNOR(i)), ' 12-hour resolution low-pass filtered currents'])
-       legend({'u-component','v-component','w-component'})
-%        eval(['print -depsc2 -tiff ',outfile1 , '.eps' ])
-%        eval(['print -dpng ',outfile1, '.png' ])     
+       legend({'u-component','v-component','w-component'})  
        print([outfile1 , '.eps'],'-depsc2','-tiff');
-       print([outfile1 , '.png'],'-dpng')         
+       print([outfile1 , '.png'],'-dpng')     
+
+
        %--------------------------------------
        % Non filtered data
        %--------------------------------------       
@@ -1155,7 +1186,7 @@ if iiNOR>0
        
        %--------------------------------------  
        % Low pass filtered    
-       %--------------------------------------         
+       %--------------------------------------    
        %replace NANs with -9999
        tf1(isnan(tf1))=-9999;
        pf1(isnan(pf1))=-9999;
@@ -2325,9 +2356,9 @@ if iiSEAGRD>0
        end
        hold off;
        title(['SEAGUARD SN: ',sprintf('%3.3d',vecSEAGRD(i)), ' 12-hour resolution low-pass filtered currents'])
-       legend({'u-component','v-component'})
+       legend({'u-component','v-component'}) 
        
-       %replace NANs with -9999
+       %% replace NANs with -9999
        t(isnan(t))=-9999;
        p(isnan(p))=-9999;
        u(isnan(u))=-9999;
@@ -2423,33 +2454,7 @@ if iiSEAGRD>0
 end
 
 end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% for mr=1:length(ifile);
-%     fidi=[ifile{mr}];
-%  
-%     % make time to julian;
-%     time=julian(yy,mm,dd,h);
-%     dt=(time(2)-time(1))*24    % sampling interval
-%     nt=round(40/dt);            % 40 hr lowpass
-% 
-%     % CORRECT FOR SOUND VELOCITY OF SEAWATER
-%     % FIRST CALC Sound velocity as fxn of T P S
-%  
-%     S(1:length(t),1)=35; 
-%     svel = sw_svel(S,t,p);
-%     svel_old=1500;
-%     corfac= (svel/svel_old);
-% 
-%     u = uraw .* corfac;
-%     v = vraw .* corfac;
-% 
-%    
-% 
-% 
-%    
-%     
-% end
 
 function [ur,vr]=uvrot(u,v,rot)
 % function [ur,vr]=uvrot(u,v,rot)
