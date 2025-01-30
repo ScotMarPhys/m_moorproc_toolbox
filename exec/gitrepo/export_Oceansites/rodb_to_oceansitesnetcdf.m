@@ -280,15 +280,15 @@ if iiADCP>0
     pd = moor_inoutpaths('nortek',moor);
 
     for j=1:length(vecADCP)
-        ncfilep = [ncdir '/' moor '_ADCP' num2str(vecADCP(j))];
+        ncfilep = [pdo.ncpre '_ADCP' num2str(vecADCP(j))];
         serialno = vecADCP(j);
         disp('*************************************************************')
         disp(['Reading ADCP - ',num2str(serialno)])
         disp('*************************************************************')
         % first determine how many bin files are to be processed
     % trying to do automatically
-    num_bins=dir([procpath,moor,'/adp/',moor,'_',num2str(vecADCP(j)),'_bin*' '.edt'])
-    num_bins=length(num_bins)
+    num_bins=dir(fullfile(pd.stage3path,sprintf([pd.stage3form(1:end-9) '*.edt'],j)));
+    num_bins=length(num_bins);
     num_bins
 
     for jz=1:num_bins % loop for total number of bins  

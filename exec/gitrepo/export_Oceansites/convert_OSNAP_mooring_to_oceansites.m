@@ -38,8 +38,8 @@ switch institution
         m.institution = 'Scottish Association for Marine Science, SAMS';
     case 'NOC'
         moorlist = {'ib3','ib4','ib5'};
-        m.principal_investigator = ''; 
-        m.principal_investigator_email = ''; 
+        m.principal_investigator = 'Penny Holliday'; 
+        m.principal_investigator_email = 'penny.holliday@noc.ac.uk'; 
         m.principal_investigator_url = 'https://www.noc.ac.uk';
         m.institution = 'National Oceanography Centre, NOC';
 end
@@ -132,14 +132,35 @@ for ijk= 1:length(moorlist)
         case {'ib3','ib4','ib5'}
 
             % Microcat
-            moorinfo.mcat.contributor_name = 'Tiago Segabinazzi Dotto; Yvonne Firing; Darren Rayner';	% CHANGE
+            moorinfo.mcat.contributor_name = 'Tiago Segabinazzi Dotto; Yvonne Firing';	% CHANGE
             moorinfo.mcat.contributor_role = 'data processing and interpretation';	% CHANGE
-            moorinfo.mcat.contributor_email = ' tiago.dotto@noc.ac.uk; yvonne.firing@noc.ac.uk; darren.rayner@noc.ac.uk';	% CHANGE
+            moorinfo.mcat.contributor_email = ' tiago.dotto@noc.ac.uk; yvonne.firing@noc.ac.uk';	% CHANGE
 
             % Nortek
             moorinfo.nortek.contributor_name = ' Tiago Segabinazzi Dotto; Darren Rayner';	% CHANGE
             moorinfo.nortek.contributor_role = 'data processing and interpretation';	% CHANGE
             moorinfo.nortek.contributor_email = 'tiago.dotto@noc.ac.uk; darren.rayner@noc.ac.uk';	% CHANGE
+
+            % ADCP
+            moorinfo.adcp.contributor_name = ' Tiago Segabinazzi Dotto; Darren Rayner';	% CHANGE
+            moorinfo.adcp.contributor_role = 'data processing and interpretation';	% CHANGE
+            moorinfo.adcp.contributor_email = 'tiago.dotto@noc.ac.uk; darren.rayner@noc.ac.uk';	% CHANGE
+            moorinfo.adcp.proclvl             = 'calibrated;good data';
+            moorinfo.adcp.sensor_model        = 'Workhorse 300 kHz';
+            moorinfo.adcp.sensor_manufacturer = 'Teledyne RDI';	
+            moorinfo.adcp.sensor_ref          = 'http://rdinstruments.com/__documents/Brochures/sentinel_datasheet_lr.pdf';
+            moorinfo.adcp.velaccuracy         = '+- 1% of the water velocity relative to ADCP +- 5mm/s';
+            moorinfo.adcp.velresolution       = '1mm/s';
+            moorinfo.adcp.sensor_mount        = 'mounted_on_mooring_line';
+            moorinfo.adcp.sens_orientation    = 'downward';
+            moorinfo.adcp.coordsyst           = 'earth';
+            moorinfo.adcp.dist1stbin          =  6.2; 
+            moorinfo.adcp.binsize             =	4;
+            moorinfo.adcp.nbbins              =	28;
+            moorinfo.adcp.pingperens          =	42;
+            moorinfo.adcp.timepinggroup       =	'85s';   
+
+
     end
 
 
