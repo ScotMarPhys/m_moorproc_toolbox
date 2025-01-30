@@ -14,27 +14,23 @@
 % 
 % 18/11/16 - Loic Houpert
 %
-function rodb_to_oceansitesnetcdf(moor,procpath,moorinfo)
+function rodb_to_oceansitesnetcdf(moor,moorinfo)
+
 if nargin <1
     help rodb_to_oceansitesnetcdf
     return
 end
 
-if isunix
-    infofile=[procpath,moor,'/',moor,'info.dat'];
-elseif ispc
-    infofile=fullfile(procpath,moor,[moor 'info.dat']);
-end
+global MOORPROC_G
 
-ncdir = 'oceansites_format'; %outpudirectory for oceansites netcdf
-
+pdo = moor_inoutpaths('oceansites',moor);
 
 % Load vectors of mooring information
 % id instrument id, sn serial number, z nominal depth of each instrument
 % s_t, e_t, s_d, e_d start and end times and dates
 % lat lon mooring position, wd corrected water depth (m)
 % mr mooring name
-[id,sn,z,s_t,s_d,e_t,e_d,lat,lon,wd,mr]  =  rodbload(infofile,...
+[id,sn,z,s_t,s_d,e_t,e_d,lat,lon,wd,mr]  =  rodbload(pdo.infofile,...
     'instrument:serialnumber:z:Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:WaterDepth:Mooring');
 
 
@@ -102,29 +98,22 @@ iii=[iiiS4;iiiRCM11;iiiARG;iiiNOR;iiiMC;iiiRBR;iiiIDR;iiiSG;iiiADCP];
 % Now read in Microcat data if required
 %--------------------------------------
 if iiMC>0
-    j=1;
-    
-    ibad = [];
-    jbad = [];
+    isgood = true(size(vecMC));
+
+    ncfilep = [pdo.ncpre '_MCAT'];
+    pd = moor_inoutpaths('microcat',moor);
+
     % loop to read one file at a time
-    netcdffilepath = [ncdir '/' moor '_MCAT'];
-    for i=1:length(vecMC);
-        serialno = vecMC(i);
+    for j=1:length(vecMC)
+        serialno = vecMC(j);
+        instrdpth = zMC(j);
         disp('*************************************************************')
         disp(['Reading MICROCAT - ',num2str(serialno)])
         disp('*************************************************************')
-        
-        
-        if isunix
-            infile = [procpath,moor,'/microcat/',moor,'_',sprintf('%0.3d',i),'.microcat'];
-        elseif ispc
-            infile = [procpath,moor,'\microcat\',moor,'_',sprintf('%0.3d',i),'.microcat'];
-        end
-        
+        infile = fullfile(pd.stage3path,sprintf(pd.stage3form,j));
         
         % check if file exists
         fileopen=fopen(infile,'r');
-        
         if fileopen>0
             % read data into vectors and then into structure array          
             [yy,mm,dd,hh,t,c,p,instrdpth] = ...
@@ -133,91 +122,35 @@ if iiMC>0
             
             % set to nan data outside time range:
             badtime = (jd<jd_start | jd>jd_end);
-            p(badtime)=-9999;
-            t(badtime)=-9999;
-            c(badtime)=-9999;
-            
-            bad_data=find(p==-9999); p(bad_data)=nan;
-            bad_data=find(t==-9999); t(bad_data)=nan;
-            bad_data=find(c==-9999); c(bad_data)=nan;
+            p(badtime | p==-9999) = nan;
+            t(badtime | t==-9999) = nan;
+            c(badtime | c==-9999) = nan;
             
             % interpolation of all the instrument on the same time_axis (the first instrument)
-            if i==1
+            if ~exist('timeref','var')
                 timeref =  datenum(yy,mm,dd,hh,0*hh,0*hh);
                 mcatdata.time(j,:) = datenum(yy,mm,dd,hh,0*hh,0*hh); %julian(YY,MM,DD,HH);
                 goodtimeindex = j; % SJ: rarely needed except first instrument missing
                 mcatdata.p(j,:) = p;
                 mcatdata.t(j,:) = t;
                 mcatdata.c(j,:) = c;
-                
             else
-                if exist('needtime'); % SJ: in the unlikely case that the first instrument is missing so we still need a base timeframe
-                    timeref =  datenum(yy,mm,dd,hh,0*hh,0*hh);
-                    %mcatdata.time(j,:) = datenum(yy,mm,dd,hh,0*hh,0*hh); %julian(YY,MM,DD,HH);
-                    goodtimeindex = j; % SJ: rarely needed except first instrument missing
-                    clear needtime
-                    mcatdata.p(j,:) = p;
-                    mcatdata.t(j,:) = t;
-                    mcatdata.c(j,:) = c;
-                    
-                end
-                
                 timeinst =  datenum(yy,mm,dd,hh,0*hh,0*hh);
                 mcatdata.time(j,:) = timeref; %julian(YY,MM,DD,HH);
-                
-                if length(p(~isnan(p)))>2
-                    pint = interp1(timeinst(~isnan(p)),p(~isnan(p)),timeref);
-                else
-                    pint = NaN;
-                end
-                if length(t(~isnan(t)))>2
-                    tint = interp1(timeinst(~isnan(t)),t(~isnan(t)),timeref);
-                else
-                    tint = NaN;
-                end
-                if length(c(~isnan(c)))>2
-                    cint = interp1(timeinst(~isnan(c)),c(~isnan(c)),timeref);
-                else
-                    cint = NaN;
-                end
-                
-                baddatamaskp = interp1(timeinst,single(isnan(p)),timeref,'nearest');
-                baddatamaskt = interp1(timeinst,single(isnan(t)),timeref,'nearest');
-                baddatamaskc = interp1(timeinst,single(isnan(c)),timeref,'nearest');
-                baddatamaskp(isnan(baddatamaskp)) = 1;
-                baddatamaskt(isnan(baddatamaskt)) = 1;
-                baddatamaskc(isnan(baddatamaskc)) = 1;
-                
-                pint(logical(baddatamaskp))= nan;
-                tint(logical(baddatamaskt))= nan;
-                cint(logical(baddatamaskc))= nan;
-
-                mcatdata.p(j,:)    = pint;
-                mcatdata.t(j,:)    = tint;
-                mcatdata.c(j,:)    = cint;
+                mcatdata.p(j,:) = baddatamask(timeinst,p,timeref);
+                mcatdata.t(j,:) = baddatamask(timeinst,t,timeref);
+                mcatdata.c(j,:) = baddatamask(timeinst,c,timeref);
             end
+        else
+            isgood(j) = false;
+        end
             mcatdata.serialnum(j) = serialno;
             mcatdata.instrdpth(j) = instrdpth;
-        else
-            
-            ibad = [ibad i];
-            jbad = [jbad j];
-            needtime = 1;  % if the first instrument is missing, we still need
-            % a timeref to interpolate the other instruments onto. take the next avbailable
-        end
-        
-        j=j+1;
-    end
     
-    
-    % for instrument without data
-    for i=1:length(ibad);
-        serialno = vecMC(ibad(i));
-        mcatdata.serialnum(jbad(i)) = serialno;
-        mcatdata.instrdpth(jbad(i)) = zMC(ibad(i));
-        mcatdata.p(jbad(i),:)    = 99999*ones(size(mcatdata.p(jbad(i),:)));
-        mcatdata.t(jbad(i),:)    = 99999*ones(size(mcatdata.p(jbad(i),:)));
-        mcatdata.c(jbad(i),:)    = 99999*ones(size(mcatdata.p(jbad(i),:)));
+            ibad = ~isgood;            
+        mcatdata.p(ibad,:)    = 99999;
+        mcatdata.t(ibad,:)    = 99999;
+        mcatdata.c(ibad,:)    = 99999;
     end
     
     % export oceansite format
@@ -230,12 +163,12 @@ if iiMC>0
     mcatdata.t(isnan(mcatdata.t))=99999;
 
     %cd export_Oceansites % SJ
-    write_MCTD_to_NetCDF(netcdffilepath, moor, lat, lon, mcatinfo, instrdepth, mcatdata.time(goodtimeindex,:),  mcatdata.p, mcatdata.s, mcatdata.t, mcatdata.c)
+    write_MCTD_to_NetCDF(ncfilep, moor, lat, lon, mcatinfo, instrdepth, mcatdata.time(goodtimeindex,:),  mcatdata.p, mcatdata.s, mcatdata.t, mcatdata.c)
     
-    info=ncinfo([netcdffilepath '.nc']);
-    ncdisp([netcdffilepath '.nc']);
+    info=ncinfo([ncfilep '.nc']);
+    ncdisp([ncfilep '.nc']);
     for ikk = 1:length(info.Variables)
-        mcatncdata.(info.Variables(ikk).Name) = ncread([netcdffilepath '.nc'],info.Variables(ikk).Name);
+        mcatncdata.(info.Variables(ikk).Name) = ncread([ '.nc'],info.Variables(ikk).Name);
     end
     
     rodb_to_oceansitesnetcdf_testplotncmcat
@@ -255,20 +188,16 @@ maxtime = jd_end;
     ibad = [];
     jbad = [];
     % loop to read one file at a time
-        netcdffilepath = [ncdir '/' moor '_Nortek'];
-    for i=1:length(vecNOR);
-       serialno = vecNOR(i);
+        ncfilep = [pdo.ncpre '_Nortek'];
+        pd = moor_inoutpaths('nortek',moor);
+
+   for j=1:length(vecNOR)
+       serialno = vecNOR(j);
        disp('*************************************************************')
        disp(['Reading AQUADOPP - ',num2str(serialno)])
        disp('*************************************************************')
 
-
-	       if isunix
-        	   infile = [procpath,moor,'/nor/',moor,'_',sprintf('%3.3d',vecNOR(i)),'.edt'];
-       		elseif ispc
-        	   infile = [procpath,moor,'\nor\',moor,'_',sprintf('%3.3d',vecNOR(i)),'.edt'];
-       		end	
-    
+        infile = fullfile(pd.stage3path,sprintf(pd.stage3form,j));    
        
        % check if file exists
        fileopen=fopen(infile,'r');
@@ -278,29 +207,23 @@ maxtime = jd_end;
 
            [yy,mm,dd,hh,t,p,u,v,w,hdg,pit,rol,uss,vss,wss,ipow,cs,cd,instrdpth] = ...
                rodbload(infile,'yy:mm:dd:hh:t:p:u:v:w:hdg:pit:rol:uss:vss:wss:ipow:cs:cd:InstrDepth');
-           jd=julian(yy,mm,dd,hh);           
+           jd=julian(yy,mm,dd,hh);        
+           t(t==-9999) = nan;
+           p(p==-9999) = nan;
+           u(u==-9999) = nan;
+           v(v==-9999) = nan;
+           w(w==-9999) = nan;
            u = u/100;
            v = v/100;
            w = w/100;
            
            timeok = (jd>jd_start & jd<jd_end);
- 
-           bad_data=find(t==-9999); t(bad_data)=nan;
-           bad_data=find(p==-9999); p(bad_data)=nan;
-           bad_data=find(u==-9999/100); u(bad_data)=nan;
-           bad_data=find(v==-9999/100); v(bad_data)=nan;
-           bad_data=find(w==-9999/100); w(bad_data)=nan;
-
-           if min(timeok) < mintime
-	   	mintime = min(jd(timeok));
-	   end
-	   if  max(timeok) < maxtime
-	   	maxtime = max(jd(timeok));
-	   end
+           mintime = min(mintime,jd(timeok));
+           maxtime = max(maxtime,jd(timeok));
 	     
        else
            
-          ibad = [ibad i];
+          ibad = [ibad j];
           jbad = [jbad j];
        end
        
@@ -315,18 +238,18 @@ maxtime = jd_end;
     ibad = [];
     jbad = [];
     % loop to read one file at a time
-        netcdffilepath = [ncdir '/' moor '_Nortek'];
-    for i=1:length(vecNOR);
-       serialno = vecNOR(i);
+        ncfilep = [ncdir '/' moor '_Nortek'];
+    for j=1:length(vecNOR);
+       serialno = vecNOR(j);
        disp('*************************************************************')
        disp(['Reading AQUADOPP - ',num2str(serialno)])
        disp('*************************************************************')
 
 
 	       if isunix
-        	   infile = [procpath,moor,'/nor/',moor,'_',sprintf('%3.3d',vecNOR(i)),'.edt'];
+        	   infile = [procpath,moor,'/nor/',moor,'_',sprintf('%3.3d',vecNOR(j)),'.edt'];
        		elseif ispc
-        	   infile = [procpath,moor,'\nor\',moor,'_',sprintf('%3.3d',vecNOR(i)),'.edt'];
+        	   infile = [procpath,moor,'\nor\',moor,'_',sprintf('%3.3d',vecNOR(j)),'.edt'];
        		end	
     
        
@@ -406,7 +329,7 @@ maxtime = jd_end;
             nortekdata.instrdpth(j) = instrdpth;     
        else
            
-          ibad = [ibad i];
+          ibad = [ibad j];
           jbad = [jbad j];
        end
        
@@ -416,28 +339,28 @@ maxtime = jd_end;
 
 
     % for instrument without data
-    for i=1:length(ibad);
-       serialno = vecNOR(ibad(i));
-            nortekdata.serialnum(jbad(i)) = serialno;
-            nortekdata.instrdpth(jbad(i)) = zNOR(ibad(i));          
-            nortekdata.p(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));
-            nortekdata.t(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));         
-            nortekdata.u(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));      
-            nortekdata.v(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));    
-            nortekdata.w(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));      
-    end
+%     for i=1:length(ibad);
+%        serialno = vecNOR(ibad(i));
+%             nortekdata.serialnum(jbad(i)) = serialno;
+%             nortekdata.instrdpth(jbad(i)) = zNOR(ibad(i));          
+%             nortekdata.p(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));
+%             nortekdata.t(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));         
+%             nortekdata.u(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));      
+%             nortekdata.v(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));    
+%             nortekdata.w(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));      
+%     end
 
    % export oceansite format
    nortekinfo = moorinfo.nortek;
    nortekinfo.serial_num = nortekdata.serialnum;
    instrdepth = nortekdata.instrdpth; % nominal depth of the bin
 
-   write_CM_to_NetCDF(netcdffilepath, moor, lat, lon, nortekinfo, instrdepth, nortekdata.time(1,:), nortekdata.p,  nortekdata.u, nortekdata.v,  nortekdata.w)
+   write_CM_to_NetCDF(ncfilep, moor, lat, lon, nortekinfo, instrdepth, nortekdata.time(1,:), nortekdata.p,  nortekdata.u, nortekdata.v,  nortekdata.w)
 
-   info=ncinfo([netcdffilepath '.nc']);
-   ncdisp([netcdffilepath '.nc']);
+   info=ncinfo([ncfilep '.nc']);
+   ncdisp([ncfilep '.nc']);
    for ikk = 1:length(info.Variables)
-    nortekncdata.(info.Variables(ikk).Name) = ncread([netcdffilepath '.nc'],info.Variables(ikk).Name);
+    nortekncdata.(info.Variables(ikk).Name) = ncread([ncfilep '.nc'],info.Variables(ikk).Name);
    end
 
    rodb_to_oceansitesnetcdf_testplotncnortek
@@ -453,11 +376,11 @@ if iiADCP>0
     
     % loop to read one file at a time
 
-    for i=1:length(vecADCP);
+    for j=1:length(vecADCP);
         
-        netcdffilepath = [ncdir '/' moor '_ADCP' num2str(vecADCP(i))];
+        ncfilep = [ncdir '/' moor '_ADCP' num2str(vecADCP(j))];
         
-       serialno = vecADCP(i);
+       serialno = vecADCP(j);
        disp('*************************************************************')
        disp(['Reading ADCP - ',num2str(serialno)])
        disp('*************************************************************')
@@ -465,7 +388,7 @@ if iiADCP>0
     
     % first determine how many bin files are to be processed
     % trying to do automatically
-    num_bins=dir([procpath,moor,'/adp/',moor,'_',num2str(vecADCP(i)),'_bin*' '.edt'])
+    num_bins=dir([procpath,moor,'/adp/',moor,'_',num2str(vecADCP(j)),'_bin*' '.edt'])
     num_bins=length(num_bins)
     num_bins
 
@@ -474,12 +397,12 @@ if iiADCP>0
         columns = ['YY:MM:DD:HH:Z:T:U:V:W:HDG:PIT:ROL:CS:CD:BEAM1SS:BEAM2SS:BEAM3SS'...
             ':BEAM4SS:BEAM1COR:BEAM2COR:BEAM3COR:BEAM4COR:EV:BEAM1PGP:BEAM2PGP:BEAM3PGP:BEAM4PGP:InstrDepth'];
         
-        indep  = z(i);
+        indep  = z(j);
         
         if j<=9
-            infile  = [procpath,moor,'/adp/',moor,'_',num2str(vecADCP(i)),'_bin0',num2str(j),'.edt'];
+            infile  = [procpath,moor,'/adp/',moor,'_',num2str(vecADCP(j)),'_bin0',num2str(j),'.edt'];
         else
-            infile  = [procpath,moor,'/adp/',moor,'_',num2str(vecADCP(i)),'_bin',num2str(j),'.edt'];
+            infile  = [procpath,moor,'/adp/',moor,'_',num2str(vecADCP(j)),'_bin',num2str(j),'.edt'];
         end
                 
         if exist(infile,'file')==0
@@ -514,20 +437,20 @@ if iiADCP>0
            bad_data=find(PG3==-9999); PG3(bad_data)=99999;        
            bad_data=find(PG4==-9999); PG4(bad_data)=99999;   
            
-            ADCPdata(i).time(j,:) = datenum(YY(timeok),MM(timeok),DD(timeok),HH(timeok),0*HH(timeok),0*HH(timeok)); %julian(YY,MM,DD,HH);
-            ADCPdata(i).z(j,:) = z(timeok);
-            ADCPdata(i).t(j,:) = t(timeok);          
-            ADCPdata(i).u(j,:) = u(timeok);
-            ADCPdata(i).v(j,:) = v(timeok);       
-            ADCPdata(i).w(j,:) = w(timeok);   
-            ADCPdata(i).err(j,:) = err(timeok);    
-            ADCPdata(i).hdg(j,:) = hdg(timeok);       
-            ADCPdata(i).pit(j,:) = pit(timeok);   
-            ADCPdata(i).rol(j,:) = rol(timeok);                
-            ADCPdata(i).PG1(j,:) = PG1(timeok);       
-            ADCPdata(i).PG2(j,:) = PG2(timeok);    
-            ADCPdata(i).PG3(j,:) = PG3(timeok);       
-            ADCPdata(i).PG4(j,:) = PG4(timeok);       
+            ADCPdata(j).time(j,:) = datenum(YY(timeok),MM(timeok),DD(timeok),HH(timeok),0*HH(timeok),0*HH(timeok)); %julian(YY,MM,DD,HH);
+            ADCPdata(j).z(j,:) = z(timeok);
+            ADCPdata(j).t(j,:) = t(timeok);          
+            ADCPdata(j).u(j,:) = u(timeok);
+            ADCPdata(j).v(j,:) = v(timeok);       
+            ADCPdata(j).w(j,:) = w(timeok);   
+            ADCPdata(j).err(j,:) = err(timeok);    
+            ADCPdata(j).hdg(j,:) = hdg(timeok);       
+            ADCPdata(j).pit(j,:) = pit(timeok);   
+            ADCPdata(j).rol(j,:) = rol(timeok);                
+            ADCPdata(j).PG1(j,:) = PG1(timeok);       
+            ADCPdata(j).PG2(j,:) = PG2(timeok);    
+            ADCPdata(j).PG3(j,:) = PG3(timeok);       
+            ADCPdata(j).PG4(j,:) = PG4(timeok);       
 
         end
         
@@ -535,8 +458,8 @@ if iiADCP>0
     end
 
         if exist('ADCPdata','var')~=1; continue;end
-        ADCPdata(i).name = ['ADCP_' num2str(serialno)];
-        ADCPdata(i).moor = moor;            
+        ADCPdata(j).name = ['ADCP_' num2str(serialno)];
+        ADCPdata(j).moor = moor;            
 
 
        j=j+1;
@@ -544,16 +467,16 @@ if iiADCP>0
        % export oceansite format
        adcpinfo = moorinfo.adcp;
        adcpinfo.serial_num = serialno;
-       bin_depth = round(nanmean(ADCPdata(i).z,2)); % nominal depth of the bin
+       bin_depth = round(nanmean(ADCPdata(j).z,2)); % nominal depth of the bin
 
-       pres = sw_pres(ADCPdata(i).z,lat);
+       pres = sw_pres(ADCPdata(j).z,lat);
 
-       write_ADCP_to_NetCDF(netcdffilepath, moor, lat, lon, adcpinfo, bin_depth, instrument_depth, pres, ADCPdata(i).time(1,:), ADCPdata(i).u, ADCPdata(i).v,  ADCPdata(i).w, ADCPdata(i).err)
+       write_ADCP_to_NetCDF(ncfilep, moor, lat, lon, adcpinfo, bin_depth, instrument_depth, pres, ADCPdata(j).time(1,:), ADCPdata(j).u, ADCPdata(j).v,  ADCPdata(j).w, ADCPdata(j).err)
 
-       info=ncinfo([netcdffilepath '.nc']);  
-       ncdisp([netcdffilepath '.nc']);
+       info=ncinfo([ncfilep '.nc']);  
+       ncdisp([ncfilep '.nc']);
        for ikk = 1:length(info.Variables)
-        ADCPncdata.(info.Variables(ikk).Name) = ncread([netcdffilepath '.nc'],info.Variables(ikk).Name);
+        ADCPncdata.(info.Variables(ikk).Name) = ncread([ncfilep '.nc'],info.Variables(ikk).Name);
        end
        
        rodb_to_oceansitesnetcdf_testplotncadcp
@@ -561,4 +484,14 @@ if iiADCP>0
 end
 
 % put the Oceansites conversion function here
+function datai = baddatamask(timeinst,data,timeref)
+                if length(data(~isnan(data)))>2
+                    datai = interp1(timeinst(~isnan(data)),data(~isnan(data)),timeref);
+                else
+                    datai = NaN;
+                end
+                baddatamask = interp1(timeinst,single(isnan(data)),timeref,'nearest');
+                baddatamask(isnan(baddatamask)) = 1;
+                datai(logical(baddatamask))= nan;
+
 
