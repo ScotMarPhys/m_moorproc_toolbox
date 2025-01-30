@@ -24,6 +24,9 @@ end
 global MOORPROC_G
 
 pdo = moor_inoutpaths('oceansites',moor);
+if ~exist(fileparts(pdo.ncpre),'dir')
+    mkdir(fileparts(pdo.ncpre))
+end
 
 % Load vectors of mooring information
 % id instrument id, sn serial number, z nominal depth of each instrument
@@ -107,6 +110,8 @@ if iiMC>0
     for j=1:length(vecMC)
         serialno = vecMC(j);
         instrdpth = zMC(j);
+        mcatdata.serialnum(j) = serialno;
+        mcatdata.instrdpth(j) = instrdpth;        
         disp('*************************************************************')
         disp(['Reading MICROCAT - ',num2str(serialno)])
         disp('*************************************************************')
@@ -119,7 +124,6 @@ if iiMC>0
             [yy,mm,dd,hh,t,c,p,instrdpth] = ...
                 rodbload(infile,'yy:mm:dd:hh:t:c:p:InstrDepth');
             jd=julian(yy,mm,dd,hh);
-            
             % set to nan data outside time range:
             badtime = (jd<jd_start | jd>jd_end);
             p(badtime | p==-9999) = nan;
@@ -127,8 +131,8 @@ if iiMC>0
             c(badtime | c==-9999) = nan;
             
             % interpolation of all the instrument on the same time_axis (the first instrument)
-            if ~exist('timeref','var')
-                timeref =  datenum(yy,mm,dd,hh,0*hh,0*hh);
+            if ~exist('mctimeref','var')
+                mctimeref =  datenum(yy,mm,dd,hh,0*hh,0*hh);
                 mcatdata.time(j,:) = datenum(yy,mm,dd,hh,0*hh,0*hh); %julian(YY,MM,DD,HH);
                 goodtimeindex = j; % SJ: rarely needed except first instrument missing
                 mcatdata.p(j,:) = p;
@@ -136,17 +140,15 @@ if iiMC>0
                 mcatdata.c(j,:) = c;
             else
                 timeinst =  datenum(yy,mm,dd,hh,0*hh,0*hh);
-                mcatdata.time(j,:) = timeref; %julian(YY,MM,DD,HH);
-                mcatdata.p(j,:) = baddatamask(timeinst,p,timeref);
-                mcatdata.t(j,:) = baddatamask(timeinst,t,timeref);
-                mcatdata.c(j,:) = baddatamask(timeinst,c,timeref);
+                mcatdata.time(j,:) = mctimeref; %julian(YY,MM,DD,HH);
+                mcatdata.p(j,:) = baddatamask(timeinst,p,mctimeref,nan);
+                mcatdata.t(j,:) = baddatamask(timeinst,t,mctimeref,nan);
+                mcatdata.c(j,:) = baddatamask(timeinst,c,mctimeref,nan);
             end
         else
             isgood(j) = false;
         end
-            mcatdata.serialnum(j) = serialno;
-            mcatdata.instrdpth(j) = instrdpth;
-    
+
             ibad = ~isgood;            
         mcatdata.p(ibad,:)    = 99999;
         mcatdata.t(ibad,:)    = 99999;
@@ -164,207 +166,109 @@ if iiMC>0
 
     %cd export_Oceansites % SJ
     write_MCTD_to_NetCDF(ncfilep, moor, lat, lon, mcatinfo, instrdepth, mcatdata.time(goodtimeindex,:),  mcatdata.p, mcatdata.s, mcatdata.t, mcatdata.c)
-    
+
     info=ncinfo([ncfilep '.nc']);
     ncdisp([ncfilep '.nc']);
     for ikk = 1:length(info.Variables)
-        mcatncdata.(info.Variables(ikk).Name) = ncread([ '.nc'],info.Variables(ikk).Name);
+        mcatncdata.(info.Variables(ikk).Name) = ncread([ncfilep '.nc'],info.Variables(ikk).Name);
     end
-    
+
     rodb_to_oceansitesnetcdf_testplotncmcat
-    
+
 end
 
 %--------------------------------------
 % Now read in Aquadopp data if required
 %--------------------------------------
 if iiNOR>0
-mintime = jd_start;
-maxtime = jd_end;
-%---------------------------------------------------------
-% find longest non-nan timelimits   
-    j=1;
-    
-    ibad = [];
-    jbad = [];
-    % loop to read one file at a time
-        ncfilep = [pdo.ncpre '_Nortek'];
-        pd = moor_inoutpaths('nortek',moor);
+    mintime = jd_start;
+    maxtime = jd_end;
+    isgood = true(size(vecNOR));
+    ncfilep = [pdo.ncpre '_Nortek'];
+    pd = moor_inoutpaths('nortek',moor);
 
-   for j=1:length(vecNOR)
-       serialno = vecNOR(j);
-       disp('*************************************************************')
-       disp(['Reading AQUADOPP - ',num2str(serialno)])
-       disp('*************************************************************')
-
-        infile = fullfile(pd.stage3path,sprintf(pd.stage3form,j));    
-       
-       % check if file exists
-       fileopen=fopen(infile,'r');
-      
-       if fileopen>0
-           % read data into vectors and then into structure array
-
-           [yy,mm,dd,hh,t,p,u,v,w,hdg,pit,rol,uss,vss,wss,ipow,cs,cd,instrdpth] = ...
-               rodbload(infile,'yy:mm:dd:hh:t:p:u:v:w:hdg:pit:rol:uss:vss:wss:ipow:cs:cd:InstrDepth');
-           jd=julian(yy,mm,dd,hh);        
-           t(t==-9999) = nan;
-           p(p==-9999) = nan;
-           u(u==-9999) = nan;
-           v(v==-9999) = nan;
-           w(w==-9999) = nan;
-           u = u/100;
-           v = v/100;
-           w = w/100;
-           
-           timeok = (jd>jd_start & jd<jd_end);
-           mintime = min(mintime,jd(timeok));
-           maxtime = max(maxtime,jd(timeok));
-	     
-       else
-           
-          ibad = [ibad j];
-          jbad = [jbad j];
-       end
-       
-       j=j+1;
+    %---------------------------------------------------------
+    % find longest non-nan timelimits
+    for j=1:length(vecNOR)
+        serialno = vecNOR(j);
+        instrdpth = zNOR(j);
+        nortekdata.serialnum(j) = serialno;
+        nortekdata.instrdpth(j) = instrdpth;
+        disp('*************************************************************')
+        disp(['Reading AQUADOPP - ',num2str(serialno)])
+        disp('*************************************************************')
+        infile = fullfile(pd.stage3path,sprintf(pd.stage3form,serialno));
+        % check if file exists
+        fileopen=fopen(infile,'r');
+        if fileopen>0
+            % read data into vectors and then into structure array
+            [yy,mm,dd,hh,t,p,u,v,w,hdg,pit,rol,uss,vss,wss,ipow,cs,cd,instrdpth] = ...
+                rodbload(infile,'yy:mm:dd:hh:t:p:u:v:w:hdg:pit:rol:uss:vss:wss:ipow:cs:cd:InstrDepth');
+            jd=julian(yy,mm,dd,hh);
+            timeok = (jd>jd_start & jd<jd_end);
+            mintime = min(mintime,jd(timeok));
+            maxtime = max(maxtime,jd(timeok));
+        else
+            isgood(j) = false;
+        end
     end
-    
 
-%---------------------------------------------------------
-% Load data
-    j=1;
-    
-    ibad = [];
-    jbad = [];
-    % loop to read one file at a time
-        ncfilep = [ncdir '/' moor '_Nortek'];
-    for j=1:length(vecNOR);
-       serialno = vecNOR(j);
-       disp('*************************************************************')
-       disp(['Reading AQUADOPP - ',num2str(serialno)])
-       disp('*************************************************************')
+    %---------------------------------------------------------
+    % Load data
+    for j=1:length(vecNOR)
+        if isgood(j)
+        serialno = vecNOR(j);
+        disp('*************************************************************')
+        disp(['Reading AQUADOPP - ',num2str(serialno)])
+        disp('*************************************************************')
+        infile = fullfile(pd.stage3path,sprintf(pd.stage3form,serialno));
+        % check if file exists
+        fileopen=fopen(infile,'r');
+        % read data into vectors and then into structure array
+        [yy,mm,dd,hh,t,p,u,v,w,hdg,pit,rol,uss,vss,wss,ipow,cs,cd,instrdpth] = ...
+            rodbload(infile,'yy:mm:dd:hh:t:p:u:v:w:hdg:pit:rol:uss:vss:wss:ipow:cs:cd:InstrDepth');
+        jd=julian(yy,mm,dd,hh);
+        t(t==-9999) = nan;
+        p(p==-9999) = nan;
+        u(u==-9999) = nan;
+        v(v==-9999) = nan;
+        w(w==-9999) = nan;
+        u = u/100;
+        v = v/100;
+        w = w/100;
 
-
-	       if isunix
-        	   infile = [procpath,moor,'/nor/',moor,'_',sprintf('%3.3d',vecNOR(j)),'.edt'];
-       		elseif ispc
-        	   infile = [procpath,moor,'\nor\',moor,'_',sprintf('%3.3d',vecNOR(j)),'.edt'];
-       		end	
-    
-       
-       % check if file exists
-       fileopen=fopen(infile,'r');
-      
-       if fileopen>0
-           % read data into vectors and then into structure array
-
-           [yy,mm,dd,hh,t,p,u,v,w,hdg,pit,rol,uss,vss,wss,ipow,cs,cd,instrdpth] = ...
-               rodbload(infile,'yy:mm:dd:hh:t:p:u:v:w:hdg:pit:rol:uss:vss:wss:ipow:cs:cd:InstrDepth');
-           jd=julian(yy,mm,dd,hh);           
-           u = u/100;
-           v = v/100;
-           w = w/100;
-           
-           timeok = (jd>jd_start & jd<jd_end);
- 
-           bad_data=find(t==-9999); t(bad_data)=nan;
-           bad_data=find(p==-9999); p(bad_data)=nan;
-           bad_data=find(u==-9999/100); u(bad_data)=nan;
-           bad_data=find(v==-9999/100); v(bad_data)=nan;
-           bad_data=find(w==-9999/100); w(bad_data)=nan;
-
-      % % % interpolation of all the instrument on the same time_axis (the first instrument) 
-      % %    timeref =  datenum(yy(timeok),mm(timeok),dd(timeok),hh(timeok),0*hh(timeok),0*hh(timeok));            
-
-
+        % % % interpolation of all the instrument on the same time_axis (the first instrument)
+        % %    timeref =  datenum(yy(timeok),mm(timeok),dd(timeok),hh(timeok),0*hh(timeok),0*hh(timeok));
         % interpolation on the longer instrument time
-            if j==1
-                timerefjd =  mintime:nanmean(diff(jd)):maxtime;
-                timeref = datenum(gregorian(timerefjd));
-            end
-            
-            timeinst =  datenum(yy,mm,dd,hh,0*hh,0*hh);
-            nortekdata.time(j,:) = timeref; %julian(YY,MM,DD,HH);
-            
-            pint = interp1(timeinst(~isnan(p)),p(~isnan(p)),timeref); 
-            tint = interp1(timeinst(~isnan(t)),t(~isnan(t)),timeref); 
-            uint = interp1(timeinst(~isnan(u)),u(~isnan(u)),timeref); 
-            vint = interp1(timeinst(~isnan(v)),v(~isnan(v)),timeref); 
-            wint = interp1(timeinst(~isnan(w)),w(~isnan(w)),timeref); 
-             
-            baddatamaskp = interp1(timeinst,single(isnan(p)),timeref,'nearest');
-            baddatamaskt = interp1(timeinst,single(isnan(t)),timeref,'nearest');      
-            baddatamasku = interp1(timeinst,single(isnan(u)),timeref,'nearest');
-            baddatamaskv = interp1(timeinst,single(isnan(v)),timeref,'nearest');   
-            baddatamaskw = interp1(timeinst,single(isnan(w)),timeref,'nearest');
-
-            
-            baddatamaskp(isnan(baddatamaskp)) = 1;
-            baddatamaskt(isnan(baddatamaskt)) = 1;            
-            baddatamasku(isnan(baddatamasku)) = 1;        
-            baddatamaskv(isnan(baddatamaskv)) = 1;        
-            baddatamaskw(isnan(baddatamaskw)) = 1;        
-            
-            pint(logical(baddatamaskp))= nan;
-            tint(logical(baddatamaskt))= nan;          
-            uint(logical(baddatamasku))= nan;
-            vint(logical(baddatamaskv))= nan;  
-            wint(logical(baddatamaskw))= nan;             
-            
-            pint(find(isnan(pint))) = 99999; 
-            tint(find(isnan(tint))) = 99999;
-            uint(find(isnan(uint))) = 99999;   
-            vint(find(isnan(vint))) = 99999;
-            wint(find(isnan(wint))) = 99999;             
-                        
-            nortekdata.p(j,:)    = pint;
-            nortekdata.t(j,:)    = tint;
-            nortekdata.u(j,:) = uint;
-            nortekdata.v(j,:) = vint;       
-            nortekdata.w(j,:) = wint;               
-
-         
-            nortekdata.serialnum(j) = serialno;
-            nortekdata.instrdpth(j) = instrdpth;     
-       else
-           
-          ibad = [ibad j];
-          jbad = [jbad j];
-       end
-       
-       j=j+1;
+        if ~exist('nortimeref','var')
+            timerefjd =  mintime:nanmean(diff(jd)):maxtime;
+            nortimeref = datenum(gregorian(timerefjd));
+        end
+        timeinst =  datenum(yy,mm,dd,hh,0*hh,0*hh);
+        nortekdata.time(j,:) = nortimeref; %julian(YY,MM,DD,HH);
+        nortekdata.p(j,:) = baddatamask(timeinst,p,nortimeref,99999);
+        nortekdata.t(j,:) = baddatamask(timeinst,t,nortimeref,99999);
+        nortekdata.u(j,:) = baddatamask(timeinst,u,nortimeref,99999);
+        nortekdata.v(j,:) = baddatamask(timeinst,v,nortimeref,99999);
+        nortekdata.w(j,:) = baddatamask(timeinst,w,nortimeref,99999);
+        end
     end
-    
 
+    % export oceansite format
+    nortekinfo = moorinfo.nortek;
+    nortekinfo.serial_num = nortekdata.serialnum;
+    instrdepth = nortekdata.instrdpth; % nominal depth of the bin
 
-    % for instrument without data
-%     for i=1:length(ibad);
-%        serialno = vecNOR(ibad(i));
-%             nortekdata.serialnum(jbad(i)) = serialno;
-%             nortekdata.instrdpth(jbad(i)) = zNOR(ibad(i));          
-%             nortekdata.p(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));
-%             nortekdata.t(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));         
-%             nortekdata.u(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));      
-%             nortekdata.v(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));    
-%             nortekdata.w(jbad(i),:)    = 99999*ones(size(nortekdata.p(jbad(i),:)));      
-%     end
+    write_CM_to_NetCDF(ncfilep, moor, lat, lon, nortekinfo, instrdepth, nortekdata.time(1,:), nortekdata.p,  nortekdata.u, nortekdata.v,  nortekdata.w)
 
-   % export oceansite format
-   nortekinfo = moorinfo.nortek;
-   nortekinfo.serial_num = nortekdata.serialnum;
-   instrdepth = nortekdata.instrdpth; % nominal depth of the bin
+    info=ncinfo([ncfilep '.nc']);
+    ncdisp([ncfilep '.nc']);
+    for ikk = 1:length(info.Variables)
+        nortekncdata.(info.Variables(ikk).Name) = ncread([ncfilep '.nc'],info.Variables(ikk).Name);
+    end
 
-   write_CM_to_NetCDF(ncfilep, moor, lat, lon, nortekinfo, instrdepth, nortekdata.time(1,:), nortekdata.p,  nortekdata.u, nortekdata.v,  nortekdata.w)
+    rodb_to_oceansitesnetcdf_testplotncnortek
 
-   info=ncinfo([ncfilep '.nc']);
-   ncdisp([ncfilep '.nc']);
-   for ikk = 1:length(info.Variables)
-    nortekncdata.(info.Variables(ikk).Name) = ncread([ncfilep '.nc'],info.Variables(ikk).Name);
-   end
-
-   rodb_to_oceansitesnetcdf_testplotncnortek
- 
 end
 
 
@@ -372,50 +276,46 @@ end
 % Now read in ADCP data if required
 %--------------------------------------
 if iiADCP>0
-    j=1;
-    
-    % loop to read one file at a time
+    isgood = true(size(vecADCP));
+    pd = moor_inoutpaths('nortek',moor);
 
-    for j=1:length(vecADCP);
-        
+    for j=1:length(vecADCP)
         ncfilep = [ncdir '/' moor '_ADCP' num2str(vecADCP(j))];
-        
-       serialno = vecADCP(j);
-       disp('*************************************************************')
-       disp(['Reading ADCP - ',num2str(serialno)])
-       disp('*************************************************************')
-
-    
-    % first determine how many bin files are to be processed
+        serialno = vecADCP(j);
+        disp('*************************************************************')
+        disp(['Reading ADCP - ',num2str(serialno)])
+        disp('*************************************************************')
+        % first determine how many bin files are to be processed
     % trying to do automatically
     num_bins=dir([procpath,moor,'/adp/',moor,'_',num2str(vecADCP(j)),'_bin*' '.edt'])
     num_bins=length(num_bins)
     num_bins
 
-    for j=1:num_bins % loop for total number of bins
-        
+    for jz=1:num_bins % loop for total number of bins  
         columns = ['YY:MM:DD:HH:Z:T:U:V:W:HDG:PIT:ROL:CS:CD:BEAM1SS:BEAM2SS:BEAM3SS'...
-            ':BEAM4SS:BEAM1COR:BEAM2COR:BEAM3COR:BEAM4COR:EV:BEAM1PGP:BEAM2PGP:BEAM3PGP:BEAM4PGP:InstrDepth'];
-        
-        indep  = z(j);
-        
-        if j<=9
-            infile  = [procpath,moor,'/adp/',moor,'_',num2str(vecADCP(j)),'_bin0',num2str(j),'.edt'];
-        else
-            infile  = [procpath,moor,'/adp/',moor,'_',num2str(vecADCP(j)),'_bin',num2str(j),'.edt'];
-        end
-                
-        if exist(infile,'file')==0
-            
+            ':BEAM4SS:BEAM1COR:BEAM2COR:BEAM3COR:BEAM4COR:EV:BEAM1PGP:BEAM2PGP:BEAM3PGP:BEAM4PGP:InstrDepth'];        
+        indep  = z(jz);
+        infile = fullfile(pd.stage3path,sprintf(pd.stage3form,j,jz));
+        if exist(infile,'file')==0            
             disp(['infile: ' infile ' does not exist.'])
-
         elseif exist(infile,'file')   > 0 
-
             [YY,MM,DD,HH,z,t,u,v,w,hdg,pit,rol,spd,direction,Amp1,Amp2,Amp3,Amp4,...
                 Beam1Cor,Beam2Cor,Beam3Cor,Beam4Cor,err,PG1,PG2,PG3,PG4,instrument_depth] = ...
                 rodbload(infile,[columns]);
            jd=julian(YY,MM,DD,HH);    
-           
+           t(t==-9999) = 99999;
+           z(z==-9999) = 99999;
+           u(u==-9999) = 99999;
+           v(v==-9999) = 99999;
+           w(w==-9999) = 99999;
+           hdg(hdg==-9999) = 99999;
+           pit(pit==-9999) = 99999;
+           rol(rol==-9999) = 99999;
+           err(err==-9999) = 99999;
+           PG1(PG1==-9999) = 99999;
+           PG2(PG2==-9999) = 99999;
+           PG3(PG3==-9999) = 99999;
+           PG4(PG4==-9999) = 99999;
            u = u/100;
            v = v/100;
            w = w/100;
@@ -423,37 +323,21 @@ if iiADCP>0
            
            timeok = (jd>jd_start & jd<jd_end);
            
-           bad_data=find(t==-9999); t(bad_data)=99999;
-           bad_data=find(z==-9999); z(bad_data)=99999;
-           bad_data=find(u==-9999/100); u(bad_data)=99999;
-           bad_data=find(v==-9999/100); v(bad_data)=99999;
-           bad_data=find(w==-9999/100); w(bad_data)=99999;
-           bad_data=find(hdg==-9999); hdg(bad_data)=99999;
-           bad_data=find(pit==-9999); pit(bad_data)=99999;
-           bad_data=find(rol==-9999); rol(bad_data)=99999;          
-           bad_data=find(err==-9999/100); err(bad_data)=99999;       
-           bad_data=find(PG1==-9999); PG1(bad_data)=99999;        
-           bad_data=find(PG2==-9999); PG2(bad_data)=99999;   
-           bad_data=find(PG3==-9999); PG3(bad_data)=99999;        
-           bad_data=find(PG4==-9999); PG4(bad_data)=99999;   
-           
-            ADCPdata(j).time(j,:) = datenum(YY(timeok),MM(timeok),DD(timeok),HH(timeok),0*HH(timeok),0*HH(timeok)); %julian(YY,MM,DD,HH);
-            ADCPdata(j).z(j,:) = z(timeok);
-            ADCPdata(j).t(j,:) = t(timeok);          
-            ADCPdata(j).u(j,:) = u(timeok);
-            ADCPdata(j).v(j,:) = v(timeok);       
-            ADCPdata(j).w(j,:) = w(timeok);   
-            ADCPdata(j).err(j,:) = err(timeok);    
-            ADCPdata(j).hdg(j,:) = hdg(timeok);       
-            ADCPdata(j).pit(j,:) = pit(timeok);   
-            ADCPdata(j).rol(j,:) = rol(timeok);                
-            ADCPdata(j).PG1(j,:) = PG1(timeok);       
-            ADCPdata(j).PG2(j,:) = PG2(timeok);    
-            ADCPdata(j).PG3(j,:) = PG3(timeok);       
-            ADCPdata(j).PG4(j,:) = PG4(timeok);       
-
+            ADCPdata(j).time(jz,:) = datenum(YY(timeok),MM(timeok),DD(timeok),HH(timeok),0*HH(timeok),0*HH(timeok)); %julian(YY,MM,DD,HH);
+            ADCPdata(j).z(jz,:) = z(timeok);
+            ADCPdata(j).t(jz,:) = t(timeok);          
+            ADCPdata(j).u(jz,:) = u(timeok);
+            ADCPdata(j).v(jz,:) = v(timeok);       
+            ADCPdata(j).w(jz,:) = w(timeok);   
+            ADCPdata(j).err(jz,:) = err(timeok);    
+            ADCPdata(j).hdg(jz,:) = hdg(timeok);       
+            ADCPdata(j).pit(jz,:) = pit(timeok);   
+            ADCPdata(j).rol(jz,:) = rol(timeok);                
+            ADCPdata(j).PG1(jz,:) = PG1(timeok);       
+            ADCPdata(j).PG2(jz,:) = PG2(timeok);    
+            ADCPdata(j).PG3(jz,:) = PG3(timeok);       
+            ADCPdata(j).PG4(jz,:) = PG4(timeok);       
         end
-        
         
     end
 
@@ -461,37 +345,36 @@ if iiADCP>0
         ADCPdata(j).name = ['ADCP_' num2str(serialno)];
         ADCPdata(j).moor = moor;            
 
+        % export oceansite format
+        adcpinfo = moorinfo.adcp;
+        adcpinfo.serial_num = serialno;
+        bin_depth = round(nanmean(ADCPdata(j).z,2)); % nominal depth of the bin
 
-       j=j+1;
+        pres = sw_pres(ADCPdata(j).z,lat);
+        write_ADCP_to_NetCDF(ncfilep, moor, lat, lon, adcpinfo, bin_depth, instrument_depth, pres, ADCPdata(j).time(1,:), ADCPdata(j).u, ADCPdata(j).v,  ADCPdata(j).w, ADCPdata(j).err)
 
-       % export oceansite format
-       adcpinfo = moorinfo.adcp;
-       adcpinfo.serial_num = serialno;
-       bin_depth = round(nanmean(ADCPdata(j).z,2)); % nominal depth of the bin
+        info=ncinfo([ncfilep '.nc']);
+        ncdisp([ncfilep '.nc']);
+        for ikk = 1:length(info.Variables)
+            ADCPncdata.(info.Variables(ikk).Name) = ncread([ncfilep '.nc'],info.Variables(ikk).Name);
+        end
 
-       pres = sw_pres(ADCPdata(j).z,lat);
-
-       write_ADCP_to_NetCDF(ncfilep, moor, lat, lon, adcpinfo, bin_depth, instrument_depth, pres, ADCPdata(j).time(1,:), ADCPdata(j).u, ADCPdata(j).v,  ADCPdata(j).w, ADCPdata(j).err)
-
-       info=ncinfo([ncfilep '.nc']);  
-       ncdisp([ncfilep '.nc']);
-       for ikk = 1:length(info.Variables)
-        ADCPncdata.(info.Variables(ikk).Name) = ncread([ncfilep '.nc'],info.Variables(ikk).Name);
-       end
-       
-       rodb_to_oceansitesnetcdf_testplotncadcp
+        rodb_to_oceansitesnetcdf_testplotncadcp
     end
 end
 
 % put the Oceansites conversion function here
-function datai = baddatamask(timeinst,data,timeref)
-                if length(data(~isnan(data)))>2
-                    datai = interp1(timeinst(~isnan(data)),data(~isnan(data)),timeref);
-                else
-                    datai = NaN;
-                end
-                baddatamask = interp1(timeinst,single(isnan(data)),timeref,'nearest');
-                baddatamask(isnan(baddatamask)) = 1;
-                datai(logical(baddatamask))= nan;
 
+function datai = baddatamask(timeinst,data,timeref,badval)
+if length(data(~isnan(data)))>2
+    datai = interp1(timeinst(~isnan(data)),data(~isnan(data)),timeref);
+else
+    datai = NaN;
+end
+baddatamask = interp1(timeinst,single(isnan(data)),timeref,'nearest');
+baddatamask(isnan(baddatamask)) = 1;
+datai(logical(baddatamask))=nan;
+if ~isnan(badval)
+    datai(isnan(datai)) = badval;
+end
 

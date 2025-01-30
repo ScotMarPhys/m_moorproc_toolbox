@@ -10,15 +10,6 @@ function convert_OSNAP_mooring_to_oceansites(depyear,institution,varargin)
 %
 % then call rodb_to_oceansitesnetcdf
 
-%-------------------------------------
-% Definition of the different path
-%pathosnap = pwd;
-workingdir = [basedir  '\exec\gitrepo\export_Oceansites'];
-% directory with the processed mooring data
-procpath = [basedir '\osnap\data\moor\proc\'];
-% output directory for the netcdf
-outpath = [basedir 'exec\gitrepo\export_Oceansites\oceansites_format'];
-
 %which moorings to work on
 %defaults
 switch institution
@@ -102,8 +93,6 @@ moorinfo.adcp.QC_indicator = 'excellent';
 
 %metadata based on institution/PI, plus which moorings to process
 
-
-cd(workingdir)
 
 for ijk= 1:length(moorlist)
     moor = [moorlist{ijk} '_' depyear];
