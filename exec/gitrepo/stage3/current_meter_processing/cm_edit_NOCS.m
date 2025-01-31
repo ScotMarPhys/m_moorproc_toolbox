@@ -1,20 +1,19 @@
 function cm_edit_NOCS(moor,varargin)
 % moor = 'rteb1_01_2014';
-% exemple of utilisation : cm_edit_NOCS_v4(moor,'filfac',10,'procpath','home/mstar/osnap/data/moor/proc/')
+% exemple of utilisation : cm_edit_NOCS_v4(moor,pd,'filfac',10)
 
 % Function for plotting directions of a mooring overlayed on the same axes
 % and speeds of a mooring overlayed on a second pair of axes.
 %
-% function cm_edit_NOCS('moor','filfac','procpath')
+% function cm_edit_NOCS('moor',pd,'filfac')
 %
 % required inputs:-
 %   moor: complete mooring name as string. e.g. 'wb1_1_200420'
 %cm_edit_NOCS_v3
 % optional inputs:-
+%   pd: output from moor_inoutpaths("instrument type",moor) - e.g. moor_inoutpaths('nor','ib3_03_2022')
+%   pd is found automatically if only 1 input, but if want to use filfac will need to specify pd as well as code defines first optional arument as this
 %   filfac: filter factor used for spike removal (default = 10)
-%   procpath: can specify exact path to proc directory if not using 
-%             standard data paths. 
-%             e.g. '/Volumes/noc/ooc/rpdmoc/rapid/data/moor/proc/'
 % 
 % Optional process to manually remove spikes with Data Brushing graphic tool
 % that is part of Matlab.
