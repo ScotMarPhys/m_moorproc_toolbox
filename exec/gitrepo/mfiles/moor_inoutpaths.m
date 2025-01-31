@@ -95,7 +95,7 @@ switch datatype
         pd.stage1log = fullfile(pd.stage1path, [moor '_seaguard_stage1.log']);
         pd.stage1form = [moor '_%5.5d.raw'];
 
-    case 'adcp'
+    case {'adcp' 'adp'}
         disp(datatype)
         moor = loc;
         pd.rawpath = fullfile(mg.moordatadir, 'raw', mg.cruise, datatype);

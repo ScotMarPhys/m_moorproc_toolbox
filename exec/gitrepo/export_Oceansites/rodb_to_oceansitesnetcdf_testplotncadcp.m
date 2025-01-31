@@ -1,6 +1,6 @@
 
-namefigadcp1 = [netcdffilepath '_uv'];
-namefigadcp2 = [netcdffilepath '_err'];
+namefigadcp1 = [ncfilep '_uv'];
+namefigadcp2 = [ncfilep '_err'];
 
 ADCPncdata.time = repmat(ADCPncdata.TIME',length(ADCPncdata.BINDEPTH),1);
 

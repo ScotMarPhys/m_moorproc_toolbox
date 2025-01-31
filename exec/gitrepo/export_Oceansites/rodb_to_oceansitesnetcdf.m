@@ -53,46 +53,13 @@ jd_end   = julian([e_d' hms2h([e_t;0]')]);
 iiMC = find(id == 337 | id == 335);
 vecMC = sn(iiMC);
 zMC = z(iiMC);
-% find the index number of RBRs
-iiRBR = find(id == 330);
-vecRBR = sn(iiRBR);
-% find the index number of Idronauts
-iiIDR = find(id == 339);
-vecIDR = sn(iiIDR);
-% find the index number of S4s
-iiS4 = find(id == 302);
-vecS4 = sn(iiS4);
-% and find index number of RCM11s
-iiRCM11 = find(id == 310);
-vecRCM11 = sn(iiRCM11);
-% and find index number of Sontek Argonauts
-iiARG = find(id == 366);
-vecARG = sn(iiARG);
 % and find index number of Nortek Aquadopps
 iiNOR = find((id == 368|id==370));
 vecNOR = sn(iiNOR);
 zNOR = z(iiNOR);
-% and find index number of AADI Seaguards
-iiSG = find(id == 301);
-vecSG = sn(iiSG);
 % Possible ADCP codes - taken from IMP moorings package
 iiADCP = find((id>=319) & (id <=328));
 vecADCP = sn(iiADCP);
-
-
-depths(:,1) = id([iiMC;iiRBR;iiIDR;iiS4;iiRCM11;iiARG;iiNOR;iiSG;iiADCP]);
-depths(:,2) = z([iiMC;iiRBR;iiIDR;iiS4;iiRCM11;iiARG;iiNOR;iiSG;iiADCP]);
-depths=sortrows(depths,2);
-iiiMC=find(depths(:,1)==337 | depths(:,1)== 335);
-iiiRBR=find(depths(:,1)==330);
-iiiIDR=find(depths(:,1)==339);
-iiiS4=find(depths(:,1)==302);  
-iiiRCM11=find(depths(:,1)==310);  
-iiiARG=find(depths(:,1)==366 | depths(:,1)==366337); 
-iiiNOR=find(depths(:,1)==368|depths(:,1)==370);
-iiiSG=find(depths(:,1)==301);
-iiiADCP=find(depths(:,1)>=319 & depths(:,1)<=328);
-iii=[iiiS4;iiiRCM11;iiiARG;iiiNOR;iiiMC;iiiRBR;iiiIDR;iiiSG;iiiADCP];
 
 % -----------------------------------
 % START OF READING IN INSTRUMENT DATA
@@ -222,7 +189,6 @@ if iiNOR>0
         disp(['Reading AQUADOPP - ',num2str(serialno)])
         disp('*************************************************************')
         infile = fullfile(pd.stage3path,sprintf(pd.stage3form,serialno));
-        % check if file exists
         fileopen=fopen(infile,'r');
         % read data into vectors and then into structure array
         [yy,mm,dd,hh,t,p,u,v,w,hdg,pit,rol,uss,vss,wss,ipow,cs,cd,instrdpth] = ...
@@ -277,7 +243,14 @@ end
 %--------------------------------------
 if iiADCP>0
     isgood = true(size(vecADCP));
-    pd = moor_inoutpaths('nortek',moor);
+    pd = moor_inoutpaths('adcp',moor);
+    if ~exist(pd.stage3path,'dir')
+        pd = moor_inoutpaths('adp',moor);
+        if ~exist(pd.stage3path,'dir')
+            warning('no processed (stage 3) adcp directory; skipping')
+            return
+        end
+    end
 
     for j=1:length(vecADCP)
         ncfilep = [pdo.ncpre '_ADCP' num2str(vecADCP(j))];
@@ -287,7 +260,7 @@ if iiADCP>0
         disp('*************************************************************')
         % first determine how many bin files are to be processed
     % trying to do automatically
-    num_bins=dir(fullfile(pd.stage3path,sprintf([pd.stage3form(1:end-9) '*.edt'],j)));
+    num_bins=dir(fullfile(pd.stage3path,sprintf([pd.stage3form(1:end-9) '*.edt'],serialno)));
     num_bins=length(num_bins);
     num_bins
 
@@ -295,7 +268,7 @@ if iiADCP>0
         columns = ['YY:MM:DD:HH:Z:T:U:V:W:HDG:PIT:ROL:CS:CD:BEAM1SS:BEAM2SS:BEAM3SS'...
             ':BEAM4SS:BEAM1COR:BEAM2COR:BEAM3COR:BEAM4COR:EV:BEAM1PGP:BEAM2PGP:BEAM3PGP:BEAM4PGP:InstrDepth'];        
         indep  = z(jz);
-        infile = fullfile(pd.stage3path,sprintf(pd.stage3form,j,jz));
+        infile = fullfile(pd.stage3path,sprintf(pd.stage3form,serialno,jz));
         if exist(infile,'file')==0            
             disp(['infile: ' infile ' does not exist.'])
         elseif exist(infile,'file')   > 0 
