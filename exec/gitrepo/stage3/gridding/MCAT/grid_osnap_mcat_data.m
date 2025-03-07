@@ -41,9 +41,10 @@ gridding                = 1  ;  % 1: linear, 2: using climatological profiles
 bathy                   = false ;  % turns on/off the bathy charts. off = flase
 mc_check_plot           = true; %false ;  % turns on/off the microcat check plots. off =false
 
-jg_start                = datenum(2014,07,01,00,00,00);
-jg_end                  = datenum(2024,07,12,00,00,00);
 
+% add start and end of total time period
+jg_start                = datenum(2014,07,01,00,00,00);
+jg_end                  = datenum(2024,07,15,00,00,00);
 
 jg_start_str = datestr(jg_start,'YYYYmm');
 jg_end_str = datestr(jg_end,'YYYYmm');

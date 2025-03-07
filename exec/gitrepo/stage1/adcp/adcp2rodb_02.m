@@ -126,13 +126,7 @@ for i = 1:length(vec)
     PG3=err*NaN; 
     PG4=err*NaN;
     p=all_data.Average_Pressure;
-
-
     z = gsw_z_from_p(p,lat); depth = -z; % depth (negatove height) from pressure
-
-    
-
-
 
     %% PRODUCE A DIAGNOSTIC PLOT HERE?
     x=datetime([year month day hour minute seconds]);
@@ -203,7 +197,7 @@ for i = 1:length(vec)
     Amp2_pro = mean(Amp2);SB2 = find(islocalmin(Amp2_pro),1,'last');
     Amp3_pro = mean(Amp3);SB3 = find(islocalmin(Amp3_pro),1,'last');
     SB = min([SB1,SB2,SB3]);
-    figure(1),clf
+    figure(2),clf
     plot(Amp1_pro),hold on,plot(Amp2_pro),plot(Amp3_pro)
     plot(SB,Amp1_pro(SB),'o')
     ylabel('Temporal mean amplitude [dB]')
@@ -248,28 +242,28 @@ for i = 1:length(vec)
     end
 
 
-    figure(2);sgt = sgtitle([moor   ' sn ' num2str(in_data.Config.SerialNo)],...
-      'Color','black', 'Interpreter', 'none');
-    sgt.FontSize = 20;
-    set(gcf, 'Units', 'Normalized', 'OuterPosition', [0, 0.04, 1, 0.96]);
-    
-    yy=rot90(bin_depths_mid(1,:));
+%     figure(3);sgt = sgtitle([moor   ' sn ' num2str(in_data.Config.SerialNo)],...
+%       'Color','black', 'Interpreter', 'none');
+%     sgt.FontSize = 20;
+%     set(gcf, 'Units', 'Normalized', 'OuterPosition', [0, 0.04, 1, 0.96]);
+%     
+%     yy=rot90(bin_depths_mid(1,:));
+% 
+%     yy=rot90(mean(depth)+up_down*bin_depths_mid(1,:));
 
-    yy=rot90(mean(depth)+up_down*bin_depths_mid(1,:));
 
-
-    ax(1)=subplot(311);
-    y=rot90(Beam1Cor);
-    contourf(avTime,yy,y(length(y(:,1))-bins_to_process:end,:),[50,75,100],'LineStyle','none');
-    axis ij;
-    ax(1)=subplot(312)
-    y=rot90(Beam2Cor);
-    contourf(y,[50,75,100],'LineStyle','none');
-    axis ij;   
-    ax(1)=subplot(313)
-    y=rot90(Beam3Cor);
-    contourf(y,[50,75,100],'LineStyle','none');
-    axis ij;
+%     ax(1)=subplot(311);
+%     y=rot90(Beam1Cor);
+% %     contourf(avTime,yy,y(length(y(:,1))-bins_to_process:end,:),[50,75,100],'LineStyle','none');
+%     axis ij;
+%     ax(1)=subplot(312)
+%     y=rot90(Beam2Cor);
+%     contourf(y,[50,75,100],'LineStyle','none');
+%     axis ij;   
+%     ax(1)=subplot(313)
+%     y=rot90(Beam3Cor);
+%     contourf(y,[50,75,100],'LineStyle','none');
+%     axis ij;
 
 
 
@@ -318,15 +312,15 @@ for i = 1:length(vec)
     % -------- generate logfile entries --------------
 
     sz   =   size(data);
-
     fprintf(fidlog,'Instrument Target Depth[m]  : %d\n',indep);
-    fprintf(fidlog,'Start date and time         : %s \n',datestr(gregorian(jd(1))));
-    fprintf(fidlog,'End date and time           : %s \n',datestr(gregorian(jd(end))));
-    sampling_rate = round(1./median(diff(jd)));
-    ex_samples = round((jd(end)-jd(1))*sampling_rate+1);
-    fprintf(fidlog,'Sampling Frequency [per day]: %d \n',sampling_rate);
-    fprintf(fidlog,'Number of samples           : %d; expected: %d \n',sz(1),ex_samples);
-
+    fprintf(fidlog,'Start date and time         : %s \n',datetime(x(1)));
+    fprintf(fidlog,'End date and time           : %s \n',datetime(x(end)));
+%     sampling_rate = round(1./median(diff(jd)));
+%     ex_samples = round((jd(end)-jd(1))*sampling_rate+1);
+    fprintf(fidlog,'Sampling Frequency [per day]: %s \n',datetime(x(2))-datetime(x(1)));
+%     fprintf(fidlog,'Number of samples           : %d; expected: %d \n',sz(1),ex_samples);
+    fprintf(fidlog,'Number of samples           : %d',sz(1));
+% 
     for k=1:bins_to_process
         if k==1
             m_hdg = median(heading(valI,:));

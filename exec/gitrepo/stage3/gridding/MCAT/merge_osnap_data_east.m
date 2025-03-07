@@ -617,38 +617,42 @@ Tfs     = [Tfs1;Tfs2;Tfs3;Tfs4;Tfs5;Tfs6;Tfs7];
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%
 % KB outputs stagged files
-z_stacked = [50;75;100;250;500;750;1000;1250;1500;1650;1775];
+z_stacked = [50;75;100;250;500;750;950;1000;1250;1500;1650;1775];
 
 %%% add NaN where instrument is missing
 fvs = NaN(1,length(JG));
-t_st1 = [fvs;Tfs1(1,:);fvs;Tfs1(2:4,:);fvs;Tfs1(5:6,:);fvs;Tfs1(7,:)];
-s_st1 = [fvs;Sfs1(1,:);fvs;Sfs1(2:4,:);fvs;Sfs1(5:6,:);fvs;Sfs1(7,:)];
-p_st1 = [fvs;Pfs1(1,:);fvs;Pfs1(2:4,:);fvs;Pfs1(5:6,:);fvs;Pfs1(7,:)];
+t_st1 = [fvs;Tfs1(1,:);fvs;Tfs1(2:4,:);fvs;fvs;Tfs1(5:6,:);fvs;Tfs1(7,:)];
+s_st1 = [fvs;Sfs1(1,:);fvs;Sfs1(2:4,:);fvs;fvs;Sfs1(5:6,:);fvs;Sfs1(7,:)];
+p_st1 = [fvs;Pfs1(1,:);fvs;Pfs1(2:4,:);fvs;fvs;Pfs1(5:6,:);fvs;Pfs1(7,:)];
 
-t_st2 = [fvs;Tfs2(1,:);fvs;Tfs2(2:7,:);fvs;Tfs2(8,:)];
-s_st2 = [fvs;Sfs2(1,:);fvs;Sfs2(2:7,:);fvs;Sfs2(8,:)];
-p_st2 = [fvs;Pfs2(1,:);fvs;Pfs2(2:7,:);fvs;Pfs2(8,:)];
+t_st2 = [fvs;Tfs2(1,:);fvs;Tfs2(2:4,:);fvs;Tfs2(5:7,:);fvs;Tfs2(8,:)];
+s_st2 = [fvs;Sfs2(1,:);fvs;Sfs2(2:4,:);fvs;Sfs2(5:7,:);fvs;Sfs2(8,:)];
+p_st2 = [fvs;Pfs2(1,:);fvs;Pfs2(2:4,:);fvs;Pfs2(5:7,:);fvs;Pfs2(8,:)];
 
-t_st3 = [fvs;fvs;Tfs3(1,:);fvs;Tfs3(2:6,:);fvs;Tfs3(7,:)];
-s_st3 = [fvs;fvs;Sfs3(1,:);fvs;Sfs3(2:6,:);fvs;Sfs3(7,:)];
-p_st3 = [fvs;fvs;Pfs3(1,:);fvs;Pfs3(2:6,:);fvs;Pfs3(7,:)];
+t_st3 = [fvs;fvs;fvs;Tfs3(1:3,:);fvs;Tfs3(4:6,:);fvs;Tfs3(7,:)];
+s_st3 = [fvs;fvs;fvs;Sfs3(1:3,:);fvs;Sfs3(4:6,:);fvs;Sfs3(7,:)];
+p_st3 = [fvs;fvs;fvs;Pfs3(1:3,:);fvs;Pfs3(4:6,:);fvs;Pfs3(7,:)];
 
-t_st4 = [Tfs4(1,:);fvs;Tfs4(2:8,:);fvs;Tfs4(9,:)];
-s_st4 = [Sfs4(1,:);fvs;Sfs4(2:8,:);fvs;Sfs4(9,:)];
-p_st4 = [Pfs4(1,:);fvs;Pfs4(2:8,:);fvs;Pfs4(9,:)];
+t_st4 = [Tfs4(1,:);fvs;Tfs4(2:5,:);fvs;Tfs4(6:8,:);fvs;Tfs4(9,:)];
+s_st4 = [Sfs4(1,:);fvs;Sfs4(2:5,:);fvs;Sfs4(6:8,:);fvs;Sfs4(9,:)];
+p_st4 = [Pfs4(1,:);fvs;Pfs4(2:5,:);fvs;Pfs4(6:8,:);fvs;Pfs4(9,:)];
 
-t_st5 = [Tfs5(1,:);fvs;Tfs5(2:10,:)];
-s_st5 = [Sfs5(1,:);fvs;Sfs5(2:10,:)];
-p_st5 = [Pfs5(1,:);fvs;Pfs5(2:10,:)];
+t_st5 = [Tfs5(1,:);fvs;Tfs5(2:5,:);fvs;Tfs5(6:10,:)];
+s_st5 = [Sfs5(1,:);fvs;Sfs5(2:5,:);fvs;Sfs5(6:10,:)];
+p_st5 = [Pfs5(1,:);fvs;Pfs5(2:5,:);fvs;Pfs5(6:10,:)];
 
-t_st6 = [Tfs6(1,:);fvs;Tfs6(2:10,:)];
-s_st6 = [Sfs6(1,:);fvs;Sfs6(2:10,:)];
-p_st6 = [Pfs6(1,:);fvs;Pfs6(2:10,:)];
+t_st6 = [Tfs6(1,:);fvs;Tfs6(2:5,:);fvs;Tfs6(6:10,:)];
+s_st6 = [Sfs6(1,:);fvs;Sfs6(2:5,:);fvs;Sfs6(6:10,:)];
+p_st6 = [Pfs6(1,:);fvs;Pfs6(2:5,:);fvs;Pfs6(6:10,:)];
+
+t_st7 = [Tfs7(1,:);fvs;Tfs7(2:11,:)];
+s_st7 = [Sfs7(1,:);fvs;Sfs7(2:11,:)];
+p_st7 = [Pfs7(1,:);fvs;Pfs7(2:11,:)];
 
 %%% add NaN where instrument is missing
-Tstacked = stack_vars(t_st1,t_st2,t_st3,t_st4,t_st5,t_st6);
-Sstacked = stack_vars(s_st1,s_st2,s_st3,s_st4,s_st5,s_st6);
-Pstacked = stack_vars(p_st1,p_st2,p_st3,p_st4,p_st5,p_st6);
+Tstacked = stack_vars(t_st1,t_st2,t_st3,t_st4,t_st5,t_st6,t_st7);
+Sstacked = stack_vars(s_st1,s_st2,s_st3,s_st4,s_st5,s_st6,s_st7);
+Pstacked = stack_vars(p_st1,p_st2,p_st3,p_st4,p_st5,p_st6,p_st7);
 
 save([grdatdir outputfile_stacked '.mat'],...
     'Tstacked','Sstacked','Pstacked','JG','z_stacked')
@@ -1046,99 +1050,11 @@ title('AFTER DESPIKING AND INTERPOLATION')
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)   
 print('-dpng',[grdatdir outputfile '_potdens'])
     
-% MAKE MERGED DATA ONLY FIGURE
-% Temperature
-
-figure;
-ax(1)=subplot(3,1,1);
-
-x=JG;y=pgg;z=TG_east;
-[c,h]=contourf(x,y,z,100,'LineColor','none');
-caxis([ceil(min(min(TG_east))) floor(max(max(TG_east)))]);
-C = colorbar;
-C.Label.String = 'Conservative Temperature (^{o} C)';
-C.Ticks=[floor(min(min(TG_east))):1:ceil(max(max(TG_east)))];
-C.TickLength=0.03;
-hold on
-[c,h]=contour(x , y, z,[2 4 6 8 10 12 14],'LineColor','k','LineWidth',0.25);
-clabel(c,h,'LabelSpacing',500,'Color','w')
-xlabel(gca,'Year');
-ylabel(gca,'Pressure (m)');
-[Y,~,~]=datevec(JG);
-date1=datenum(min(Y),1,1);
-date2=datenum(max(Y),1,1);
-datetick('x','Keeplimits');
-axis ij
-title('Rockall Trough Eastern Boundary Gridded Temperature')
-cmap=cmocean('Thermal');
-colormap(ax(1),cmap);
-
-% Salinity
-
-ax(2)=subplot(3,1,2)
-
-x=JG;y=pgg;z=SG_east;
-[c,h]=contourf(x,y,z,12,'LineColor','none');
-caxis([round(min(min(z)),1) round(max(max(z)),1)]);
-C = colorbar;
-cmap=cmocean('Haline');
-colormap(ax(2),cmap);
-C.Label.String = 'Absolute Salinity (g kg^{-1})';
-C.Ticks=[round(min(min(z)),1):0.1:round(max(max(z)),1)];
-C.TickLength=0.03;
-hold on
-[c,h]=contour(JG , pgg, SGfs,[35.2 35.4 35.6],'LineColor','k','LineWidth',0.25); 
-clabel(c,h,'LabelSpacing',500,'Color','w')
-xlabel(gca,'Year');
-ylabel(gca,'Pressure (m)');
-% SORT LABELS
-[Y,~,~]=datevec(JG);
-date1=datenum(min(Y),1,1);
-date2=datenum(max(Y),1,1);
-datetick('x','Keeplimits');
-axis ij
-title('Rockall Trough Eastern Boundary Gridded Salinity')
-
-
-% Density
-
-ax(3)=subplot(3,1,3);
-
-x=JG;y=pgg;z=gsw_rho(SG_east,TG_east,0); 
-[c,h]=contourf(x,y,z,12,'LineColor','none');
-caxis([round(min(min(z)),1) round(max(max(z)),1)]);
-C = colorbar;
-cmap=cmocean('Dense');
-colormap(ax(3),cmap);
-C = colorbar;
-C.Label.String = 'Potential density (kg/m^{3})';
-C.Ticks=[round(min(min(z)),1):0.2:round(max(max(z)),1)];
-C.TickLength=0.03;
-hold on
-[c,h]=contour(JG , pgg, z,[1027.8 1027.5 1027.2],'LineColor','k','LineWidth',0.25); 
-clabel(c,h,'LabelSpacing',500,'Color','w')
-xlabel(gca,'Year');
-ylabel(gca,'Pressure (m)');
-% SORT LABELS
-[Y,~,~]=datevec(JG);
-date1=datenum(min(Y),1,1);
-date2=datenum(max(Y),1,1);
-datetick('x','Keeplimits');
-axis ij
-title('Rockall Trough Eastern Boundary Gridded Density')
-
-% save figure
-width=35; height=20; FS=12; FN='Arial';
-for hh=1:numel(ax)
-    set(ax(hh),'fontsize', FS, 'FontName',FN);
-end
-set(gcf,'units','centimeters','position',[5 5 width height])
-print('-dpng',[grdatdir outputfile])
 
  
 %% functions
-function Ustacked = stack_vars(U1,U2,U3,U4,U5,U6)
-    Ustacked = cat(3,U1,U2,U3,U4,U5,U6);
+function Ustacked = stack_vars(U1,U2,U3,U4,U5,U6,U7)
+    Ustacked = cat(3,U1,U2,U3,U4,U5,U6,U7);
     Ustacked = sum(Ustacked,3,'omitnan');
     Ustacked(Ustacked==0)=NaN;
 end

@@ -577,9 +577,9 @@ t_st2 = [fvs;Tfs2(1,:);fvs;Tfs2(2:7,:);fvs;Tfs2(8,:)];
 s_st2 = [fvs;Sfs2(1,:);fvs;Sfs2(2:7,:);fvs;Sfs2(8,:)];
 p_st2 = [fvs;Pfs2(1,:);fvs;Pfs2(2:7,:);fvs;Pfs2(8,:)];
 
-t_st3 = [fvs;fvs;Tfs3(1,:);fvs;Tfs3(2:6,:);fvs;Tfs3(7,:)];
-s_st3 = [fvs;fvs;Sfs3(1,:);fvs;Sfs3(2:6,:);fvs;Sfs3(7,:)];
-p_st3 = [fvs;fvs;Pfs3(1,:);fvs;Pfs3(2:6,:);fvs;Pfs3(7,:)];
+t_st3 = [fvs;Tfs3(1,:);fvs;Tfs3(2:9,:)];
+s_st3 = [fvs;Sfs3(1,:);fvs;Sfs3(2:9,:)];
+p_st3 = [fvs;Pfs3(1,:);fvs;Pfs3(2:9,:)];
 
 t_st4 = [Tfs4(1,:);fvs;Tfs4(2:8,:);fvs;Tfs4(9,:)];
 s_st4 = [Sfs4(1,:);fvs;Sfs4(2:8,:);fvs;Sfs4(9,:)];
@@ -593,10 +593,14 @@ t_st6 = [Tfs6(1,:);fvs;Tfs6(2:10,:)];
 s_st6 = [Sfs6(1,:);fvs;Sfs6(2:10,:)];
 p_st6 = [Pfs6(1,:);fvs;Pfs6(2:10,:)];
 
+t_st7 = [Tfs7(1,:);fvs;Tfs7(2:9,:);Tfs7(12,:)];
+s_st7 = [Sfs7(1,:);fvs;Sfs7(2:9,:);Sfs7(12,:)];
+p_st7 = [Pfs7(1,:);fvs;Pfs7(2:9,:);Pfs7(12,:)];
+
 %%% add NaN where instrument is missing
-Tstacked = stack_vars(t_st1,t_st2,t_st3,t_st4,t_st5,t_st6);
-Sstacked = stack_vars(s_st1,s_st2,s_st3,s_st4,s_st5,s_st6);
-Pstacked = stack_vars(p_st1,p_st2,p_st3,p_st4,p_st5,p_st6);
+Tstacked = stack_vars(t_st1,t_st2,t_st3,t_st4,t_st5,t_st6,t_st7);
+Sstacked = stack_vars(s_st1,s_st2,s_st3,s_st4,s_st5,s_st6,s_st7);
+Pstacked = stack_vars(p_st1,p_st2,p_st3,p_st4,p_st5,p_st6,p_st7);
 
 save([grdatdir outputfile_stacked '.mat'],...
     'Tstacked','Sstacked','Pstacked','JG','z_stacked')
@@ -976,8 +980,8 @@ RTWB_merg.comment{9,1}= 'SGfs2 -- salinity interpolated onto the time grid (JG) 
 save([grdatdir outputfile],'RTWB_merg');
  
 %% functions
-function Ustacked = stack_vars(U1,U2,U3,U4,U5,U6)
-    Ustacked = cat(3,U1,U2,U3,U4,U5,U6);
+function Ustacked = stack_vars(U1,U2,U3,U4,U5,U6,U7)
+    Ustacked = cat(3,U1,U2,U3,U4,U5,U6,U7);
     Ustacked = sum(Ustacked,3,'omitnan');
     Ustacked(Ustacked==0)=NaN;
 end

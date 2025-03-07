@@ -8,20 +8,20 @@
 
 %% filename 
 startdate = '201407'; % does not change!
-enddate='202207';
+enddate='202407';
 version='v1';
 filename =strcat('Rockall_Trough_mooring_stacked_TSUV_',startdate,'_',enddate,'_', version)
-outdir                      = [pathgit '/data/moor/THREDDS'];
+outdir                      = [basedir '/osnap/data/moor/THREDDS'];
 if exist(outdir,'dir')==0;mkdir(outdir);end
 outfile                    = fullfile(outdir, [filename '.nc']);
 
 %% Input data
-tsdir                       = [pathgit '/data/moor/proc/hydro_grid_merged/'];
-vldir                       = [pathgit '/data/moor/proc/velocity_grid_merged/'];%[pathosnap '/data/moor/proc/velocity_grid_merged/'];
+tsdir                       = [basedir '/osnap/data/moor/proc/hydro_grid_merged/'];
+vldir                       = [basedir '/osnap/data/moor/proc/velocity_grid_merged/'];%[pathosnap '/data/moor/proc/velocity_grid_merged/'];
 
 %% T S DATA 
 % Load western array data
-TSWB = load([tsdir 'Hydro_rtwb_stacked_201407_202207_v0.mat']);
+TSWB = load([tsdir 'Hydro_rtwb_stacked_201407_202407_v0.mat']);
 
 % rename var and make NaN 99999
 TS_WEST                 =TSWB.Tstacked;
@@ -31,7 +31,7 @@ ZS_WEST_TS                 =TSWB.z_stacked;
 time                    =TSWB.JG; 
     
 %Load eastern array data
-TSEB = load([tsdir 'Hydro_rteb_stacked_201407_202207_v0.mat']);
+TSEB = load([tsdir 'Hydro_rteb_stacked_201407_202407_v0.mat']);
 TS_EAST                 =TSEB.Tstacked;
 SS_EAST                 =TSEB.Sstacked;
 PS_EAST_TS                 =TSEB.Pstacked;
