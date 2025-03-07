@@ -4,7 +4,7 @@
 %% filename 
 startdate = '201407' % does not change!
 enddate='202407';
-version='v1';
+version='v2';
 filename =strcat('Rockall_Trough_mooring_gridded_TSUV_',startdate,'_',enddate,'_', version)
 % outdir                      =  [pathgit '\data\processed\THREDDS_DATA\'];%['X:\Marphys_Archive\Data\OSNAP\THREDDS_DATA'];
 outdir                      = [basedir '/osnap/data/moor/THREDDS'];

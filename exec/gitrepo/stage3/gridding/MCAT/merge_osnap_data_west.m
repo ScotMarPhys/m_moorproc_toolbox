@@ -593,9 +593,9 @@ t_st6 = [Tfs6(1,:);fvs;Tfs6(2:10,:)];
 s_st6 = [Sfs6(1,:);fvs;Sfs6(2:10,:)];
 p_st6 = [Pfs6(1,:);fvs;Pfs6(2:10,:)];
 
-t_st7 = [Tfs7(1,:);fvs;Tfs7(2:9,:);Tfs7(12,:)];
-s_st7 = [Sfs7(1,:);fvs;Sfs7(2:9,:);Sfs7(12,:)];
-p_st7 = [Pfs7(1,:);fvs;Pfs7(2:9,:);Pfs7(12,:)];
+t_st7 = [Tfs7(1,:);fvs;Tfs7(2:10,:)];
+s_st7 = [Sfs7(1,:);fvs;Sfs7(2:10,:)];
+p_st7 = [Pfs7(1,:);fvs;Pfs7(2:10,:)];
 
 %%% add NaN where instrument is missing
 Tstacked = stack_vars(t_st1,t_st2,t_st3,t_st4,t_st5,t_st6,t_st7);
