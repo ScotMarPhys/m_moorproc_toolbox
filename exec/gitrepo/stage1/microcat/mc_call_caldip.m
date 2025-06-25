@@ -58,7 +58,7 @@ ctdnum = sprintf('%03d',str2double(cast));
 
 cruise = MOORPROC_G.cruise;
 
-doctd = 1;% 1; % whether to load and plot CTD data: 1 if mstar format, 99 if native cnv file (without header)
+doctd = 99;% 1; % whether to load and plot CTD data: 1 if mstar format, 99 if native cnv file (without header)
 
 % get paths for data input and output
 pd = moor_inoutpaths('microcat_cal_dip',cast);
@@ -85,9 +85,9 @@ end
 if ~exist(pd.infofile,'file')
     error('infofile %s not found',pd.infofile)
 end
-if ~exist(pd.ctdfile,'file')
-    error('ctdinfile %s not found',pd.ctdfile)
-end
+% if ~exist(pd.ctdfile,'file')
+%     error('ctdinfile %s not found',pd.ctdfile)
+% end
 if ~exist(pd.stage1fig,'dir')
     mkdir(pd.stage1fig)
 end
@@ -102,19 +102,22 @@ if ~exist('doctd','var') || doctd == 1
     end
 elseif doctd == 99 % using cnv file instead of .nc
     warning('hardwired cast numbers/times in %s (what cruise is this code from?)',mfilename)
-    if contains(cast,'1')
-       start_date_cast = datenum(2018,07,02,18,17,06);  
-    elseif contains(cast,'2')
-       start_date_cast = datenum(2018,07,03,17,17,42);  
-    elseif contains(cast,'3')
-       start_date_cast = datenum(2018,07,04,17,19,06);         
-    elseif contains(cast,'5')
-       start_date_cast = datenum(2018,07,07,03,08,39); 
-       start_date_cast_9141 = datenum(2016,7,4,16,00,01);
-    elseif contains(cast,'6')
-       start_date_cast = datenum(2018,07,07,13,13,15);
+    % if contains(cast,'1')
+    %    start_date_cast = datenum(2018,07,02,18,17,06);  
+    % elseif contains(cast,'2')
+    %    start_date_cast = datenum(2018,07,03,17,17,42);  
+    % elseif contains(cast,'3')
+    %    start_date_cast = datenum(2018,07,04,17,19,06);         
+    % elseif contains(cast,'5')
+    %    start_date_cast = datenum(2018,07,07,03,08,39); 
+    %    start_date_cast_9141 = datenum(2016,7,4,16,00,01);
+    % elseif contains(cast,'6')
+    %    start_date_cast = datenum(2018,07,07,13,13,15);
+    if contains(cast,'13') & strcmpi(cruise,'ce25007')
+       start_date_cast = datenum(2025,05,14,04,33,59);
     end
-    read_ctd_cnv(pd.ctdfile,start_date_cast);
+    d=read_cnv_data(pd.cnvfile,start_date_cast);
+    d.yd=d.yd-jd0;
 end
 
 % --- get mooring information from infofile ---
@@ -314,7 +317,7 @@ title(['CAST ' cast ' Calibration Dip'])
 if doctd
     hl = plot(d.yd,d.cond1-.02,d.yd,d.cond1+.02,d.yd,d.cond1,d.yd,d.cond2); 
     set(hl(1:2),'color',[.8 .8 .8],'linestyle','--');
-    set(hl(3),'color',[0 0 0]);set(hl(4),'color',[.4 .4 .4]); % ylf jc145 plot both
+    set(hl(3),'color',[0 0 0], 'LineWidth',1.5 );set(hl(4),'color',[.4 .4 .4]); % ylf jc145 plot both
     title(['CAST ' cast  ' Calibration Dip (-k=CTD1,gray=CTD2)'])
 end
 xlim(sort([jdstt-.01 jdend+.01])); grid

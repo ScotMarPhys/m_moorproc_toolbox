@@ -45,6 +45,7 @@ switch datatype
         pd.stage1log = fullfile(pd.stage1path,'microcat2rodb.log');
         pd.stage1fig = fullfile(mg.reportdir,'figs','caldip');
         pd.ctdfile = fullfile(mg.ctddir,sprintf('ctd_%s_%03d_psal.nc',mg.cruise_ctd,castn));
+        pd.cnvfile = fullfile(mg.ctddir,sprintf('ctd_%s_%03d.cnv',mg.cruise_ctd,castn));
         pd.stage2path = fullfile(mg.moordatadir, 'proc_calib'); %***
         pd.stage2fig = fullfile(mg.reportdir,'figs','caldip',['microcat_check_cast_' cast '_plot']);
         pd.stage2log = fullfile(mg.reportdir,'stats',['microcat_check' cast '.log']);
@@ -209,5 +210,9 @@ switch datatype
                 pd.ctd_cnvfile = fullfile(mg.ctddir,'ASCII_FILES',sprintf('ar30-04%3.3d.cnv',cast));
             case 'dy181'
                 pd.bottle_file = fullfile(mg.ctddir,sprintf('fir_%s_%03d.nc',mg.cruise,cast));
-        end
+            case 'ce25007'
+                pd.ctd_1hzfile = fullfile(mg.ctddir,sprintf('ctd_%s_%3.3d_raw.nc',mg.cruise,cast));
+                pd.bottle_file = fullfile(mg.ctddir,'ASCII_FILES',sprintf('ar30-04%3.3d.ros',cast));
+                pd.ctd_cnvfile = fullfile(mg.ctddir,'ASCII_FILES',sprintf('ar30-04%3.3d.cnv',cast));
+            end
 end

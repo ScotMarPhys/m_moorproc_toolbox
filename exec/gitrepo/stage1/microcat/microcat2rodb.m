@@ -385,12 +385,19 @@ if cnv==0 % data is in .asc file
         End_Date   = dt(dtl,[5 4 3]);
         jd         = julian([dt(:,[5 4 3]) HH]) - toffset;
         
-    elseif  size(dt,2) ==9;
+    elseif  size(dt,2) ==9
         
         HH         = hms2h(dt(:,7),dt(:,8),dt(:,9)); % decimal hour
         Start_Date = dt(1,[6 5 4]);
         End_Date   = dt(dtl,[6 5 4]);
         jd         = julian([dt(:,[6 5 4]) HH]) - toffset;
+
+    elseif  size(dt,2) ==10
+        
+        HH         = hms2h(dt(:,8),dt(:,9),dt(:,10)); % decimal hour
+        Start_Date = dt(1,[7 6 5]);
+        End_Date   = dt(dtl,[7 6 5]);
+        jd         = julian([dt(:,[7 6 5]) HH]) - toffset;
         
     end
 else % data is in cnv file
@@ -416,6 +423,7 @@ else % data is in cnv file
     if size(dt,2)==5 % SMP with pressure
         cnv_days=dt(:,4); % seconds since 1st Jan 2000.
         jd=cnv_days+julian(toffset,1,1,0) - 1;
+        %jd=cnv_days
         disp(['dateoffset : ',num2str(toffset)]);
         gtime=gregorian(jd);
         HH=hms2h(gtime(:,4),gtime(:,5),gtime(:,6));
@@ -458,6 +466,10 @@ if cnv==0 %.asc file
     data = [TIME(:,1:3) hms2h(TIME(:,4:6)) dt(:,1) dt(:,2)*10];
     
     if  size(dt,2) ==9           % with pressure
+        data = [data dt(:,3)];
+        cols = colsp;
+        fort = fortp;
+    elseif size(dt,2)==10
         data = [data dt(:,3)];
         cols = colsp;
         fort = fortp;
