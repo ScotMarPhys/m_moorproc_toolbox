@@ -11,9 +11,16 @@
 
 
 clearvars; close('all');
-indir   = 'C:\Users\sa01ld\m_moorproc_toolbox';
+addpath(genpath('D:\Work_computer_sync\MATLAB_functions'));
 
-datafile = fullfile(indir,'data/moor/THREDDS/Rockall-Trough-Mooring-Time-Series-2022.nc');
+% indir   = 'C:\Users\sa01ld\m_moorproc_toolbox';
+indir = 'D:\Work_computer_sync\OSNAP_postdoc\Python\m_moorproc_toolbox';
+outdir = 'D:\Work_computer_sync\OSNAP_postdoc\Python\m_moorproc_toolbox\data\moor\THREDDS\figs\';
+% datafile = fullfile(indir,'data/moor/THREDDS/Rockall-Trough-Mooring-Time-Series-2022.nc');
+datafile = fullfile(indir,'data/moor/THREDDS/Rockall_Trough_mooring_gridded_TSUV_201407_202207_v0.nc');
+
+
+
 finfo=ncinfo(datafile);
 
 mooring='EAST';
@@ -150,7 +157,7 @@ dy120=datenum(2020,10,18,00,00,00);
 %%%%%%%%%%%%%%%%%%% TEMPERATURE %%%%%%%%%%%%%%%%%%%
 x=ncread(datafile,'TIME')+datenum(1950,1,1,0,0,0);
 y=ncread(datafile,'PRES');
-z=gsw_pt_from_CT(ncread(datafile,['SG_' mooring]),ncread(datafile,['TG_' mooring])-273.15);
+z=gsw_pt_from_CT(ncread(datafile,['SG_' mooring]),ncread(datafile,['TG_' mooring]));
 ax(1)=subplot(3,1,1);
 [c,h]=contourf(x,y,z,100,'LineColor','none');
 caxis([ceil(min(min(z))) floor(max(max(z)))]);
@@ -214,13 +221,13 @@ plot([DY053 DY053],[0 1800],'--k','LineWidth',2);
 plot([dy078 dy078],[0 1800],'--k','LineWidth',2);
 plot([dy120 dy120],[0 1800],'--k','LineWidth',2);
 plot([ar30 ar30],[0 1800],'--k','LineWidth',2);
-
+plot([jc238 jc238],[0 1800],'--k','LineWidth',2);
 
 %%%%%%%%%%%%%%%%%%% DENSITY %%%%%%%%%%%%%%%%%%%
 ax(3)=subplot(3,1,3);
 x=ncread(datafile,'TIME')+datenum(1950,1,1,0,0,0);
 y=ncread(datafile,'PRES');
-z=gsw_rho(ncread(datafile,['SG_' mooring]),ncread(datafile,['TG_' mooring])-273.15,0)-1000;
+z=gsw_rho(ncread(datafile,['SG_' mooring]),ncread(datafile,['TG_' mooring]),0)-1000;
 [c,h]=contourf(x,y,z,12,'LineColor','none');
 caxis([round(min(min(z)),1) round(max(max(z)),1)]);
 C = colorbar;
@@ -246,12 +253,12 @@ plot([DY053 DY053],[0 1800],'--k','LineWidth',2);
 plot([dy078 dy078],[0 1800],'--k','LineWidth',2);
 plot([dy120 dy120],[0 1800],'--k','LineWidth',2);
 plot([ar30 ar30],[0 1800],'--k','LineWidth',2);
-
+plot([jc238 jc238],[0 1800],'--k','LineWidth',2);
 
 width=35; height=20; FS=20; FN='Helvetica';
 set(ax(1:3),'fontsize', FS, 'FontName',FN);
 set(gcf,'units','centimeters','position',[5 5 width height])
-print('-dpng',['C:\Users\sa01ld\Desktop\OSNAP\ScotMarPhys.OSNAP-Mooring-Processing.io\img\' mooring '_TS'])
+print('-dpng',[outdir mooring '_TS'])
 
 
 %% 3 plot currents
@@ -282,6 +289,7 @@ text(DY053,0,'DY053','Rotation',45,'fontsize', 16, 'FontName','Helvetica');
 text(dy078,0,'DY078','Rotation',45,'fontsize', 16, 'FontName','Helvetica');
 text(dy120,0,'DY120','Rotation',45,'fontsize', 16, 'FontName','Helvetica');
 text(ar30,0,'AR30','Rotation',45,'fontsize', 16, 'FontName','Helvetica');
+text(jc238,0,'JC238','Rotation',45,'fontsize', 16, 'FontName','Helvetica');
 hold on
 plot([KN221 KN221],[0 1800],'--k','LineWidth',2);
 plot([PE399 PE399],[0 1800],'--k','LineWidth',2);
@@ -289,12 +297,14 @@ plot([DY053 DY053],[0 1800],'--k','LineWidth',2);
 plot([dy078 dy078],[0 1800],'--k','LineWidth',2);
 plot([dy120 dy120],[0 1800],'--k','LineWidth',2);
 plot([ar30 ar30],[0 1800],'--k','LineWidth',2);
+plot([jc238 jc238],[0 1800],'--k','LineWidth',2);
+
 axis ij
 width=35; height=10; FS=14; FN='Helvetica';
 set(gca,'fontsize', FS, 'FontName',FN);
 set(gcf,'units','centimeters','position',[5 5 width height])
-print('-dpng',['Figures/' mooring '_NOR_V'])
-print('-dpng',['C:\Users\sa01ld\Desktop\OSNAP\ScotMarPhys.OSNAP-Mooring-Processing.io\img\' mooring '_NOR_V']);
+print('-dpng',['Figures/' mooring '_NOR_U'])
+print('-dpng',[outdir mooring '_NOR_U']);
 
 %%%%%%%%%%%%%%%%%%% V %%%%%%%%%%%%%%%%%%%
 x=ncread(datafile,'TIME')+datenum(1950,1,1,0,0,0);
@@ -318,12 +328,14 @@ plot([DY053 DY053],[0 1800],'--k','LineWidth',2);
 plot([dy078 dy078],[0 1800],'--k','LineWidth',2);
 plot([dy120 dy120],[0 1800],'--k','LineWidth',2);
 plot([ar30 ar30],[0 1800],'--k','LineWidth',2);
+plot([jc238 jc238],[0 1800],'--k','LineWidth',2);
+
 axis ij
 width=35; height=10; FS=14; FN='Helvetica';
 set(gca,'fontsize', FS, 'FontName',FN);
 set(gcf,'units','centimeters','position',[5 5 width height])
-print('-dpng',['Figures/' mooring '_NOR_U'])
-print('-dpng',['C:\Users\sa01ld\Desktop\OSNAP\ScotMarPhys.OSNAP-Mooring-Processing.io\img\' mooring '_NOR_U']);
+print('-dpng',['Figures/' mooring '_NOR_V'])
+print('-dpng',[outdir mooring '_NOR_V']);
 
 %%%%%%%%%%%%%%%%%%% W %%%%%%%%%%%%%%%%%%%
 
@@ -349,11 +361,13 @@ plot([DY053 DY053],[0 1800],'--k','LineWidth',2);
 plot([dy078 dy078],[0 1800],'--k','LineWidth',2);
 plot([dy120 dy120],[0 1800],'--k','LineWidth',2);
 plot([ar30 ar30],[0 1800],'--k','LineWidth',2);
+plot([jc238 jc238],[0 1800],'--k','LineWidth',2);
+
 axis ij
 width=35; height=10; FS=14; FN='Helvetica';
 set(gca,'fontsize', FS, 'FontName',FN);
 set(gcf,'units','centimeters','position',[5 5 width height])
 print('-dpng',['Figures/' mooring '_NOR_W'])
-print('-dpng',['C:\Users\sa01ld\Desktop\OSNAP\ScotMarPhys.OSNAP-Mooring-Processing.io\img\' mooring '_NOR_W']);
+print('-dpng',[outdir mooring '_NOR_W']);
 
 clear
