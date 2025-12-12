@@ -26,18 +26,23 @@ addpath(genpath('../functions'));
 % in- and output directories
 pc_name = getenv('COMPUTERNAME');
 if strcmp(pc_name,'SA07KB-3JN9YY2');
-    basedir = 'C:\Users\sa07kb\OneDrive - SAMS\data\data_OSNAP\German_53N_Array\';
-    pathgit = 'C:\Users\sa07kb\Projects\Oi\';
+    basedir = 'C:\Users\sa07kb\Projects\Moor_Data_Proc\';
+    dataindir = [basedir,'moor_examples\osnap\data\moor\raw\jc238\s55\']
+    pathgit = [basedir 'm_moorproc_toolbox\'];
+    figureoutdir = [basedir,'RHADCP\figures\'];
+    filename = 'S200044A008_RHADCP_2020'
+    addpath(genpath('D:\Work_computer_sync\MATLAB_functions')); % General functions
 elseif strcmp(pc_name,'SA01SJ-G9WC2J3')
     dataindir = 'E:\OSNAP\RHADCP\DY181\S200044A012_RHAD2_JC238\conversion2\';
     pathgit = 'D:\Work_computer_sync\OSNAP_postdoc\Python\m_moorproc_toolbox\';    
     figureoutdir = ['D:\Work_computer_sync\OSNAP_postdoc\Mooring\RHADCP\plots\'];
     addpath(genpath('D:\Work_computer_sync\MATLAB_functions')); % General functions
+    filename = 'S200044A012_RHAD2_JC238';
 else
     error('Please add your path above')
 end
 
-filename = 'S200044A012_RHAD2_JC238';
+
 %% Load
 load([dataindir filename '.mat']);
 
