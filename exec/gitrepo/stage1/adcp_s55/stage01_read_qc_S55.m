@@ -60,6 +60,17 @@ load([dataindir filename '.mat']);
 % 8: ?
 % 9: QC_MISSING
 
+QC_NOT_EVALUATED = 0;
+QC_GOOD = 1;
+QC_UNKNOWN = 2;
+QC_PROBABLY_BAD = 3;
+QC_BAD = 4;
+QC_CHANGED = 5;
+QC_UNSAMPLED = 6;
+QC_INTERPOLATED = 7;
+QC_COMPASS_BAD = 8;
+QC_MISSING = 9;
+
 QC_vel = 0*double(Data.Average_VelEast);
 QC_1D = 0*double(Data.Average_Pressure);
 
@@ -95,7 +106,7 @@ disp('Flagged them as QC_BAD (4).')
 disp(' ')
 
 badind = ((S.maskStart+S.maskEnd)==1);
-QC_vel(badind,:) = 4; QC_1D(badind) = 4;
+QC_vel(badind,:) = QC_BAD; QC_1D(badind) = QC_BAD;
 
 figure(1);
 subplot(3,1,1)
@@ -115,8 +126,8 @@ set(gca,'YDir','reverse');
 
 % Create a neat text box on the figure (normalized figure coordinates)
 txt = {['ylim = median \pm ' sprintf('%d·std',n_std)], ...
-       [sprintf('Found %d shallow values at start and %d at end. Flagged them as bad (4). ', ...
-                     S.nTrimStart, S.nTrimEnd)]};
+       [sprintf('Found %d shallow values at start and %d at end. Flagged them as bad (%d). ', ...
+                     S.nTrimStart, S.nTrimEnd,QC_BAD)]};
 
 % Position: upper-right of axes (tweak if needed)
 ax = gca;
@@ -136,7 +147,7 @@ hBox = annotation('textbox', [bx by bw bh], 'String', txt, ...
 
 %% 2. Tilt / pitch %%%%%%%%%%%%%%%%%%%%%%%%
 y = Data.Average_Pitch;
-y(QC_1D==4) = NaN;
+y(QC_1D==QC_BAD) = NaN;
 x = Data.Average_Time;
 
 y_trim = Data.Average_Pitch;
@@ -182,11 +193,11 @@ badind = find(y > 30 | y < -30);
 
 if ~isempty(badind)
     plot(y(badind),y(badind),'or', 'DisplayName', 'QC_BAD pitch bottom');
-    QC_vel(badind,:) = 4;
-    QC_1D(badind) = 4;
+    QC_vel(badind,:) = QC_BAD;
+    QC_1D(badind) = QC_BAD;
 end
 disp('***Pitch check***')
-disp([num2str(length(badind)) ' timesteps flagged bad (4) due to excessive pitch (>abs(30))']);
+disp([num2str(length(badind)) ' timesteps flagged bad (',num2str(QC_BAD),') due to excessive pitch (>abs(30))']);
 disp(' ')
 legend('Interpreter','none')
 
@@ -196,10 +207,10 @@ badind = find( (y > 10 & y < 30) | (y < -10 & y > -30) );
 
 if ~isempty(badind)
     plot(y(badind),y(badind),'or', 'DisplayName', 'QC_PROBABLY_BAD pitch bottom');
-    QC_vel(badind,:) = 3;
-    QC_1D(badind) = 3;
+    QC_vel(badind,:) = QC_PROBABLY_BAD;
+    QC_1D(badind) = QC_PROBABLY_BAD;
 end
-disp([num2str(length(badind)) ' timesteps flagged probably bad (3) due to pitch between +(-) 10 and +(-) 30']);
+disp([num2str(length(badind)) ' timesteps flagged probably bad (',num2str(QC_PROBABLY_BAD),') due to pitch between +(-) 10 and +(-) 30']);
 disp('Post processing possible.');
 disp(' ')
 legend('Interpreter','none','Location','southeast')
