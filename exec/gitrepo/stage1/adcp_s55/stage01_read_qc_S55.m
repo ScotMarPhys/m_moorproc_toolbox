@@ -1,51 +1,86 @@
-%%  Code for the quality control of Signature 55 ADCP
+% stage01_read_qc_S55.m
+% Read and quality control Signature 55 ADCP data
+% raw ADCP data in .mat format as exported by Signature Viewer
+%
+% required inputs: moor - mooring name e.g. 'rhadcp_01_2020'
+%                  
+% optional inputs:     dataindir = varargin{1};
+%                      filename = varargin{2}
+%                      infofile = varargin{3};
+%                      logfile = varargin{4};
+%                      outdir = varargin{5}; #output dir (fig, data, logs)
+% functions called:    rodbload
+%
+% 
 
-% K Burmeister, S Jones 12/2025
+function stage01_read_qc_S55(moor, varargin)
 
-
-%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% 1. PARAMETER PRAEMBLE
-% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Notes:
-% Need to be updated for:
-% - directories and file names
-% - add additional deployment periods (add moorX = 'filename')
-% - turn off/on checkplots
-% - edit start/end of total time period
-% - data version
-% - set depth of shallowest instrument (idepth)
-% - preamble for despiking
-% - if you add a deployment period, you need to edit steps 1-3
-%---------
-close all
-clear
-
-addpath(genpath('../functions'));
-
-% TO UPDATE <------------------------
-% in- and output directories
-pc_name = getenv('COMPUTERNAME');
-if strcmp(pc_name,'SA07KB-3JN9YY2');
-    basedir = 'C:\Users\sa07kb\Projects\Moor_Data_Proc\';
-    dataindir = [basedir,'moor_examples\osnap\data\moor\raw\jc238\s55\'];
-    pathgit = [basedir 'm_moorproc_toolbox\'];
-    figureoutdir = [basedir,'RHADCP\figures\'];
-    filename = 'S200044A008_RHADCP_2020';
-    addpath(genpath('D:\Work_computer_sync\MATLAB_functions')); % General functions
-elseif strcmp(pc_name,'SA01SJ-G9WC2J3')
-    dataindir = 'E:\OSNAP\RHADCP\DY181\S200044A012_RHAD2_JC238\conversion2\';
-    pathgit = 'D:\Work_computer_sync\OSNAP_postdoc\Python\m_moorproc_toolbox\';    
-    figureoutdir = ['D:\Work_computer_sync\OSNAP_postdoc\Mooring\RHADCP\plots\'];
-    addpath(genpath('D:\Work_computer_sync\MATLAB_functions')); % General functions
-    filename = 'S200044A012_RHAD2_JC238';
-else
-    error('Please add your path above')
+if nargin==0
+    help stage01_read_qc_S55
+    return
 end
 
+if nargin==1
+    global MOORPROC_G
+    operator = MOORPROC_G.operator;
+    pd = moor_inoutpaths('adcp_S55',moor);
+    dataindir = pd.rawpath;
+    infofile = pd.infofile;
+    logfile = pd.stage1log;
+    outdir = pd.stage1path;
+    ouput_form = pd.stage1form;
+else
+    operator = getenv('COMPUTERNAME');    
+    dataindir = varargin{1};
+    filename = varargin{2};
+    infofile = varargin{3};
+    logfile = varargin{4};
+    outdir = varargin{5};
+    ouput_form = [moor '_%d.nc'];
+end
+
+if exist(infofile,"file")
+    % ----- read infofile / open logfile  ------------------------------------
+    infovar = 'instrument:serialnumber:z:Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:WaterDepth'; 
+    [id,sn,z,s_t,s_d,e_t,e_d,lat,lon,wd]  =  rodbload(infofile,infovar);
+else
+    disp('No info file given. Parameters set to NaN')
+    [id,sn,z,s_t,s_d,e_t,e_d,lat,lon,wd] = deal(NaN);
+end
+
+if ~exist(outdir,'dir')
+    mkdir(outdir)
+end
+
+fidlog   = fopen(logfile,'a');
+fprintf(fidlog,'Read and quality control Signature 55 ADCP data. \n');
+fprintf(fidlog,'Processing carried out by %s at %s\n\n\n',operator,datestr(clock));
+fprintf(fidlog,'Mooring   %s \n',moor);
+fprintf(fidlog,'Latitude  %6.3f \n',lat);
+fprintf(fidlog,'Longitude %6.3f \n\n\n',lon);
+
+bg = datenum(datetime([s_d.' , s_t.' , 0])); %start
+ed = datenum(datetime([e_d.' , e_t.' , 0])); %end
+
+if isnan(id)
+   fprintf('No serial number given, use default 20044')
+   serial_nums='20044';
+else
+    vec=find((id>=319) & (id <=328)); % Possible ADCP codes - taken from IMP moorings package
+    serial_nums=sn(vec);
+end
 
 %% Load
-load([dataindir filename '.mat']);
+for i = 1:length(serial_nums)
+    fprintf('Processing sn %d',serial_nums(i))
+    if ~exist(filename,"var")
+        filename = sprintf('%d_data',serial_nums(i));
+    end
+infile=fullfile(dataindir,[filename,'.mat']);
+load(infile);
 
+fprintf(fidlog,'infile : %s\n',infile);
+fprintf(fidlog,'ADCP serial number  : %d\n',serial_nums(i));
 
 %% Build post-processing flag array
 
@@ -79,7 +114,7 @@ QC_1D = 0*double(Data.Average_Pressure);
 % pressure etc.  A bit of automatic flagging for demo in Fig. 1
 
 %% figure settings
-fs = 14
+fs = 14;
 set(findall(gcf, '-property', 'FontSize'), 'FontUnits', 'points', 'FontSize', fs);
 
 %% STAGE 1.  Nortek suggested quality control steps %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -105,6 +140,11 @@ disp(sprintf('Found %d shallow values at start and %d at end.\nIndicates instrum
 disp('Flagged them as QC_BAD (4).')
 disp(' ')
 
+fprintf(fidlog,'***Pressure check***\n');
+fprintf(fidlog,sprintf('Found %d shallow values at start and %d at end.\nIndicates instrument was sinking/rising.\n', ...
+                     S.nTrimStart, S.nTrimEnd));
+fprintf(fidlog,'Flagged them as QC_BAD (4).\n');
+
 badind = ((S.maskStart+S.maskEnd)==1);
 QC_vel(badind,:) = QC_BAD; QC_1D(badind) = QC_BAD;
 
@@ -126,7 +166,7 @@ set(gca,'YDir','reverse');
 
 % Create a neat text box on the figure (normalized figure coordinates)
 txt = {['ylim = median \pm ' sprintf('%d·std',n_std)], ...
-       [sprintf('Found %d shallow values at start and %d at end. Flagged them as bad (%d). ', ...
+       [sprintf('Found %d shallow values at start and %d at end.\nFlagged them as bad (%d). ', ...
                      S.nTrimStart, S.nTrimEnd,QC_BAD)]};
 
 % Position: upper-right of axes (tweak if needed)
@@ -199,6 +239,10 @@ end
 disp('***Pitch check***')
 disp([num2str(length(badind)) ' timesteps flagged bad (',num2str(QC_BAD),') due to excessive pitch (>abs(30))']);
 disp(' ')
+fprintf(fidlog,'***Pitch check***\n');
+fprintf(fidlog,[num2str(length(badind)) ' timesteps flagged bad (',...
+    num2str(QC_BAD),') due to excessive pitch (>abs(30))\n']);
+
 legend('Interpreter','none')
 
 % Automatically flag any bad timesteps with postprocessing possible: high
@@ -213,6 +257,10 @@ end
 disp([num2str(length(badind)) ' timesteps flagged probably bad (',num2str(QC_PROBABLY_BAD),') due to pitch between +(-) 10 and +(-) 30']);
 disp('Post processing possible.');
 disp(' ')
+fprintf(fidlog,[num2str(length(badind)) ' timesteps flagged probably bad (',...
+    num2str(QC_PROBABLY_BAD),') due to pitch between +(-)10 and +(-)30.\n']);
+fprintf(fidlog,'Post processing possible.\n\n');
+
 legend('Interpreter','none','Location','southeast')
 
 
@@ -256,10 +304,14 @@ an = annotation('textbox', [0 0.02 1 0.06], ...   % [x y w h] in normalized figu
 
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',[figureoutdir filename '_f1_pressure_pitch_heading_QC']);
+print('-dpng',fullfile(outdir,[filename,'_f1_pressure_pitch_heading_QC.png']));
 
+end
+fclose(fidlog);
+end
 
-%% fuctions
+%% nested fuctions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % looks for deployment and recovery period in pressure
 function S = suggestTrimForShallowEdges_simple(y, ymin,x)
