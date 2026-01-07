@@ -113,6 +113,17 @@ switch datatype
         pd.stage3forml = [moor '_%d_bin%02.f.lowedt'];
         pd.stage3logl = [moor '_%d_bin%02.f.lowedt.log'];
 
+    case 'adcp_S55'
+        disp(datatype)
+        moor = loc;
+        pd.rawpath = fullfile(mg.moordatadir, 'raw', mg.cruise, datatype);
+        pd.infofile = fullfile(mg.moordatadir, 'proc', moor, [moor 'info.dat']);
+        pd.stage1path = fullfile(mg.moordatadir, 'proc', moor, datatype);
+        pd.stage1log = fullfile(pd.stage1path, [moor '_ADCP_stage1.log']);
+        pd.stage1form = [moor '_%d.nc'];
+        pd.stage2path = fullfile(mg.moordatadir, 'proc', moor, datatype);
+        pd.stage2log = fullfile(pd.stage2path, [moor '_ADCP_stage2.log']);
+
     case 'cal_coef' %***ctd path setting should be its own thing, same for microcat_cal_dip and for cal_coef?
         cast = loc;
         pd.datadir = mg.moordatadir;
