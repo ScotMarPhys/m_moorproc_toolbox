@@ -54,6 +54,7 @@ end
 
 
 if ~isempty(MOORPROC_G)
+    addpath(genpath('C:\Users\sa07kb\Matlab\toolboxes\gsw_matlab_v3_06_16'))
     stage01_read_qc_S55(moor)
 else
     stage01_read_qc_S55(moor,dataindir,filename,...
