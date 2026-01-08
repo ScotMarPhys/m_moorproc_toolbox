@@ -73,11 +73,12 @@ end
 %% Load
 for i = 1:length(serial_nums)
     fprintf('Processing sn %d',serial_nums(i))
-    if ~exist(filename,"var")
+    if ~exist('filename',"var")
         filename = sprintf('%d_data',serial_nums(i));
     end
 infile=fullfile(dataindir,[filename,'.mat']);
 load(infile);
+Data = cell2struct(cellfun(@double,struct2cell(Data),'uni',false),fieldnames(Data),1);
 
 fprintf(fidlog,'infile : %s\n',infile);
 fprintf(fidlog,'ADCP serial number  : %d\n',serial_nums(i));
@@ -113,6 +114,25 @@ QC_1D = 0*double(Data.Average_Pressure);
 % E.g. It's a good opportunity to remove deployment and recovery based on
 % pressure etc.  A bit of automatic flagging for demo in Fig. 1
 
+%% Checking few configuration which should be the same each time step
+if serial_nums(i)~=Config.SerialNo
+    error('Entered Serial Number does not match Config-file')
+end
+prombt = ' is not equal for all time steps. Please check ';
+if numunique(Data.Average_NBeams,"rows") ~= 1
+    text = ['Number of beams',prombt,'Data.Average_NBeams'];
+    disp(text); fprintf(fidlog,[text,'\n']);
+elseif numunique(Data.Average_NCells,"rows") ~= 1
+    text = ['Number of cells',prombt,'Data.Average_NCells'];
+    disp(text); fprintf(fidlog,[text,'\n']);
+elseif numunique(Data.Average_BeamToChannelMapping,"rows") ~= 1
+    text = ['Beam to channel mapping',prombt,'Data.Average_BeamToChannelMapping'];
+    disp(text); fprintf(fidlog,[text,'\n']);
+elseif numunique(Data.Average_Error,'rows')~= 1 | Data.Average_Error(1)~=0
+    text = ['Errors occured during measuring. Please check Data.Average_Error'];
+    disp(text); fprintf(fidlog,[text,'\n']);
+end
+
 %% figure settings
 fs = 14;
 set(findall(gcf, '-property', 'FontSize'), 'FontUnits', 'points', 'FontSize', fs);
@@ -122,6 +142,7 @@ timemin = Data.Average_Time(1);
 timemax = Data.Average_Time(end);
 
 %% 1. Instrument orientation and pressure %%%%%%%%%%%%%%%%%%%%%%%%
+% pressure
 y = Data.Average_Pressure; 
 x = Data.Average_Time;
 
@@ -145,7 +166,23 @@ fprintf(fidlog,sprintf('Found %d shallow values at start and %d at end.\nIndicat
                      S.nTrimStart, S.nTrimEnd));
 fprintf(fidlog,'Flagged them as QC_BAD (4).\n');
 
-badind = ((S.maskStart+S.maskEnd)==1);
+% if bg
+ds_vec = datevec(x([S.startIdx,S.endIdx]));
+bg_suggest = datenum([ds_vec(1,1:end-1),0]);
+ed_suggest = datenum([ds_vec(2,1:end-1),0]);
+if bg_suggest~=bg
+    prombt = ['***',newline,'Suggest to set mooring start date and time in ',... 
+            moor,'info.dat to ',datestr(bg_suggest),newline,'***',newline,newline];
+    disp(prombt);
+    fprintf(fidlog,prombt);
+elseif ed_suggest~=ed
+        prombt = ['***',newline,'Suggest to set mooring end date and time in ',... 
+            moor,'info.dat to ',datestr(ed_suggest),newline,'***',newline,newline];
+    disp(prombt);
+    fprintf(fidlog,prombt);
+end
+
+badind = (S.keepMask==0);
 QC_vel(badind,:) = QC_BAD; QC_1D(badind) = QC_BAD;
 
 figure(1);
@@ -154,7 +191,7 @@ title([filename ' pressure'],'Interpreter','none');
 hold on; grid on;
 
 % Plot data
-h.data = plot(Data.Average_Time,Data.Average_Pressure,'k.');
+h.data = plot(x,y,'k.');
 yline(P_median,'r')
 [h, nAbove, nBelow] = markClippedPoints_pres(h, y, yl, x);
 
@@ -185,7 +222,7 @@ hBox = annotation('textbox', [bx by bw bh], 'String', txt, ...
 % Optional: give the box a subtle background for readability
 % set(hBox, 'BackgroundColor', [1 1 1 0.85]); % if MATLAB supports RGBA; otherwise use [1 1 1]
 
-%% 2. Tilt / pitch %%%%%%%%%%%%%%%%%%%%%%%%
+% Tilt / pitch %%%%%%%%%%%%%%%%%%%%%%%%
 y = Data.Average_Pitch;
 y(QC_1D==QC_BAD) = NaN;
 x = Data.Average_Time;
@@ -264,7 +301,7 @@ fprintf(fidlog,'Post processing possible.\n\n');
 legend('Interpreter','none','Location','southeast')
 
 
-%% 3. heading %%%%%%%%%%%%%%%%%%%%%%%%
+% heading %%%%%%%%%%%%%%%%%%%%%%%%
 yl = [-0 360];
 y = Data.Average_Heading;
 x = Data.Average_Time; 
@@ -290,7 +327,7 @@ ylabel('Heading (^o)');
 
 legend('Interpreter','none','Location','southeast')
 
-%% add remarks
+% add remarks
 % place at top-right of figure (normalized units)
 str = 'Pitch and heading should remain fairly constant during deployment';
 an = annotation('textbox', [0 0.02 1 0.06], ...   % [x y w h] in normalized figure units
@@ -306,6 +343,148 @@ an = annotation('textbox', [0 0.02 1 0.06], ...   % [x y w h] in normalized figu
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
 print('-dpng',fullfile(outdir,[filename,'_f1_pressure_pitch_heading_QC.png']));
 
+
+%% 2. Beam amplitudes %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+nCells = 1:Data.Average_NCells(1);  %number of cells
+bl_dist = Config.Average_BlankingDistance; %blanking distance (m)
+Cell_Size = Config.Average_CellSize; %cell size (m)
+Dist2Instr_CellMidpoint = bl_dist+nCells.*Cell_Size; 
+
+if ~isnan(wd)
+    Nominal_CellDepth = wd-Dist2Instr_CellMidpoint;
+else
+    wd = 1080;
+    while true
+        prompt = sprintf('Please enter nominal depth of instrument in m (default %dm): ', wd);
+        val = input(prompt);
+        if isempty(val)                     % user accepted default
+            depth = wd;
+            break
+        end
+        if isnumeric(val) && isscalar(val) && isfinite(val) && val > 0
+            depth = val;
+            break
+        end
+        fprintf('Invalid entry. Enter a positive number or press Return for default.\n');
+    end
+    Nominal_CellDepth = wd-Dist2Instr_CellMidpoint;
+end
+
+y=Nominal_CellDepth;
+x = Data.Average_Time;
+clim =[0,100];
+
+%%%%%%%%%%%%%%%%%%%%%%%
+f2 = figure(2);clf
+ax(1) = subplot(2,3,1);hold on
+imagesc(x, y, Data.Average_AmpBeam1');
+ax(2) = subplot(2,3,2);
+imagesc(x, y, Data.Average_AmpBeam2');
+ax(3) = subplot(2,3,3);
+imagesc(x, y, Data.Average_AmpBeam3');
+
+ax(4) = subplot(2,3,4);
+imagesc(x, y, Data.Average_CorBeam1');
+ax(5) = subplot(2,3,5);
+imagesc(x, y, Data.Average_CorBeam2');
+ax(6) = subplot(2,3,6);
+imagesc(x, y, Data.Average_CorBeam3');
+
+for k = 1:numel(ax)
+    axis(ax(k),'xy','ij');
+    ylabel(ax(k),'Nominal cell depth (m)')
+    datetick(ax(k),'x','mmm-yyyy','keepticks','keeplimits');
+end
+
+for k=1:3
+    axes(ax(k));                   % make axis current
+    title(sprintf('Amplitude Beam %d',k))
+    caxis(ax(k), clim); 
+    colorbar(ax(k))
+end
+
+% Parameters
+threshold = 50;
+ncolors = 256;                    % size of colormap
+colorBelow = [1 1 1];       % RGB for <50 (dark green)
+colorAboveMap = parula(ncolors);  % gradient for >=50 (choose any colormap)
+
+% compute how many entries correspond to < threshold
+fracBelow = max(0, min(1, (threshold - clim(1)) / (clim(2) - clim(1))));
+nbelow = max(1, round(ncolors * fracBelow));
+nabove = ncolors - nbelow;
+
+% build colormap: first nbelow rows = colorBelow, rest from colorAboveMap
+cmap = [repmat(colorBelow, nbelow, 1); colorAboveMap(end-nabove+1:end,:)];
+
+% Apply to the correlation axes (assume ax(4:6) are your second-row axes)
+for k = 4:6
+    axes(ax(k));                   % make axis current
+    title(sprintf('Correlation Beam %d',k-3))
+    axes(ax(k));                   % make axis current
+    caxis(clim);                   % ensure CLim is consistent
+    colormap(ax(k), cmap);         % set custom colormap for this axes
+    cb = colorbar(ax(k));          % add colorbar
+    cb.Ticks = [clim(1), threshold, clim(2)];        % tick at threshold
+    cb.TickLabels = {num2str(clim(1)), num2str(threshold), num2str(clim(2))};
+end
+
+% Save figure
+set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
+print('-dpng',fullfile(outdir,[filename,'_f2.1_beam_amplitude_correlation_QC.png']));
+clear ax
+%% define surface bins
+Amp1_pro = mean(Data.Average_AmpBeam1);SB1 = find(islocalmin(Amp1_pro),1,'last');
+Amp2_pro = mean(Data.Average_AmpBeam2);SB2 = find(islocalmin(Amp2_pro),1,'last');
+Amp3_pro = mean(Data.Average_AmpBeam3);SB3 = find(islocalmin(Amp3_pro),1,'last');
+Cor1_pro = mean(Data.Average_CorBeam1);CB1 = find(Cor1_pro>=50,1,'last');
+Cor2_pro = mean(Data.Average_CorBeam2);CB2 = find(Cor2_pro>=50,1,'last');
+Cor3_pro = mean(Data.Average_CorBeam3);CB3 = find(Cor3_pro>=50,1,'last');
+SB = min([SB1,SB2,SB3]);
+CB = min([CB1,CB2,CB3]);
+
+figure(3),clf
+ax(1) = subplot(1,2,1);
+plot(Amp1_pro,y),hold on,plot(Amp2_pro,y),plot(Amp3_pro,y)
+yline(y(SB),'--')
+xlabel('Temporal mean amplitude [dB]')
+ylabel('Nominal cell depth')
+legend('Beam1','Beam2','Beam3','Location','southwest')
+axis ij
+title([num2str(SB),' valid bins before surface'])
+
+ax(2) = subplot(1,2,2);
+plot(Cor1_pro,y),hold on,plot(Cor2_pro,y),plot(Cor3_pro,y)
+xline(50,'--')
+yline(y(CB),'--')
+xlabel('Temporal mean correlation [%]')
+title([num2str(CB),' valid bins before surface'])
+
+for k=1:numel(ax)
+    axes(ax(k));    
+    ylabel('Nominal cell depth')
+    legend('Beam1','Beam2','Beam3','Location','southwest')
+    axis ij
+    grid on
+end
+
+clear ax
+srf_bins = min([SB,CB]);
+bins_to_process=input(['\nAutodetected ', num2str(srf_bins),...
+    ' valid bins out from the sensor head.',...
+    '\nWill flag bins >', num2str(srf_bins),' as bad (',num2str(QC_BAD),')',...
+    ' \nDo you want to adjust valid bin number?',...
+    ' \nEnter 0 for no (default) or new adjusted number: ']);
+if (isempty(bins_to_process) || bins_to_process==0)
+    bins_to_process=srf_bins;
+end
+
+QC_vel(:,bins_to_process+1:end)=QC_BAD;
+% Save figure
+set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
+print('-dpng',fullfile(outdir,[filename,'_f2.2_beam_amplitude_correlation_QC.png']));
+
+%%
 end
 fclose(fidlog);
 end
@@ -318,7 +497,7 @@ function S = suggestTrimForShallowEdges_simple(y, ymin,x)
 % Suggest trim indices for leading/trailing consecutive y < ymin.
 % S.startIdx = first index to keep
 % S.endIdx   = last  index to keep
-% S.nTrimStart, S.nTrimEnd, S.keepMask
+% S.keepMask
 
 y = y(:);
 n = numel(y);
@@ -360,20 +539,20 @@ else
     nTrimEnd = 0;
 end
 
-startIdx = firstKeep - nTrimStart;
-endIdx   = lastKeep + nTrimEnd;
+startIdx = firstKeep;
+endIdx   = lastKeep;
 
 % Build masks
 maskStart = false(n,1); if nTrimStart>0, maskStart(1:firstKeep-1) = true; maskStart(~isShallow) = false; end
 maskEnd   = false(n,1); if nTrimEnd>0, maskEnd(lastKeep+1:end) = true; maskEnd(~isShallow) = false; end
 keepMask = false(n,1);
-if startIdx <= endIdx
-    keepMask(startIdx:endIdx) = true;
+if firstKeep <= lastKeep
+    keepMask(firstKeep:lastKeep) = true;
 end
 
 S = struct('startIdx', startIdx, 'endIdx', endIdx, ...
            'nTrimStart', nTrimStart, 'nTrimEnd', nTrimEnd, ...
-           'maskStart', maskStart, 'maskEnd', maskEnd, 'keepMask', keepMask);
+           'keepMask', keepMask);
 end
 
 %marks if data is outside of y-axes lim for pressure (positive downward)
