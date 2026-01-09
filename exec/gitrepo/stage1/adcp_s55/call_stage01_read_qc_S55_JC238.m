@@ -38,6 +38,7 @@ if strcmp(pc_name,'SA07KB-3JN9YY2');
         moor, [moor 'info.dat']);
     filename = '200044_data';
     addpath(genpath(fullfile(pathgit,'exec','gitrepo')))
+    addpath(genpath('C:\Users\sa07kb\Matlab\toolboxes\gsw_matlab_v3_06_16'))
 elseif strcmp(pc_name,'SA01SJ-G9WC2J3')
     dataindir = 'E:\OSNAP\RHADCP\DY181\S200044A012_RHAD2_JC238\conversion2\';
     pathgit = 'D:\Work_computer_sync\OSNAP_postdoc\Python\m_moorproc_toolbox\';    

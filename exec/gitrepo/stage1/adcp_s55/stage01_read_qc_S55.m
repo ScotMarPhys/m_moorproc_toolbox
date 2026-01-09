@@ -358,11 +358,11 @@ else
         prompt = sprintf('Please enter nominal depth of instrument in m (default %dm): ', wd);
         val = input(prompt);
         if isempty(val)                     % user accepted default
-            depth = wd;
+            wd = wd;
             break
         end
         if isnumeric(val) && isscalar(val) && isfinite(val) && val > 0
-            depth = val;
+            wd = val;
             break
         end
         fprintf('Invalid entry. Enter a positive number or press Return for default.\n');
@@ -370,30 +370,75 @@ else
     Nominal_CellDepth = wd-Dist2Instr_CellMidpoint;
 end
 
+fprintf(fidlog,'***Beams, surface bins, sidelobe check***\n');
+fprintf(fidlog,sprintf('Nominal depth of instrument set as %d dbar.\n',wd));
+
 y=Nominal_CellDepth;
 x = Data.Average_Time;
 clim =[0,100];
 
+% define surface bins
+Amp1=Data.Average_AmpBeam1; Amp1(QC_1D==4,:)=NaN;
+Amp2=Data.Average_AmpBeam2; Amp2(QC_1D==4,:)=NaN;
+Amp3=Data.Average_AmpBeam3; Amp3(QC_1D==4,:)=NaN;
+Cor1=Data.Average_CorBeam1; Cor1(QC_1D==4,:)=NaN;
+Cor2=Data.Average_CorBeam2; Cor2(QC_1D==4,:)=NaN;
+Cor3=Data.Average_CorBeam3; Cor3(QC_1D==4,:)=NaN;
+U = Data.Average_VelEast;U(QC_1D==4,:)=NaN;
+V = Data.Average_VelNorth;V(QC_1D==4,:)=NaN;
+W = Data.Average_VelUp;W(QC_1D==4,:)=NaN;
+Amp1_pro = nanmean(Amp1);SB1 = find(islocalmin(Amp1_pro),1,'last');
+Amp2_pro = nanmean(Amp2);SB2 = find(islocalmin(Amp2_pro),1,'last');
+Amp3_pro = nanmean(Amp3);SB3 = find(islocalmin(Amp3_pro),1,'last');
+Cor1_pro = nanmean(Cor1);CB1 = find(Cor1_pro>=50,1,'last');
+Cor2_pro = nanmean(Cor2);CB2 = find(Cor2_pro>=50,1,'last');
+Cor3_pro = nanmean(Cor3);CB3 = find(Cor3_pro>=50,1,'last');
+SB = min([SB1,SB2,SB3]);
+CB = min([CB1,CB2,CB3]);
+
+% side lobe interference
+SM1 = find(islocalmax(Amp1_pro),1,'last');
+SM2 = find(islocalmax(Amp2_pro),1,'last');
+SM3 = find(islocalmax(Amp3_pro),1,'last');
+SM = min([SM1,SM2,SM3]);
+A(1) = gsw_z_from_p(nanmean(Data.Average_Pressure(QC_1D==0)),lat); % range based on pressure sensor
+A(2) = Dist2Instr_CellMidpoint(SM); % range based on nominal cell distance
+%slant angle 20 degree plus abs(pitch)
+pitch = Data.Average_Pitch; pitch(QC_1D==4)=NaN;
+theta = abs(pitch)+20;
+% R contains buffer for upper range of cell
+R =max(A)*cosd(theta)-Cell_Size; 
+% find(Dist2Instr_CellMidpoint <= R(i), 1, 'last') for each time step i
+idx_nan = isnan(R);
+R(idx_nan)=wd;
+idx_valid = arrayfun(@(r) find(Dist2Instr_CellMidpoint <= r, 1, 'last'),...
+    R);
+idx_valid(idx_nan)=1;
+R(idx_nan)=NaN;
+
 %%%%%%%%%%%%%%%%%%%%%%%
 f2 = figure(2);clf
 ax(1) = subplot(2,3,1);hold on
-imagesc(x, y, Data.Average_AmpBeam1');
-ax(2) = subplot(2,3,2);
-imagesc(x, y, Data.Average_AmpBeam2');
-ax(3) = subplot(2,3,3);
-imagesc(x, y, Data.Average_AmpBeam3');
+imagesc(x, y, Amp1');
+ax(2) = subplot(2,3,2);hold on
+imagesc(x, y, Amp2');
+ax(3) = subplot(2,3,3);hold on
+imagesc(x, y, Amp3');
 
-ax(4) = subplot(2,3,4);
-imagesc(x, y, Data.Average_CorBeam1');
-ax(5) = subplot(2,3,5);
-imagesc(x, y, Data.Average_CorBeam2');
-ax(6) = subplot(2,3,6);
-imagesc(x, y, Data.Average_CorBeam3');
+ax(4) = subplot(2,3,4);hold on
+imagesc(x, y, Cor1');
+ax(5) = subplot(2,3,5);hold on
+imagesc(x, y, Cor2');
+ax(6) = subplot(2,3,6);hold on
+imagesc(x, y, Cor3');
 
 for k = 1:numel(ax)
     axis(ax(k),'xy','ij');
     ylabel(ax(k),'Nominal cell depth (m)')
     datetick(ax(k),'x','mmm-yyyy','keepticks','keeplimits');
+    hLine = plot(ax(k),x, y(idx_valid), 'r', 'LineWidth', 0.1);
+    hLine.DisplayName = 'Sidelobe interference';
+    xlim(ax(k),[min(x),max(x)])
 end
 
 for k=1:3
@@ -402,6 +447,10 @@ for k=1:3
     caxis(ax(k), clim); 
     colorbar(ax(k))
 end
+
+lgd = legend(ax(1),'show', 'Location', 'none','Box','off','FontSize',10);
+lgd.Units = 'normalized';
+lgd.Position = [0.13 0.35 0.12 0.3];  % [x y width height]
 
 % Parameters
 threshold = 50;
@@ -433,45 +482,58 @@ end
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
 print('-dpng',fullfile(outdir,[filename,'_f2.1_beam_amplitude_correlation_QC.png']));
 clear ax
-%% define surface bins
-Amp1_pro = mean(Data.Average_AmpBeam1);SB1 = find(islocalmin(Amp1_pro),1,'last');
-Amp2_pro = mean(Data.Average_AmpBeam2);SB2 = find(islocalmin(Amp2_pro),1,'last');
-Amp3_pro = mean(Data.Average_AmpBeam3);SB3 = find(islocalmin(Amp3_pro),1,'last');
-Cor1_pro = mean(Data.Average_CorBeam1);CB1 = find(Cor1_pro>=50,1,'last');
-Cor2_pro = mean(Data.Average_CorBeam2);CB2 = find(Cor2_pro>=50,1,'last');
-Cor3_pro = mean(Data.Average_CorBeam3);CB3 = find(Cor3_pro>=50,1,'last');
-SB = min([SB1,SB2,SB3]);
-CB = min([CB1,CB2,CB3]);
 
+%% suface bin detection
 figure(3),clf
-ax(1) = subplot(1,2,1);
+ax(1) = subplot(1,3,1);
 plot(Amp1_pro,y),hold on,plot(Amp2_pro,y),plot(Amp3_pro,y)
 yline(y(SB),'--')
+yline(y([min(idx_valid(QC_1D==0)),max(idx_valid(QC_1D==0))]),'r--')
 xlabel('Temporal mean amplitude [dB]')
 ylabel('Nominal cell depth')
-legend('Beam1','Beam2','Beam3','Location','southwest')
 axis ij
 title([num2str(SB),' valid bins before surface'])
 
-ax(2) = subplot(1,2,2);
+ax(2) = subplot(1,3,2);
 plot(Cor1_pro,y),hold on,plot(Cor2_pro,y),plot(Cor3_pro,y)
-xline(50,'--')
 yline(y(CB),'--')
+yline(y([min(idx_valid(QC_1D==0)),max(idx_valid(QC_1D==0))]),'r--')
+xline(50,'--')
 xlabel('Temporal mean correlation [%]')
 title([num2str(CB),' valid bins before surface'])
+lgd_text = {'Amp','Cor'};
+
+subplot(1,3,3)
+plot(nanmean(U),y),hold on,plot(nanmean(V),y),plot(nanmean(W),y),
+ylabel('Nominal cell depth')
+xlabel('Velocity [m/s]')
+axis ij
+grid on
+xlim([-0.05 0.2])
+yline(y(CB),'--')
+yline(y([min(idx_valid(QC_1D==0)),max(idx_valid(QC_1D==0))]),'r--')
+xline(0,'--')
+legend('U','V','W','Sidelobe range','valid bins','Location','southeast')
 
 for k=1:numel(ax)
     axes(ax(k));    
     ylabel('Nominal cell depth')
-    legend('Beam1','Beam2','Beam3','Location','southwest')
+    labels = {'Beam1','Beam2','Beam3',[lgd_text{k},' bin range'],...
+        'Sidelobe min/max range'};
+    legend(labels,'Location','southwest')
     axis ij
     grid on
 end
+% Save figure
+set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
+print('-dpng',fullfile(outdir,[filename,'_f2.2_beam_amplitude_correlation_QC.png']));
 
+%%
 clear ax
+
 srf_bins = min([SB,CB]);
 bins_to_process=input(['\nAutodetected ', num2str(srf_bins),...
-    ' valid bins out from the sensor head.',...
+    ' valid bins out of ',num2str(max(nCells)),' from the sensor head.',...
     '\nWill flag bins >', num2str(srf_bins),' as bad (',num2str(QC_BAD),')',...
     ' \nDo you want to adjust valid bin number?',...
     ' \nEnter 0 for no (default) or new adjusted number: ']);
@@ -480,10 +542,57 @@ if (isempty(bins_to_process) || bins_to_process==0)
 end
 
 QC_vel(:,bins_to_process+1:end)=QC_BAD;
-% Save figure
-set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[filename,'_f2.2_beam_amplitude_correlation_QC.png']));
 
+fprintf(fidlog,sprintf('Flagged bin >%d as QC_BAD (%d).\n\n',...
+    bins_to_process,QC_BAD));
+
+
+prompt = sprintf(['Sidelobe contamination for each time step varies between ' ...
+    'bin %d and %d out of %d bins.\n' ...
+    'Would you like to flag sidelobe contaminated bins for each time step ' ...
+    'as QC_BAD (%d). Y/N [Y]: '], min(idx_valid(QC_1D==0))+1,...
+    max(idx_valid(QC_1D==0))+1, max(nCells), QC_BAD);
+
+% reply = input(prompt, 's');          % read raw text
+% if isempty(reply)
+%     reply = 'Y';                     % default
+% end
+% 
+% while true
+% if strcmpi(reply, 'Y') || strcmpi(reply, 'YES')
+%     QC_vel(:,bins_to_process+1:end)=QC_BAD;
+%     break
+% elseif strcmpi(reply, 'N') || strcmpi(reply, 'NO')
+%     % user declined
+%     break
+% else
+%     fprintf('Invalid entry. Enter a positive number or press Return for default.\n');
+% end
+% end
+% 
+% [T, D] = size(QC_vel);        % T = 308630, D = 56
+% idx_trim = idx_valid(:)+1;       % ensure column vector
+% 
+% if numel(idx_trim) ~= T
+%     error('Length of idx_trim (%d) must equal number of rows in QC_vel (%d).', ...
+%         numel(idx_trim), T);
+% end
+% 
+% % Prepare indices: integer, clamp to [1, D+1]. D+1 means "no flags for that row".
+% idxc = floor(idx_trim);
+% idxc(isnan(idxc)) = D + 1;
+% idxc = min(max(idxc, 1), D + 1);
+% 
+% % Create mask: true where column j should be flagged (j >= idxc(i))
+% cols = 1:D;                        % 1×D
+% mask = cols >= idxc;               % implicit expansion -> T×D (R2016b+)
+% % If using older MATLAB, use:
+% % mask = bsxfun(@ge, cols, idxc);
+% 
+% % Ensure rows with idxc == D+1 have no flags
+% mask(idxc == D + 1, :) = false;
+% 
+% pcolor(x,y,mask'),shading flat
 %%
 end
 fclose(fidlog);
