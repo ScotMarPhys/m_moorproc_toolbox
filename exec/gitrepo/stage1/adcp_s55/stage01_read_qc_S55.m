@@ -53,6 +53,7 @@ if ~exist(outdir,'dir')
 end
 
 fidlog   = fopen(logfile,'a');
+fprintf(fidlog, '\n==== START ENTRY  =====\n');
 fprintf(fidlog,'Read and quality control Signature 55 ADCP data. \n');
 fprintf(fidlog,'Processing carried out by %s at %s\n\n\n',operator,datestr(clock));
 fprintf(fidlog,'Mooring   %s \n',moor);
@@ -387,6 +388,41 @@ Cor3=Data.Average_CorBeam3; Cor3(QC_1D==4,:)=NaN;
 U = Data.Average_VelEast;U(QC_1D==4,:)=NaN;
 V = Data.Average_VelNorth;V(QC_1D==4,:)=NaN;
 W = Data.Average_VelUp;W(QC_1D==4,:)=NaN;
+
+% find spikes - e.g. fish schools (short lived)
+ %NEED TO REMOVE NANS BEFORE FILTERING OTHERWISE REPLACES WHOLE
+%SERIES WITH NaNs.
+[Amp1_bm,Amp1_bs] = calculate_block_mean_std(Amp1);
+
+idx_maks = find(abs(Amp1)>(Amp1_bm+3.*Amp1_bs));
+[T,D]=size(Amp1);
+length(idx_maks)/(T*D)
+
+% QARTOD decibel increase
+diff_amp = diff(Amp1_bm,1,2);
+diff_m = nanmedian(diff_amp);
+diff_s = nanstd(diff_amp);
+idx2 = find(diff_amp>diff_m+2.*diff_s);
+length(idx2)/(T*D)
+
+%%
+figure
+nx = 29800:30800;
+ny = 45;
+plot(Amp1(nx,ny)),hold on
+plot(Amp1_bm(nx,ny))
+plot(Amp1_bm(nx,ny)+2*Amp1_bs(nx,ny),'k:')
+plot(Amp1_bm(nx,ny)-2*Amp1_bs(nx,ny),'k:')
+
+%%
+def=find(~isnan(u));% high pass data for spike identification
+      
+uhf=u*NaN;
+uhf(def)=sqrt(mfilter(u(def),1,0,1/nt).^2);
+ii=find(uhf>filfac*mean(uhf) | vhf>filfac*mean(vhf)); % line that identifies spikes
+
+
+% surface bin detection
 Amp1_pro = nanmean(Amp1);SB1 = find(islocalmin(Amp1_pro),1,'last');
 Amp2_pro = nanmean(Amp2);SB2 = find(islocalmin(Amp2_pro),1,'last');
 Amp3_pro = nanmean(Amp3);SB3 = find(islocalmin(Amp3_pro),1,'last');
@@ -409,12 +445,11 @@ theta = abs(pitch)+20;
 % R contains buffer for upper range of cell
 R =max(A)*cosd(theta)-Cell_Size; 
 % find(Dist2Instr_CellMidpoint <= R(i), 1, 'last') for each time step i
-idx_nan = isnan(R);
-R(idx_nan)=wd;
+R(QC_1D==4)=wd;
 idx_valid = arrayfun(@(r) find(Dist2Instr_CellMidpoint <= r, 1, 'last'),...
     R);
-idx_valid(idx_nan)=1;
-R(idx_nan)=NaN;
+idx_valid(QC_1D==4)=0;
+R(QC_1D==4)=NaN;
 
 %%%%%%%%%%%%%%%%%%%%%%%
 f2 = figure(2);clf
@@ -436,7 +471,7 @@ for k = 1:numel(ax)
     axis(ax(k),'xy','ij');
     ylabel(ax(k),'Nominal cell depth (m)')
     datetick(ax(k),'x','mmm-yyyy','keepticks','keeplimits');
-    hLine = plot(ax(k),x, y(idx_valid), 'r', 'LineWidth', 0.1);
+    hLine = plot(ax(k),x(QC_1D==0), y(idx_valid(QC_1D==0)), 'r', 'LineWidth', 0.1);
     hLine.DisplayName = 'Sidelobe interference';
     xlim(ax(k),[min(x),max(x)])
 end
@@ -513,7 +548,7 @@ xlim([-0.05 0.2])
 yline(y(CB),'--')
 yline(y([min(idx_valid(QC_1D==0)),max(idx_valid(QC_1D==0))]),'r--')
 xline(0,'--')
-legend('U','V','W','Sidelobe range','valid bins','Location','southeast')
+legend('U','V','W','surface bins','Sidelobe range','Location','southeast')
 
 for k=1:numel(ax)
     axes(ax(k));    
@@ -527,8 +562,6 @@ end
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
 print('-dpng',fullfile(outdir,[filename,'_f2.2_beam_amplitude_correlation_QC.png']));
-
-%%
 clear ax
 
 srf_bins = min([SB,CB]);
@@ -546,55 +579,54 @@ QC_vel(:,bins_to_process+1:end)=QC_BAD;
 fprintf(fidlog,sprintf('Flagged bin >%d as QC_BAD (%d).\n\n',...
     bins_to_process,QC_BAD));
 
+%% sidelobe contamination
 
-prompt = sprintf(['Sidelobe contamination for each time step varies between ' ...
-    'bin %d and %d out of %d bins.\n' ...
-    'Would you like to flag sidelobe contaminated bins for each time step ' ...
-    'as QC_BAD (%d). Y/N [Y]: '], min(idx_valid(QC_1D==0))+1,...
-    max(idx_valid(QC_1D==0))+1, max(nCells), QC_BAD);
+prompt = sprintf([ ...
+  'Sidelobe contamination for each time step varies between %d and %d ' ...
+  'out of %d bins.\nSee red line in figure 2.\n Would you like to flag ' ...
+  ' sidelobe contaminated bins for each time step as QC_BAD (%d). Y/N [Y]: '], ...
+  min(idx_valid(QC_1D==0))+1, max(idx_valid(QC_1D==0))+1, max(nCells), QC_BAD);
 
-% reply = input(prompt, 's');          % read raw text
-% if isempty(reply)
-%     reply = 'Y';                     % default
-% end
-% 
-% while true
-% if strcmpi(reply, 'Y') || strcmpi(reply, 'YES')
-%     QC_vel(:,bins_to_process+1:end)=QC_BAD;
-%     break
-% elseif strcmpi(reply, 'N') || strcmpi(reply, 'NO')
-%     % user declined
-%     break
-% else
-%     fprintf('Invalid entry. Enter a positive number or press Return for default.\n');
-% end
-% end
-% 
-% [T, D] = size(QC_vel);        % T = 308630, D = 56
-% idx_trim = idx_valid(:)+1;       % ensure column vector
-% 
-% if numel(idx_trim) ~= T
-%     error('Length of idx_trim (%d) must equal number of rows in QC_vel (%d).', ...
-%         numel(idx_trim), T);
-% end
-% 
-% % Prepare indices: integer, clamp to [1, D+1]. D+1 means "no flags for that row".
-% idxc = floor(idx_trim);
-% idxc(isnan(idxc)) = D + 1;
-% idxc = min(max(idxc, 1), D + 1);
-% 
-% % Create mask: true where column j should be flagged (j >= idxc(i))
-% cols = 1:D;                        % 1×D
-% mask = cols >= idxc;               % implicit expansion -> T×D (R2016b+)
-% % If using older MATLAB, use:
-% % mask = bsxfun(@ge, cols, idxc);
-% 
-% % Ensure rows with idxc == D+1 have no flags
-% mask(idxc == D + 1, :) = false;
-% 
-% pcolor(x,y,mask'),shading flat
+reply = input(prompt, 's');
+if isempty(reply)
+    reply = 'Y';
+end
+
+while true
+    if strcmpi(reply, 'Y') || strcmpi(reply, 'YES')
+        mask = nCells > idx_valid(:);
+        QC_vel(mask) = QC_BAD;
+
+        prombt = ['Sidelobe contamination for each time step varies between ' ...
+            ' %d and %d out of %d bins.\nBins contaminated by' ...
+            ' sidelobe interference flagged as QC_BAD (%d).\n'];
+        fprintf(fidlog, prombt, ...
+            min(idx_valid(QC_1D==0))+1, max(idx_valid(QC_1D==0))+1, max(nCells), QC_BAD);
+        break
+
+    elseif strcmpi(reply, 'N') || strcmpi(reply, 'NO')
+        prombt = ['Sidelobe contamination for each time step varies between ' ...
+            'bin %d and %d out of %d bins.\nOperator chose NOT to flag ' ...
+            'bins contaminated by sidelobe interference.\n'];
+        fprintf(1, prombt, ...
+            min(idx_valid(QC_1D==0))+1, max(idx_valid(QC_1D==0))+1, max(nCells)); % to screen
+        fprintf(fidlog, prombt, ...
+            min(idx_valid(QC_1D==0))+1, max(idx_valid(QC_1D==0))+1, max(nCells));
+        break
+
+    else
+        fprintf('Invalid entry. Enter Y or N (press Return for default).\n');
+        reply = input('Y/N [Y]: ', 's');   % re-prompt and read again
+        if isempty(reply)
+            reply = 'Y';
+        end
+    end
+end
+
+
 %%
 end
+fprintf(fidlog, '\n==== END ENTRY  =====\n');
 fclose(fidlog);
 end
 
@@ -872,4 +904,130 @@ for k = 1:n
 end
 end
 
+function [mu_time,s_time] = calculate_block_mean_std(A)
+    % A: time_dim x depth
+    block = 10;
+    [T, D] = size(A);
+    nBlocks = T/block;
+    % reshape to (block, nBlocks, depth)
+    B = reshape(A, block, nBlocks, D);
+    % mean and std over the first dimension (within each 10-s burst)
+    mu = median(B, 1);    % 1 x nBlocks x D
+    s  = std(B, 0, 1);  % 1 x nBlocks x D  (default normalization N-1)
+    
+    % replicate to (block, nBlocks, D)
+    mu_rep = repmat(mu, block, 1, 1);
+    s_rep  = repmat(s,  block, 1, 1);
+    
+    % reshape back to (time_dim_trimmed, depth)
+    mu_time = reshape(mu_rep, nBlocks*block, D);
+    s_time  = reshape(s_rep,  nBlocks*block, D);
+end
 
+function [suggestTime, suggestDepth] = suggest_thresholds(amp, timeWin, depthWin, p)
+% amp: nTime x nDepth
+% timeWin, depthWin: as used for local medians
+% p: desired tail probability per-sided (e.g. 1e-3 -> ~99.9th percentile). optional
+
+if nargin < 4 || isempty(p), p = 1e-3; end
+
+% local medians and MAD estimates
+localMedT = movmedian(amp, timeWin, 1);     % along time
+resT = amp - localMedT;
+madT = movmad(resT, 1);                     % custom: MAD per column
+sigmaT = 1.4826 * max(madT, eps);           % robust sigma per column
+rzT = abs(resT ./ sigmaT);                  % robust-z per element
+
+localMedD = movmedian(amp, depthWin, 2);    % along depth
+resD = amp - localMedD;
+madD = movmad(resD, 2);                     % MAD per row
+sigmaD = 1.4826 * max(madD, eps);
+rzD = abs(resD ./ sigmaD);
+
+% aggregate robust-z distributions excluding extreme outliers to estimate background tails
+% use median absolute robust-z percentile estimation
+zT_vals = rzT(:);
+zD_vals = rzD(:);
+
+% remove very large extremes before estimating percentile to avoid bias
+zT_vals = zT_vals(zT_vals < prctile(zT_vals, 99.9)*5);
+zD_vals = zD_vals(zD_vals < prctile(zD_vals, 99.9)*5);
+
+% suggested thresholds: empirical percentile (two-sided)
+suggestTime = prctile(zT_vals, 100*(1 - p));
+suggestDepth = prctile(zD_vals, 100*(1 - p));
+
+% also give rule-of-thumb Gaussian equivalent for p: z = norminv(1 - p)
+z_gauss = norminv(1 - p);
+fprintf('Suggested thresholds (empirical %g tail): time=%.2f, depth=%.2f\n', p, suggestTime, suggestDepth);
+fprintf('Gaussian equivalent for same p: %.2f\n', z_gauss);
+end
+
+function m = movmad(A, dim)
+% compute MAD along dimension dim, returning vector sized like median along dim
+m = mad(A, 1, dim);
+end
+
+function mask = detect_spikes_amp(amp, timeWin, depthWin, threshTime, threshDepth)
+%DETECT_SPIKES_AMP  Detect spikes in a time x depth amplitude matrix.
+%   mask = DETECT_SPIKES_AMP(amp, timeWin, depthWin, threshTime, threshDepth)
+%   returns a logical mask (nTime-by-nDepth) with true for detected spikes.
+%
+%   Inputs
+%     amp         - nTime-by-nDepth numeric matrix of amplitudes
+%     timeWin     - moving window length along time (odd integer, used for movmedian)
+%     depthWin    - moving window length along depth (odd integer, currently unused but kept for symmetry)
+%     threshTime  - robust z threshold for detection along time (e.g. 4)
+%     threshDepth - robust z threshold for detection along depth (e.g. 4)
+%
+%   Output
+%     mask        - logical matrix, true = flagged (bad/spike)
+%
+%   Notes
+%   - Uses MAD (median absolute deviation) based robust z-scores along each dimension.
+%   - Combines time-wise and depth-wise detections: mask = maskTime | maskDepth.
+%   - Does not apply morphological postprocessing.
+
+% Validate
+narginchk(5,5);
+assert(isnumeric(amp) && ismatrix(amp), 'amp must be a 2-D numeric matrix.');
+[nTime, nDepth] = size(amp);
+
+% Ensure window lengths are odd positive integers (use as-is if valid)
+timeWin = max(1, round(timeWin));
+depthWin = max(1, round(depthWin));
+
+% 1) Detect along time (column-wise)
+% compute column medians and MAD
+medTime = median(amp, 1);                      % 1 x nDepth
+madTime = mad(amp, 1, 1);                      % 1 x nDepth (MAD along dim 1)
+% avoid divide-by-zero
+madTime(madTime == 0) = eps;
+% robust z per element
+rzTime = abs((amp - medTime) ./ madTime);      % nTime x nDepth
+maskTime = rzTime > threshTime;
+
+% Optionally use local moving-median difference to reduce isolated false positives
+% (this step is helpful for impulsive spikes; keeps those that differ from local median)
+if timeWin > 1
+    localMedT = movmedian(amp, timeWin, 1);    % nTime x nDepth
+    maskTime = maskTime & (abs(amp - localMedT) > 0);
+end
+
+% 2) Detect along depth (row-wise)
+medDepth = median(amp, 2);                     % nTime x 1
+madDepth = mad(amp, 1, 2);                     % nTime x 1 (MAD along dim 2)
+madDepth(madDepth == 0) = eps;
+rzDepth = abs((amp - medDepth) ./ madDepth);   % nTime x nDepth (broadcast)
+maskDepth = rzDepth > threshDepth;
+
+% Optionally use local moving-median across depth (if depthWin > 1)
+if depthWin > 1
+    localMedD = movmedian(amp, depthWin, 2);   % nTime x nDepth
+    maskDepth = maskDepth & (abs(amp - localMedD) > 0);
+end
+
+% 3) Combine
+mask = maskTime | maskDepth;
+
+end
