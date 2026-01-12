@@ -41,6 +41,7 @@ else
     moor{4} = 'rteb_osnap_04_2017';
     moor{5} = 'rteb_osnap_05_2018';
     moor{6} = 'rteb_osnap_06_2020';
+    moor{7} = 'rteb_osnap_07_2022';
 end
 
 col         = {'r','b','m','c','g','y','r--','b--','m--','c--','g--','y--','r:',...
@@ -106,16 +107,16 @@ for i = 1: length(sn1)
         figure(20011)
         hold on; box on;
         plot(JG, Sfs1(i, :), col{:,i},'LineWidth',2);
-        title('OSNAP 2 - SALINITY')
+        title('OSNAP 2 - ABSOLUTE SALINITY')
         
         figure(20012)
         hold on; box on;
         plot(JG, Tfs1(i, :), col{:,i},'LineWidth',2);
-        title('OSNAP 2 - TEMPERATURE')
+        title('OSNAP 2 - CONSERVATIVE TEMPERATURE')
         
         figure(200120)
         hold on; box on;
-        plot(JG, sw_pden(Sfs1(i, :),Tfs1(i, :),Pfs1(i, :),0)-1000, col{:,i},'LineWidth',2);
+        plot(JG, gsw_rho(Sfs1(i, :),Tfs1(i, :),0)-1000, col{:,i},'LineWidth',2);
         title('OSNAP 1 - POTENTIAL DENSITY')      
         
         figure(20013)
@@ -178,16 +179,16 @@ for i = 1: length(sn2)
         figure(20021)
         hold on; box on;
         plot(JG, Sfs2(i, :), col{:,i},'LineWidth',2);
-        title('OSNAP 2 - SALINITY')
+        title('OSNAP 2 - ABSOLUTE SALINITY')
         
         figure(20022)
         hold on; box on;
         plot(JG, Tfs2(i, :), col{:,i},'LineWidth',2);
-        title('OSNAP 2 - TEMPERATURE')
+        title('OSNAP 2 - CONSERVATIVE TEMPERATURE')
         
         figure(200220)
         hold on; box on;
-        plot(JG, sw_pden(Sfs2(i, :),Tfs2(i, :),Pfs2(i, :),0)-1000, col{:,i},'LineWidth',2);
+        plot(JG, gsw_rho(Sfs2(i, :),Tfs2(i, :),0)-1000, col{:,i},'LineWidth',2);
         title('OSNAP 2 - POTENTIAL DENSITY')      
     
         figure(20023)
@@ -250,16 +251,16 @@ for i = 1: length(sn3)
         figure(30021)
         hold on; box on;
         plot(JG, Sfs3(i, :), col{:,i},'LineWidth',2);
-        title('OSNAP 3 - SALINITY')
+        title('OSNAP 3 - ABSOLUTE SALINITY')
         
         figure(30022)
         hold on; box on;
         plot(JG, Tfs3(i, :), col{:,i},'LineWidth',2);
-        title('OSNAP 3 - TEMPERATURE')
+        title('OSNAP 3 - CONSERVATIVE TEMPERATURE')
         
         figure(300220)
         hold on; box on;
-        plot(JG, sw_pden(Sfs3(i, :),Tfs3(i, :),Pfs3(i, :),0)-1000, col{:,i},'LineWidth',2);
+        plot(JG, gsw_rho(Sfs3(i, :),Tfs3(i, :),0)-1000, col{:,i},'LineWidth',2);
         title('OSNAP 3 - POTENTIAL DENSITY')      
     
         figure(30023)
@@ -317,16 +318,16 @@ for i = 1: length(sn4)
         figure(40021)
         hold on; box on;
         plot(JG, Sfs4(i, :), col{:,i},'LineWidth',2);
-        title('OSNAP 4 - SALINITY')
+        title('OSNAP 4 - ABSOLUTE SALINITY')
         
         figure(40022)
         hold on; box on;
         plot(JG, Tfs4(i, :), col{:,i},'LineWidth',2);
-        title('OSNAP 4 - TEMPERATURE')
+        title('OSNAP 4 - CONSERVATIVE TEMPERATURE')
         
         figure(400220)
         hold on; box on;
-        plot(JG, sw_pden(Sfs4(i, :),Tfs4(i, :),Pfs4(i, :),0)-1000, col{:,i},'LineWidth',2);
+        plot(JG, gsw_rho(Sfs4(i, :),Tfs4(i, :),0)-1000, col{:,i},'LineWidth',2);
         title('OSNAP 4 - POTENTIAL DENSITY')      
     
         figure(40023)
@@ -382,16 +383,16 @@ for i = 1: length(sn5)
         figure(50021)
         hold on; box on;
         plot(JG, Sfs5(i, :), col{:,i},'LineWidth',2);
-        title('OSNAP 5 - SALINITY')
+        title('OSNAP 5 - ABSOLUTE SALINITY')
         
         figure(50022)
         hold on; box on;
         plot(JG, Tfs5(i, :), col{:,i},'LineWidth',2);
-        title('OSNAP 5 - TEMPERATURE')
+        title('OSNAP 5 - CONSERVATIVE TEMPERATURE')
         
         figure(500220)
         hold on; box on;
-        plot(JG, sw_pden(Sfs5(i, :),Tfs5(i, :),Pfs5(i, :),0)-1000, col{:,i},'LineWidth',2);
+        plot(JG, gsw_rho(Sfs5(i, :),Tfs5(i, :),0)-1000, col{:,i},'LineWidth',2);
         title('OSNAP 5 - POTENTIAL DENSITY')      
     
         figure(50023)
@@ -403,8 +404,6 @@ for i = 1: length(sn5)
 end
 
 % OSNAP 6 (DY120 --> JC238)
-
-
 disp('---------  OSNAP 6 (DY120--> JC238) ---------')
 fileID6 = fopen([boundarydir, moor{6}, '.dat']);
 delimiter = {'\t',' '};
@@ -448,16 +447,16 @@ for i = 1: length(sn6)
         figure(60021)
         hold on; box on;
         plot(JG, Sfs6(i, :), col{:,i},'LineWidth',2);
-        title('OSNAP 6 - SALINITY')
+        title('OSNAP 6 - ABSOLUTE SALINITY')
         
         figure(60022)
         hold on; box on;
         plot(JG, Tfs6(i, :), col{:,i},'LineWidth',2);
-        title('OSNAP 6 - TEMPERATURE')
+        title('OSNAP 6 - CONSERVATIVE TEMPERATURE')
         
         figure(600220)
         hold on; box on;
-        plot(JG, sw_pden(Sfs6(i, :),Tfs6(i, :),Pfs6(i, :),0)-1000, col{:,i},'LineWidth',2);
+        plot(JG, gsw_rho(Sfs6(i, :),Tfs6(i, :),0)-1000, col{:,i},'LineWidth',2);
         title('OSNAP 6 - POTENTIAL DENSITY')      
     
         figure(60023)
@@ -467,17 +466,84 @@ for i = 1: length(sn6)
     end
     
 end
+
+% OSNAP 7 (JC238-->Dy181)
+disp('---------  OSNAP 7 (JC238-->DY181) ---------')
+fileID7 = fopen([boundarydir, moor{7}, '.dat']);
+delimiter = {'\t',' '};
+startRow = 6;
+formatSpec = '%s%f%f%f%f%*s%*s%[^\n\r]';
+file7_data = textscan(fileID7, formatSpec, 'Delimiter', delimiter, 'MultipleDelimsAsOne', true, 'HeaderLines' ,startRow-1, 'ReturnOnError', false);
+% % Close the text file.
+fclose(fileID7);
+mooring7 = file7_data{1};
+sn7      = file7_data{2};
+mc7      = file7_data{3};
+z7       = file7_data{4};
+lon7     = file7_data{5};
+
+T7 = zeros(length(sn7), length(JG));
+P7 = zeros(length(sn7), length(JG));
+S7 = zeros(length(sn7), length(JG));
+
+i = 1; j = 1;    
+infile = [hydrodir, mooring7{i,:}, '_grid.mat'];
+load(infile);
+
+for i = 1: length(sn7)
+    jdnew = datenum(gregorian(jd));    
+    sampling_rate = round(1./median(diff(jd_grid))); %nominal sampling rate [per day]
+    salinity    = interp1(jdnew(1:end-1), Sfs((i),1:end-1)', JG)';
+    temp        = interp1(jdnew(1:end-1), Tfs((i),1:end-1)', JG)';
+    pressure    = interp1(jdnew(1:end-1), Pfs((i),1:end-1)', JG)';
+    % SJ: the indexing below only seems to work when there are no gaps in
+    % the instruments but caused error in Dep 4.
+%     salinity    = interp1(jdnew(1:end-1), Sfs(mc4(i),1:end-1)', JG)';
+%     temp        = interp1(jdnew(1:end-1), Tfs(mc4(i),1:end-1)', JG)';
+%     pressure    = interp1(jdnew(1:end-1), Pfs(mc4(i),1:end-1)', JG)';
+    Sfs7(j,:) = salinity;
+    Pfs7(j,:) = pressure;
+    Tfs7(j,:) = temp;
+    
+    j = j + 1;
+    
+    if mc_check_plot
+        figure(70021)
+        hold on; box on;
+        plot(JG, Sfs7(i, :), col{:,i},'LineWidth',2);
+        title('OSNAP 7 - ABSOLUTE SALINITY')
+        
+        figure(70022)
+        hold on; box on;
+        plot(JG, Tfs7(i, :), col{:,i},'LineWidth',2);
+        title('OSNAP 7 - CONSERVATIVE TEMPERATURE')
+        
+        figure(700220)
+        hold on; box on;
+        plot(JG, gsw_rho(Sfs7(i, :),Tfs7(i, :),0)-1000, col{:,i},'LineWidth',2);
+        title('OSNAP 7 - POTENTIAL DENSITY')      
+    
+        figure(70023)
+        hold on; box on;
+        plot(JG, Pfs7(i, :), col{:,i},'LineWidth',2);
+        title('OSNAP 7 - PRESSURE')
+    end
+    
+end
+
+
 %% 3. CONCATENATE AND ORDER THE MATRICES
 % This step adds alll the matrices for the deployments together to form large 
 % data sets. These are then sorted into pressure order at every time step before 
 % the gridding takes place.
 
-PDENfs1 = sw_pden(Sfs1,Tfs1,Pfs1,0) - 1000;
-PDENfs2 = sw_pden(Sfs2,Tfs2,Pfs2,0) - 1000;  
-PDENfs3 = sw_pden(Sfs3,Tfs3,Pfs3,0) - 1000;
-PDENfs4 = sw_pden(Sfs4,Tfs4,Pfs4,0) - 1000;
-PDENfs5 = sw_pden(Sfs5,Tfs5,Pfs5,0) - 1000;
-PDENfs6 = sw_pden(Sfs6,Tfs6,Pfs6,0) - 1000;
+PDENfs1 = gsw_rho(Sfs1,Tfs1,0) - 1000;
+PDENfs2 = gsw_rho(Sfs2,Tfs2,0) - 1000;  
+PDENfs3 = gsw_rho(Sfs3,Tfs3,0) - 1000;
+PDENfs4 = gsw_rho(Sfs4,Tfs4,0) - 1000;
+PDENfs5 = gsw_rho(Sfs5,Tfs5,0) - 1000;
+PDENfs6 = gsw_rho(Sfs6,Tfs6,0) - 1000;
+PDENfs7 = gsw_rho(Sfs7,Tfs7,0) - 1000;
 
 figure(11)   %  graph of the data to show that it is all there!
 clf;
@@ -489,6 +555,7 @@ plot(JG , Tfs3, 'g.')
 plot(JG , Tfs4, 'r.')
 plot(JG , Tfs5, 'm.')
 plot(JG , Tfs6, 'k.')
+plot(JG , Tfs7, 'b.')
 
 ylabel('C')
 datetick
@@ -502,6 +569,7 @@ plot(JG , Sfs3, 'g.')
 plot(JG , Sfs4, 'r.')
 plot(JG , Sfs5, 'm.')
 plot(JG , Sfs6, 'k.')
+plot(JG , Sfs7, 'b.')
 
 ylabel('SAL.')
 datetick
@@ -521,6 +589,7 @@ plot(JG , Pfs3, 'g.')
 plot(JG , Pfs4, 'r.')  
 plot(JG , Pfs5, 'm.')  
 plot(JG , Pfs6, 'k.')  
+plot(JG , Pfs7, 'b.')  
 ylabel('dbar')
 datetick
 title('PRES')   
@@ -533,6 +602,7 @@ plot(JG , PDENfs3, 'g.')
 plot(JG , PDENfs4, 'r.')
 plot(JG , PDENfs5, 'm.')
 plot(JG , PDENfs6, 'k.')
+plot(JG , PDENfs7, 'b.')
 ylabel('kg/m3.')
 datetick
 title('POT. DENS')   
@@ -541,44 +611,48 @@ set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
 print('-dpng',[grdatdir 'otherfigure' filesep  'RTEBmerged_beforegrid_check2'])
 
 % all the matrices for the deployments stacked together
-Pfs     = [Pfs1;Pfs2;Pfs3;Pfs4;Pfs5;Pfs6];
-Sfs     = [Sfs1;Sfs2;Sfs3;Sfs4;Sfs5;Sfs6];
-Tfs     = [Tfs1;Tfs2;Tfs3;Tfs4;Tfs5;Tfs6];
+Pfs     = [Pfs1;Pfs2;Pfs3;Pfs4;Pfs5;Pfs6;Pfs7];
+Sfs     = [Sfs1;Sfs2;Sfs3;Sfs4;Sfs5;Sfs6;Sfs7];
+Tfs     = [Tfs1;Tfs2;Tfs3;Tfs4;Tfs5;Tfs6;Tfs7];
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%
 % KB outputs stagged files
-z_stacked = [50;75;100;250;500;750;1000;1250;1500;1650;1775];
+z_stacked = [50;75;100;250;500;750;950;1000;1250;1500;1650;1775];
 
 %%% add NaN where instrument is missing
 fvs = NaN(1,length(JG));
-t_st1 = [fvs;Tfs1(1,:);fvs;Tfs1(2:4,:);fvs;Tfs1(5:6,:);fvs;Tfs1(7,:)];
-s_st1 = [fvs;Sfs1(1,:);fvs;Sfs1(2:4,:);fvs;Sfs1(5:6,:);fvs;Sfs1(7,:)];
-p_st1 = [fvs;Pfs1(1,:);fvs;Pfs1(2:4,:);fvs;Pfs1(5:6,:);fvs;Pfs1(7,:)];
+t_st1 = [fvs;Tfs1(1,:);fvs;Tfs1(2:4,:);fvs;fvs;Tfs1(5:6,:);fvs;Tfs1(7,:)];
+s_st1 = [fvs;Sfs1(1,:);fvs;Sfs1(2:4,:);fvs;fvs;Sfs1(5:6,:);fvs;Sfs1(7,:)];
+p_st1 = [fvs;Pfs1(1,:);fvs;Pfs1(2:4,:);fvs;fvs;Pfs1(5:6,:);fvs;Pfs1(7,:)];
 
-t_st2 = [fvs;Tfs2(1,:);fvs;Tfs2(2:7,:);fvs;Tfs2(8,:)];
-s_st2 = [fvs;Sfs2(1,:);fvs;Sfs2(2:7,:);fvs;Sfs2(8,:)];
-p_st2 = [fvs;Pfs2(1,:);fvs;Pfs2(2:7,:);fvs;Pfs2(8,:)];
+t_st2 = [fvs;Tfs2(1,:);fvs;Tfs2(2:4,:);fvs;Tfs2(5:7,:);fvs;Tfs2(8,:)];
+s_st2 = [fvs;Sfs2(1,:);fvs;Sfs2(2:4,:);fvs;Sfs2(5:7,:);fvs;Sfs2(8,:)];
+p_st2 = [fvs;Pfs2(1,:);fvs;Pfs2(2:4,:);fvs;Pfs2(5:7,:);fvs;Pfs2(8,:)];
 
-t_st3 = [fvs;fvs;Tfs3(1,:);fvs;Tfs3(2:6,:);fvs;Tfs3(7,:)];
-s_st3 = [fvs;fvs;Sfs3(1,:);fvs;Sfs3(2:6,:);fvs;Sfs3(7,:)];
-p_st3 = [fvs;fvs;Pfs3(1,:);fvs;Pfs3(2:6,:);fvs;Pfs3(7,:)];
+t_st3 = [fvs;fvs;fvs;Tfs3(1:3,:);fvs;Tfs3(4:6,:);fvs;Tfs3(7,:)];
+s_st3 = [fvs;fvs;fvs;Sfs3(1:3,:);fvs;Sfs3(4:6,:);fvs;Sfs3(7,:)];
+p_st3 = [fvs;fvs;fvs;Pfs3(1:3,:);fvs;Pfs3(4:6,:);fvs;Pfs3(7,:)];
 
-t_st4 = [Tfs4(1,:);fvs;Tfs4(2:8,:);fvs;Tfs4(9,:)];
-s_st4 = [Sfs4(1,:);fvs;Sfs4(2:8,:);fvs;Sfs4(9,:)];
-p_st4 = [Pfs4(1,:);fvs;Pfs4(2:8,:);fvs;Pfs4(9,:)];
+t_st4 = [Tfs4(1,:);fvs;Tfs4(2:5,:);fvs;Tfs4(6:8,:);fvs;Tfs4(9,:)];
+s_st4 = [Sfs4(1,:);fvs;Sfs4(2:5,:);fvs;Sfs4(6:8,:);fvs;Sfs4(9,:)];
+p_st4 = [Pfs4(1,:);fvs;Pfs4(2:5,:);fvs;Pfs4(6:8,:);fvs;Pfs4(9,:)];
 
-t_st5 = [Tfs5(1,:);fvs;Tfs5(2:10,:)];
-s_st5 = [Sfs5(1,:);fvs;Sfs5(2:10,:)];
-p_st5 = [Pfs5(1,:);fvs;Pfs5(2:10,:)];
+t_st5 = [Tfs5(1,:);fvs;Tfs5(2:5,:);fvs;Tfs5(6:10,:)];
+s_st5 = [Sfs5(1,:);fvs;Sfs5(2:5,:);fvs;Sfs5(6:10,:)];
+p_st5 = [Pfs5(1,:);fvs;Pfs5(2:5,:);fvs;Pfs5(6:10,:)];
 
-t_st6 = [Tfs6(1,:);fvs;Tfs6(2:10,:)];
-s_st6 = [Sfs6(1,:);fvs;Sfs6(2:10,:)];
-p_st6 = [Pfs6(1,:);fvs;Pfs6(2:10,:)];
+t_st6 = [Tfs6(1,:);fvs;Tfs6(2:5,:);fvs;Tfs6(6:10,:)];
+s_st6 = [Sfs6(1,:);fvs;Sfs6(2:5,:);fvs;Sfs6(6:10,:)];
+p_st6 = [Pfs6(1,:);fvs;Pfs6(2:5,:);fvs;Pfs6(6:10,:)];
+
+t_st7 = [Tfs7(1,:);fvs;Tfs7(2:11,:)];
+s_st7 = [Sfs7(1,:);fvs;Sfs7(2:11,:)];
+p_st7 = [Pfs7(1,:);fvs;Pfs7(2:11,:)];
 
 %%% add NaN where instrument is missing
-Tstacked = stack_vars(t_st1,t_st2,t_st3,t_st4,t_st5,t_st6);
-Sstacked = stack_vars(s_st1,s_st2,s_st3,s_st4,s_st5,s_st6);
-Pstacked = stack_vars(p_st1,p_st2,p_st3,p_st4,p_st5,p_st6);
+Tstacked = stack_vars(t_st1,t_st2,t_st3,t_st4,t_st5,t_st6,t_st7);
+Sstacked = stack_vars(s_st1,s_st2,s_st3,s_st4,s_st5,s_st6,s_st7);
+Pstacked = stack_vars(p_st1,p_st2,p_st3,p_st4,p_st5,p_st6,p_st7);
 
 save([grdatdir outputfile_stacked '.mat'],...
     'Tstacked','Sstacked','Pstacked','JG','z_stacked')
@@ -659,12 +733,7 @@ end
 
 %% Apply correction for 2017 data to EB mooring
 [wbfile,path] = uigetfile(grdatdir,'Select most recent version of WB merged') % select the most recent processing of the WB data
-[Tfs,Sfs,Pfs,TGfs,SGfs] = extrap_missing_data(pathosnap,wbfile,Tfs,Sfs,Pfs,TGfs,SGfs,JG,pgg);
-
-%% Apply correction for 2017 data to EB mooring
-[wbfile,path] = uigetfile(grdatdir,'Select most recent version of WB merged') % select the most recent processing of the WB data
 [Tfs,Sfs,Pfs,TGfs,SGfs] = extrap_missing_data(path,wbfile,Tfs,Sfs,Pfs,TGfs,SGfs,JG,pgg);
-
 TGfs(pgg>max_depth,:)=NaN;
 SGfs(pgg>max_depth,:)=NaN;
 %% Save data
@@ -846,10 +915,10 @@ RTEB_merg.comment{2,1}= 'Tfs -- original stacked Temperature data from the deplo
 RTEB_merg.comment{3,1}= 'Sfs -- original stacked salinity data from the deployments ';
 RTEB_merg.comment{4,1}= 'Pfs -- original stacked Pressure data from the deployments';    
 RTEB_merg.comment{5,1}= 'pgg -- pressure grid ';
-RTEB_merg.comment{6,1}= 'TGfs -- temperature interpolated onto the pressure grid (PGfs)';
-RTEB_merg.comment{7,1}= 'SGfs -- salinity interpolated onto the pressure grid (PGfs)';
-RTEB_merg.comment{8,1}= 'TGfs2 -- temperature interpolated onto the time grid (JG) after despiking';  
-RTEB_merg.comment{9,1}= 'SGfs2 -- salinity interpolated onto the time grid (JG) after despiking';  
+RTEB_merg.comment{6,1}= 'TGfs -- CONSERVATIVE TEMPERATURE interpolated onto the pressure grid (PGfs)';
+RTEB_merg.comment{7,1}= 'SGfs -- ABSOLUTE SALINITY interpolated onto the pressure grid (PGfs)';
+RTEB_merg.comment{8,1}= 'TGfs2 -- CONSERVATIVE TEMPERATURE interpolated onto the time grid (JG) after despiking';  
+RTEB_merg.comment{9,1}= 'SGfs2 -- ABSOLUTE SALINITY interpolated onto the time grid (JG) after despiking';  
 
 save([grdatdir outputfile],'RTEB_merg');
 %  6. PLOTTING THE GRIDDED AND MERGED PROFILES 
@@ -957,9 +1026,9 @@ C.TickLength=0.03;
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)   
 print('-dpng',[grdatdir outputfile '_salinity'])
 %%
-PDENGfs = sw_pden(SGfs,TGfs,pgg',0);
-pden = sw_pden(salinity,temp,pgg',0);   
-PDENG_east = sw_pden(SG_east,TG_east,pgg',0);   
+PDENGfs = gsw_rho(SGfs,TGfs,0);
+pden = gsw_rho(salinity,temp,0);   
+PDENG_east = gsw_rho(SG_east,TG_east,0);   
 
 figure(3);clf
 subplot(3,1,1)
@@ -981,99 +1050,11 @@ title('AFTER DESPIKING AND INTERPOLATION')
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)   
 print('-dpng',[grdatdir outputfile '_potdens'])
     
-% MAKE MERGED DATA ONLY FIGURE
-% Temperature
-
-figure;
-ax(1)=subplot(3,1,1);
-
-x=JG;y=pgg;z=TG_east;
-[c,h]=contourf(x,y,z,100,'LineColor','none');
-caxis([ceil(min(min(TG_east))) floor(max(max(TG_east)))]);
-C = colorbar;
-C.Label.String = 'Conservative Temperature (^{o} C)';
-C.Ticks=[floor(min(min(TG_east))):1:ceil(max(max(TG_east)))];
-C.TickLength=0.03;
-hold on
-[c,h]=contour(x , y, z,[2 4 6 8 10 12 14],'LineColor','k','LineWidth',0.25);
-clabel(c,h,'LabelSpacing',500,'Color','w')
-xlabel(gca,'Year');
-ylabel(gca,'Pressure (m)');
-[Y,~,~]=datevec(JG);
-date1=datenum(min(Y),1,1);
-date2=datenum(max(Y),1,1);
-datetick('x','Keeplimits');
-axis ij
-title('Rockall Trough Eastern Boundary Gridded Temperature')
-cmap=cmocean('Thermal');
-colormap(ax(1),cmap);
-
-% Salinity
-
-ax(2)=subplot(3,1,2)
-
-x=JG;y=pgg;z=SG_east;
-[c,h]=contourf(x,y,z,12,'LineColor','none');
-caxis([round(min(min(z)),1) round(max(max(z)),1)]);
-C = colorbar;
-cmap=cmocean('Haline');
-colormap(ax(2),cmap);
-C.Label.String = 'Absolute Salinity (g kg^{-1})';
-C.Ticks=[round(min(min(z)),1):0.1:round(max(max(z)),1)];
-C.TickLength=0.03;
-hold on
-[c,h]=contour(JG , pgg, SGfs,[35.2 35.4 35.6],'LineColor','k','LineWidth',0.25); 
-clabel(c,h,'LabelSpacing',500,'Color','w')
-xlabel(gca,'Year');
-ylabel(gca,'Pressure (m)');
-% SORT LABELS
-[Y,~,~]=datevec(JG);
-date1=datenum(min(Y),1,1);
-date2=datenum(max(Y),1,1);
-datetick('x','Keeplimits');
-axis ij
-title('Rockall Trough Eastern Boundary Gridded Salinity')
-
-
-% Density
-
-ax(3)=subplot(3,1,3);
-
-x=JG;y=pgg;z=gsw_rho(SG_east,TG_east,0); 
-[c,h]=contourf(x,y,z,12,'LineColor','none');
-caxis([round(min(min(z)),1) round(max(max(z)),1)]);
-C = colorbar;
-cmap=cmocean('Dense');
-colormap(ax(3),cmap);
-C = colorbar;
-C.Label.String = 'Potential density (kg/m^{3})';
-C.Ticks=[round(min(min(z)),1):0.2:round(max(max(z)),1)];
-C.TickLength=0.03;
-hold on
-[c,h]=contour(JG , pgg, z,[1027.8 1027.5 1027.2],'LineColor','k','LineWidth',0.25); 
-clabel(c,h,'LabelSpacing',500,'Color','w')
-xlabel(gca,'Year');
-ylabel(gca,'Pressure (m)');
-% SORT LABELS
-[Y,~,~]=datevec(JG);
-date1=datenum(min(Y),1,1);
-date2=datenum(max(Y),1,1);
-datetick('x','Keeplimits');
-axis ij
-title('Rockall Trough Eastern Boundary Gridded Density')
-
-% save figure
-width=35; height=20; FS=12; FN='Arial';
-for hh=1:numel(ax)
-    set(ax(hh),'fontsize', FS, 'FontName',FN);
-end
-set(gcf,'units','centimeters','position',[5 5 width height])
-print('-dpng',[grdatdir outputfile])
 
  
 %% functions
-function Ustacked = stack_vars(U1,U2,U3,U4,U5,U6)
-    Ustacked = cat(3,U1,U2,U3,U4,U5,U6);
+function Ustacked = stack_vars(U1,U2,U3,U4,U5,U6,U7)
+    Ustacked = cat(3,U1,U2,U3,U4,U5,U6,U7);
     Ustacked = sum(Ustacked,3,'omitnan');
     Ustacked(Ustacked==0)=NaN;
 end

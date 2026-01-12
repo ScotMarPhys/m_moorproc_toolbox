@@ -58,7 +58,7 @@ ctdnum = sprintf('%03d',str2double(cast));
 
 cruise = MOORPROC_G.cruise;
 
-doctd = 1;% 1; % whether to load and plot CTD data: 1 if mstar format, 99 if native cnv file (without header)
+doctd = 99;% 1; % whether to load and plot CTD data: 1 if mstar format, 99 if native cnv file (without header)
 
 % get paths for data input and output
 pd = moor_inoutpaths('microcat_cal_dip',cast);
@@ -85,9 +85,9 @@ end
 if ~exist(pd.infofile,'file')
     error('infofile %s not found',pd.infofile)
 end
-if ~exist(pd.ctdfile,'file')
-    error('ctdinfile %s not found',pd.ctdfile)
-end
+% if ~exist(pd.ctdfile,'file')
+%     error('ctdinfile %s not found',pd.ctdfile)
+% end
 if ~exist(pd.stage1fig,'dir')
     mkdir(pd.stage1fig)
 end
@@ -102,19 +102,27 @@ if ~exist('doctd','var') || doctd == 1
     end
 elseif doctd == 99 % using cnv file instead of .nc
     warning('hardwired cast numbers/times in %s (what cruise is this code from?)',mfilename)
-    if contains(cast,'1')
-       start_date_cast = datenum(2018,07,02,18,17,06);  
-    elseif contains(cast,'2')
-       start_date_cast = datenum(2018,07,03,17,17,42);  
-    elseif contains(cast,'3')
-       start_date_cast = datenum(2018,07,04,17,19,06);         
-    elseif contains(cast,'5')
-       start_date_cast = datenum(2018,07,07,03,08,39); 
-       start_date_cast_9141 = datenum(2016,7,4,16,00,01);
-    elseif contains(cast,'6')
-       start_date_cast = datenum(2018,07,07,13,13,15);
+    % if contains(cast,'1')
+    %    start_date_cast = datenum(2018,07,02,18,17,06);  
+    % elseif contains(cast,'2')
+    %    start_date_cast = datenum(2018,07,03,17,17,42);  
+    % elseif contains(cast,'3')
+    %    start_date_cast = datenum(2018,07,04,17,19,06);         
+    % elseif contains(cast,'5')
+    %    start_date_cast = datenum(2018,07,07,03,08,39); 
+    %    start_date_cast_9141 = datenum(2016,7,4,16,00,01);
+    % elseif contains(cast,'6')
+    %    start_date_cast = datenum(2018,07,07,13,13,15);
+    %if contains(cast,'13') & strcmpi(cruise,'ce25007')
+    %   start_date_cast = datenum(2025,05,14,04,33,59);
+    if contains(cast,'15') & strcmpi(cruise,'tc24015')
+       start_date_cast = datenum(2024,06,24,09,25,00);
+    elseif contains(cast,'21') & strcmpi(cruise,'tc24015')
+       start_date_cast = datenum(2024,06,25,02,52,00);
     end
-    read_ctd_cnv(pd.ctdfile,start_date_cast);
+
+    d=read_cnv_data(pd.cnvfile,start_date_cast);
+    d.yd=d.yd-jd0;
 end
 
 % --- get mooring information from infofile ---
@@ -136,7 +144,7 @@ sn = sn(ii);
 % --- create log file ---
 fidlog = fopen(pd.stage1log,'w');
 if fidlog==-1
-    error('could not open logfile %s',logf)
+    error('could not open logfile %s',pd.stage1log) % error('could not open logfile %s',logf)
 end
 legend_handle = ['[';'[';'['];
 legend_string = [];
@@ -183,7 +191,8 @@ for i = 1:length(sn)
     if exist(infile,'file')
         valid_sn(i)=true;
         %------------------------------------------------------------
-        % specific cases when microcat starting jday is >365
+        % specific cases when microcat time is "jd" (really year-day) or
+        % when an offset needs to be applied due to clock error
         if(contains(cruise,'ar30') && sn(i) == 11327 && contains(cast,'6'))
             dateoffsetmc = 2017;
         elseif  (contains(cruise,'ar30') && sn(i) == 9141 && contains(cast,'5'))
@@ -191,7 +200,13 @@ for i = 1:length(sn)
         elseif strcmp(cruise,'dy146') && sn(i)==6322
             dateoffsetmc=60/86400;
         elseif strcmp(cruise,'en705') && strcmp(cast,'2')
-            dateoffsetmc=-1/24; %note: this is subtracted from mc times
+            dateoffsetmc=-1/24; %note: this is subtracted from mc times %edited by HS by accident - possibly incorrect!
+        elseif strcmp(cruise,'tc24015') && strcmp(cast,'21')
+            dateoffsetmc= -0.145/24; %note: this is subtracted from mc times % HS 06/01/2026
+        elseif strcmp(cruise,'tc24015') && strcmp(cast,'15')
+            dateoffsetmc= 0.009/24; %note: this is subtracted from mc times % HS 06/01/2026
+        elseif strcmp(cruise,'dy181') && strcmp(cast,'3') %after this, use seconds
+            dateoffsetmc=MOORPROC_G.YEAR;
         else
             dateoffsetmc = 0;
         end
@@ -284,7 +299,7 @@ if sum(id2==335)>0
 end
 
 fprintf(fidlog,'%s \n','for mcats wi serial nos ')
-fprintf(fidlog,'%s \n',num2str(sn));
+fprintf(fidlog,'%s \n',num2str(sn'));
 fprintf(fidlog,'%s \n','mean p diff = ')
 fprintf(fidlog,'%s \n',pdiff);
 fprintf(fidlog,'%s \n','mean c diff = ')
@@ -311,7 +326,7 @@ title(['CAST ' cast ' Calibration Dip'])
 if doctd
     hl = plot(d.yd,d.cond1-.02,d.yd,d.cond1+.02,d.yd,d.cond1,d.yd,d.cond2); 
     set(hl(1:2),'color',[.8 .8 .8],'linestyle','--');
-    set(hl(3),'color',[0 0 0]);set(hl(4),'color',[.4 .4 .4]); % ylf jc145 plot both
+    set(hl(3),'color',[0 0 0], 'LineWidth',1.5 );set(hl(4),'color',[.4 .4 .4]); % ylf jc145 plot both
     title(['CAST ' cast  ' Calibration Dip (-k=CTD1,gray=CTD2)'])
 end
 xlim(sort([jdstt-.01 jdend+.01])); grid

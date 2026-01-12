@@ -4,7 +4,7 @@
 % sensors
 
 % outputs remapped bins mid-points in distance from sensor head
-function [new_bin_mids, sos_source]=remap_bins_for_sos(bin_depths_mid,press_depth,lat,ADCP_t)
+function [remapped_bin_mid, sos_source]=remap_bins_for_sos(bin_depths_mid,press_depth,lat,ADCP_t)
     cor_type = input(['To correct the bin depths for speed of sound (sos), would you like to use',...
         '\na) sos derived from ctd profiles',...
         '\nb) fixed sos derived from ADCP temp sensor and fixed salinity given by user (in PSU)',...
@@ -33,7 +33,7 @@ function [new_bin_mids, sos_source]=remap_bins_for_sos(bin_depths_mid,press_dept
            press_depth2=press_depth*ones(1,length(ctd_press));
            press_depth2=press_depth2';
            %ctd_press2=ctd_press2';
-           press_diff=abs(ctd_press2-press_depth2);e bin remapping
+           press_diff=abs(ctd_press2-press_depth2); % bin remapping
             % to remap DY120 ADCP to new depth (instrument were setup with wrong depth)
            for ijk=1:length(press_diff)
             sensor_index(ijk)=find(press_diff(:,ijk) == min(press_diff(:,ijk))); % sensor_index and sos will be a vector when have p sensor
@@ -83,7 +83,7 @@ function [new_bin_mids, sos_source]=remap_bins_for_sos(bin_depths_mid,press_dept
         
         sos_str = input(['Was the instrument set up with a',...
                     'fixed sos of 1500m/s. Enter 0 to proceed (default) or enter ',...
-                    'alternative sos'],'s');
+                    'alternative sos: '],'s');
         if strcmp(sos_str,'0') || isempty(sos_str)
             sos=1500;
         else
@@ -152,5 +152,4 @@ function [new_bin_mids, sos_source]=remap_bins_for_sos(bin_depths_mid,press_dept
             
         end
     end
-    new_bin_mids=remapped_bin_start+(remapped_bin_end-remapped_bin_start)/2;
 end

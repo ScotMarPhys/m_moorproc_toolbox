@@ -1,0 +1,18 @@
+Mooring              = rteb1s_01_2024      
+WaterDepth           = 1806      
+Start_Date           = 2024/06/26
+Start_Time           = 12:00
+End_Date             = 2025/05/13
+End_Time             = 07:00
+Latitude             = 53 55.280 N
+Longitude            = 016 54.570 W
+Columns              = z:instrument:serialnumber
+     25      337     9141
+     80      337     7923
+    230      337     5509
+    490      337     5510
+    750      337    16363
+   1000      337    16379
+   1250      337    21269
+   1520      337    23829
+   1780      337    23830

@@ -6,9 +6,28 @@
 % clear all ; close all ;
 
 % basedir      = '/home/sa02lh/Data/Dropbox/Work/Postdoc_OSNAP/OSNAP_mooring/backup_mdrive';
-basedir = pathosnap;
+% basedir = pathosnap;
 
-for iyear=1 %1:3
+global MOORPROC_G
+clearvars -except MOORPROC_G
+
+% only mooring name and dates need to be modified, rest set in MOORPROC_G by
+% startup{cruise}.m
+
+moor = input('mooring deployment (e.g. ebh2_15_2022) to process:   ','s');
+%moor = 'ebh2_15_2022';
+% the start and end times of the time axis for plotting
+%plot_interval = [2023 03 05; 2023 07 21];
+%plot_interval = [2022 02 24; 2024 03 30];
+
+cruise = MOORPROC_G.cruise;
+operator = MOORPROC_G.operator;
+
+% get paths to files
+pd = moor_inoutpaths('nor',moor);
+basedir = MOORPROC_G.moordatadir;
+
+for iyear=7 %1:3
 switch(iyear)
     case(1)
         year = '_01_2014'; jg_start = datenum(2014,7,19,00,00,00);  jg_end = datenum(2015,6,20,00,00,00);
@@ -22,6 +41,8 @@ switch(iyear)
         year = '_05_2018'; jg_start = datenum(2018,7,9,00,00,00); jg_end = datenum(2020,10,10,00,00,00);    
     case(6)
         year = '_06_2020'; jg_start = datenum(2020,10,10,00,00,00); jg_end = datenum(2022,7,15,00,00,00);
+    case(7)
+        year = '_07_2022'; jg_start = datenum(2022,07,22,00,00,00); jg_end = datenum(2024,7,17,00,00,00);
 end
 
  for imoor=1:3
@@ -42,8 +63,8 @@ gap_max             = 10; % no more than 10 days of nan in a row
 moor                = [moorselect year];
 
 p_hydrogrid.moor    = moor;   
-mooringpath         = [basedir '/data/moor/proc/' moor ];
-out_path            = [basedir '/data/moor/proc/velocity_grid/'];
+mooringpath         = [basedir '/proc/' moor ];
+out_path            = [basedir '/proc/velocity_grid/'];
 
 % --- get moring information from infofile
 infofile            =[mooringpath '/' moor 'info.dat'];
@@ -264,7 +285,7 @@ end
 %% plot the mean velocity data
 
 figure;
-ax(1)=subplot(3,1,1)
+ax(1)=subplot(3,1,1);
 [c,h]=contourf(dnumi,pgrid,ufii,'LineColor','none');
 cmocean('balance','pivot',0);
 axis ij
@@ -274,7 +295,7 @@ C=colorbar;
 ylabel(C,' u velocity (cm s^{-1})')
 
 
-ax(1)=subplot(3,1,2)
+ax(1)=subplot(3,1,2);
 [c,h]=contourf(dnumi,pgrid,vfii,'LineColor','none');
 cmocean('balance','pivot',0);
 axis ij
@@ -283,7 +304,7 @@ ylabel('Pressure (db)');
 C=colorbar;
 ylabel(C,' v velocity (cm s^{-1})')
 
-ax(1)=subplot(3,1,3)
+ax(1)=subplot(3,1,3);
 [c,h]=contourf(dnumi,pgrid,wfii,'LineColor','none');
 cmocean('balance','pivot',0);
 axis ij

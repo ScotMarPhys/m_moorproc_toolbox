@@ -35,46 +35,60 @@ function stick_plot(moor,varargin)
 % 15/4/11 - aboard KN200-4: added Seaguard capability. DR.
 % 05/10/16 - Loic Houpert: added option to process lvl 3 data (.microcat and .edt files for nortek) and save plot
 %
-if nargin <1
+
+close all
+
+global MOORPROC_G
+
+% clearvars -except MEXEC_G MOORPROC_G
+
+cruise   = MOORPROC_G.cruise;
+operator = MOORPROC_G.operator;
+procpath = [MOORPROC_G.moordatadir,'/proc/'];
+% % moor = input('mooring deployment (e.g. ebh2_15_2022) to process:   ','s');
+
+if nargin==0
     help stick_plot
     return
 end
 
+pd = moor_inoutpaths('nor',moor);
+
 % check for optional arguments
-a=strmatch('layout',varargin,'exact');
+varargin_string=varargin;
+a=strmatch('layout',varargin_string,'exact');
 if a>0
-    layout=char(varargin(a+1));
+    layout='landscape';
 else
     layout='portrait';
 end
 
-a=strmatch('procpath',varargin,'exact');
+a=strmatch('filfac',varargin_string,'exact'); % check for filfac first
 if a>0
-    procpath=char(varargin(a+1));
+    filfac=str2double(varargin{a+1});
 else
-    data_report_tools_dir=which('data_report_tools');
-    b=strfind(data_report_tools_dir,'/');
-    data_report_tools_dir=data_report_tools_dir(1:b(end));
-    procpath=[data_report_tools_dir '../../../moor/proc/']; %DR changed to be relative paths now that data_report_tools are on the network 19/2/12
+    filfac=10; % --- filter factor for despiking
 end
 
-a=strmatch('proclvl',varargin,'exact');
+a=strmatch('proclvl',varargin_string,'exact');
 if a>0
     proclvlstr0=char(varargin(a+1));
     proclvl   = str2num(proclvlstr0);
+    %add correct procpath using pd
+    % procpath = pd.
 else
     proclvl=2;
     proclvlstr0 = num2str(proclvl);
 end
 
-a=strmatch('plot_interval',varargin,'exact');
+a=strmatch('plot_interval',varargin_string,'exact');
 if a>0
     plot_interval=eval(varargin{a+1});
 else
     plot_interval=0;
 end
 
-a=strmatch('unfiltered',varargin,'exact');
+a=strmatch('unfiltered',varargin_string,'exact');
 if a>0
     filt_or_unfilt=1;
     proclvlstr = [proclvlstr0 '_unfilt'];    
@@ -84,9 +98,9 @@ else
 end
 
 if isunix
-    infofile=[procpath,moor,'/',moor,'info.dat'];
+    infofile=[MOORPROC_G.moordatadir,'/proc/',moor,'/',moor,'info.dat'];
 elseif ispc
-    infofile=[procpath,moor,'\',moor,'info.dat'];
+    infofile=[MOORPROC_G.moordatadir,'\proc\',moor,'\',moor,'info.dat'];
 end
 
 % Load vectors of mooring information
@@ -187,7 +201,7 @@ end
 jd1 = julian(plot_interval(1,:));
 jd2 = julian(plot_interval(2,:)); 
 
-num_to_plot=2; % num_to_plot is the number of samples per day to plot and can be adjusted accordingly
+num_to_plot=.5; % num_to_plot is the number of samples per day to plot and can be adjusted accordingly
 
 
 % find the index number of S4s
@@ -222,20 +236,20 @@ topbdwidth = 30;
 set(0,'Units','pixels') 
 scnsize = get(0,'ScreenSize');
 
-%set print area of figure
-pos1  = [1/8*scnsize(3),8*bdwidth,1/2*scnsize(3),(scnsize(4) - 30*bdwidth)];
-pressure_plot=figure('Position',pos1);
-set(pressure_plot,'PaperUnits','centimeters');
-set(pressure_plot, 'PaperType', 'A4');
-set(pressure_plot, 'PaperOrientation',layout);
-papersize = get(pressure_plot,'PaperSize');
-width=17; height=26; left = (papersize(1)- width)/2; bottom = (papersize(2)- height)/2;
-figuresize = [left, bottom, width, height];
-set(pressure_plot, 'PaperPosition', figuresize);
-
-    
-% setup subplot number of panels
-subplot(length(depths(:,1)),1,1);
+% %set print area of figure
+% pos1  = [1/8*scnsize(3),8*bdwidth,1/2*scnsize(3),(scnsize(4) - 30*bdwidth)];
+% pressure_plot=figure ('Position',pos1);
+% set(pressure_plot,'PaperUnits','centimeters');
+% set(pressure_plot, 'PaperType', 'A4');
+% set(pressure_plot, 'PaperOrientation',layout);
+% papersize = get(pressure_plot,'PaperSize');
+% width=17; height=26; left = (papersize(1)- width)/2; bottom = (papersize(2)- height)/2;
+% figuresize = [left, bottom, width, height];
+% set(pressure_plot, 'PaperPosition', figuresize);
+% 
+%     
+% % setup subplot number of panels
+% subplot(length(depths(:,1)),1,1);
 
 MAX_v=0;
 plot_string={};
@@ -253,6 +267,8 @@ if iiS4>0
        disp(['Reading S4 - ',num2str(serialno)])
        disp('*************************************************************')
 
+       SN_CM{i} = num2str(serialno); 
+       
        if isunix
            infile = [procpath,moor,'/s4/',moor,'_',sprintf('%4.4d',vecS4(i)),'.use'];
        elseif ispc
@@ -336,6 +352,8 @@ if iiRCM11>0
        disp('*************************************************************')
        disp(['Reading RCM11 - ',num2str(serialno)])
        disp('*************************************************************')
+
+       SN_CM{i} = num2str(serialno); 
 
        if isunix
            infile = [procpath,moor,'/rcm/',moor,'_',sprintf('%3.3d',vecRCM11(i)),'.use'];
@@ -421,6 +439,8 @@ if iiARG>0
        disp('*************************************************************')
        disp(['Reading ARGONAUT - ',num2str(serialno)])
        disp('*************************************************************')
+
+       SN_CM{i} = num2str(serialno); 
 
        if isunix
            infile = [procpath,moor,'/arg/',moor,'_',num2str(vecARG(i)),'.use'];
@@ -535,6 +555,8 @@ if iiNOR>0
        disp(['Reading NORTEK - ',num2str(serialno)])
        disp('*************************************************************')
 
+       SN_CM{i} = num2str(serialno); 
+
 	if proclvl==2
 	       if isunix
         	   infile = [procpath,moor,'/nor/',moor,'_',sprintf('%3.3d',vecNOR(i)),'.use'];
@@ -546,6 +568,12 @@ if iiNOR>0
         	   infile = [procpath,moor,'/nor/',moor,'_',sprintf('%3.3d',vecNOR(i)),'.edt'];
        		elseif ispc
         	   infile = [procpath,moor,'\nor\',moor,'_',sprintf('%3.3d',vecNOR(i)),'.edt'];
+           end
+     elseif proclvl==4
+	       if isunix
+        	   infile = [procpath,moor,'/nor/',moor,'_',sprintf('%3.3d',vecNOR(i)),'.lowedt'];
+       		elseif ispc
+        	   infile = [procpath,moor,'\nor\',moor,'_',sprintf('%3.3d',vecNOR(i)),'.lowedt'];
        		end	
 	end   
        
@@ -655,6 +683,7 @@ if iiSG>0
            infile = [procpath,moor,'\seaguard\',moor,'_',sprintf('%3.3d',vecSG(i)),'.use'];
        end
        
+       SN_CM{i} = num2str(serialno); 
 
        % read data into vectors and then into structure array
 
@@ -732,23 +761,25 @@ end
 MAX_v=ceil(MAX_v/10)*10;
 
 % create axes
+figure('pos',[500 600 800 600 ]); box on;
+dz = 0;
 for i=1:length(iii)
     % create axes
     axes_string=['axes' num2str(iii(i))];
-    eval([axes_string '=subplot(length(depths(:,1)),1,iii(i));']);
-    ylabel('velocity (cm/s)');
+    eval([axes_string '=subplot(1,1,1);']);hold on
+    % ylabel('velocity (cm/s)');
 
     % create quiver on axes
     quiver_string=['quiver' num2str(iii(i))];
     % need to multiply julian days by 4 so can scale better for quiver plot
     eval(['x_vals=zeros(size(' char(eval_string(iii(i))) '.jdf));'])
-    eval([quiver_string '=quiver((' char(eval_string(iii(i))) '.jdf-jd1)*4,x_vals,' ...
+    eval([quiver_string '=quiver((' char(eval_string(iii(i))) '.jdf-jd1)*4,x_vals+dz,' ...
           char(eval_string(iii(i))) '.uf,' char(eval_string(iii(i))) ...
           '.vf,''AutoScale'',''off'',''ShowArrowHead'',''off'');']);
-    axis equal
+    axis tight
     xlim([0 (jd2-jd1)*4]); % again multiply jd by 4
-    ylim([-MAX_v MAX_v]);
-    set(gca,'YMinorTick','on');
+%     ylim([-MAX_v MAX_v]+depths(iii(i),2));
+    % set(gca,'YMinorTick','on');
     set(gca,'xTickLabel',xticklabels);
     set(gca,'XTick',(jdxticks-jd1)*4); % again multiply jd by 4
     % Not using timeaxis function as had to scale x axis differently.
@@ -758,20 +789,27 @@ for i=1:length(iii)
     % Label plots with serial numbers and depths
     % need to insert backslash into text string to prevent subscript in
     % labels
-    s = regexprep(eval_string(iii(i)), '_', '\n');
-    text((jd2-jd1)*4,-MAX_v/2,s,'FontSize',8);
+    %s = regexprep(eval_string(iii(i)), '_', '\n');
+    %text((jd2-jd1)*4,i*10-5,s,'FontSize',8);
+    %
+    %text((jd2-jd1)*4,i*10,[num2str(depths(iii(i),2)) 'm'],'FontSize',8);
     
-    text((jd2-jd1)*4,MAX_v/2,[num2str(depths(iii(i),2)) 'm'],'FontSize',8);
-    
-end
+    dz2(i) = dz;
+    dz_label{i} = [num2str(depths(iii(i),2)) ' m'];
 
-% Display year labels on bottom graph
-eval(['axes(axes' num2str(i) ');']);
-a=-2*MAX_v-MAX_v/length(iii);
-text(1,a,num2str(xticks(1,1)),'FontSize',10);
-for i=1:length(year_indexes)
-    text((jd2-jd1)*4*(year_indexes(i)-1)/(length(xticklabels)-1),a,num2str(xticks(year_indexes(i),1)),'FontSize',10);
+    dz = dz-40; % Assumes 40 cm/s as the range expected
+    
 end
+set(gca,'ytick',fliplr(dz2),'YTickLabel',fliplr(dz_label))
+legend(SN_CM,'location','northwest')
+
+% % Display year labels on bottom graph
+% eval(['axes(axes' num2str(i) ');']);
+% a=-2*MAX_v-MAX_v/length(iii);
+% text(1,-100,num2str(xticks(1,1)),'FontSize',10);
+% for i=1:length(year_indexes)
+%     text((jd2-jd1)*4*(year_indexes(i)-1)/(length(xticklabels)-1),a,num2str(xticks(year_indexes(i),1)),'FontSize',10);
+% end
 
 % Add title to top graph
 s = regexprep(moor,'_','\\_');
@@ -783,5 +821,5 @@ else
     suptitle(strcat('Unfiltered stick vector plot from mooring: ',' ',s));
 end
 %keyboard
-print('-dpng',[moor '_stick_plot_proclvl_' proclvlstr])
-savefig([moor '_stick_plot_proclvl_' proclvlstr])
+print('-dpng',[MOORPROC_G.reportdir '/figs/' moor '_stick_plot_proclvl_' proclvlstr])
+savefig([MOORPROC_G.reportdir '/figs/' moor '_stick_plot_proclvl_' proclvlstr])

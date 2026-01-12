@@ -2,7 +2,6 @@
 % _*Original author: Lewis Drysdale, 2020*_
 
 
-clearvars -except pathosnap pathgit ; close('all')
 
 % 1.SET GRID AND QA PARAMETERS
 
@@ -31,10 +30,10 @@ p_hydrogrid.iss          = 12; % initial sub-sampling frequency [1/days]
 p_hydrogrid.fss          = 2;  % final sub-sampling frequency [1/days]
 
 % 4.SET DIRECTORIES FOR MERGE
-hydrodir                = [pathosnap filesep 'data/moor/proc/hydro_grid/'];
-grdatdir                = [pathgit filesep 'data/moor/proc/hydro_grid_merged/'];
+hydrodir                = [basedir filesep 'osnap/data/moor/proc/hydro_grid/'];
+grdatdir                = [basedir filesep 'osnap/data/moor/proc/hydro_grid_merged/'];
 if exist(grdatdir,'dir')==0;mkdir(grdatdir);end
-boundarydir             = [pathgit filesep 'exec/gitrepo/stage3/gridding/MCAT/DAT/'];
+boundarydir             = [pathgit filesep 'gitrepo/stage3/gridding/MCAT/DAT/'];
 
 % 5.MERGE INITIALISATION 
 
@@ -42,19 +41,20 @@ gridding                = 1  ;  % 1: linear, 2: using climatological profiles
 bathy                   = false ;  % turns on/off the bathy charts. off = flase
 mc_check_plot           = true; %false ;  % turns on/off the microcat check plots. off =false
 
-jg_start                = datenum(2014,07,01,00,00,00);
-jg_end                  = datenum(2022,07,31,00,00,00);
 
+% add start and end of total time period
+jg_start                = datenum(2014,07,01,00,00,00);
+jg_end                  = datenum(2024,07,15,00,00,00);
 
 jg_start_str = datestr(jg_start,'YYYYmm');
 jg_end_str = datestr(jg_end,'YYYYmm');
 
-lastyeardata            = '2020';
+lastyeardata            = '2022';
 
 JG                      = jg_start: 0.5: jg_end; % full time series using 2 samples per day
 pgg                     = 0:20:2000; % depths in 20dbar bins
-max_depth               = 1780; %set max depth of valid data
-depthminforhoriz_interp = 0; % in case no data are available at a specific time, % multiples of 20
+max_depth               = 1800; %set max depth of valid data
+depthminforhoriz_interp = 40; % in case no data are available at a specific time, % multiples of 20
 % (e.g.: mooring turn around, knock-down of the mooring head) don't interpolate on a time basis for level above 40 m
 
 data_version = 'v0'; 
@@ -81,7 +81,10 @@ moorings = {'rteb1_01_2014';...
             'rteb1_05_2018';...
             'rtwb1_06_2020';...
             'rtwb2_06_2020';...
-            'rteb1_06_2020'};
+            'rteb1_06_2020';...
+            'rtwb1_07_2022';...
+            'rtwb2_07_2022';...
+            'rteb1_07_2022'};
         
 % order of microCATs (serial numbers 335:337) in info.dat file, but exclude double deployed ODO 
 microcat_order=(   {[1:4 6:8],...
@@ -101,7 +104,10 @@ microcat_order=(   {[1:4 6:8],...
                     [1:5 8:12] ...
                     [1:9] ...
                     [1:3] ...
-                    [1:5 8:12]});
+                    [1:5 8:12] ...
+                    [1:9] ...
+                    [1:3] ...
+                    [1:3 5:6 8:13]});
 instrument_order=(  {[1:4 6:8],...
                     [1:8],...
                     [1:2],...
@@ -119,16 +125,19 @@ instrument_order=(  {[1:4 6:8],...
                     [11290 11289 11288 11287 10577 3276 10560 10562 9113 9375],...
                     [11343,11342,14364,7923,7924,11137,11139,10576,11465],...
                     [10575,11341,13020],...
-                    [9141,11322,9396,21560,11327,11330,11334,11335,9390,11338]});
+                    [9141,11322,9396,21560,11327,11330,11334,11335,9390,11338],...
+                    [11321,11324,11325,11336,11340,3254,3256,3257,3276],...
+                    [7290,3244,3231],...
+                    [4608,4609,4610,9140,13019,24104,10578,10579,13021,14368,13022]});
 
                 
 
 % CHECK FOR FOLDERS 
 
 for ii=1:numel(moorings)
-    if exist([pathosnap '/Figures/' char(moorings(ii))],'dir')==7
+    if exist([basedir '/Figures/' char(moorings(ii))],'dir')==7
     else
-        mkdir([pathosnap '/Figures/' char(moorings(ii))])
+        mkdir([basedir '/Figures/' char(moorings(ii))])
     end
 end
 
@@ -168,16 +177,16 @@ p_hydrogrid.mc_ind=cell2mat(ilist(ii)); % get instrument order
 
 % SET PATHS
 
-p_hydrogrid.basedir      = pathosnap;
+p_hydrogrid.basedir      = basedir;
 p_hydrogrid.moor         = moor;
-p_hydrogrid.ini_path     = [p_hydrogrid.basedir '/data/moor/proc/hydro_grid/ini'];
-p_hydrogrid.rodbpath     = [p_hydrogrid.basedir '/data/moor/'];
-p_hydrogrid.rodbctdpath  = [p_hydrogrid.basedir '/cruise_data/'];
+p_hydrogrid.ini_path     = [p_hydrogrid.basedir '/osnap/data/moor/proc/hydro_grid/ini'];
+p_hydrogrid.rodbpath     = [p_hydrogrid.basedir '/osnap/data/moor/'];
+p_hydrogrid.rodbctdpath  = [p_hydrogrid.basedir '/osnap/cruise_data/'];
 p_hydrogrid.info_path    = [p_hydrogrid.rodbpath,'proc/',moor,'/'];
-p_hydrogrid.mooringpath  = [pathosnap '/data/moor/proc'];
-p_hydrogrid.out_path     = [p_hydrogrid.basedir '/data/moor/proc/hydro_grid/'];
+p_hydrogrid.mooringpath  = [basedir '/osnap/data/moor/proc'];
+p_hydrogrid.out_path     = [p_hydrogrid.basedir '/osnap/data/moor/proc/hydro_grid/'];
 p_hydrogrid.outname      = [moor,'_grid.mat'];
-p_hydrogrid.dataexternal_ctd_dir        = [p_hydrogrid.basedir '/cruise_data/'];
+p_hydrogrid.dataexternal_ctd_dir        = [p_hydrogrid.basedir '/osnap/cruise_data/'];
 p_hydrogrid.datactd_ref_cruises   = {'kn221';'pe399'}; % for plot
 
 % INTERPOLATE 

@@ -1,10 +1,11 @@
 # directories
-/data
+/odissea/data
 /users
 /matlab_diaries
 **.
-
-
+/osnap
+/rpdmoc
+/cruise_data
 # data (or plot) file types, but not info file types
 **/*.raw
 **/*.use*
@@ -34,5 +35,5 @@ exec/gitrepo/export_Oceansites/oceansites_format/
 **/._*
 
 # exclude any cruise specific startup files
-startup*
-
+*startup*
+*startup.m

@@ -30,50 +30,27 @@
 % - set depth of shallowest instrument (idepth)
 % - praembel for despiking
 % - if you add a deployment period, you need to edit steps 1-3
+% 
+% Now in 'setup' function - LewisD-Jan2025
 %---------
 
-close all
+% add last year of data and mooring name below
+lastyear=2024;
 MOOR = 'RTWB1';
-moor1 = 'CM_rtwb1_osnap_01_2014';
-moor2 = 'CM_rtwb1_osnap_02_2015';
-moor3 = 'CM_rtwb1_osnap_03_2016';
-moor4 = 'CM_rtwb1_osnap_04_2017';
-moor5 = 'CM_rtwb1_osnap_05_2018';
-moor6 = 'CM_rtwb1_osnap_06_2020';
 
-% in- and output directories
-hydrodir = [basedir 'data/moor/proc/velocity_grid/'];
-grdatdir = [pathgit '/data/moor/proc/velocity_grid_merged/'];%[basedir '/data/moor/proc/velocity_grid_merged/'];
-boundarydir = [execdir 'gitrepo/stage3/gridding/CM/'];
+[hydrodir,grdatdir,boundarydir,fmoor,cm_check_plot,data_version,...
+            outputfile,outputfile_stacked,...
+            stddy_tol,std_win,nloop,...
+            graphics,JG,pgg,idepth] = setup(lastyear,MOOR,basedir);
 
-% turns on/off check plots. off=false, on=true
-cm_check_plot = false ;  
+moor1=char(fmoor(1));
+moor2=char(fmoor(2));
+moor3=char(fmoor(3));
+moor4=char(fmoor(4));
+moor5=char(fmoor(5));
+moor6=char(fmoor(6));
+moor7=char(fmoor(7));
 
-% add start and end of total time period
-jg_start                = datenum(2014,07,01,00,00,00);
-jg_end                  = datenum(2022,07,31,00,00,00);
-
-jg_start_str = datestr(jg_start,'YYYYmm');
-jg_end_str = datestr(jg_end,'YYYYmm');
-
-% put out data version?
-data_version = 'v1'; 
-
-JG = jg_start: 0.5: jg_end; % full time series using 2 samples per day
-pgg = 0:20:2000; % depths in 20dbar bins
-idepth = 40; % depth of shallowest instrument, steps of 20 (i.e. if shallowest
-             % instrument is at 50m, select 40m
-
-% output filenames (should be automatic)
-outputfile = [MOOR '_merg_linear_interp_' jg_start_str '_' jg_end_str];
-outputfile_stacked = ['CM_rtwb1_stacked_' jg_start_str '_' jg_end_str,...
-                        '_' data_version];
-
-% Praemble for 4.b despike time series
-stddy_tol  = 10; % tolerance range of differences between adjacent values
-std_win    = 3.5; % 3.5 * std of the time series (median pm std_wind*std)
-[nloop]    = 5; % max number of despiking repetitions
-graphics   = 'y'; %y if plots of despiking on, 'n' if off
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 2.  LOAD AND VERTICALLY STACK CM FILES FOR EACH CRUISE
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -136,6 +113,9 @@ disp('---------  OSNAP 6 (DY120 --> JC238) ---------')
 [Ufs6,Vfs6,Wfs6,Pfs6] = load_and_stacked_CM(boundarydir,hydrodir,moor6,JG,cm_check_plot);
 Fs6 = struct('Ufs',Ufs6,'Vfs',Vfs6,'Pfs',Pfs6);
 
+disp('---------  OSNAP 7 (JC238 --> DY181) ---------')
+[Ufs7,Vfs7,Wfs7,Pfs7] = load_and_stacked_CM(boundarydir,hydrodir,moor7,JG,cm_check_plot);
+Fs7 = struct('Ufs',Ufs7,'Vfs',Vfs7,'Pfs',Pfs7);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %  3.  CONCATENATE MATRICES ALONG TIME
@@ -159,6 +139,7 @@ plot(JG , Ufs3, 'g.')
 plot(JG , Ufs4, 'r.')
 plot(JG , Ufs5, 'm.')
 plot(JG , Ufs6, 'k.')
+plot(JG , Ufs7, 'b.')
 ylabel('U')
 datetick
 title('QUICK CHECK OF DATA')
@@ -171,6 +152,7 @@ plot(JG , Vfs3, 'g.')
 plot(JG , Vfs4, 'r.')
 plot(JG , Vfs5, 'm.')
 plot(JG , Vfs6, 'k.')
+plot(JG , Vfs7, 'b.')
 ylabel('V')
 datetick
 title('QUICK CHECK OF DATA')
@@ -182,18 +164,18 @@ print('-dpng',[grdatdir 'otherfigure' filesep MOOR,...
     '_merged_beforegrid_check'])
 
 % all the matrices for the deployments stacked together
-Ufs     = [Ufs1;Ufs2;Ufs3;Ufs4;Ufs5;Ufs6];
-Vfs     = [Vfs1;Vfs2;Vfs3;Vfs4;Vfs5;Vfs6];
-Pfs     = [Pfs1;Pfs2;Pfs3;Pfs4;Pfs5;Pfs6];
+Ufs     = [Ufs1;Ufs2;Ufs3;Ufs4;Ufs5;Ufs6;Ufs7];
+Vfs     = [Vfs1;Vfs2;Vfs3;Vfs4;Vfs5;Vfs6;Vfs7];
+Pfs     = [Pfs1;Pfs2;Pfs3;Pfs4;Pfs5;Pfs6;Pfs7];;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 % KB outputs stagged files
 z_stacked = [100;500;1000;1350;1570];
 
 %%% add NaN where instrument is missing
-Ustacked = stack_vars(Fs1.Ufs,Fs2.Ufs,Fs3.Ufs,Fs4.Ufs,Fs5.Ufs,Fs6.Ufs);
-Vstacked = stack_vars(Fs1.Vfs,Fs2.Vfs,Fs3.Vfs,Fs4.Vfs,Fs5.Vfs,Fs6.Vfs);
-Pstacked = stack_vars(Fs1.Pfs,Fs2.Pfs,Fs3.Pfs,Fs4.Pfs,Fs5.Pfs,Fs6.Pfs);
+Ustacked = stack_vars(Fs1.Ufs,Fs2.Ufs,Fs3.Ufs,Fs4.Ufs,Fs5.Ufs,Fs6.Ufs,Fs7.Ufs);
+Vstacked = stack_vars(Fs1.Vfs,Fs2.Vfs,Fs3.Vfs,Fs4.Vfs,Fs5.Vfs,Fs6.Vfs,Fs7.Vfs);
+Pstacked = stack_vars(Fs1.Pfs,Fs2.Pfs,Fs3.Pfs,Fs4.Pfs,Fs5.Pfs,Fs6.Pfs,Fs7.Pfs);
 
 % plot(JG,Pstacked')
 % datetick
@@ -201,10 +183,10 @@ save([grdatdir outputfile_stacked '.mat'],...
     'Ustacked','Vstacked','Pstacked','JG','z_stacked')
 %%%%%%%%%%%%%%%%%%
 
-clear Pfs1 Pfs2 Pfs3 Pfs4 Pfs5 Pfs6
-clear Ufs1 Ufs2 Ufs3 Ufs4 Ufs6 Ufs6
-clear Vfs1 Vfs2 Vfs3 Vfs4 Vfs5 Vfs6
-clear Wfs1 Wfs2 Wfs3 Wfs4 Wfs5 Wfs6
+clear Pfs1 Pfs2 Pfs3 Pfs4 Pfs5 Pfs6 Pfs7
+clear Ufs1 Ufs2 Ufs3 Ufs4 Ufs5 Ufs6 Ufs7
+clear Vfs1 Vfs2 Vfs3 Vfs4 Vfs5 Vfs6 Vfs7
+clear Wfs1 Wfs2 Wfs3 Wfs4 Wfs5 Wfs6 Wfs7
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %  4.  GRIDDING
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -282,7 +264,7 @@ subplot(3,1,1)
 set(h,'LineColor','none')
 hold on
 plot(JG,Pstacked','k')
-polarmap,colorbar
+colorbar
 caxis([min(contourlimituv) max(contourlimituv)]);
 datetick; ylabel('U')
 title('BEFORE DESPIKING AND INTERPOLATION')
@@ -291,7 +273,7 @@ subplot(3,1,2)
 set(h,'LineColor','none')
 hold on
 plot(JG,Pstacked','k')
-polarmap,colorbar
+colorbar
 caxis([min(contourlimituv) max(contourlimituv)]);    
 datetick; ylabel('U');
 title('AFTER DESPIKING')
@@ -300,7 +282,7 @@ subplot(3,1,3)
 set(h,'LineColor','none')
 hold on
 plot(JG,Pstacked','k')
-polarmap,colorbar
+colorbar
 caxis([min(contourlimituv) max(contourlimituv)]);    
 datetick; ylabel('U')
 title('AFTER DESPIKING AND INTERPOLATION')
@@ -314,7 +296,7 @@ subplot(3,1,1)
 set(h,'LineColor','none')
 hold on
 plot(JG,Pstacked','k')
-polarmap,colorbar
+colorbar
 datetick; ylabel('V')
 caxis([min(contourlimituv) max(contourlimituv)]);    
 title('BEFORE DESPIKING AND INTERPOLATION')
@@ -323,7 +305,7 @@ subplot(3,1,2)
 set(h,'LineColor','none')
 hold on
 plot(JG,Pstacked','k')
-polarmap,colorbar
+colorbar
 caxis([min(contourlimituv) max(contourlimituv)]);    
 datetick; ylabel('V')
 title('AFTER DESPIKING')
@@ -332,7 +314,7 @@ subplot(3,1,3)
 set(h,'LineColor','none')
 hold on
 plot(JG,Pstacked','k')
-polarmap,colorbar
+colorbar
 caxis([min(contourlimituv) max(contourlimituv)]);    
 datetick; ylabel('V')
 title('AFTER DESPIKING AND INTERPOLATION')
@@ -387,8 +369,3 @@ end
     print(fig1,'-dpng',outfig)
 end
 
-function Ustacked = stack_vars(U1,U2,U3,U4,U5,U6)
-    Ustacked = cat(3,U1,U2,U3,U4,U5,U6);
-    Ustacked = sum(Ustacked,3,'omitnan');
-    Ustacked(Ustacked==0)=NaN;
-end
