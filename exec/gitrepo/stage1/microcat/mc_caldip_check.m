@@ -21,7 +21,8 @@ jd0 = julian(YEAR,1,1,0);
 cast = input('Which cast number? ','s');
 ctdnum = sprintf('%03d',str2double(cast));
 ctdsen = input('Which CTD sensors (1 or 2 [or blank to use already-selected primary])?) ','s');
-oxysen = input('Which CTD oxygen (1 or 2 [or blank to use already-selected primary])?' , 's');
+%HS - only one oxygen sensor on Celtic Explorer
+%oxysen = input('Which CTD oxygen (1 or 2 [or blank to use already-selected primary])?' , 's');
 
 diff_max.p = 5; 
 diff_max.c = 0.02; 
@@ -38,6 +39,7 @@ if ~exist(fileparts(pd.stage2log),'dir')
 end
 
 % ----------------- load CTD DATA   ----------------------------------
+%HS - where is the psal.nc file? How is it created?
 cvars = 'time press temp1 cond1 oxygen1 temp2 cond2 temp cond oxygen ';
 h = m_read_header(pd.ctdfile); if sum(strcmp(h.fldnam,'oxygen2')); cvars = [cvars 'oxygen2 ']; end
 d = mload(pd.ctdfile,[cvars ' ']);
