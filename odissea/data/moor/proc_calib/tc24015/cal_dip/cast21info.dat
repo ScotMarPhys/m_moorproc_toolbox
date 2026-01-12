@@ -1,0 +1,14 @@
+Mooring            = caldip2
+Latitude           = 52 59.97 N
+Longitude          = 15  4.79 W
+WaterDepth         = 2011
+StartDate          = 2024/06/25
+StartTime          = 02:52
+EndDate            = 2024/06/25
+EndTime            = 05:30
+Columns            = z:instrument:serialnumber:deployment
+  750   337   16363 1
+ 1000   337   16379 1
+ 1250   337   21269 1
+ 1500   337   23829 1
+ 1760   337   23830 1

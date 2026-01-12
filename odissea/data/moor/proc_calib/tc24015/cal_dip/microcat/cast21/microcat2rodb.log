@@ -1,0 +1,82 @@
+
+
+infile: C:\Users\sa03hs\ODISSEA_data\m_moorproc_toolbox\odissea\data\moor\raw\tc24015\microcat_cal_dip\cast21\16363_cal_dip_data.cnv
+outfile: C:\Users\sa03hs\ODISSEA_data\m_moorproc_toolbox\odissea\data\moor\proc_calib\tc24015\cal_dip\microcat\cast21\cast21_16363.raw
+serial number: 16363
+Median Temperature 13.94
+Median Conductivity  0.00
+Median Pressure  0.45
+Instrument Target Depth[m]: 750
+Start date and time: 25-Jun-2024 00:08:53 
+End date and time:   25-Jun-2024 06:02:33 
+Sampling Frequency [per jd]: 8640 
+Number of samples: 2123; expected: 2123 
+Offset of  -0.0060 days has been subtracted from recored time 
+
+
+ W A R N I N G: Record already ends before end of mooring deployment period: 
+ Recorded time could be wrong!! 
+
+
+infile: C:\Users\sa03hs\ODISSEA_data\m_moorproc_toolbox\odissea\data\moor\raw\tc24015\microcat_cal_dip\cast21\16379_cal_dip_data.cnv
+outfile: C:\Users\sa03hs\ODISSEA_data\m_moorproc_toolbox\odissea\data\moor\proc_calib\tc24015\cal_dip\microcat\cast21\cast21_16379.raw
+serial number: 16379
+Median Temperature 13.55
+Median Conductivity -0.00
+Median Pressure  0.61
+Instrument Target Depth[m]: 1000
+Start date and time: 25-Jun-2024 00:08:53 
+End date and time:   25-Jun-2024 05:51:03 
+Sampling Frequency [per jd]: 8640 
+Number of samples: 2054; expected: 2054 
+Offset of  -0.0060 days has been subtracted from recored time 
+
+
+ W A R N I N G: Record already ends before end of mooring deployment period: 
+ Recorded time could be wrong!! 
+
+
+infile: C:\Users\sa03hs\ODISSEA_data\m_moorproc_toolbox\odissea\data\moor\raw\tc24015\microcat_cal_dip\cast21\21269_cal_dip_data.cnv
+outfile: C:\Users\sa03hs\ODISSEA_data\m_moorproc_toolbox\odissea\data\moor\proc_calib\tc24015\cal_dip\microcat\cast21\cast21_21269.raw
+serial number: 21269
+Median Temperature 13.36
+Median Conductivity  0.00
+Median Pressure  0.66
+Instrument Target Depth[m]: 1250
+Start date and time: 25-Jun-2024 00:08:53 
+End date and time:   25-Jun-2024 06:08:43 
+Sampling Frequency [per jd]: 8640 
+Number of samples: 2160; expected: 2160 
+Offset of  -0.0060 days has been subtracted from recored time 
+
+
+ W A R N I N G: Record already ends before end of mooring deployment period: 
+ Recorded time could be wrong!! 
+
+
+
+
+infile: C:\Users\sa03hs\ODISSEA_data\m_moorproc_toolbox\odissea\data\moor\raw\tc24015\microcat_cal_dip\cast21\23830_cal_dip_data.cnv
+outfile: C:\Users\sa03hs\ODISSEA_data\m_moorproc_toolbox\odissea\data\moor\proc_calib\tc24015\cal_dip\microcat\cast21\cast21_23830.raw
+serial number: 23830
+Median Temperature 13.45
+Median Conductivity  0.00
+Median Pressure  0.27
+Instrument Target Depth[m]: 1760
+Start date and time: 25-Jun-2024 00:08:53 
+End date and time:   25-Jun-2024 05:53:43 
+Sampling Frequency [per jd]: 8640 
+Number of samples: 2070; expected: 2070 
+Offset of  -0.0060 days has been subtracted from recored time 
+
+
+ W A R N I N G: Record already ends before end of mooring deployment period: 
+ Recorded time could be wrong!! 
+for mcats wi serial nos  
+16363  16379  21269  23830 
+mean p diff =  
+mean p diff = -0.33366     -0.7526    -0.85871    -0.41297 
+mean c diff =  
+mean c diff = -0.0044077   -0.004426  -0.0046067  -0.0014638 
+mean t diff =  
+mean t diff = 0.0057282   0.0019724   0.0020233   0.0014412 
