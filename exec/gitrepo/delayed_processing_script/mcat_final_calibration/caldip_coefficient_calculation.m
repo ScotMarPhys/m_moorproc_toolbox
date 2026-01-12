@@ -33,7 +33,9 @@ p_insitucal.apply_offset   = input('apply time offset between CTD and MC (y/n/i)
 if strcmp(p_insitucal.cruise,'pe399') & (p_insitucal.cast == 17 | p_insitucal.cast == 38)   
     p_insitucal.interval_move  = [-100 -50];
 elseif strcmp(p_insitucal.cruise,'dy078') | strcmp(p_insitucal.cruise,'ar304') | strcmp(p_insitucal.cruise,'dy120')
-    p_insitucal.interval_move  = [-600 600]*2; % bottlestop can be up to 20 mins for 02 sensors   
+    p_insitucal.interval_move  = [-600 600]*2; % bottlestop can be up to 20 mins for 02 sensors 
+elseif strcmp(p_insitucal.cruise,'tc24015')
+    p_insitucal.interval_move  = [-160 180]; %bottle stop around 6 mins
 else
     p_insitucal.interval_move  = [-480 480];    
 end
@@ -274,12 +276,24 @@ elseif strcmp(p_insitucal.cruise,'dy181') & p_insitucal.cast == 76
     p_insitucal.dp_interval    = [-10 10];   
     p_insitucal.p_interval       = [0 3000];
     p_insitucal.average_interval = [1500 3100];% [1000 2150];
+elseif strcmp(p_insitucal.cruise,'tc24015') & p_insitucal.cast == 15
+    p_insitucal.c_interval     = [-0.025 0.025]; % plotting only
+    p_insitucal.t_interval     = [-.02 .02]; % plotting only
+    p_insitucal.dp_interval    = [-10 10];    % plotting only
+    p_insitucal.p_interval       = [0  2000]; % plotting only
+    p_insitucal.average_interval = [1000 2000]; %depth interval for stable water column if bottle stops are not in stable water
+elseif strcmp(p_insitucal.cruise,'tc24015') & p_insitucal.cast == 21
+    p_insitucal.c_interval     = [-0.025 0.025]; % plotting only
+    p_insitucal.t_interval     = [-.02 .02]; % plotting only
+    p_insitucal.dp_interval    = [-10 10];    % plotting only
+    p_insitucal.p_interval       = [0  2000]; % plotting only
+    p_insitucal.average_interval = [1000 2000]; 
 else
     p_insitucal.c_interval     = [-0.025 0.025]; % plotting only
     p_insitucal.t_interval     = [-.02 .02]; % plotting only
     p_insitucal.dp_interval    = [-10 10];    % plotting only
     p_insitucal.p_interval       = [0  2000]; % plotting only
-    p_insitucal.average_interval = [1000 2000];        
+    p_insitucal.average_interval = [1000 2000]; 
 end
     
 % % --- futhers parameters (unlikely to be changed) -------------------

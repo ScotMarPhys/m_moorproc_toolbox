@@ -113,9 +113,14 @@ elseif doctd == 99 % using cnv file instead of .nc
     %    start_date_cast_9141 = datenum(2016,7,4,16,00,01);
     % elseif contains(cast,'6')
     %    start_date_cast = datenum(2018,07,07,13,13,15);
-    if contains(cast,'13') & strcmpi(cruise,'ce25007')
-       start_date_cast = datenum(2025,05,14,04,33,59);
+    %if contains(cast,'13') & strcmpi(cruise,'ce25007')
+    %   start_date_cast = datenum(2025,05,14,04,33,59);
+    if contains(cast,'15') & strcmpi(cruise,'tc24015')
+       start_date_cast = datenum(2024,06,24,09,25,00);
+    elseif contains(cast,'21') & strcmpi(cruise,'tc24015')
+       start_date_cast = datenum(2024,06,25,02,52,00);
     end
+
     d=read_cnv_data(pd.cnvfile,start_date_cast);
     d.yd=d.yd-jd0;
 end
@@ -195,7 +200,11 @@ for i = 1:length(sn)
         elseif strcmp(cruise,'dy146') && sn(i)==6322
             dateoffsetmc=60/86400;
         elseif strcmp(cruise,'en705') && strcmp(cast,'2')
-            dateoffsetmc=-1/24; %note: this is subtracted from mc times
+            dateoffsetmc=-1/24; %note: this is subtracted from mc times %edited by HS by accident - possibly incorrect!
+        elseif strcmp(cruise,'tc24015') && strcmp(cast,'21')
+            dateoffsetmc= -0.145/24; %note: this is subtracted from mc times % HS 06/01/2026
+        elseif strcmp(cruise,'tc24015') && strcmp(cast,'15')
+            dateoffsetmc= 0.009/24; %note: this is subtracted from mc times % HS 06/01/2026
         elseif strcmp(cruise,'dy181') && strcmp(cast,'3') %after this, use seconds
             dateoffsetmc=MOORPROC_G.YEAR;
         else
