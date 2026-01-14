@@ -154,7 +154,11 @@ else
     %
     % gdm, dy039, incremented to account for new 5 digit serial numbers
     if ~isempty(a)
-        SerialNumber = str2num(zeile(a+17:a+22));
+        if ismac % horrible temporary solution
+            SerialNumber = str2num(zeile((a-1)+17:(a-1)+22));
+        else
+            SerialNumber = str2num(zeile(a+17:a+22));
+        end
     else
         disp('unable to find serial number\n\n')
         input('please enter valid serial number')
