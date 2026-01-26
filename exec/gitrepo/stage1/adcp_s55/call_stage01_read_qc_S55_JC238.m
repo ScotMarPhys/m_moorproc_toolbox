@@ -40,24 +40,35 @@ if strcmp(pc_name,'SA07KB-3JN9YY2');
     addpath(genpath(fullfile(pathgit,'exec','gitrepo')))
     addpath(genpath('C:\Users\sa07kb\Matlab\toolboxes\gsw_matlab_v3_06_16'))
 elseif strcmp(pc_name,'SA01SJ-G9WC2J3')
+    basedir = 'D:\Work_computer_sync\OSNAP_postdoc\Python\';
     dataindir = 'E:\OSNAP\RHADCP\DY181\S200044A012_RHAD2_JC238\conversion2\';
-    pathgit = 'D:\Work_computer_sync\OSNAP_postdoc\Python\m_moorproc_toolbox\';    
+    pathgit = [basedir 'm_moorproc_toolbox\'];   
     figureoutdir = ['D:\Work_computer_sync\OSNAP_postdoc\Mooring\RHADCP\plots\'];
-    addpath(genpath('D:\Work_computer_sync\MATLAB_functions')); % General functions
     filename = 'S200044A012_RHAD2_JC238';
-    infofile = '';
     logfile = fullfile(figureoutdir,[moor '_ADCP_stage1.log']);
+    infofile = fullfile('E:\OSNAP\RHADCP\DY181\S200044A012_RHAD2_JC238\conversion2\', [moor 'info.dat']);
+    filename = '200044_data';
     addpath(genpath(fullfile(pathgit,'exec','gitrepo')))
+    addpath(genpath('D:\Work_computer_sync\MATLAB_functions')); % General functions
 else
     error('Please add your path above')
 end
 
 
-
-if ~isempty(MOORPROC_G)
-    addpath(genpath('C:\Users\sa07kb\Matlab\toolboxes\gsw_matlab_v3_06_16'))
-    stage01_read_qc_S55(moor)
-else
-    stage01_read_qc_S55(moor,dataindir,filename,...
-                 infofile,logfile,figureoutdir)
+if strcmp(pc_name,'SA07KB-3JN9YY2');
+    if ~isempty(MOORPROC_G)
+        addpath(genpath('C:\Users\sa07kb\Matlab\toolboxes\gsw_matlab_v3_06_16'))
+        stage01_read_qc_S55(moor)
+    else
+        stage01_read_qc_S55(moor,dataindir,filename,...
+            infofile,logfile,figureoutdir)
+    end
+elseif strcmp(pc_name,'SA01SJ-G9WC2J3')
+    if ~isempty(MOORPROC_G)
+        addpath(genpath('D:\Work_computer_sync\MATLAB_functions'));
+        stage01_read_qc_S55(moor)
+    else
+        stage01_read_qc_S55(moor,dataindir,filename,...
+            infofile,logfile,figureoutdir)
+    end
 end
