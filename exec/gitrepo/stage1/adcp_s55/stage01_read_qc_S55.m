@@ -186,7 +186,7 @@ end
 badind = (S.keepMask==0);
 QC_vel(badind,:) = QC_BAD; QC_1D(badind) = QC_BAD;
 
-figure(1);
+figure(1);clf
 subplot(3,1,1)
 title([filename ' pressure'],'Interpreter','none');
 hold on; grid on;
@@ -201,6 +201,15 @@ xlim([timemin timemax]);
 ylim(yl);
 ylabel('Pressure (db)');
 set(gca,'YDir','reverse');
+
+% --- RIGHT AXIS: Battery ---
+yyaxis right
+hold on
+h_bat = plot(Data.Average_Time, Data.Average_Battery, 'b-', 'LineWidth', 1); 
+ylabel('Battery (V)');
+ylim([0,20])
+set(gca, 'YColor', 'b'); 
+hold off
 
 % Create a neat text box on the figure (normalized figure coordinates)
 txt = {['ylim = median \pm ' sprintf('%d·std',n_std)], ...
@@ -389,39 +398,6 @@ U = Data.Average_VelEast;U(QC_1D==4,:)=NaN;
 V = Data.Average_VelNorth;V(QC_1D==4,:)=NaN;
 W = Data.Average_VelUp;W(QC_1D==4,:)=NaN;
 
-% find spikes - e.g. fish schools (short lived)
- %NEED TO REMOVE NANS BEFORE FILTERING OTHERWISE REPLACES WHOLE
-%SERIES WITH NaNs.
-[Amp1_bm,Amp1_bs] = calculate_block_mean_std(Amp1);
-
-idx_maks = find(abs(Amp1)>(Amp1_bm+3.*Amp1_bs));
-[T,D]=size(Amp1);
-length(idx_maks)/(T*D)
-
-% QARTOD decibel increase
-diff_amp = diff(Amp1_bm,1,2);
-diff_m = nanmedian(diff_amp);
-diff_s = nanstd(diff_amp);
-idx2 = find(diff_amp>diff_m+2.*diff_s);
-length(idx2)/(T*D)
-
-%%
-figure
-nx = 29800:30800;
-ny = 45;
-plot(Amp1(nx,ny)),hold on
-plot(Amp1_bm(nx,ny))
-plot(Amp1_bm(nx,ny)+2*Amp1_bs(nx,ny),'k:')
-plot(Amp1_bm(nx,ny)-2*Amp1_bs(nx,ny),'k:')
-
-%%
-def=find(~isnan(u));% high pass data for spike identification
-      
-uhf=u*NaN;
-uhf(def)=sqrt(mfilter(u(def),1,0,1/nt).^2);
-ii=find(uhf>filfac*mean(uhf) | vhf>filfac*mean(vhf)); % line that identifies spikes
-
-
 % surface bin detection
 Amp1_pro = nanmean(Amp1);SB1 = find(islocalmin(Amp1_pro),1,'last');
 Amp2_pro = nanmean(Amp2);SB2 = find(islocalmin(Amp2_pro),1,'last');
@@ -450,6 +426,7 @@ idx_valid = arrayfun(@(r) find(Dist2Instr_CellMidpoint <= r, 1, 'last'),...
     R);
 idx_valid(QC_1D==4)=0;
 R(QC_1D==4)=NaN;
+
 
 %%%%%%%%%%%%%%%%%%%%%%%
 f2 = figure(2);clf
@@ -623,6 +600,19 @@ while true
     end
 end
 
+%% spikes
+% find spikes - e.g. fish schools (short lived)
+SDc =3;
+fprintf('Amplitude 1\n')
+mask_spikes_Amp1 = detect_spikes_amp(Amp1, SDc);
+fprintf('Amplitude 2\n')
+mask_spikes_Amp2 = detect_spikes_amp(Amp2, SDc);
+fprintf('Amplitude 3\n')
+mask_spikes_Amp3 = detect_spikes_amp(Amp3, SDc);
+
+
+%%
+hold off;
 
 %%
 end
@@ -904,7 +894,7 @@ for k = 1:n
 end
 end
 
-function [mu_time,s_time] = calculate_block_mean_std(A)
+function [mu_time,s_time,B] = calculate_block_mean_std(A)
     % A: time_dim x depth
     block = 10;
     [T, D] = size(A);
@@ -924,110 +914,49 @@ function [mu_time,s_time] = calculate_block_mean_std(A)
     s_time  = reshape(s_rep,  nBlocks*block, D);
 end
 
-function [suggestTime, suggestDepth] = suggest_thresholds(amp, timeWin, depthWin, p)
-% amp: nTime x nDepth
-% timeWin, depthWin: as used for local medians
-% p: desired tail probability per-sided (e.g. 1e-3 -> ~99.9th percentile). optional
+function mask = detect_spikes_amp(A, SDc)
+    % A: time_dim x depth
+    block = 10;
+    [T, D] = size(A);
+    nBlocks = T/block;
 
-if nargin < 4 || isempty(p), p = 1e-3; end
+    % --- Criterion 1: Amplitude spike along Time Dimension ---
+    [A_bm, A_bs, B] = calculate_block_mean_std(A);
+    mask_amp = (A > (A_bm + SDc*A_bs)) | (A < (A_bm - SDc*A_bs));
 
-% local medians and MAD estimates
-localMedT = movmedian(amp, timeWin, 1);     % along time
-resT = amp - localMedT;
-madT = movmad(resT, 1);                     % custom: MAD per column
-sigmaT = 1.4826 * max(madT, eps);           % robust sigma per column
-rzT = abs(resT ./ sigmaT);                  % robust-z per element
+    % --- Criterion 2: Sudden Amplitude Increase along depth (QARTOD) ---
+    % B is (10 x nBlocks x D)
+    B_md = median(B, 1);    % Result: 1 x nBlocks x D
+    
+    % Diff along Depth (Dim 3 of the B_md matrix)
+    Z = diff(B_md, 1, 3);   % Result: 1 x nBlocks x (D-1)
 
-localMedD = movmedian(amp, depthWin, 2);    % along depth
-resD = amp - localMedD;
-madD = movmad(resD, 2);                     % MAD per row
-sigmaD = 1.4826 * max(madD, eps);
-rzD = abs(resD ./ sigmaD);
+    % Running stats along nBlocks (Time), which is Dim 2
+    window_size = 3;
+    Z_md_block = movmedian(Z, window_size, 2);
+    Z_sd_block = movstd(Z, window_size, 0, 2);
 
-% aggregate robust-z distributions excluding extreme outliers to estimate background tails
-% use median absolute robust-z percentile estimation
-zT_vals = rzT(:);
-zD_vals = rzD(:);
+    % Create the mask for Z (1 x nBlocks x D-1)
+    mask_z_block = (Z>(Z_md_block+SDc*Z_sd_block)) | (Z<(Z_md_block-SDc*Z_sd_block));
 
-% remove very large extremes before estimating percentile to avoid bias
-zT_vals = zT_vals(zT_vals < prctile(zT_vals, 99.9)*5);
-zD_vals = zD_vals(zD_vals < prctile(zD_vals, 99.9)*5);
+    % Replicate to match the 10 samples per block
+    % Result: 10 x nBlocks x D-1
+    mask_z_rep = repmat(mask_z_block, block, 1, 1);
 
-% suggested thresholds: empirical percentile (two-sided)
-suggestTime = prctile(zT_vals, 100*(1 - p));
-suggestDepth = prctile(zD_vals, 100*(1 - p));
+    % Reshape back to (T x D-1)
+    mask_z_2d = reshape(mask_z_rep, T, D-1);
 
-% also give rule-of-thumb Gaussian equivalent for p: z = norminv(1 - p)
-z_gauss = norminv(1 - p);
-fprintf('Suggested thresholds (empirical %g tail): time=%.2f, depth=%.2f\n', p, suggestTime, suggestDepth);
-fprintf('Gaussian equivalent for same p: %.2f\n', z_gauss);
-end
+    % Pad with false at the first depth column to return to (T x D)
+    mask_z = [false(T, 1), mask_z_2d]; 
 
-function m = movmad(A, dim)
-% compute MAD along dimension dim, returning vector sized like median along dim
-m = mad(A, 1, dim);
-end
+    % --- Final Combined Mask ---
+    mask = mask_amp | mask_z;
 
-function mask = detect_spikes_amp(amp, timeWin, depthWin, threshTime, threshDepth)
-%DETECT_SPIKES_AMP  Detect spikes in a time x depth amplitude matrix.
-%   mask = DETECT_SPIKES_AMP(amp, timeWin, depthWin, threshTime, threshDepth)
-%   returns a logical mask (nTime-by-nDepth) with true for detected spikes.
-%
-%   Inputs
-%     amp         - nTime-by-nDepth numeric matrix of amplitudes
-%     timeWin     - moving window length along time (odd integer, used for movmedian)
-%     depthWin    - moving window length along depth (odd integer, currently unused but kept for symmetry)
-%     threshTime  - robust z threshold for detection along time (e.g. 4)
-%     threshDepth - robust z threshold for detection along depth (e.g. 4)
-%
-%   Output
-%     mask        - logical matrix, true = flagged (bad/spike)
-%
-%   Notes
-%   - Uses MAD (median absolute deviation) based robust z-scores along each dimension.
-%   - Combines time-wise and depth-wise detections: mask = maskTime | maskDepth.
-%   - Does not apply morphological postprocessing.
-
-% Validate
-narginchk(5,5);
-assert(isnumeric(amp) && ismatrix(amp), 'amp must be a 2-D numeric matrix.');
-[nTime, nDepth] = size(amp);
-
-% Ensure window lengths are odd positive integers (use as-is if valid)
-timeWin = max(1, round(timeWin));
-depthWin = max(1, round(depthWin));
-
-% 1) Detect along time (column-wise)
-% compute column medians and MAD
-medTime = median(amp, 1);                      % 1 x nDepth
-madTime = mad(amp, 1, 1);                      % 1 x nDepth (MAD along dim 1)
-% avoid divide-by-zero
-madTime(madTime == 0) = eps;
-% robust z per element
-rzTime = abs((amp - medTime) ./ madTime);      % nTime x nDepth
-maskTime = rzTime > threshTime;
-
-% Optionally use local moving-median difference to reduce isolated false positives
-% (this step is helpful for impulsive spikes; keeps those that differ from local median)
-if timeWin > 1
-    localMedT = movmedian(amp, timeWin, 1);    % nTime x nDepth
-    maskTime = maskTime & (abs(amp - localMedT) > 0);
-end
-
-% 2) Detect along depth (row-wise)
-medDepth = median(amp, 2);                     % nTime x 1
-madDepth = mad(amp, 1, 2);                     % nTime x 1 (MAD along dim 2)
-madDepth(madDepth == 0) = eps;
-rzDepth = abs((amp - medDepth) ./ madDepth);   % nTime x nDepth (broadcast)
-maskDepth = rzDepth > threshDepth;
-
-% Optionally use local moving-median across depth (if depthWin > 1)
-if depthWin > 1
-    localMedD = movmedian(amp, depthWin, 2);   % nTime x nDepth
-    maskDepth = maskDepth & (abs(amp - localMedD) > 0);
-end
-
-% 3) Combine
-mask = maskTime | maskDepth;
-
+    % Statistics
+    total_points = numel(A);
+    num_outliers = sum(mask(:));
+    if num_outliers>0
+    fprintf('\nTotal Amplitude Spikes Found: %d (%.2f%% of data)\n', num_outliers, (num_outliers/total_points)*100);
+    fprintf('Consider smoothing velocity ensembles\n\n')
+    end
 end
