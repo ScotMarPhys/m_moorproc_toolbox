@@ -64,8 +64,8 @@ bg = datenum(datetime([s_d.' , s_t.' , 0])); %start
 ed = datenum(datetime([e_d.' , e_t.' , 0])); %end
 
 if isnan(id)
-   fprintf('No serial number given, use default 20044')
-   serial_nums='20044';
+   fprintf('No serial number given, use default 200044');
+   serial_nums=200044;
 else
     vec=find((id>=319) & (id <=328)); % Possible ADCP codes - taken from IMP moorings package
     serial_nums=sn(vec);
@@ -73,7 +73,7 @@ end
 
 %% Load
 for i = 1:length(serial_nums)
-    fprintf('Processing sn %d',serial_nums(i))
+    fprintf('Processing sn %d',serial_nums(i));
     if ~exist('filename',"var")
         filename = sprintf('%d_data',serial_nums(i));
     end
@@ -116,25 +116,29 @@ QC_1D = 0*double(Data.Average_Pressure);
 % pressure etc.  A bit of automatic flagging for demo in Fig. 1
 
 %% Checking few configuration which should be the same each time step
-if serial_nums(i)~=Config.SerialNo
-    error('Entered Serial Number does not match Config-file')
-end
-prombt = ' is not equal for all time steps. Please check ';
-if numunique(Data.Average_NBeams,"rows") ~= 1
-    text = ['Number of beams',prombt,'Data.Average_NBeams'];
-    disp(text); fprintf(fidlog,[text,'\n']);
-elseif numunique(Data.Average_NCells,"rows") ~= 1
-    text = ['Number of cells',prombt,'Data.Average_NCells'];
-    disp(text); fprintf(fidlog,[text,'\n']);
-elseif numunique(Data.Average_BeamToChannelMapping,"rows") ~= 1
-    text = ['Beam to channel mapping',prombt,'Data.Average_BeamToChannelMapping'];
-    disp(text); fprintf(fidlog,[text,'\n']);
-elseif numunique(Data.Average_Error,'rows')~= 1 | Data.Average_Error(1)~=0
-    text = ['Errors occured during measuring. Please check Data.Average_Error'];
-    disp(text); fprintf(fidlog,[text,'\n']);
-elseif numunique(Data.Average_Soundspeed,'rows')~= 1 
-    text = ['Sound speed not constant. Please check Data.Average_Soundspeed'];
-    disp(text); fprintf(fidlog,[text,'\n']);
+if strcmp(getenv('COMPUTERNAME'),'SA07KB-3JN9YY2'); % Numunique in V2025a onwards, temporarily skip check
+    if serial_nums(i)~=Config.SerialNo
+        error('Entered Serial Number does not match Config-file')
+    end
+    prombt = ' is not equal for all time steps. Please check ';
+    if numunique(Data.Average_NBeams,"rows") ~= 1
+        text = ['Number of beams',prombt,'Data.Average_NBeams'];
+        disp(text); fprintf(fidlog,[text,'\n']);
+    elseif numunique(Data.Average_NCells,"rows") ~= 1
+        text = ['Number of cells',prombt,'Data.Average_NCells'];
+        disp(text); fprintf(fidlog,[text,'\n']);
+    elseif numunique(Data.Average_BeamToChannelMapping,"rows") ~= 1
+        text = ['Beam to channel mapping',prombt,'Data.Average_BeamToChannelMapping'];
+        disp(text); fprintf(fidlog,[text,'\n']);
+    elseif numunique(Data.Average_Error,'rows')~= 1 | Data.Average_Error(1)~=0
+        text = ['Errors occured during measuring. Please check Data.Average_Error'];
+        disp(text); fprintf(fidlog,[text,'\n']);
+    elseif numunique(Data.Average_Soundspeed,'rows')~= 1
+        text = ['Sound speed not constant. Please check Data.Average_Soundspeed'];
+        disp(text); fprintf(fidlog,[text,'\n']);
+    end
+else
+
 end
 
 %% figure settings
@@ -459,7 +463,7 @@ end
 for k=1:3
     axes(ax(k));                   % make axis current
     title(sprintf('Amplitude Beam %d',k))
-    clim(ax(k), cb_lim); 
+    caxis(ax(k), cb_lim); 
     colorbar(ax(k))
 end
 
