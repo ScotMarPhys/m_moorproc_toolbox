@@ -1,4 +1,4 @@
-% stage01_read_qc_S55.m
+% stage01_read_qc_S55.mQC_vel
 % Read and quality control Signature 55 ADCP data
 % raw ADCP data in .mat format as exported by Signature Viewer
 %
@@ -131,6 +131,9 @@ elseif numunique(Data.Average_BeamToChannelMapping,"rows") ~= 1
     disp(text); fprintf(fidlog,[text,'\n']);
 elseif numunique(Data.Average_Error,'rows')~= 1 | Data.Average_Error(1)~=0
     text = ['Errors occured during measuring. Please check Data.Average_Error'];
+    disp(text); fprintf(fidlog,[text,'\n']);
+elseif numunique(Data.Average_Soundspeed,'rows')~= 1 
+    text = ['Sound speed not constant. Please check Data.Average_Soundspeed'];
     disp(text); fprintf(fidlog,[text,'\n']);
 end
 
@@ -385,7 +388,7 @@ fprintf(fidlog,sprintf('Nominal depth of instrument set as %d dbar.\n',wd));
 
 y=Nominal_CellDepth;
 x = Data.Average_Time;
-clim =[0,100];
+cb_lim =[0,100];
 
 % define surface bins
 Amp1=Data.Average_AmpBeam1; Amp1(QC_1D==4,:)=NaN;
@@ -394,6 +397,11 @@ Amp3=Data.Average_AmpBeam3; Amp3(QC_1D==4,:)=NaN;
 Cor1=Data.Average_CorBeam1; Cor1(QC_1D==4,:)=NaN;
 Cor2=Data.Average_CorBeam2; Cor2(QC_1D==4,:)=NaN;
 Cor3=Data.Average_CorBeam3; Cor3(QC_1D==4,:)=NaN;
+
+% mask any Cor<50 as bad
+mask_corr = (Cor1 < 50) | (Cor2 < 50) | (Cor3 < 50);
+QC_vel(mask_corr)=QC_BAD;
+
 U = Data.Average_VelEast;U(QC_1D==4,:)=NaN;
 V = Data.Average_VelNorth;V(QC_1D==4,:)=NaN;
 W = Data.Average_VelUp;W(QC_1D==4,:)=NaN;
@@ -430,22 +438,17 @@ R(QC_1D==4)=NaN;
 
 %%%%%%%%%%%%%%%%%%%%%%%
 f2 = figure(2);clf
-ax(1) = subplot(2,3,1);hold on
-imagesc(x, y, Amp1');
-ax(2) = subplot(2,3,2);hold on
-imagesc(x, y, Amp2');
-ax(3) = subplot(2,3,3);hold on
-imagesc(x, y, Amp3');
+ax(1) = subplot(2,3,1);hold on; imagesc(x, y, Amp1');
+ax(2) = subplot(2,3,2);hold on; imagesc(x, y, Amp2');
+ax(3) = subplot(2,3,3);hold on; imagesc(x, y, Amp3');
 
-ax(4) = subplot(2,3,4);hold on
-imagesc(x, y, Cor1');
-ax(5) = subplot(2,3,5);hold on
-imagesc(x, y, Cor2');
-ax(6) = subplot(2,3,6);hold on
-imagesc(x, y, Cor3');
+ax(4) = subplot(2,3,4);hold on; imagesc(x, y, Cor1');
+ax(5) = subplot(2,3,5);hold on; imagesc(x, y, Cor2');
+ax(6) = subplot(2,3,6);hold on; imagesc(x, y, Cor3');
 
 for k = 1:numel(ax)
     axis(ax(k),'xy','ij');
+    ylim(ax(k),[0,1080])
     ylabel(ax(k),'Nominal cell depth (m)')
     datetick(ax(k),'x','mmm-yyyy','keepticks','keeplimits');
     hLine = plot(ax(k),x(QC_1D==0), y(idx_valid(QC_1D==0)), 'r', 'LineWidth', 0.1);
@@ -456,7 +459,7 @@ end
 for k=1:3
     axes(ax(k));                   % make axis current
     title(sprintf('Amplitude Beam %d',k))
-    caxis(ax(k), clim); 
+    clim(ax(k), cb_lim); 
     colorbar(ax(k))
 end
 
@@ -471,7 +474,7 @@ colorBelow = [1 1 1];       % RGB for <50 (dark green)
 colorAboveMap = parula(ncolors);  % gradient for >=50 (choose any colormap)
 
 % compute how many entries correspond to < threshold
-fracBelow = max(0, min(1, (threshold - clim(1)) / (clim(2) - clim(1))));
+fracBelow = max(0, min(1, (threshold - cb_lim(1)) / (cb_lim(2) - cb_lim(1))));
 nbelow = max(1, round(ncolors * fracBelow));
 nabove = ncolors - nbelow;
 
@@ -483,16 +486,16 @@ for k = 4:6
     axes(ax(k));                   % make axis current
     title(sprintf('Correlation Beam %d',k-3))
     axes(ax(k));                   % make axis current
-    caxis(clim);                   % ensure CLim is consistent
+    clim(cb_lim);                   % ensure CLim is consistent
     colormap(ax(k), cmap);         % set custom colormap for this axes
     cb = colorbar(ax(k));          % add colorbar
-    cb.Ticks = [clim(1), threshold, clim(2)];        % tick at threshold
-    cb.TickLabels = {num2str(clim(1)), num2str(threshold), num2str(clim(2))};
+    cb.Ticks = [cb_lim(1), threshold, cb_lim(2)];        % tick at threshold
+    cb.TickLabels = {num2str(cb_lim(1)), num2str(threshold), num2str(cb_lim(2))};
 end
 
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[filename,'_f2.1_beam_amplitude_correlation_QC.png']));
+print('-dpng',fullfile(outdir,[filename,'_f2_beam_amplitude_correlation_QC.png']));
 clear ax
 
 %% suface bin detection
@@ -538,7 +541,7 @@ for k=1:numel(ax)
 end
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[filename,'_f2.2_beam_amplitude_correlation_QC.png']));
+print('-dpng',fullfile(outdir,[filename,'_f3_beam_amplitude_correlation_QC.png']));
 clear ax
 
 srf_bins = min([SB,CB]);
@@ -600,6 +603,9 @@ while true
     end
 end
 
+%% Apply correlation threshold
+
+
 %% spikes
 % find spikes - e.g. fish schools (short lived)
 SDc =3;
@@ -611,9 +617,113 @@ fprintf('Amplitude 3\n')
 mask_spikes_Amp3 = detect_spikes_amp(Amp3, SDc);
 
 
-%%
-hold off;
+%% Velocity
+% raw
+U = Data.Average_VelEast;
+V = Data.Average_VelNorth;
+W = Data.Average_VelUp;
+CSPD = sqrt(U.^2+V.^2);
 
+% QC
+W_thr = 0.1;
+CUR_thr = 1;
+
+mU = mean(U, 1, 'omitnan'); sU = std(U, 0, 1, 'omitnan');
+mV = mean(V, 1, 'omitnan'); sV = std(V, 0, 1, 'omitnan');
+mS = mean(CSPD, 1, 'omitnan'); sS = std(CSPD, 0, 1, 'omitnan');
+
+% 2. Create Masks: Checks if each pixel is > 3 STD from its specific depth-mean
+% (MATLAB automatically broadcasts the 1xDepth vector across the Time rows)
+mask_u = abs(U - mU) > 3.*sU;
+mask_v = abs(V - mV) > 3.*sV;
+mask_s = abs(CSPD - mS) > 3.*sS;
+mask_w = (W > W_thr) | (W < -W_thr);
+
+%% spikes in velocity
+U_diff = diff(U, 1, 2);
+V_diff = diff(V, 1, 2);
+[T,D]=size(U);
+mask_ud = [false(T, 1), (abs(U_diff)>CUR_thr)]; 
+mask_vd = [false(T, 1), (abs(V_diff)>CUR_thr)]; 
+
+
+mask_vel_comb = (mask_u | mask_v | mask_s | mask_w | mask_ud | mask_vd);
+QC_vel(mask_vel_comb)= QC_BAD;
+
+prombt = ['Velocity QC Summary: Flagged cells as QC_BAD (%d) based on:\n' ...
+          ' - Horizontal spikes (|dU/dz|, |dV/dz|) > %0.2f m/s\n' ...
+          ' - Statistical outliers > 3 standard deviations (per depth bin)\n' ...
+          ' - Vertical velocity outliers (|W|) > %0.2f m/s\n'];
+
+% 1. Print to the command window
+fprintf(1, prombt, QC_BAD, CUR_thr, W_thr); 
+
+% 2. Print to the log file
+fprintf(fidlog, prombt, QC_BAD, CUR_thr, W_thr);
+
+
+U_QC = U; U_QC(QC_vel==4)=NaN;
+V_QC = V; V_QC(QC_vel==4)=NaN;
+W_QC = W; W_QC(QC_vel==4)=NaN;
+CSPD_QC = CSPD; CSPD_QC(QC_vel==4)=NaN;
+
+f4 = figure(4); clf;
+
+W_thresh = 0.1; 
+cb_titles = {'Zonal Velocity (m/s)', 'Zonal Velocity (m/s)', ...
+          'Meridional Velocity (m/s)', 'Meridional Velocity (m/s)',...
+          'Vertical Velocity (m/s)', 'Vertical Velocity (m/s)', ...
+          'Current Speed (m/s)', 'Current Speed (m/s)'};
+data_list = {U,U_QC,V,V_QC,W,W_QC,CSPD,CSPD_QC};
+
+% High-Contrast Colormap: [Cyan; Blue-White-Red; Yellow]
+b_to_w = [linspace(0,1,11)', linspace(0,1,11)', ones(11,1)];
+w_to_r = [ones(10,1), linspace(0.9,0,10)', linspace(0.9,0,10)'];
+cmap = [[0 1 1]; b_to_w; w_to_r; [1 1 0]];
+
+for k = 1:8
+    ax = subplot(4,2,k);
+    im = imagesc(ax, x, y, data_list{k}');
+    hold(ax, 'on');
+    
+    % Visual Formatting
+    set(ax, 'YDir', 'reverse', 'Color', [0.8 0.8 0.8]); % Gray for NaNs
+    set(im, 'AlphaData', ~isnan(data_list{k}'));       % Transparency for NaNs
+    datetick(ax, 'x', 'mmm-yyyy', 'keepticks', 'keeplimits');
+    ylim(ax, [0, 1080]);
+    xlim(ax, [min(x), max(x)]);
+
+    colormap(ax, cmap);
+    
+    if k==1
+        title('Raw velocities')
+    elseif k==2
+        title_str = {
+    sprintf('QC velocities: |U|,|V|,|CSPD| < mean+3*STD; |dU/dz|,|dV/dz|<1 m/s'), ...
+    sprintf('|W|<0.1 m/s, and previous QCs')
+};
+        title(title_str)
+    end
+
+    if k == 5 || k== 6% Vertical Velocity logic
+        limit_W = W_thresh * 1.1;
+        clim(ax, [-limit_W, limit_W]);
+        cb = colorbar(ax);
+        cb.Ticks = [-limit_W, -W_thresh, 0, W_thresh, limit_W];
+        cb.TickLabels = {sprintf('<%.2f',-W_thresh), '-0.1', '0', '0.1', sprintf('>%.2f',W_thresh)};
+    else
+        clim(ax, [-1.1, 1.1]);
+        cb = colorbar(ax);
+        cb.Ticks = [-1.1, -1, 0, 1, 1.1];
+        cb.TickLabels = {'<-1', '-1', '0', '1', '>1'};
+    end
+    ylabel(cb, cb_titles{k});
+end
+
+% Save figure
+set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
+print('-dpng',fullfile(outdir,[filename,'_f4_velocity_and_speed_QC.png']));
+clear ax
 %%
 end
 fprintf(fidlog, '\n==== END ENTRY  =====\n');
@@ -958,5 +1068,50 @@ function mask = detect_spikes_amp(A, SDc)
     if num_outliers>0
     fprintf('\nTotal Amplitude Spikes Found: %d (%.2f%% of data)\n', num_outliers, (num_outliers/total_points)*100);
     fprintf('Consider smoothing velocity ensembles\n\n')
+    end
+end
+
+% plot U,W,V and current speed
+function plot_UVW(parent_container, U, V, W, CSPD, x, y)
+    % Create layout inside the Panel
+    t = tiledlayout(parent_container, 2, 2, 'TileSpacing', 'compact', 'Padding', 'tight');
+    
+    W_thresh = 0.1; 
+    titles = {'Zonal Velocity (m/s)', 'Meridional Velocity (m/s)', ...
+              'Vertical Velocity (m/s)', 'Current Speed (m/s)'};
+    data_list = {U, V, W, CSPD};
+    
+    % High-Contrast Colormap: [Cyan; Blue-White-Red; Yellow]
+    b_to_w = [linspace(0,1,11)', linspace(0,1,11)', ones(11,1)];
+    w_to_r = [ones(10,1), linspace(0.9,0,10)', linspace(0.9,0,10)'];
+    cmap = [[0 1 1]; b_to_w; w_to_r; [1 1 0]];
+
+    for k = 1:4
+        ax = nexttile(t);
+        im = imagesc(ax, x, y, data_list{k}');
+        hold(ax, 'on');
+        
+        % Visual Formatting
+        set(ax, 'YDir', 'reverse', 'Color', [0.8 0.8 0.8]); % Gray for NaNs
+        set(im, 'AlphaData', ~isnan(data_list{k}'));       % Transparency for NaNs
+        datetick(ax, 'x', 'mmm-yyyy', 'keepticks', 'keeplimits');
+        ylim(ax, [0, 1080]);
+        xlim(ax, [min(x), max(x)]);
+
+        colormap(ax, cmap);
+        
+        if k == 3 % Vertical Velocity logic
+            limit_W = W_thresh * 1.1;
+            clim(ax, [-limit_W, limit_W]);
+            cb = colorbar(ax);
+            cb.Ticks = [-limit_W, -W_thresh, 0, W_thresh, limit_W];
+            cb.TickLabels = {sprintf('<%.2f',-W_thresh), '-0.1', '0', '0.1', sprintf('>%.2f',W_thresh)};
+        else
+            clim(ax, [-1.1, 1.1]);
+            cb = colorbar(ax);
+            cb.Ticks = [-1.1, -1, 0, 1, 1.1];
+            cb.TickLabels = {'<-1', '-1', '0', '1', '>1'};
+        end
+        ylabel(cb, titles{k});
     end
 end

@@ -22,7 +22,9 @@ clear
 
 global MOORPROC_G
 
+
 moor = 'rhadcp_01_2020';
+% moor = 'rhadcp_02_2022';
 
 % TO UPDATE <------------------------
 % in- and output directories
