@@ -75,7 +75,7 @@ dbpath = getenv('RODBPATH');
 if exist('rodbpath') == 2
   dbpath = rodbpath;
 end
-if length(dbpath) == 0
+if isempty(dbpath)
   dbpath = ''; %dbpath = '/home/hamlet/ro2';  % modified by loic houpert July 2016
 end
 

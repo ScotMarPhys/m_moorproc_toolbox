@@ -26,9 +26,11 @@ infiles = {
     fullfile('data',sprintf('%4.4d.asc',sn))
     sprintf('%4.4d%s',sn,'.asc')
     sprintf('%4.4d_DATA.asc',sn)
+    sprintf('%4.4d_CAL_DIP_DATA.asc',sn)
     sprintf('%4.4d_data.cnv',sn)
     sprintf('%4.4d_Data.cnv',sn)
     sprintf('%4.4d_data.asc',sn)
+    sprintf('SBE37SM-RS232_0370%d_2026_02_03.cnv',sn) %***there has to be a way to make this all more general. search files in the directory? 
     };
 
 for n = 1:length(infiles)
