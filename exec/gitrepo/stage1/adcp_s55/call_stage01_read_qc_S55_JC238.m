@@ -23,15 +23,16 @@ clear
 global MOORPROC_G
 
 
-moor = 'rhadcp_01_2020';
-% moor = 'rhadcp_02_2022';
+% moor = 'rhadcp_01_2020';
+moor = 'rhadcp_02_2022';
 
 % TO UPDATE <------------------------
 % in- and output directories
 pc_name = getenv('COMPUTERNAME');
 if strcmp(pc_name,'SA07KB-3JN9YY2');
     basedir = 'C:\Users\sa07kb\Projects\Moor_Data_Proc\';
-    dataindir = [basedir,'moor_examples\osnap\data\moor\raw\jc238\adcp_s55\'];
+    % dataindir = [basedir,'moor_examples\osnap\data\moor\raw\jc238\adcp_s55\'];
+    dataindir = [basedir,'moor_examples\osnap\data\moor\raw\dy181\adcp_s55\'];
     pathgit = [basedir 'm_moorproc_toolbox\'];
     figureoutdir = fullfile(basedir,'moor_examples\osnap\data\moor\proc', ...
         moor,'adcp_S55');

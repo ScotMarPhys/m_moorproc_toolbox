@@ -115,6 +115,7 @@ QC_1D = 0*double(Data.Average_Pressure);
 % E.g. It's a good opportunity to remove deployment and recovery based on
 % pressure etc.  A bit of automatic flagging for demo in Fig. 1
 
+
 %% Checking few configuration which should be the same each time step
 if strcmp(getenv('COMPUTERNAME'),'SA07KB-3JN9YY2'); % Numunique in V2025a onwards, temporarily skip check
     if serial_nums(i)~=Config.SerialNo
@@ -122,20 +123,26 @@ if strcmp(getenv('COMPUTERNAME'),'SA07KB-3JN9YY2'); % Numunique in V2025a onward
     end
     prombt = ' is not equal for all time steps. Please check ';
     if numunique(Data.Average_NBeams,"rows") ~= 1
-        text = ['Number of beams',prombt,'Data.Average_NBeams'];
-        disp(text); fprintf(fidlog,[text,'\n']);
+        prombt = ['Number of beams',prombt,'Data.Average_NBeams'];
+        disp(prombt_2); fprintf(fidlog,[prombt_2,'\n']);
     elseif numunique(Data.Average_NCells,"rows") ~= 1
-        text = ['Number of cells',prombt,'Data.Average_NCells'];
-        disp(text); fprintf(fidlog,[text,'\n']);
+        prombt_2 = ['Number of cells',prombt,'Data.Average_NCells'];
+        disp(prombt_2); fprintf(fidlog,[prombt_2,'\n']);
     elseif numunique(Data.Average_BeamToChannelMapping,"rows") ~= 1
-        text = ['Beam to channel mapping',prombt,'Data.Average_BeamToChannelMapping'];
-        disp(text); fprintf(fidlog,[text,'\n']);
+        prombt_2 = ['Beam to channel mapping',prombt,'Data.Average_BeamToChannelMapping'];
+        disp(prombt_2); fprintf(fidlog,[prombt_2,'\n']);
+    elseif numunique(Data.Average_AmbiguityVel,"rows") ~= 1
+        prombt_2 = ['Ambiduity velocity',prombt,'Data.Average_AmbiguityVel'];
+        disp(prombt_2); fprintf(fidlog,[prombt_2,'\n']);
+     elseif numunique(Data.Average_NominalCorrelation,"rows") ~= 1
+        prombt_2 = ['Nominal Correlation',prombt,'Data.Average_NominalCorrelation'];
+        disp(prombt_2); fprintf(fidlog,[prombt_2,'\n']);
     elseif numunique(Data.Average_Error,'rows')~= 1 | Data.Average_Error(1)~=0
-        text = ['Errors occured during measuring. Please check Data.Average_Error'];
-        disp(text); fprintf(fidlog,[text,'\n']);
+        prombt_2 = ['Errors occured during measuring. Please check Data.Average_Error'];
+        disp(prombt_2); fprintf(fidlog,[prombt_2,'\n']);
     elseif numunique(Data.Average_Soundspeed,'rows')~= 1
-        text = ['Sound speed not constant. Please check Data.Average_Soundspeed'];
-        disp(text); fprintf(fidlog,[text,'\n']);
+        prombt_2 = ['Sound speed not constant. Please check Data.Average_Soundspeed'];
+        disp(prombt_2); fprintf(fidlog,[prombt_2,'\n']);
     end
 else
 
@@ -241,6 +248,7 @@ hBox = annotation('textbox', [bx by bw bh], 'String', txt, ...
 
 % Tilt / pitch %%%%%%%%%%%%%%%%%%%%%%%%
 y = Data.Average_Pitch;
+y_roll = Data.Average_Roll;
 y(QC_1D==QC_BAD) = NaN;
 x = Data.Average_Time;
 
@@ -257,7 +265,8 @@ hold on; grid on;
 h.data = plot(x,y,'.','DisplayName', 'pitch raw bottom');
 plot(x,y_trim,'.c','DisplayName', 'pitch QC_BAD sinking/rising');
 
-plot(Data.Average_Time(QC_1D==0),Data.Average_Roll(QC_1D==0),'k','DisplayName', 'roll raw bottom','LineWidth',0.5);
+plot(Data.Average_Time(QC_1D==0),Data.Average_Roll(QC_1D==0),'k', ...
+    'DisplayName', 'roll raw bottom','LineWidth',0.5);
 
 % [h, nAbove, nBelow] = markClippedPoints(h, y,yl, x);
 
@@ -265,8 +274,10 @@ datetick('x', 'mmm-yyyy', 'keepticks', 'keeplimits');
 
 % Suggested quality thresholds
 hl1 = yline(0,'color','k'); hl1.Annotation.LegendInformation.IconDisplayStyle = 'off';
-hl1 = yline([-10 10],'color','g');  arrayfun(@(h) set(h.Annotation.LegendInformation, 'IconDisplayStyle', 'off'), hl1);
-hl1 = yline([-30 30],'color','r');  arrayfun(@(h) set(h.Annotation.LegendInformation, 'IconDisplayStyle', 'off'), hl1);
+hl1 = yline([-10 10],'color','g');  arrayfun(@(h) set(h.Annotation.LegendInformation, ...
+    'IconDisplayStyle', 'off'), hl1);
+hl1 = yline([-30 30],'color','r');  arrayfun(@(h) set(h.Annotation.LegendInformation, ...
+    'IconDisplayStyle', 'off'), hl1);
 
 xlim([timemin timemax]);
 ylim(yl);
@@ -274,8 +285,8 @@ ylim(yl);
 ys_data = [ 10, -10, 30, -30 ];
 ys_labels = { '10 < 30: Post processing possible', ...
            '-10 > -30: Post processing possible', ...
-           '>30: Profiles probably bad', ...
-           '<-30: Profiles probably bad' };
+           '>30: Profiles bad', ...
+           '<-30: Profiles bad' };
 ys_colors =  {'g','g','r','r'};
 
 annotateYLabels(ys_data, ys_labels, ys_colors);
@@ -283,7 +294,9 @@ annotateYLabels(ys_data, ys_labels, ys_colors);
 ylabel('Pitch (^o)');
 
 % Automatically flag any bad timesteps: excessive pitch 
-badind = find(y > 30 | y < -30);
+y(QC_1D~=0)=NaN;
+y_roll(QC_1D~=0)=NaN;
+badind = find(y > 30 | y < -30 | y_roll >30 | y_roll < -30 );
 
 if ~isempty(badind)
     plot(y(badind),y(badind),'or', 'DisplayName', 'QC_BAD pitch bottom');
@@ -291,7 +304,8 @@ if ~isempty(badind)
     QC_1D(badind) = QC_BAD;
 end
 disp('***Pitch check***')
-disp([num2str(length(badind)) ' timesteps flagged bad (',num2str(QC_BAD),') due to excessive pitch (>abs(30))']);
+disp([num2str(length(badind)) ' timesteps flagged bad (',num2str(QC_BAD), ...
+    ') due to excessive pitch (>abs(30))']);
 disp(' ')
 fprintf(fidlog,'***Pitch check***\n');
 fprintf(fidlog,[num2str(length(badind)) ' timesteps flagged bad (',...
@@ -301,14 +315,16 @@ legend('Interpreter','none')
 
 % Automatically flag any bad timesteps with postprocessing possible: high
 % pitch
-badind = find( (y > 10 & y < 30) | (y < -10 & y > -30) );
+badind = find( (y > 10 & y < 30) | (y < -10 & y > -30) | ...
+    (y_roll > 10 & y_roll < 30) | (y_roll < -10 & y_roll > -30));
 
 if ~isempty(badind)
     plot(y(badind),y(badind),'or', 'DisplayName', 'QC_PROBABLY_BAD pitch bottom');
     QC_vel(badind,:) = QC_PROBABLY_BAD;
     QC_1D(badind) = QC_PROBABLY_BAD;
 end
-disp([num2str(length(badind)) ' timesteps flagged probably bad (',num2str(QC_PROBABLY_BAD),') due to pitch between +(-) 10 and +(-) 30']);
+disp([num2str(length(badind)) ' timesteps flagged probably bad (', ...
+    num2str(QC_PROBABLY_BAD),') due to pitch between +(-) 10 and +(-) 30']);
 disp('Post processing possible.');
 disp(' ')
 fprintf(fidlog,[num2str(length(badind)) ' timesteps flagged probably bad (',...
@@ -323,7 +339,7 @@ yl = [-0 360];
 y = Data.Average_Heading;
 x = Data.Average_Time; 
 
-y(QC_1D==4) = NaN;
+y(QC_1D~=0) = NaN;
 y_trim =  Data.Average_Heading;
 y_trim(QC_1D==0) = NaN;
 
@@ -395,20 +411,20 @@ x = Data.Average_Time;
 cb_lim =[0,100];
 
 % define surface bins
-Amp1=Data.Average_AmpBeam1; Amp1(QC_1D==4,:)=NaN;
-Amp2=Data.Average_AmpBeam2; Amp2(QC_1D==4,:)=NaN;
-Amp3=Data.Average_AmpBeam3; Amp3(QC_1D==4,:)=NaN;
-Cor1=Data.Average_CorBeam1; Cor1(QC_1D==4,:)=NaN;
-Cor2=Data.Average_CorBeam2; Cor2(QC_1D==4,:)=NaN;
-Cor3=Data.Average_CorBeam3; Cor3(QC_1D==4,:)=NaN;
+Amp1=Data.Average_AmpBeam1; Amp1(QC_1D~=0,:)=NaN;
+Amp2=Data.Average_AmpBeam2; Amp2(QC_1D~=0,:)=NaN;
+Amp3=Data.Average_AmpBeam3; Amp3(QC_1D~=0,:)=NaN;
+Cor1=Data.Average_CorBeam1; Cor1(QC_1D~=0,:)=NaN;
+Cor2=Data.Average_CorBeam2; Cor2(QC_1D~=0,:)=NaN;
+Cor3=Data.Average_CorBeam3; Cor3(QC_1D~=0,:)=NaN;
 
 % mask any Cor<50 as bad
 mask_corr = (Cor1 < 50) | (Cor2 < 50) | (Cor3 < 50);
 QC_vel(mask_corr)=QC_BAD;
 
-U = Data.Average_VelEast;U(QC_1D==4,:)=NaN;
-V = Data.Average_VelNorth;V(QC_1D==4,:)=NaN;
-W = Data.Average_VelUp;W(QC_1D==4,:)=NaN;
+U = Data.Average_VelEast;U(QC_1D~=0,:)=NaN;
+V = Data.Average_VelNorth;V(QC_1D~=0,:)=NaN;
+W = Data.Average_VelUp;W(QC_1D~=0,:)=NaN;
 
 % surface bin detection
 Amp1_pro = nanmean(Amp1);SB1 = find(islocalmin(Amp1_pro),1,'last');
@@ -427,17 +443,33 @@ SM3 = find(islocalmax(Amp3_pro),1,'last');
 SM = min([SM1,SM2,SM3]);
 A(1) = gsw_z_from_p(nanmean(Data.Average_Pressure(QC_1D==0)),lat); % range based on pressure sensor
 A(2) = Dist2Instr_CellMidpoint(SM); % range based on nominal cell distance
-%slant angle 20 degree plus abs(pitch)
-pitch = Data.Average_Pitch; pitch(QC_1D==4)=NaN;
-theta = abs(pitch)+20;
+
+%all angle in degrees
+gamma = 20; %slant angle
+alpha = [0, 120,240]; % beam 1 - aligned with x-axis, beam 2, beam 3
+pitch = Data.Average_Pitch; pitch(QC_1D~=0)=NaN; % y-axis rotation, in deg
+roll = Data.Average_Roll; roll(QC_1D~=0)=NaN; % x-axis rotation, in deg
+
+% Pre-calculate trig terms (using 'd' versions for degrees)
+cp = cosd(pitch); sp = sind(pitch);
+cr = cosd(roll);  sr = sind(roll);
+cg = cosd(gamma); sg = sind(gamma);
+ca = cosd(alpha); sa = sind(alpha); % alpha is 1x3
+
+% Angle to vertical for each beam (in degrees)
+beta = acosd(-sp .* sg .* ca + cp .* sr .* sg .* sa + cp .* cr .* cg);
+
+% Find the minimum angle to vertical across all three beams for each timestamp
+max_beta = max(beta, [], 2);
+
 % R contains buffer for upper range of cell
-R =max(A)*cosd(theta)-Cell_Size; 
+R =max(A)*cosd(max_beta)-Cell_Size; 
 % find(Dist2Instr_CellMidpoint <= R(i), 1, 'last') for each time step i
-R(QC_1D==4)=wd;
+R(QC_1D~=0)=wd;
 idx_valid = arrayfun(@(r) find(Dist2Instr_CellMidpoint <= r, 1, 'last'),...
     R);
-idx_valid(QC_1D==4)=0;
-R(QC_1D==4)=NaN;
+idx_valid(QC_1D~=0)=0;
+R(QC_1D~=0)=NaN;
 
 
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -566,7 +598,7 @@ fprintf(fidlog,sprintf('Flagged bin >%d as QC_BAD (%d).\n\n',...
 %% sidelobe contamination
 
 prompt = sprintf([ ...
-  'Sidelobe contamination for each time step varies between %d and %d ' ...
+  '\n\nSidelobe contamination for each time step varies between %d and %d ' ...
   'out of %d bins.\nSee red line in figure 2.\n Would you like to flag ' ...
   ' sidelobe contaminated bins for each time step as QC_BAD (%d). Y/N [Y]: '], ...
   min(idx_valid(QC_1D==0))+1, max(idx_valid(QC_1D==0))+1, max(nCells), QC_BAD);
@@ -728,7 +760,164 @@ end
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
 print('-dpng',fullfile(outdir,[filename,'_f4_velocity_and_speed_QC.png']));
 clear ax
+
 %%
+%% Magnetometer Horizontal Intensity and Circle Fitting
+% Extract X and Y components (columns 1 and 2)
+mx = Data.Average_Magnetometer(:,1); mx(QC_1D~=0)=NaN;
+my = Data.Average_Magnetometer(:,2); my(QC_1D~=0)=NaN;
+
+% Solve for circle parameters using Least Squares
+A = [mx, my, ones(size(mx))];
+B = mx.^2 + my.^2;
+valid = ~isnan(mx) & ~isnan(my);
+
+if any(valid)
+    params = A(valid,:) \ B(valid);
+    xc = params(1)/2;
+    yc = params(2)/2;
+    radius = sqrt(params(3) + xc^2 + yc^2);
+else
+    xc = NaN; yc = NaN; radius = NaN;
+end
+
+% % Raw heading from magnetometer (Instrument Frame)
+% % Note: Using -my because most ADCP compasses are clockwise
+% raw_mag_heading = atan2d(-my, mx); 
+% 
+% % Corrected heading (Subtracting the Hard-Iron offsets)
+% corr_mag_heading = atan2d(-(my - yc), (mx - xc));
+% 
+% % The angular correction required (in degrees)
+% heading_correction = corr_mag_heading - raw_mag_heading;
+% 
+% % Normalize the correction to [-180, 180] to avoid wrap-around jumps
+% heading_correction = atan2d(sind(heading_correction), cosd(heading_correction));
+
+% % Assuming Data.U and Data.V are [Bins x Time] or [Time x Bins]
+% % Let's assume [Time x Bins] to match your 'x' variable
+% U_raw = Data.U;
+% V_raw = Data.V;
+% 
+% % Apply rotation
+% % U_new = U*cos(phi) - V*sin(phi)
+% % V_new = U*sin(phi) + V*cos(phi)
+% Data.U_corrected = U_raw .* cosd(heading_correction) - V_raw .* sind(heading_correction);
+% Data.V_corrected = U_raw .* sind(heading_correction) + V_raw .* cosd(heading_correction);
+% 
+% % Vertical velocity remains the same
+% Data.W_corrected = Data.W; 
+
+
+
+f5 = figure(5); clf;
+set(f5, 'Color', 'w');
+hold on;
+
+% 4. Plot the raw horizontal data (Time x [1,2])
+scatter(mx, my, 5, x, 'filled', 'MarkerFaceAlpha', 0.5, 'DisplayName', 'Mag Data');
+
+% 1. Plot the "Ideal" Circle centered at (0,0) based on raw data average
+avg_radius = mean(sqrt(mx.^2 + my.^2), 'omitnan');
+theta = linspace(0, 2*pi, 300);
+plot(avg_radius*cos(theta), avg_radius*sin(theta), 'r--', 'LineWidth', 1, 'DisplayName', 'Ideal Path (at 0,0)');
+
+
+% 2. Plot the FITTED circle centered at (xc, yc)
+plot(xc + radius*cos(theta), yc + radius*sin(theta), 'k-', 'LineWidth', 1.5, 'DisplayName', 'Fitted Circle');
+
+% 3. Plot the Center of the Fit
+plot(xc, yc, 'kx', 'MarkerSize', 10, 'LineWidth', 2, 'DisplayName', 'Fit Center (Hard-Iron)');
+
+% Formatting
+axis equal; grid on;
+xlabel('Mag X (mG)'); ylabel('Mag Y (mG)');
+title(['Horizontal Mag Fit: ', filename], 'Interpreter', 'none');
+
+% Add center crosshairs at (0,0)
+xl = xlim; yl = ylim;
+line([min(xl) max(xl)], [0 0], 'Color', [0.5 0.5 0.5], 'HandleVisibility', 'off');
+line([0 0], [min(yl) max(yl)], 'Color', [0.5 0.5 0.5], 'HandleVisibility', 'off');
+
+% Colorbar Setup
+hcb = colorbar;
+ylabel(hcb, 'Deployment Time');
+ticks = get(hcb, 'Ticks');
+set(hcb, 'TickLabels', datestr(ticks, 'yyyy-mmm'));
+
+% Legend - including the new fitted items
+legend('Location', 'northeast');
+
+% Annotate the Offset
+text(300, yc, sprintf('  Offset X: %.1f\n  Offset Y: %.1f\n  Radius: %.1f mG', xc, yc, radius), ...
+    'VerticalAlignment', 'top', 'FontWeight', 'bold', 'Color', 'k', 'BackgroundColor', 'w');
+
+hold off;
+
+% Save figure
+set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
+print('-dpng',fullfile(outdir,[filename,'_f5_horizontal_magnetometer_QC.png']));
+%% Sensor diagnostics
+
+f6 = figure(6); clf;
+
+% --- TOP ROW: ALL TEMPERATURES GROUPED ---
+ax(1) = subplot(4,1,1);
+hold on;
+plot(x,Data.Average_Temperature, 'LineWidth', 1.5, 'DisplayName', 'Water Temp');
+plot(x,Data.Average_RTCTemperature, 'DisplayName', 'RTC (Internal)');
+plot(x,Data.Average_MagnetometerTemperature, 'DisplayName', 'Mag Temp');
+plot(x,Data.Average_PressureSensorTemperature, 'DisplayName', 'Pressure Temp');
+hold off;
+title('Temperature Sensors');
+ylabel('°C');
+legend('Location', 'north','NumColumns',4);
+grid on;
+
+% --- MIDDLE ROW: MECHANICAL/ENVIRONMENTAL ---
+ax(2) = subplot(4,1,2);
+plot(x,Data.Average_Magnetometer);
+title('Magnetometer'); grid on;
+ylabel('mG');
+
+ax(3) = subplot(4,1,3);
+plot(x,Data.Average_Accelerometer);
+title('Accelerometer'); grid on;
+ylabel('g')
+
+% --- BOTTOM ROW: SENSOR STATUS ---
+ax(4) = subplot(4,1,4);
+plot(x,Data.Average_TransmitEnergy);
+title('Transmit Energy'); grid on;
+ylabel('Joules');
+
+for k = 1:numel(ax)
+    axis(ax(k));
+    datetick(ax(k),'x','mmm-yyyy','keepticks','keeplimits');
+    xlim(ax(k),[min(x)-1e1,max(x)+1e1])
+end
+
+% Improve spacing
+sgtitle('ADCP Sensor Diagnostic');
+% Save figure
+set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
+print('-dpng',fullfile(outdir,[filename,'_f6_sensor_diagnostics.png']));
+clear ax
+%%
+m_u=median(U_QC,"omitnan" );m_v=median(V_QC,"omitnan" );m_w=median(W_QC,"omitnan" );
+m_Beam1ss=median(Amp1,"omitnan" ); m_Beam2ss=median(Amp2,"omitnan" ); m_Beam3ss=median(Amp3,"omitnan" );
+m_Beam1cor, m_Beam2cor, m_Beam3cor
+
+for i=1:srf_bins;
+fprintf(fidlog,'\nBin %d : nominally %3.2f m - %3.2f m from sensor head\n\n', k, Nominal_CellDepth(k)-Cell_Size,Nominal_CellDepth(k)+Cell_Size);
+fprintf(fidlog,'Median velocity u / v / w [m/s]                : %4.1f  %4.1f  %4.1f\n',m_u(k), m_v(k), m_w(k));
+fprintf(fidlog,'Median Amp Beam1 / Beam2 / Beam3 [db]           : %3.0f  %3.0f  %3.0f  %3.0f\n',m_Beam1ss, m_Beam2ss, m_Beam3ss);
+fprintf(fidlog,'Median correlation Beam1 / Beam2 / Beam3 [%]    : %3.0f  %3.0f  %3.0f  %3.0f\n',m_Beam1cor, m_Beam2cor, m_Beam3cor);
+fprintf(fidlog,'Median velocity error [m/s]                    : %4.1f\n',m_err);
+fprintf(fidlog,'Median speed [m/s]                             : %4.1f\n',m_spd);
+fprintf(fidlog,'Median direction [m/s]                         : %5.2f\n',m_dir);
+end
+
 end
 fprintf(fidlog, '\n==== END ENTRY  =====\n');
 fclose(fidlog);
