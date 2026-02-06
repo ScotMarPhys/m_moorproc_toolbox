@@ -1,4 +1,4 @@
-% stage01_read_qc_S55.mQC_vel
+% stage01_read_qc_S55.mData.mask_QC_3D
 % Read and quality control Signature 55 ADCP data
 % raw ADCP data in .mat format as exported by Signature Viewer
 %
@@ -39,46 +39,42 @@ else
     ouput_form = [moor '_%d.nc'];
 end
 
-if exist(infofile,"file")
-    % ----- read infofile / open logfile  ------------------------------------
-    infovar = 'instrument:serialnumber:z:Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:WaterDepth'; 
-    [id,sn,z,s_t,s_d,e_t,e_d,lat,lon,wd]  =  rodbload(infofile,infovar);
-else
-    disp('No info file given. Parameters set to NaN')
-    [id,sn,z,s_t,s_d,e_t,e_d,lat,lon,wd] = deal(NaN);
-end
-
 if ~exist(outdir,'dir')
     mkdir(outdir)
 end
 
+% read in meta data
+info_adcp = read_adcp_infofile(infofile);
+
+% start log entry
 fidlog   = fopen(logfile,'a');
 fprintf(fidlog, '\n==== START ENTRY  =====\n');
 fprintf(fidlog,'Read and quality control Signature 55 ADCP data. \n');
 fprintf(fidlog,'Processing carried out by %s at %s\n\n\n',operator,datestr(clock));
 fprintf(fidlog,'Mooring   %s \n',moor);
-fprintf(fidlog,'Latitude  %6.3f \n',lat);
-fprintf(fidlog,'Longitude %6.3f \n\n\n',lon);
+fprintf(fidlog,'Latitude  %6.3f \n',info_adcp.lat);
+fprintf(fidlog,'Longitude %6.3f \n\n\n',info_adcp.lon);
 
-bg = datenum(datetime([s_d.' , s_t.' , 0])); %start
-ed = datenum(datetime([e_d.' , e_t.' , 0])); %end
+info_adcp.start_timestamp = datenum(datetime([info_adcp.s_d.' , info_adcp.s_t.' , 0])); %start date and time gb
+info_adcp.end_timestamp = datenum(datetime([info_adcp.e_d.' , info_adcp.e_t.' , 0])); %end date and time ed
 
-if isnan(id)
+if isnan(info_adcp.id)
    fprintf('No serial number given, use default 200044');
    serial_nums=200044;
 else
-    vec=find((id>=319) & (id <=328)); % Possible ADCP codes - taken from IMP moorings package
-    serial_nums=sn(vec);
+    vec=find((info_adcp.id>=319) & (info_adcp.id <=328)); % Possible ADCP codes - taken from IMP moorings package
+    serial_nums=info_adcp.sn(vec);
 end
 
-%% Load
+%% Load data: Config, Data, Description
 for i = 1:length(serial_nums)
     fprintf('Processing sn %d',serial_nums(i));
     if ~exist('filename',"var")
         filename = sprintf('%d_data',serial_nums(i));
     end
+outfile = fullfile(outdir,sprintf(ouput_form,serial_nums(i)));
 infile=fullfile(dataindir,[filename,'.mat']);
-load(infile);
+load(infile); clear Descriptions %Description is not helpful as referring to raw data and not the matlab variables
 Data = cell2struct(cellfun(@double,struct2cell(Data),'uni',false),fieldnames(Data),1);
 
 fprintf(fidlog,'infile : %s\n',infile);
@@ -97,6 +93,12 @@ fprintf(fidlog,'ADCP serial number  : %d\n',serial_nums(i));
 % 8: ?
 % 9: QC_MISSING
 
+flag_vals = [0, 1, 2, 3, 4, 5, 6, 7, 9];
+flag_mean = ['1=QC_NOT_EVALUATED 1=QC_GOOD ' ...
+    '3=QC_UNKNOWN QC_PROBABLY_BAD 4=QC_BAD QC_CHANGED ' ...
+    '5=QC_UNSAMPLED 6=QC_INTERPOLATED ' ...
+    '9=QC_MISSING'];
+
 QC_NOT_EVALUATED = 0;
 QC_GOOD = 1;
 QC_UNKNOWN = 2;
@@ -108,8 +110,8 @@ QC_INTERPOLATED = 7;
 QC_COMPASS_BAD = 8;
 QC_MISSING = 9;
 
-QC_vel = 0*double(Data.Average_VelEast);
-QC_1D = 0*double(Data.Average_Pressure);
+Data.mask_QC_3D = 0*double(Data.Average_VelEast);
+Data.mask_QC_1D = 0*double(Data.Average_Pressure);
 
 % NOTE: Do we want the ability to interactively flag and zoom on these early plots?
 % E.g. It's a good opportunity to remove deployment and recovery based on
@@ -148,78 +150,119 @@ else
 
 end
 
+%% STAGE 1.  Nortek suggested quality control steps %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% --- Load and Rename Variables ---
+timemin = Data.Average_Time(1);
+timemax = Data.Average_Time(end);
+
+T     = Data.Average_Time;
+P     = Data.Average_Pressure; 
+B     = Data.Average_Battery;
+Pitch = Data.Average_Pitch;
+Roll  = Data.Average_Roll;
+H     = Data.Average_Heading;
+
+% pressure stats and ylims
+P_median = median(P);
+P_std    = std(P);
+n_std    = 1;
+
 %% figure settings
 fs = 14;
 set(findall(gcf, '-property', 'FontSize'), 'FontUnits', 'points', 'FontSize', fs);
 
-%% STAGE 1.  Nortek suggested quality control steps %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-timemin = Data.Average_Time(1);
-timemax = Data.Average_Time(end);
+% ylims
+yl_P     = (P_median + n_std * [-P_std P_std]);
+yl_Pitch =  [-40 40];
+yl_H = [-0 360];
 
 %% 1. Instrument orientation and pressure %%%%%%%%%%%%%%%%%%%%%%%%
-% pressure
-y = Data.Average_Pressure; 
-x = Data.Average_Time;
+% --- 1. Pressure Check (Sinking/Rising) ---
+S = suggestTrimForShallowEdges_simple(P, min(yl_P));
 
-P_median = median(Data.Average_Pressure);
-P_std = std(Data.Average_Pressure);
-n_std = 1;
+% Update Masks for Pressure
+Data.mask_QC_1D(S.keepMask == 0) = QC_BAD; 
+Data.mask_QC_3D(S.keepMask == 0, :) = QC_BAD;
 
-yl = (P_median+n_std*[-P_std P_std]);
+% Pitch and Roll
+Pitch_Pgood = Pitch; Pitch_Pbad = Pitch;
+Pitch_Pgood(S.keepMask == 0) = NaN;Pitch_Pbad(S.keepMask == 1) = NaN;
 
-% Check for deployment and recovery time
-S = suggestTrimForShallowEdges_simple(y, min(yl),x);
-disp(' ')
-disp('***Pressure check***')
-disp(sprintf('Found %d shallow values at start and %d at end.\nIndicates instrument was sinking/rising.', ...
-                     S.nTrimStart, S.nTrimEnd));
-disp('Flagged them as QC_BAD (4).')
-disp(' ')
+Roll_Pgood = Roll; %Roll_Pbad = Roll;
+Roll_Pgood(S.keepMask == 0) = NaN; %Roll_Pbad(S.keepMask == 0) = NaN;
 
-fprintf(fidlog,'***Pressure check***\n');
-fprintf(fidlog,sprintf('Found %d shallow values at start and %d at end.\nIndicates instrument was sinking/rising.\n', ...
-                     S.nTrimStart, S.nTrimEnd));
-fprintf(fidlog,'Flagged them as QC_BAD (4).\n');
+% Output logging for Pressure
+prompt = sprintf(['***Pressure check***\n', ...
+    'Found %d shallow values at start and %d at end flagged bad (%d).\n\n'], ...
+    S.nTrimStart, S.nTrimEnd, QC_BAD);
+fprintf(1, prompt); % Print to Command Window
+fprintf(fidlog, prompt); % Print to Log File
+clear prombt
 
-% if bg
-ds_vec = datevec(x([S.startIdx,S.endIdx]));
-bg_suggest = datenum([ds_vec(1,1:end-1),0]);
-ed_suggest = datenum([ds_vec(2,1:end-1),0]);
-if bg_suggest~=bg
+% --- 2. Information File Check ---
+ds_vec = datevec(T([S.startIdx, S.endIdx])); 
+bg_suggest = datenum([ds_vec(1, 1:end-1), 0]);
+ed_suggest = datenum([ds_vec(2, 1:end-1), 0]);
+
+if bg_suggest~=info_adcp.start_timestamp
     prombt = ['***',newline,'Suggest to set mooring start date and time in ',... 
             moor,'info.dat to ',datestr(bg_suggest),newline,'***',newline,newline];
-    disp(prombt);
-    fprintf(fidlog,prombt);
-elseif ed_suggest~=ed
+    disp(prombt); fprintf(fidlog,prombt); clear prombt
+elseif ed_suggest~=info_adcp.end_timestamp
         prombt = ['***',newline,'Suggest to set mooring end date and time in ',... 
             moor,'info.dat to ',datestr(ed_suggest),newline,'***',newline,newline];
-    disp(prombt);
-    fprintf(fidlog,prombt);
+    disp(prombt); fprintf(fidlog,prombt);clear prombt
 end
 
-badind = (S.keepMask==0);
-QC_vel(badind,:) = QC_BAD; QC_1D(badind) = QC_BAD;
+% --- 3. Pitch and Roll Check ---
+% Identify Excessive Pitch/Roll (> 30)
+badind_tilt_severe = find((Pitch>30 | Pitch<-30 | Roll>30 | Roll<-30) ...
+    & Data.mask_QC_1D == 0);
+Data.mask_QC_1D(badind_tilt_severe) = QC_BAD;
+Data.mask_QC_3D(badind_tilt_severe, :) = QC_BAD;
 
+% Identify Moderate Pitch/Roll (10 to 30)
+badind_tilt_mod = find(((abs(Pitch) > 10 & abs(Pitch) <= 30) | ...
+               (abs(Roll) > 10 & abs(Roll) <= 30)) & Data.mask_QC_1D == 0);
+Data.mask_QC_1D(badind_tilt_mod) = QC_PROBABLY_BAD;
+Data.mask_QC_3D(badind_tilt_mod, :) = QC_PROBABLY_BAD;
+
+% Logging for Tilt
+prompt = sprintf(['***Pitch check***\n', ...
+    '%d timesteps flagged bad (%d) due to excessive pitch (>abs(30))\n', ...
+    '%d timesteps flagged probably bad (%d) due to pitch between 10 and 30\n', ...
+    'Post processing possible.\n\n'], ...
+    length(badind_tilt_severe), QC_BAD, ...
+    length(badind_tilt_mod), QC_PROBABLY_BAD);
+fprintf(1, prompt); fprintf(fidlog, prompt); clear prombt
+
+% Heading mark values with bad pitch/roll/pressure
+H_trim = H;
+H_trim(Data.mask_QC_1D == 0) = NaN;
+
+% --- Visualization ---
+%% 1. Instrument orientation and pressure %%%%%%%%%%%%%%%%%%%%%%%%
 figure(1);clf
+
+% Pressure %%%%%%%%%%%%%%%%%%%%%%%%
 subplot(3,1,1)
 title([filename ' pressure'],'Interpreter','none');
 hold on; grid on;
 
-% Plot data
-h.data = plot(x,y,'k.');
+h.data = plot(T,P,'k.');
 yline(P_median,'r')
-[h, nAbove, nBelow] = markClippedPoints_pres(h, y, yl, x);
+[h, nAbove, nBelow] = markClippedPoints_pres(h, P, yl_P, T);
 
 datetick('x', 'mmm-yyyy', 'keepticks', 'keeplimits');
 xlim([timemin timemax]);
-ylim(yl);
+ylim(yl_P);
 ylabel('Pressure (db)');
 set(gca,'YDir','reverse');
 
 % --- RIGHT AXIS: Battery ---
 yyaxis right
 hold on
-h_bat = plot(Data.Average_Time, Data.Average_Battery, 'b-', 'LineWidth', 1); 
+h_bat = plot(T, B, 'b-', 'LineWidth', 1); 
 ylabel('Battery (V)');
 ylim([0,20])
 set(gca, 'YColor', 'b'); 
@@ -243,32 +286,15 @@ hBox = annotation('textbox', [bx by bw bh], 'String', txt, ...
     'FitBoxToText', 'on', 'EdgeColor', 'none', ...
     'Interpreter', 'tex', 'HorizontalAlignment', 'left');
 
-% Optional: give the box a subtle background for readability
-% set(hBox, 'BackgroundColor', [1 1 1 0.85]); % if MATLAB supports RGBA; otherwise use [1 1 1]
-
-% Tilt / pitch %%%%%%%%%%%%%%%%%%%%%%%%
-y = Data.Average_Pitch;
-y_roll = Data.Average_Roll;
-y(QC_1D==QC_BAD) = NaN;
-x = Data.Average_Time;
-
-y_trim = Data.Average_Pitch;
-y_trim(QC_1D==0) = NaN;
-
-yl =  [-40 40];
-
+%%% Roll and pitch %%%%%%%%%%%%%%%%%%%%%%%%
 subplot(3,1,2) 
 title([filename ' pitch and roll'],'Interpreter','none');
 hold on; grid on;
 
 % plot data
-h.data = plot(x,y,'.','DisplayName', 'pitch raw bottom');
-plot(x,y_trim,'.c','DisplayName', 'pitch QC_BAD sinking/rising');
-
-plot(Data.Average_Time(QC_1D==0),Data.Average_Roll(QC_1D==0),'k', ...
-    'DisplayName', 'roll raw bottom','LineWidth',0.5);
-
-% [h, nAbove, nBelow] = markClippedPoints(h, y,yl, x);
+h.data = plot(T,Pitch_Pgood,'.','DisplayName', 'pitch raw bottom');
+plot(T,Pitch_Pbad,'.c','DisplayName', 'pitch QC_BAD sinking/rising');
+plot(T,Roll_Pgood,'k','DisplayName', 'roll raw bottom','LineWidth',0.5);
 
 datetick('x', 'mmm-yyyy', 'keepticks', 'keeplimits');
 
@@ -280,7 +306,7 @@ hl1 = yline([-30 30],'color','r');  arrayfun(@(h) set(h.Annotation.LegendInforma
     'IconDisplayStyle', 'off'), hl1);
 
 xlim([timemin timemax]);
-ylim(yl);
+ylim(yl_Pitch);
 
 ys_data = [ 10, -10, 30, -30 ];
 ys_labels = { '10 < 30: Post processing possible', ...
@@ -292,78 +318,30 @@ ys_colors =  {'g','g','r','r'};
 annotateYLabels(ys_data, ys_labels, ys_colors);
 
 ylabel('Pitch (^o)');
-
-% Automatically flag any bad timesteps: excessive pitch 
-y(QC_1D~=0)=NaN;
-y_roll(QC_1D~=0)=NaN;
-badind = find(y > 30 | y < -30 | y_roll >30 | y_roll < -30 );
-
-if ~isempty(badind)
-    plot(y(badind),y(badind),'or', 'DisplayName', 'QC_BAD pitch bottom');
-    QC_vel(badind,:) = QC_BAD;
-    QC_1D(badind) = QC_BAD;
-end
-disp('***Pitch check***')
-disp([num2str(length(badind)) ' timesteps flagged bad (',num2str(QC_BAD), ...
-    ') due to excessive pitch (>abs(30))']);
-disp(' ')
-fprintf(fidlog,'***Pitch check***\n');
-fprintf(fidlog,[num2str(length(badind)) ' timesteps flagged bad (',...
-    num2str(QC_BAD),') due to excessive pitch (>abs(30))\n']);
-
-legend('Interpreter','none')
-
-% Automatically flag any bad timesteps with postprocessing possible: high
-% pitch
-badind = find( (y > 10 & y < 30) | (y < -10 & y > -30) | ...
-    (y_roll > 10 & y_roll < 30) | (y_roll < -10 & y_roll > -30));
-
-if ~isempty(badind)
-    plot(y(badind),y(badind),'or', 'DisplayName', 'QC_PROBABLY_BAD pitch bottom');
-    QC_vel(badind,:) = QC_PROBABLY_BAD;
-    QC_1D(badind) = QC_PROBABLY_BAD;
-end
-disp([num2str(length(badind)) ' timesteps flagged probably bad (', ...
-    num2str(QC_PROBABLY_BAD),') due to pitch between +(-) 10 and +(-) 30']);
-disp('Post processing possible.');
-disp(' ')
-fprintf(fidlog,[num2str(length(badind)) ' timesteps flagged probably bad (',...
-    num2str(QC_PROBABLY_BAD),') due to pitch between +(-)10 and +(-)30.\n']);
-fprintf(fidlog,'Post processing possible.\n\n');
-
 legend('Interpreter','none','Location','southeast')
 
 
 % heading %%%%%%%%%%%%%%%%%%%%%%%%
-yl = [-0 360];
-y = Data.Average_Heading;
-x = Data.Average_Time; 
-
-y(QC_1D~=0) = NaN;
-y_trim =  Data.Average_Heading;
-y_trim(QC_1D==0) = NaN;
-
 subplot(3,1,3)
 title([filename ' heading'],'Interpreter','none');
 hold on; grid on;
 
 % Plot data
-plot(x,y,'k.','DisplayName', 'heading raw bottom');
-plot(x,y_trim,'.c','DisplayName', 'QC_BAD sinking/rising/pitch');
+plot(T,H,'k.','DisplayName', 'heading raw bottom');
+plot(T,H_trim,'.c','DisplayName', 'QC_BAD sinking/rising/pitch');
 
 datetick('x', 'mmm-yyyy', 'keepticks', 'keeplimits');
 xlim([timemin timemax]);
 
-ylim(yl);
+ylim(yl_H);
 ylabel('Heading (^o)');
-[h, nAbove, nBelow] = markClippedPoints(h, y,yl,x);
 
 legend('Interpreter','none','Location','southeast')
 
 % add remarks
 % place at top-right of figure (normalized units)
 str = 'Pitch and heading should remain fairly constant during deployment';
-an = annotation('textbox', [0 0.02 1 0.06], ...   % [x y w h] in normalized figure units
+annotation('textbox', [0 0.02 1 0.06], ...   % [x y w h] in normalized figure units
                 'String', str, ...
                 'FitBoxToText', 'on', ...
                 'EdgeColor', 'none', ...
@@ -383,48 +361,47 @@ bl_dist = Config.Average_BlankingDistance; %blanking distance (m)
 Cell_Size = Config.Average_CellSize; %cell size (m)
 Dist2Instr_CellMidpoint = bl_dist+nCells.*Cell_Size; 
 
-if ~isnan(wd)
-    Nominal_CellDepth = wd-Dist2Instr_CellMidpoint;
+if ~isnan(info_adcp.wd)
+    Nominal_CellDepth = info_adcp.wd-Dist2Instr_CellMidpoint;
 else
-    wd = 1080;
+    info_adcp.wd = 1080;
     while true
-        prompt = sprintf('Please enter nominal depth of instrument in m (default %dm): ', wd);
+        prompt = sprintf('Please enter nominal depth of instrument in m (default %dm): ', info_adcp.wd);
         val = input(prompt);
         if isempty(val)                     % user accepted default
-            wd = wd;
+            info_adcp.wd = info_adcp.wd;
             break
         end
         if isnumeric(val) && isscalar(val) && isfinite(val) && val > 0
-            wd = val;
+            info_adcp.wd = val;
             break
         end
         fprintf('Invalid entry. Enter a positive number or press Return for default.\n');
     end
-    Nominal_CellDepth = wd-Dist2Instr_CellMidpoint;
+    Nominal_CellDepth = info_adcp.wd-Dist2Instr_CellMidpoint;
 end
 
 fprintf(fidlog,'***Beams, surface bins, sidelobe check***\n');
-fprintf(fidlog,sprintf('Nominal depth of instrument set as %d dbar.\n',wd));
+fprintf(fidlog,sprintf('Nominal depth of instrument set as %d dbar.\n',info_adcp.wd));
 
 y=Nominal_CellDepth;
-x = Data.Average_Time;
 cb_lim =[0,100];
 
 % define surface bins
-Amp1=Data.Average_AmpBeam1; Amp1(QC_1D~=0,:)=NaN;
-Amp2=Data.Average_AmpBeam2; Amp2(QC_1D~=0,:)=NaN;
-Amp3=Data.Average_AmpBeam3; Amp3(QC_1D~=0,:)=NaN;
-Cor1=Data.Average_CorBeam1; Cor1(QC_1D~=0,:)=NaN;
-Cor2=Data.Average_CorBeam2; Cor2(QC_1D~=0,:)=NaN;
-Cor3=Data.Average_CorBeam3; Cor3(QC_1D~=0,:)=NaN;
+Amp1=Data.Average_AmpBeam1; Amp1(Data.mask_QC_1D~=0,:)=NaN;
+Amp2=Data.Average_AmpBeam2; Amp2(Data.mask_QC_1D~=0,:)=NaN;
+Amp3=Data.Average_AmpBeam3; Amp3(Data.mask_QC_1D~=0,:)=NaN;
+Cor1=Data.Average_CorBeam1; Cor1(Data.mask_QC_1D~=0,:)=NaN;
+Cor2=Data.Average_CorBeam2; Cor2(Data.mask_QC_1D~=0,:)=NaN;
+Cor3=Data.Average_CorBeam3; Cor3(Data.mask_QC_1D~=0,:)=NaN;
 
 % mask any Cor<50 as bad
 mask_corr = (Cor1 < 50) | (Cor2 < 50) | (Cor3 < 50);
-QC_vel(mask_corr)=QC_BAD;
+Data.mask_QC_3D(mask_corr)=QC_BAD;
 
-U = Data.Average_VelEast;U(QC_1D~=0,:)=NaN;
-V = Data.Average_VelNorth;V(QC_1D~=0,:)=NaN;
-W = Data.Average_VelUp;W(QC_1D~=0,:)=NaN;
+U = Data.Average_VelEast;U(Data.mask_QC_1D~=0,:)=NaN;
+V = Data.Average_VelNorth;V(Data.mask_QC_1D~=0,:)=NaN;
+W = Data.Average_VelUp;W(Data.mask_QC_1D~=0,:)=NaN;
 
 % surface bin detection
 Amp1_pro = nanmean(Amp1);SB1 = find(islocalmin(Amp1_pro),1,'last');
@@ -441,14 +418,14 @@ SM1 = find(islocalmax(Amp1_pro),1,'last');
 SM2 = find(islocalmax(Amp2_pro),1,'last');
 SM3 = find(islocalmax(Amp3_pro),1,'last');
 SM = min([SM1,SM2,SM3]);
-A(1) = gsw_z_from_p(nanmean(Data.Average_Pressure(QC_1D==0)),lat); % range based on pressure sensor
+A(1) = gsw_z_from_p(nanmean(Data.Average_Pressure(Data.mask_QC_1D==0)),info_adcp.lat); % range based on pressure sensor
 A(2) = Dist2Instr_CellMidpoint(SM); % range based on nominal cell distance
 
 %all angle in degrees
 gamma = 20; %slant angle
 alpha = [0, 120,240]; % beam 1 - aligned with x-axis, beam 2, beam 3
-pitch = Data.Average_Pitch; pitch(QC_1D~=0)=NaN; % y-axis rotation, in deg
-roll = Data.Average_Roll; roll(QC_1D~=0)=NaN; % x-axis rotation, in deg
+pitch = Data.Average_Pitch; pitch(Data.mask_QC_1D~=0)=NaN; % y-axis rotation, in deg
+roll = Data.Average_Roll; roll(Data.mask_QC_1D~=0)=NaN; % x-axis rotation, in deg
 
 % Pre-calculate trig terms (using 'd' versions for degrees)
 cp = cosd(pitch); sp = sind(pitch);
@@ -465,31 +442,31 @@ max_beta = max(beta, [], 2);
 % R contains buffer for upper range of cell
 R =max(A)*cosd(max_beta)-Cell_Size; 
 % find(Dist2Instr_CellMidpoint <= R(i), 1, 'last') for each time step i
-R(QC_1D~=0)=wd;
+R(Data.mask_QC_1D~=0)=info_adcp.wd;
 idx_valid = arrayfun(@(r) find(Dist2Instr_CellMidpoint <= r, 1, 'last'),...
     R);
-idx_valid(QC_1D~=0)=0;
-R(QC_1D~=0)=NaN;
+idx_valid(Data.mask_QC_1D~=0)=0;
+R(Data.mask_QC_1D~=0)=NaN;
 
 
-%%%%%%%%%%%%%%%%%%%%%%%
+% Visualisation Amplides and Correlation
 f2 = figure(2);clf
-ax(1) = subplot(2,3,1);hold on; imagesc(x, y, Amp1');
-ax(2) = subplot(2,3,2);hold on; imagesc(x, y, Amp2');
-ax(3) = subplot(2,3,3);hold on; imagesc(x, y, Amp3');
+ax(1) = subplot(2,3,1);hold on; imagesc(T, y, Amp1');
+ax(2) = subplot(2,3,2);hold on; imagesc(T, y, Amp2');
+ax(3) = subplot(2,3,3);hold on; imagesc(T, y, Amp3');
 
-ax(4) = subplot(2,3,4);hold on; imagesc(x, y, Cor1');
-ax(5) = subplot(2,3,5);hold on; imagesc(x, y, Cor2');
-ax(6) = subplot(2,3,6);hold on; imagesc(x, y, Cor3');
+ax(4) = subplot(2,3,4);hold on; imagesc(T, y, Cor1');
+ax(5) = subplot(2,3,5);hold on; imagesc(T, y, Cor2');
+ax(6) = subplot(2,3,6);hold on; imagesc(T, y, Cor3');
 
 for k = 1:numel(ax)
     axis(ax(k),'xy','ij');
     ylim(ax(k),[0,1080])
     ylabel(ax(k),'Nominal cell depth (m)')
     datetick(ax(k),'x','mmm-yyyy','keepticks','keeplimits');
-    hLine = plot(ax(k),x(QC_1D==0), y(idx_valid(QC_1D==0)), 'r', 'LineWidth', 0.1);
+    hLine = plot(ax(k),T(Data.mask_QC_1D==0), y(idx_valid(Data.mask_QC_1D==0)), 'r', 'LineWidth', 0.1);
     hLine.DisplayName = 'Sidelobe interference';
-    xlim(ax(k),[min(x),max(x)])
+    xlim(ax(k),[min(T),max(T)])
 end
 
 for k=1:3
@@ -534,12 +511,12 @@ set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
 print('-dpng',fullfile(outdir,[filename,'_f2_beam_amplitude_correlation_QC.png']));
 clear ax
 
-%% suface bin detection
+%% 3. suface bin detection %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 figure(3),clf
 ax(1) = subplot(1,3,1);
 plot(Amp1_pro,y),hold on,plot(Amp2_pro,y),plot(Amp3_pro,y)
-yline(y(SB),'--')
-yline(y([min(idx_valid(QC_1D==0)),max(idx_valid(QC_1D==0))]),'r--')
+yline(y(SB),'--','LineWidth',1.5)
+yline(y([min(idx_valid(Data.mask_QC_1D==0)),max(idx_valid(Data.mask_QC_1D==0))]),'r--')
 xlabel('Temporal mean amplitude [dB]')
 ylabel('Nominal cell depth')
 axis ij
@@ -547,8 +524,8 @@ title([num2str(SB),' valid bins before surface'])
 
 ax(2) = subplot(1,3,2);
 plot(Cor1_pro,y),hold on,plot(Cor2_pro,y),plot(Cor3_pro,y)
-yline(y(CB),'--')
-yline(y([min(idx_valid(QC_1D==0)),max(idx_valid(QC_1D==0))]),'r--')
+yline(y(CB),'--','LineWidth',1.5)
+yline(y([min(idx_valid(Data.mask_QC_1D==0)),max(idx_valid(Data.mask_QC_1D==0))]),'r--')
 xline(50,'--')
 xlabel('Temporal mean correlation [%]')
 title([num2str(CB),' valid bins before surface'])
@@ -562,7 +539,7 @@ axis ij
 grid on
 xlim([-0.05 0.2])
 yline(y(CB),'--')
-yline(y([min(idx_valid(QC_1D==0)),max(idx_valid(QC_1D==0))]),'r--')
+yline(y([min(idx_valid(Data.mask_QC_1D==0)),max(idx_valid(Data.mask_QC_1D==0))]),'r--')
 xline(0,'--')
 legend('U','V','W','surface bins','Sidelobe range','Location','southeast')
 
@@ -580,6 +557,8 @@ set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
 print('-dpng',fullfile(outdir,[filename,'_f3_beam_amplitude_correlation_QC.png']));
 clear ax
 
+%% prombts after plotting
+% surface bin
 srf_bins = min([SB,CB]);
 bins_to_process=input(['\nAutodetected ', num2str(srf_bins),...
     ' valid bins out of ',num2str(max(nCells)),' from the sensor head.',...
@@ -590,18 +569,18 @@ if (isempty(bins_to_process) || bins_to_process==0)
     bins_to_process=srf_bins;
 end
 
-QC_vel(:,bins_to_process+1:end)=QC_BAD;
+Data.mask_QC_3D(:,bins_to_process+1:end)=QC_BAD;
 
 fprintf(fidlog,sprintf('Flagged bin >%d as QC_BAD (%d).\n\n',...
     bins_to_process,QC_BAD));
 
-%% sidelobe contamination
+% sidelobe contamination
 
 prompt = sprintf([ ...
   '\n\nSidelobe contamination for each time step varies between %d and %d ' ...
   'out of %d bins.\nSee red line in figure 2.\n Would you like to flag ' ...
   ' sidelobe contaminated bins for each time step as QC_BAD (%d). Y/N [Y]: '], ...
-  min(idx_valid(QC_1D==0))+1, max(idx_valid(QC_1D==0))+1, max(nCells), QC_BAD);
+  min(idx_valid(Data.mask_QC_1D==0))+1, max(idx_valid(Data.mask_QC_1D==0))+1, max(nCells), QC_BAD);
 
 reply = input(prompt, 's');
 if isempty(reply)
@@ -611,13 +590,13 @@ end
 while true
     if strcmpi(reply, 'Y') || strcmpi(reply, 'YES')
         mask = nCells > idx_valid(:);
-        QC_vel(mask) = QC_BAD;
+        Data.mask_QC_3D(mask) = QC_BAD;
 
         prombt = ['Sidelobe contamination for each time step varies between ' ...
             ' %d and %d out of %d bins.\nBins contaminated by' ...
             ' sidelobe interference flagged as QC_BAD (%d).\n'];
         fprintf(fidlog, prombt, ...
-            min(idx_valid(QC_1D==0))+1, max(idx_valid(QC_1D==0))+1, max(nCells), QC_BAD);
+            min(idx_valid(Data.mask_QC_1D==0))+1, max(idx_valid(Data.mask_QC_1D==0))+1, max(nCells), QC_BAD);
         break
 
     elseif strcmpi(reply, 'N') || strcmpi(reply, 'NO')
@@ -625,9 +604,9 @@ while true
             'bin %d and %d out of %d bins.\nOperator chose NOT to flag ' ...
             'bins contaminated by sidelobe interference.\n'];
         fprintf(1, prombt, ...
-            min(idx_valid(QC_1D==0))+1, max(idx_valid(QC_1D==0))+1, max(nCells)); % to screen
+            min(idx_valid(Data.mask_QC_1D==0))+1, max(idx_valid(Data.mask_QC_1D==0))+1, max(nCells)); % to screen
         fprintf(fidlog, prombt, ...
-            min(idx_valid(QC_1D==0))+1, max(idx_valid(QC_1D==0))+1, max(nCells));
+            min(idx_valid(Data.mask_QC_1D==0))+1, max(idx_valid(Data.mask_QC_1D==0))+1, max(nCells));
         break
 
     else
@@ -639,21 +618,19 @@ while true
     end
 end
 
-%% Apply correlation threshold
 
-
-%% spikes
+% spikes
 % find spikes - e.g. fish schools (short lived)
-SDc =3;
-fprintf('Amplitude 1\n')
-mask_spikes_Amp1 = detect_spikes_amp(Amp1, SDc);
-fprintf('Amplitude 2\n')
-mask_spikes_Amp2 = detect_spikes_amp(Amp2, SDc);
-fprintf('Amplitude 3\n')
-mask_spikes_Amp3 = detect_spikes_amp(Amp3, SDc);
+% SDc =3;
+% fprintf('Amplitude 1\n')
+% mask_spikes_Amp1 = detect_spikes_amp(Amp1, SDc);
+% fprintf('Amplitude 2\n')
+% mask_spikes_Amp2 = detect_spikes_amp(Amp2, SDc);
+% fprintf('Amplitude 3\n')
+% mask_spikes_Amp3 = detect_spikes_amp(Amp3, SDc);
 
 
-%% Velocity
+%% 4. Velocity %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % raw
 U = Data.Average_VelEast;
 V = Data.Average_VelNorth;
@@ -675,16 +652,16 @@ mask_v = abs(V - mV) > 3.*sV;
 mask_s = abs(CSPD - mS) > 3.*sS;
 mask_w = (W > W_thr) | (W < -W_thr);
 
-%% spikes in velocity
+% spikes in velocity
 U_diff = diff(U, 1, 2);
 V_diff = diff(V, 1, 2);
-[T,D]=size(U);
-mask_ud = [false(T, 1), (abs(U_diff)>CUR_thr)]; 
-mask_vd = [false(T, 1), (abs(V_diff)>CUR_thr)]; 
+[Tidx,Didx]=size(U);
+mask_ud = [false(Tidx, 1), (abs(U_diff)>CUR_thr)]; 
+mask_vd = [false(Tidx, 1), (abs(V_diff)>CUR_thr)]; 
 
 
 mask_vel_comb = (mask_u | mask_v | mask_s | mask_w | mask_ud | mask_vd);
-QC_vel(mask_vel_comb)= QC_BAD;
+Data.mask_QC_3D(mask_vel_comb)= QC_BAD;
 
 prombt = ['Velocity QC Summary: Flagged cells as QC_BAD (%d) based on:\n' ...
           ' - Horizontal spikes (|dU/dz|, |dV/dz|) > %0.2f m/s\n' ...
@@ -698,10 +675,10 @@ fprintf(1, prombt, QC_BAD, CUR_thr, W_thr);
 fprintf(fidlog, prombt, QC_BAD, CUR_thr, W_thr);
 
 
-U_QC = U; U_QC(QC_vel==4)=NaN;
-V_QC = V; V_QC(QC_vel==4)=NaN;
-W_QC = W; W_QC(QC_vel==4)=NaN;
-CSPD_QC = CSPD; CSPD_QC(QC_vel==4)=NaN;
+U_QC = U; U_QC(Data.mask_QC_3D~=0)=NaN;
+V_QC = V; V_QC(Data.mask_QC_3D~=0)=NaN;
+W_QC = W; W_QC(Data.mask_QC_3D~=0)=NaN;
+CSPD_QC = CSPD; CSPD_QC(Data.mask_QC_3D~=0)=NaN;
 
 f4 = figure(4); clf;
 
@@ -719,7 +696,7 @@ cmap = [[0 1 1]; b_to_w; w_to_r; [1 1 0]];
 
 for k = 1:8
     ax = subplot(4,2,k);
-    im = imagesc(ax, x, y, data_list{k}');
+    im = imagesc(ax, T, y, data_list{k}');
     hold(ax, 'on');
     
     % Visual Formatting
@@ -727,7 +704,7 @@ for k = 1:8
     set(im, 'AlphaData', ~isnan(data_list{k}'));       % Transparency for NaNs
     datetick(ax, 'x', 'mmm-yyyy', 'keepticks', 'keeplimits');
     ylim(ax, [0, 1080]);
-    xlim(ax, [min(x), max(x)]);
+    xlim(ax, [min(T), max(T)]);
 
     colormap(ax, cmap);
     
@@ -746,7 +723,8 @@ for k = 1:8
         clim(ax, [-limit_W, limit_W]);
         cb = colorbar(ax);
         cb.Ticks = [-limit_W, -W_thresh, 0, W_thresh, limit_W];
-        cb.TickLabels = {sprintf('<%.2f',-W_thresh), '-0.1', '0', '0.1', sprintf('>%.2f',W_thresh)};
+        cb.TickLabels = {sprintf('<%.2f',-W_thresh), '-0.1', '0', '0.1', ...
+sprintf('>%.2f',W_thresh)};
     else
         clim(ax, [-1.1, 1.1]);
         cb = colorbar(ax);
@@ -761,73 +739,40 @@ set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
 print('-dpng',fullfile(outdir,[filename,'_f4_velocity_and_speed_QC.png']));
 clear ax
 
-%%
-%% Magnetometer Horizontal Intensity and Circle Fitting
-% Extract X and Y components (columns 1 and 2)
-mx = Data.Average_Magnetometer(:,1); mx(QC_1D~=0)=NaN;
-my = Data.Average_Magnetometer(:,2); my(QC_1D~=0)=NaN;
+% Update Mask to QC as all Data now has been checked
+Data.mask_QC_3D(Data.mask_QC_3D==0) = 1;
+Data.mask_QC_1D(Data.mask_QC_1D==0) = 1;
 
-% Solve for circle parameters using Least Squares
-A = [mx, my, ones(size(mx))];
-B = mx.^2 + my.^2;
-valid = ~isnan(mx) & ~isnan(my);
+%% Magnetometer Horizontal Intensity and Circle Fitting %%%%%%%%%%%%%%%%%%
+mx = Data.Average_Magnetometer(:,1); mx(Data.mask_QC_1D ~= 1) = NaN;
+my = Data.Average_Magnetometer(:,2); my(Data.mask_QC_1D ~= 1) = NaN;
+Data_corr = s55_hard_iron_compass_correction(Data,false);
+xc = Data_corr.hard_iron_offset_x;
+yc = Data_corr.hard_iron_offset_y;
+radius = Data_corr.radius;
 
-if any(valid)
-    params = A(valid,:) \ B(valid);
-    xc = params(1)/2;
-    yc = params(2)/2;
-    radius = sqrt(params(3) + xc^2 + yc^2);
-else
-    xc = NaN; yc = NaN; radius = NaN;
-end
-
-% % Raw heading from magnetometer (Instrument Frame)
-% % Note: Using -my because most ADCP compasses are clockwise
-% raw_mag_heading = atan2d(-my, mx); 
-% 
-% % Corrected heading (Subtracting the Hard-Iron offsets)
-% corr_mag_heading = atan2d(-(my - yc), (mx - xc));
-% 
-% % The angular correction required (in degrees)
-% heading_correction = corr_mag_heading - raw_mag_heading;
-% 
-% % Normalize the correction to [-180, 180] to avoid wrap-around jumps
-% heading_correction = atan2d(sind(heading_correction), cosd(heading_correction));
-
-% % Assuming Data.U and Data.V are [Bins x Time] or [Time x Bins]
-% % Let's assume [Time x Bins] to match your 'x' variable
-% U_raw = Data.U;
-% V_raw = Data.V;
-% 
-% % Apply rotation
-% % U_new = U*cos(phi) - V*sin(phi)
-% % V_new = U*sin(phi) + V*cos(phi)
-% Data.U_corrected = U_raw .* cosd(heading_correction) - V_raw .* sind(heading_correction);
-% Data.V_corrected = U_raw .* sind(heading_correction) + V_raw .* cosd(heading_correction);
-% 
-% % Vertical velocity remains the same
-% Data.W_corrected = Data.W; 
-
-
-
-f5 = figure(5); clf;
-set(f5, 'Color', 'w');
-hold on;
-
-% 4. Plot the raw horizontal data (Time x [1,2])
-scatter(mx, my, 5, x, 'filled', 'MarkerFaceAlpha', 0.5, 'DisplayName', 'Mag Data');
-
-% 1. Plot the "Ideal" Circle centered at (0,0) based on raw data average
+% Ideal circle
 avg_radius = mean(sqrt(mx.^2 + my.^2), 'omitnan');
 theta = linspace(0, 2*pi, 300);
-plot(avg_radius*cos(theta), avg_radius*sin(theta), 'r--', 'LineWidth', 1, 'DisplayName', 'Ideal Path (at 0,0)');
 
+f5 = figure(5); clf;
+hold on;
 
-% 2. Plot the FITTED circle centered at (xc, yc)
-plot(xc + radius*cos(theta), yc + radius*sin(theta), 'k-', 'LineWidth', 1.5, 'DisplayName', 'Fitted Circle');
+% Plot the raw horizontal data (Time x [1,2])
+scatter(mx, my, 5, T, 'filled', 'MarkerFaceAlpha', 0.5, 'DisplayName', ...
+    'Mag Data');
 
-% 3. Plot the Center of the Fit
-plot(xc, yc, 'kx', 'MarkerSize', 10, 'LineWidth', 2, 'DisplayName', 'Fit Center (Hard-Iron)');
+% Plot the "Ideal" Circle centered at (0,0) based on raw data average
+plot(avg_radius*cos(theta), avg_radius*sin(theta), 'r--', 'LineWidth', 1, ...
+    'DisplayName', 'Ideal Path (at 0,0)');
+
+% Plot the FITTED circle centered at (xc, yc)
+plot(xc + radius*cos(theta), yc + radius*sin(theta), ...
+    'k-', 'LineWidth', 1.5, 'DisplayName', 'Fitted Circle');
+
+% Plot the Center of the Fit
+plot(xc, yc, 'kx', 'MarkerSize', 10, 'LineWidth', 2, 'DisplayName', ...
+    'Fit Center (Hard-Iron)');
 
 % Formatting
 axis equal; grid on;
@@ -849,25 +794,29 @@ set(hcb, 'TickLabels', datestr(ticks, 'yyyy-mmm'));
 legend('Location', 'northeast');
 
 % Annotate the Offset
-text(300, yc, sprintf('  Offset X: %.1f\n  Offset Y: %.1f\n  Radius: %.1f mG', xc, yc, radius), ...
-    'VerticalAlignment', 'top', 'FontWeight', 'bold', 'Color', 'k', 'BackgroundColor', 'w');
+% Annotate the Offset
+text(xc, yc-10, sprintf(['  Offset X: %.1f mG\n  Offset Y: %.1f mG\n  ' ...
+    'Radius: %.1f mG'], xc, yc, radius), ...
+    'VerticalAlignment', 'top','HorizontalAlignment','center', ...
+    'FontWeight', 'bold','Color', 'k');
+
 
 hold off;
 
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
 print('-dpng',fullfile(outdir,[filename,'_f5_horizontal_magnetometer_QC.png']));
-%% Sensor diagnostics
+%% 6. Sensor diagnostics %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 f6 = figure(6); clf;
 
 % --- TOP ROW: ALL TEMPERATURES GROUPED ---
 ax(1) = subplot(4,1,1);
 hold on;
-plot(x,Data.Average_Temperature, 'LineWidth', 1.5, 'DisplayName', 'Water Temp');
-plot(x,Data.Average_RTCTemperature, 'DisplayName', 'RTC (Internal)');
-plot(x,Data.Average_MagnetometerTemperature, 'DisplayName', 'Mag Temp');
-plot(x,Data.Average_PressureSensorTemperature, 'DisplayName', 'Pressure Temp');
+plot(T,Data.Average_Temperature, 'LineWidth', 1.5, 'DisplayName', 'Water Temp');
+plot(T,Data.Average_RTCTemperature, 'DisplayName', 'RTC (Internal)');
+plot(T,Data.Average_MagnetometerTemperature, 'DisplayName', 'Mag Temp');
+plot(T,Data.Average_PressureSensorTemperature, 'DisplayName', 'Pressure Temp');
 hold off;
 title('Temperature Sensors');
 ylabel('°C');
@@ -876,25 +825,25 @@ grid on;
 
 % --- MIDDLE ROW: MECHANICAL/ENVIRONMENTAL ---
 ax(2) = subplot(4,1,2);
-plot(x,Data.Average_Magnetometer);
+plot(T,Data.Average_Magnetometer);
 title('Magnetometer'); grid on;
 ylabel('mG');
 
 ax(3) = subplot(4,1,3);
-plot(x,Data.Average_Accelerometer);
+plot(T,Data.Average_Accelerometer);
 title('Accelerometer'); grid on;
 ylabel('g')
 
 % --- BOTTOM ROW: SENSOR STATUS ---
 ax(4) = subplot(4,1,4);
-plot(x,Data.Average_TransmitEnergy);
+plot(T,Data.Average_TransmitEnergy);
 title('Transmit Energy'); grid on;
 ylabel('Joules');
 
 for k = 1:numel(ax)
     axis(ax(k));
     datetick(ax(k),'x','mmm-yyyy','keepticks','keeplimits');
-    xlim(ax(k),[min(x)-1e1,max(x)+1e1])
+    xlim(ax(k),[min(T)-1e1,max(T)+1e1])
 end
 
 % Improve spacing
@@ -904,20 +853,28 @@ set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
 print('-dpng',fullfile(outdir,[filename,'_f6_sensor_diagnostics.png']));
 clear ax
 %%
-m_u=median(U_QC,"omitnan" );m_v=median(V_QC,"omitnan" );m_w=median(W_QC,"omitnan" );
-m_Beam1ss=median(Amp1,"omitnan" ); m_Beam2ss=median(Amp2,"omitnan" ); m_Beam3ss=median(Amp3,"omitnan" );
-m_Beam1cor, m_Beam2cor, m_Beam3cor
+m_u=median(U_QC,"omitnan" )*1e2;m_v=median(V_QC,"omitnan" )*1e2;
+m_w=median(W_QC,"omitnan" )*1e2;
+m_Amp1=median(Amp1,"omitnan" ); m_Amp2=median(Amp2,"omitnan" ); 
+m_Amp3=median(Amp3,"omitnan" );
+m_Cor1=median(Cor1,"omitnan" ); m_Cor2=median(Cor2,"omitnan" ); 
+m_Cor3=median(Cor3,"omitnan" ); 
+dir_current = mod(atan2d(U_QC, V_QC), 360);
+m_spd=median(CSPD_QC,'omitnan')*1e2;
+m_dir=median(dir_current,'omitnan');
 
-for i=1:srf_bins;
+for k=1:srf_bins;
 fprintf(fidlog,'\nBin %d : nominally %3.2f m - %3.2f m from sensor head\n\n', k, Nominal_CellDepth(k)-Cell_Size,Nominal_CellDepth(k)+Cell_Size);
-fprintf(fidlog,'Median velocity u / v / w [m/s]                : %4.1f  %4.1f  %4.1f\n',m_u(k), m_v(k), m_w(k));
-fprintf(fidlog,'Median Amp Beam1 / Beam2 / Beam3 [db]           : %3.0f  %3.0f  %3.0f  %3.0f\n',m_Beam1ss, m_Beam2ss, m_Beam3ss);
-fprintf(fidlog,'Median correlation Beam1 / Beam2 / Beam3 [%]    : %3.0f  %3.0f  %3.0f  %3.0f\n',m_Beam1cor, m_Beam2cor, m_Beam3cor);
-fprintf(fidlog,'Median velocity error [m/s]                    : %4.1f\n',m_err);
-fprintf(fidlog,'Median speed [m/s]                             : %4.1f\n',m_spd);
-fprintf(fidlog,'Median direction [m/s]                         : %5.2f\n',m_dir);
+fprintf(fidlog,'Median velocity u / v / w [cm/s]                : %4.1f  %4.1f  %4.1f\n',m_u(k), m_v(k), m_w(k));
+fprintf(fidlog,'Median Amp Beam1 / Beam2 / Beam3 [db]           : %3.0f  %3.0f  %3.0f  \n',m_Amp1(k), m_Amp2(k), m_Amp3(k));
+fprintf(fidlog,'Median correlation Beam1 / Beam2 / Beam3 [%]    : %3.0f  %3.0f  %3.0f  \n',m_Cor1(k), m_Cor2(k), m_Cor3(k));
+fprintf(fidlog,'Median speed [cm/s]                             : %4.1f\n',m_spd(k));
+fprintf(fidlog,'Median direction [deg]                         : %5.2f\n',m_dir(k));
 end
 
+save_signature_to_nc(Data, Config, nCells, Dist2Instr_CellMidpoint, ...
+    Nominal_CellDepth,flag_vals,flag_mean,operator,moor,info_adcp, outfile);
+ncdisp(outfile);
 end
 fprintf(fidlog, '\n==== END ENTRY  =====\n');
 fclose(fidlog);
@@ -926,8 +883,41 @@ end
 %% nested fuctions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+function info_adcp = read_adcp_infofile(infofile)
+% READ_ADCP_INFOFILE Reads ADCP metadata into a structured format
+%
+% USAGE:
+%   info_adcp = read_adcp_infofile(infofile)
+
+    % Define the variables to be loaded from the RODB file
+    infovar = 'instrument:serialnumber:z:Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:WaterDepth'; 
+
+    if exist(infofile, 'file')
+        % Load data using the rodbload utility
+        [id, sn, z, s_t, s_d, e_t, e_d, lat, lon, wd] = rodbload(infofile, infovar);
+    else
+        warning('No info file found at: %s. Setting fields to NaN.', infofile);
+        % Use deal to assign NaN to all outputs if file doesn't exist
+        [id, sn, z, s_t, s_d, e_t, e_d, lat, lon, wd] = deal(NaN);
+    end
+
+    % Assign variables to the info_adcp structure
+    info_adcp.id  = id;
+    info_adcp.sn  = sn;
+    info_adcp.z   = z;
+    info_adcp.s_t = s_t;
+    info_adcp.s_d = s_d;
+    info_adcp.e_t = e_t;
+    info_adcp.e_d = e_d;
+    info_adcp.lat = lat;
+    info_adcp.lon = lon;
+    info_adcp.wd  = wd;
+
+end
+
+
 % looks for deployment and recovery period in pressure
-function S = suggestTrimForShallowEdges_simple(y, ymin,x)
+function S = suggestTrimForShallowEdges_simple(y, ymin)
 % Suggest trim indices for leading/trailing consecutive y < ymin.
 % S.startIdx = first index to keep
 % S.endIdx   = last  index to keep
@@ -1264,47 +1254,128 @@ function mask = detect_spikes_amp(A, SDc)
     end
 end
 
-% plot U,W,V and current speed
-function plot_UVW(parent_container, U, V, W, CSPD, x, y)
-    % Create layout inside the Panel
-    t = tiledlayout(parent_container, 2, 2, 'TileSpacing', 'compact', 'Padding', 'tight');
-    
-    W_thresh = 0.1; 
-    titles = {'Zonal Velocity (m/s)', 'Meridional Velocity (m/s)', ...
-              'Vertical Velocity (m/s)', 'Current Speed (m/s)'};
-    data_list = {U, V, W, CSPD};
-    
-    % High-Contrast Colormap: [Cyan; Blue-White-Red; Yellow]
-    b_to_w = [linspace(0,1,11)', linspace(0,1,11)', ones(11,1)];
-    w_to_r = [ones(10,1), linspace(0.9,0,10)', linspace(0.9,0,10)'];
-    cmap = [[0 1 1]; b_to_w; w_to_r; [1 1 0]];
+function save_signature_to_nc(Data, Config, nCells, Dist2Instr_CellMidpoint, Nominal_CellDepth,flag_vals,flag_mean,operator,moor,info_adcp, filename)
+% SAVE_SIGNATURE_TO_NC Saves full Signature ADCP Data structure and Config attributes to NetCDF
+%
+% USAGE:
+%   save_signature_to_nc(Data, Config, nCells, Dist2Instr, Nominal_Depth, 'filename.nc')
 
-    for k = 1:4
-        ax = nexttile(t);
-        im = imagesc(ax, x, y, data_list{k}');
-        hold(ax, 'on');
-        
-        % Visual Formatting
-        set(ax, 'YDir', 'reverse', 'Color', [0.8 0.8 0.8]); % Gray for NaNs
-        set(im, 'AlphaData', ~isnan(data_list{k}'));       % Transparency for NaNs
-        datetick(ax, 'x', 'mmm-yyyy', 'keepticks', 'keeplimits');
-        ylim(ax, [0, 1080]);
-        xlim(ax, [min(x), max(x)]);
+    if exist(filename, 'file'), delete(filename); end
 
-        colormap(ax, cmap);
-        
-        if k == 3 % Vertical Velocity logic
-            limit_W = W_thresh * 1.1;
-            clim(ax, [-limit_W, limit_W]);
-            cb = colorbar(ax);
-            cb.Ticks = [-limit_W, -W_thresh, 0, W_thresh, limit_W];
-            cb.TickLabels = {sprintf('<%.2f',-W_thresh), '-0.1', '0', '0.1', sprintf('>%.2f',W_thresh)};
+    % 1. Determine Dimensions
+    [nTime, nBins] = size(Data.Average_VelEast);
+    
+    % 2. Create Dimensions
+    nccreate(filename, 'time', 'Dimensions', {'time', nTime});
+    nccreate(filename, 'cell', 'Dimensions', {'cell', nBins});
+    nccreate(filename, 'xyz',  'Dimensions', {'xyz', 3});
+    nccreate(filename, 'beam_map', 'Dimensions', {'beam_map', 4});
+
+    % 3. Write Data Variables and Assign Units
+    all_fields = fieldnames(Data);
+
+    for i = 1:numel(all_fields)
+        f = all_fields{i};
+        val = Data.(f);
+        [rows, cols] = size(val);
+
+        % --- Determine Dimensions and Create Variable ---
+        if rows == nTime && cols == 1
+            nccreate(filename, f, 'Dimensions', {'time', nTime});
+        elseif rows == nTime && cols == nBins
+            nccreate(filename, f, 'Dimensions', {'time', nTime, 'cell', nBins});
+        elseif rows == nTime && cols == 3
+            nccreate(filename, f, 'Dimensions', {'time', nTime, 'xyz', 3});
+        elseif rows == nTime && cols == 4
+            nccreate(filename, f, 'Dimensions', {'time', nTime, 'beam_map', 4});
         else
-            clim(ax, [-1.1, 1.1]);
-            cb = colorbar(ax);
-            cb.Ticks = [-1.1, -1, 0, 1, 1.1];
-            cb.TickLabels = {'<-1', '-1', '0', '1', '>1'};
+            continue; % Skip if dimensions don't match known patterns
         end
-        ylabel(cb, titles{k});
+
+        % --- Write Data ---
+        ncwrite(filename, f, double(val));
+
+        % --- Assign Units Attribute ---
+        unit_str = '';
+        if contains(f, 'Vel'), unit_str = 'm/s';
+        elseif contains(f, 'Amp'), unit_str = 'dB';
+        elseif contains(f, 'Cor'), unit_str = '%';
+        elseif contains(f, 'Temp'), unit_str = 'degC';
+        elseif (contains(f, 'Pressure') || contains(f, 'PressureSensor')) && ~contains(f, 'Temp')
+            unit_str = 'dbar';
+        elseif contains(f, 'Magnetometer') && ~contains(f, 'Temp'), unit_str = 'mG';
+        elseif contains(f, 'Accelerometer'), unit_str = 'g';
+        elseif contains(f, 'Energy'), unit_str = 'Joules';
+        elseif contains(f, 'Heading') || contains(f, 'Pitch') || contains(f, 'Roll')
+            unit_str = 'degrees';
+            if contains(f, 'mask_QC')              
+                ncwriteatt(filename, f, 'flag_values', int8(flag_vals));
+                ncwriteatt(filename, f, 'flag_meanings', flag_mean);
+            end
+        elseif contains(f, 'Time'), unit_str = 'datenum';
+        elseif contains(f, 'mask') || contains(f, 'Status') || contains(f, 'Error'), unit_str = 'flag';
+        elseif contains(f, 'Soundspeed'), unit_str = 'm/s';
+        elseif contains(f, 'Battery'), unit_str = 'V';
+        end
+        
+        if ~isempty(unit_str)
+            ncwriteatt(filename, f, 'units', unit_str);
+        end
     end
+
+    % 4. Write Coordinates (Dimensions)
+    ncwrite(filename, 'time', Data.Average_Time);
+    ncwriteatt(filename, 'time', 'units', 'datenum');
+
+    ncwrite(filename, 'cell', double(nCells));
+    ncwriteatt(filename, 'cell', 'long_name', 'Cell Index');
+
+    nccreate(filename, 'Dist2Instr_CellMidpoint', 'Dimensions', {'cell', nBins});
+    ncwrite(filename, 'Dist2Instr_CellMidpoint', double(Dist2Instr_CellMidpoint));
+    ncwriteatt(filename, 'Dist2Instr_CellMidpoint', 'units', 'm');
+
+    nccreate(filename, 'Nominal_CellDepth', 'Dimensions', {'cell', nBins});
+    ncwrite(filename, 'Nominal_CellDepth', double(Nominal_CellDepth));
+    ncwriteatt(filename, 'Nominal_CellDepth', 'units', 'm');
+
+    % Latitude Variable
+    nccreate(filename, 'latitude', 'Datatype', 'double');
+    ncwrite(filename, 'latitude', double(info_adcp.lat));
+    ncwriteatt(filename, 'latitude', 'units', 'degrees_north');
+    ncwriteatt(filename, 'latitude', 'long_name', 'Latitude');
+    
+    % Longitude Variable
+    nccreate(filename, 'longitude', 'Datatype', 'double');
+    ncwrite(filename, 'longitude', double(info_adcp.lon));
+    ncwriteatt(filename, 'longitude', 'units', 'degrees_east');
+    ncwriteatt(filename, 'longitude', 'long_name', 'Longitude');
+
+    % Final Global Metadata
+    ncwriteatt(filename, '/', 'history', ['Created on ', datestr(now)]);
+    ncwriteatt(filename, '/', 'Operator', operator);
+    ncwriteatt(filename, '/', 'Mooring', moor);
+    ncwriteatt(filename, '/', 'nominal_water_depth_m', double(info_adcp.wd));
+    % 5. Write FULL Config structure as Global Attributes
+    conf_fields = fieldnames(Config);
+    for i = 1:numel(conf_fields)
+        cf = conf_fields{i};
+        cval = Config.(cf);
+        
+        if isempty(cval), continue; end
+        
+        % Special Case: Matrix Beam2xyz cannot be a global attribute
+        if strcmp(cf, 'Average_Beam2xyz')
+            nccreate(filename, 'Config_Average_Beam2xyz', 'Dimensions', {'row', 3, 'col', 3});
+            ncwrite(filename, 'Config_Average_Beam2xyz', double(cval));
+            ncwriteatt(filename, 'Config_Average_Beam2xyz', 'description', 'Beam to XYZ transformation matrix');
+        elseif isnumeric(cval) && isscalar(cval)
+            % Write numeric scalars directly
+            ncwriteatt(filename, '/', cf, double(cval));
+        else
+            % Convert strings, booleans, and multi-element chars to char arrays
+            ncwriteatt(filename, '/', cf, char(string(cval)));
+        end
+    end
+    fprintf('NetCDF file "%s" created successfully with full attributes.\n', filename);
 end
+
