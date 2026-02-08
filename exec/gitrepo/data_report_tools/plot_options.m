@@ -1,7 +1,19 @@
-%some code to be used by various plotting scripts
+function plotpar = plot_options(moor, varargin)
+% sets parameters to be used by various plotting scripts
+% to return defaults:
+%   plotpar = plot_options(moor)
+% 
+% defaults can be overwritten by passing them in varargin as structure,
+% e.g.
+%   p.subsamp = 2; p.non_verbose = 1; plotpar = plot_options(moor, p)
+% or as parameter-value pairs, e.g.
+%   plotpar = plot_options(moor, 'unfiltered', 1, 'plot_x_labels', 1);
+%
+
+global MOORPROC_G
 
 %defaults
-pd = moor_inoutpaths('reports');
+pd = moor_inoutpaths('reports', moor);
 plotpar.procpath = fullfile(MOORPROC_G.moordatadir,'proc');
 plotpar.infofile = fullfile(plotpar.procpath,moor,[moor 'info.dat']);
 plotpar.outpath = fullfile(pd.figsdir,moor);
@@ -24,23 +36,28 @@ plotpar.plot_x_labels = 0;
 plotpar.colours = 'kbrgcmykbrgcmy'; %or just kbkbkb for properties?
 
 %and optional inputs overwrite them
-n = 1;
-while n<=length(inargs)
-    if isstruct(inargs{n})
-        fn = fieldnames(inargs{n});
-        for no = 1:length(fn)
-            plotpar.(fn{no}) = inargs{n}.(fn{no}); 
+if nargin>1
+    if iscell(varargin{1})
+        varargin = varargin{1};
+    end
+    n = 1;
+    while n<=length(varargin)
+        if isstruct(varargin{n})
+            fn = fieldnames(varargin{n});
+            for no = 1:length(fn)
+                plotpar.(fn{no}) = varargin{n}.(fn{no});
+            end
+            n = n+1;
+        elseif strcmp(varargin{n},'unfiltered')
+            plotpar.unfilt = 1;
+            n = n+1;
+        elseif strcmp(varargin{n},'non-verbose')
+            plotpar.non_verbose = 1;
+            n = n+1;
+        else
+            plotpar.(varargin{n}) = varargin{n+1};
+            n = n+2;
         end
-        n = n+1;
-    elseif strcmp(inargs{n},'unfiltered')
-        plotpar.unfilt = 1;
-        n = n+1;
-    elseif strcmp(inargs{n},'non-verbose')
-        plotpar.non_verbose = 1;
-        n = n+1;
-    else
-        plotpar.(inargs{n}) = inargs{n+1};
-        n = n+2;
     end
 end
 

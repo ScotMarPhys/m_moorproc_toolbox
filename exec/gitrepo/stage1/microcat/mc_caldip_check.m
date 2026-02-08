@@ -292,8 +292,10 @@ end
          ptest(i) = px(nmhx(1));
          ipx2 = find(pi > ptest(i)-2*pbin & pi < ptest(i)+2*pbin);
     end
-    % DY181 change: don't use first 5 minutes of stop***make this a cruise option?
-    ipx3 = ipx2(300/sampint:end-2); 
+    % DY181 change: don't use first 5 minutes of stop***make this a cruise
+    % option? yes, it doesn't work very well with 5-minute stops!
+    if strcmp(MOORPROC_G.cruise,'dy181'); mcut = 5; else; mcut = 1; end
+    ipx3 = ipx2(mcut*60/sampint:end-2);
     nimpt(i,2) = length(ipx3);
     pstd(i,2) = nanstd(p(ipx3) - pi(ipx3)); % pi is ctd on microcat time base
     cstd(i,2) = nanstd(c(ipx3) - ci(ipx3));

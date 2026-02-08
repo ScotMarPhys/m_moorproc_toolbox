@@ -31,6 +31,7 @@ infiles = {
     sprintf('%4.4d_Data.cnv',sn)
     sprintf('%4.4d_data.asc',sn)
     sprintf('SBE37SM-RS232_0370%d_2026_02_03.cnv',sn) %***there has to be a way to make this all more general. search files in the directory? 
+    sprintf('SBE37SM-RS232_0370%d_2026_02_07.cnv',sn) %***there has to be a way to make this all more general. search files in the directory? 
     };
 
 for n = 1:length(infiles)

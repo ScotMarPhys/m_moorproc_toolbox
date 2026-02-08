@@ -84,9 +84,8 @@ for i = 1:length(vec)
         end
     else
         outfile = fullfile(pd.stage1path,sprintf(pd.stage1form,vec(i)));
-        microcat2rodb(infile,outfile,pd.infofile,fidlog,'y',dateoffset);
-        disp('Press any key to continue: ')
-        pause
+        wrote = microcat2rodb(infile,outfile,pd.infofile,fidlog,'y',dateoffset);
+        if wrote; disp('Press any key to continue: '); pause; end
     end
 end
 

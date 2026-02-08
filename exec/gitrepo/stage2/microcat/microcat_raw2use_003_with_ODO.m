@@ -390,7 +390,12 @@ for proc = 1 : length(sn)
 
         end
         orient tall
-        print(gcf,'-dpng','-r300',fullfile(pd.stage2figpath,[sprintf(pd.stage2form,sn(proc)),'.png']));
+        if ~exist(pd.stage2figpath,'dir')
+            mkdir(pd.stage2figpath)
+        end
+        figname = fullfile(pd.stage2figpath,sprintf(pd.stage2form,sn(proc)));
+        print(gcf,'-dpng','-r300',figname);
+        savefig([figname '.fig']);
 
         sampling_rate = 1/median(diff(jd));
         
@@ -490,7 +495,9 @@ for proc = 1 : length(sn)
         end
 
         orient tall
-        print(gcf,'-dpng','-r300',fullfile(pd.stage2figpath,[sprintf(pd.stage2form,sn(proc)) '_lowpass.png']));
+        figname = fullfile(pd.stage2figpath,[sprintf(pd.stage2form,sn(proc)) '_lowpass']);
+        print(gcf,'-dpng','-r300',figname);
+        savefig([figname '.fig']);
         disp('pause (press any key to continue)'); pause
     end % if exist(infile)
 

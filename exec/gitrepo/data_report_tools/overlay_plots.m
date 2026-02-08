@@ -12,15 +12,12 @@ function overlay_plots(moor,datatype,varargin)
 %   moor: complete mooring name as string. e.g. 'wb1_1_200420'
 %   datatype: 'currents' or 'properties'
 %
-% optional inputs (otherwise set by plot_options.m):-
+% optional parameter-value pair inputs (otherwise set by plot_options.m):-
 %   layout: orientation of figure portrait/lanscape (default = portrait)
 %           input of 1 = landscape, 0 = portrait
 %   plot_interval: matrix of start and end dates for plot
 %                  e.g. [2004 02 01 00; 2005 06 01 00]
 %                  dates are:- yyyy mm dd hh
-%   procpath: can specify exact path to proc directory if not using 
-%             standard data paths. 
-%             e.g. '/Volumes/noc/mpoc/rpdmoc/rapid/data/moor/proc/'
 %   proclvl: can specify level of processing of the data to plot. 
 %           e.g. 'proclvl','2': will plot the .use file ; 'proclvl','3' will plot the .microcat and .edt files
 %   num_to_plot: number of samples per day to plot. Default is 2 but for
@@ -43,15 +40,17 @@ function overlay_plots(moor,datatype,varargin)
 
 global MOORPROC_G
 close all
+pd = moor_inoutpaths('reports',moor);
+infofile = pd.infofile;
 
 if nargin <1
     help currents_overlay
     return
 end
-if nargin>1 && isstruct(varargin{1})
-    plotpar = varargin{1};
+if nargin>1
+    plotpar = plot_options(moor, varargin);
 else
-    inargs = varargin; plot_options
+    plotpar = plot_options(moor);
 end
 if ~exist(plotpar.outpath,'dir')
     warning('making directory %s',plotpar.outpath)
@@ -63,7 +62,7 @@ end
 % s_t, e_t, s_d, e_d start and end times and dates
 % lat lon mooring position, wd corrected water depth (m)
 % mr mooring name
-[id,sn,z,s_t,s_d,e_t,e_d]  =  rodbload(plotpar.infofile,'instrument:serialnumber:z:Start_Time:Start_Date:End_Time:End_Date');
+[id,sn,z,s_t,s_d,e_t,e_d]  =  rodbload(infofile,'instrument:serialnumber:z:Start_Time:Start_Date:End_Time:End_Date');
 disp(['z : instrument id : serial number'])
 for i = 1:length(id)
     disp([z(i),id(i),sn(i)])
@@ -75,6 +74,13 @@ plots = set_plots(datatype,moor,plotpar);
 
 %get information about all the instruments including prefixes and filenames/paths, in a table we can loop through
 id_z_sn = all_inst_table(id, z, sn);
+if strcmp(datatype,'currents')
+    mc = cellfun(@(x) length(x)>1, id_z_sn.vars_cs); 
+if ~sum(mc)
+    warning('no current data from %s; skipping',moor)
+    return
+end
+end
 
 %load data
 [alldata, id_z_sn, plots] = load_alldata(moor, id_z_sn, plots, plotpar, datatype);
@@ -164,32 +170,28 @@ switch datatype
 end
 
 for iid=1:length(id_z_sn.id)
-    if ~isempty(id_z_sn.dirs{iid}) && contains(id_z_sn.vars{iid},diagntype)
+    if ~isempty(id_z_sn.dirs{iid}) && contains(id_z_sn.vars_st{iid},diagntype)
         if ~plotpar.non_verbose
             disp('*************************************************************')
             disp(['Reading ' id_z_sn.inst{iid} ' - ',num2str(id_z_sn.sn(iid))])
             disp('*************************************************************')
         end
-        infile = fullfile(plotpar.procpath,moor,id_z_sn.dirs{iid},sprintf('%s_%0.4d%s.use',moor,id_z_sn.sn(iid),id_z_sn.suf{iid}));
-        if ~exist(infile,'file')
-            infile = fullfile(plotpar.procpath,moor,id_z_sn.dirs{iid},sprintf('%s_%3.3d%s.use',moor,id_z_sn.sn(iid),id_z_sn.suf{iid}));
-        end
-        if sum(strcmp({'MC' 'ODOMC'},id_z_sn.inst{iid})) && plotpar.proclvl==3
-            infile1 = fullfile(plotpar.procpath,moor,id_z_sn.dirs{iid},sprintf('%s_%0.4d%s.microcat',moor,id_z_sn.sn(iid),id_z_sn.suf{iid}));
-            if exist(infile1,'file')
-                infile = infile1;
-            end
+        pd = moor_inoutpaths(id_z_sn.dirs{iid},moor);
+        if plotpar.proclvl==3 && ismember(id_z_sn.inst{iid},{'MC','ODOMC'})
+            infile = fullfile(pd.stage3path,[sprintf(pd.stage3form,id_z_sn.sn(iid)) id_z_sn.suf{iid}]);
+        else
+            infile = fullfile(pd.stage2path,[sprintf(pd.stage2form,id_z_sn.sn(iid)) id_z_sn.suf{iid}]);
         end            
         iname = sprintf('%s_%d', id_z_sn.inst{iid}, id_z_sn.sn(iid));
 
         %read data into structure array
         fileopen=fopen(infile,'r');
         if fileopen>0
-            varstr = ['yy:mm:dd:hh:' id_z_sn.vars{iid}];
+            varstr = ['yy:mm:dd:hh:' id_z_sn.vars_st{iid}];
             d = rodbload(infile,varstr);
             clear data
             data.jd=julian(d{1},d{2},d{3},d{4});
-            vars = split(id_z_sn.vars{iid},':');
+            vars = split(id_z_sn.vars_st{iid},':');
             for no = 1:length(vars)
                 data.(vars{no}) = d{no+4};
                 data.(vars{no})(data.(vars{no})==-9999) = NaN;
@@ -300,6 +302,9 @@ for no = 1:length(plot_types)
 end
 
 %actually plot
+if length(id_z_sn.id)>length(plotpar.colours)
+    plotpar.colours = [plotpar.colours; plotpar.colours];
+end
 for iid = 1:length(id_z_sn.id)
     iname = sprintf('%s_%d', id_z_sn.inst{iid}, id_z_sn.sn(iid));
     if strcmp(plots.(plot_types{no}).var,'o2') && ~strncmp('ODO',iname,3)

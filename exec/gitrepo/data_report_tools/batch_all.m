@@ -1,7 +1,5 @@
 % script to run data report scripts and output 
-global MOORPROC_G %in case cleared
-
-moorlist = {'wb1_17_2023','wb2_18_2023'};%,'wb1l1_1_2020','wb2l15_15_2020','wbal9_9_2020','wbadcp_16_2023'};
+moorlist = {'ebh3_16_2024','ebh3b_1_2024','ebh2_16_2024','ebh1_16_2024','ebh1l15_15_2022'};
 
 %  If proclvl = '2': processing is using the .use files; proclvl = '3' : processing is using the .microcat and .edt files
 proclvl = '2';
@@ -11,15 +9,15 @@ for ijk= 1:length(moorlist)
  	stats_table(moorlist{ijk}) %paths set in moor_inoutpaths
 end
 
-%----------------------------------------------------------------------------------------------------		
 % Plots	
 for ijk= 1:length(moorlist)
-    pd = moor_inoutpaths('reports');
+    pd = moor_inoutpaths('reports',moor);
     outpathfigs = fullfile(pd.figsdir,moor);
     if ~exist(outpathfigs,'dir')
         mkdir(outpathfigs)
     end
-    batch_data_report(moor,'procpath',procpath,'outpathfigs',outpathfigs,'proclvl',proclvl,'unfiltered')
+    %batch_data_report(moor,'procpath',procpath,'outpathfigs',outpathfigs,'proclvl',proclvl,'unfiltered')
+    batch_data_report(moorlist{ijk})
 
     %  %   ADCP_allbin_plot(moor,'procpath',procpath,'proclvl',proclvl) % SJ
 % Script to look into correlation between pressure of the instrument and
@@ -27,7 +25,6 @@ for ijk= 1:length(moorlist)
 %vel_vs_sal_pres_corr(moor,'procpath',procpath,'proclvl','3','unfiltered')
 end
 
-% else
 % %-------------------------------------------------------
 % % Specific period (e.g. SCVs)
 % % intervalstr = '[2014 08 05 00; 2014 09 05 00]'; % SCV?

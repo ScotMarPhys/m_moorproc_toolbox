@@ -158,7 +158,7 @@ switch MOORPROC_G.project
             MOORPROC_G.ctddatadir = fullfile(MOORPROC_G.basedir,'rpdmoc',MOORPROC_G.cruise,'mcruise','data','ctd');
         end
         MOORPROC_G.moordatadir = fullfile(MOORPROC_G.basedir,'rpdmoc','rapid','data','moor');
-        MOORPROC_G.reportdir = fullfile(MOORPROC_G.basedir,'rpdmoc','cruise_data',MOORPROC_G.cruise,'report_tables');
+        MOORPROC_G.reportdir = fullfile(MOORPROC_G.basedir,'rpdmoc','rapid','summary_info');
     case 'OSNAP'
         if ~isfield(MOORPROC_G,'basedir')
             MOORPROC_G.basedir = input('base data directory (e.g. /data/pstar/projects/osnap, containing subdirectories cruise_data and data) ','s');

@@ -504,7 +504,8 @@ for k=1:length(plot_handle)
         suptitle(['Unfiltered ' suptitle_label{k} ' from mooring: ' s]);
     end
     
-    print('-dpng',[MOORPROC_G.reportdir '/figs/' moor '_plot_stacked_' plot_handle{k} '_proclvl_' proclvlstr])
-    savefig([MOORPROC_G.reportdir '/figs/' moor '_plot_stacked_' plot_handle{k} '_proclvl_' proclvlstr])
+    figfile = fullfile(MOORPROC_G.reportdir,'datareports',MOORPROC_G.cruise,'figs',sprintf('%s_plot_stacked_%s_proclvl_%s',moor,plot_handle{k},proclvlstr));
+    print('-dpng',[figfile '.png'])
+    savefig(figfile)
 end
 end

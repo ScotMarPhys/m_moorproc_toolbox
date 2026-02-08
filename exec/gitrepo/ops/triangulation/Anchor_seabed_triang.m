@@ -50,7 +50,6 @@ function Anchor_seabed_triang(varargin)
 
 global MEXEC_G MOORPROC_G
 
-pd = moor_inoutpaths('reports');
 iscor = 0;
 
 % User input
@@ -64,9 +63,7 @@ if nargin>0
     end
 else
     fprintf(1,'\n Enter mooring name (e.g. ebh3)). Times will then be read from <name>_times.txt: \n');
-    fprintf(1,' - in the folder %s \n',pd.trilatdir)
     fprintf(1,' - with one range per line in format  YYYY MM DD HH MM SS range. \n')
-    fprintf(1, ' Output will be saved to <name>_triangle.txt in %s\n\n',pd.trilatdir);
     loc_name = input('Enter mooring name (e.g. ebh3): ','s');
 end
 if ~exist('rht','var')
@@ -78,17 +75,39 @@ end
 if isempty(loc_name)
     return
 end
+pd = moor_inoutpaths('reports',loc_name);
+fprintf(1, ' Output will be saved to <name>_triangle.txt in %s\n\n',pd.trilatdir);
 
 %target positions
 targ_loc=NaN(2,1);
-target_fn = fullfile(pd.targetdir,['targets_',MOORPROC_G.cruise,'.txt']);
+target_fn = pd.target_fn;
 if exist(target_fn,'file')
     fileID = fopen(target_fn,'r');
     txt = textscan(fileID,'%s','delimiter','\n');
-    for i=1:length(txt{1})
-        if strfind(txt{1}{i},[loc_name,' '])
-            targ_loc = sscanf(txt{1}{i},[loc_name,' %f %f']);
+    l = txt{1}(~cellfun('isempty',strfind(txt{1},loc_name)));
+    found = 0; n = 1;
+    while ~found && n<=length(l)
+        s = strsplit(replace(l{n},whitespacePattern,','),','); %space or tab delimited
+        if sum(strcmp(s,loc_name))
+            found = 1;
+            break
+        else
+            n = n+1;
         end
+    end
+    if found
+        if abs(str2num(s{2}))>90
+            %rapid format ddmm.mm
+            d = str2num(s{2}(1:end-5)); m = str2num(s{2}(end-4:end));
+            if d>=0; targ_loc(1) = d+m/60; else; targ_loc(1) = d-m/60; end
+            d = str2num(s{3}(1:end-5)); m = str2num(s{3}(end-4:end));
+            if d>=0; targ_loc(2) = d+m/60; else; targ_loc(2) = d-m/60; end
+        else
+            %dd.dd
+            targ_loc = cellfun(@(x) str2num(x), s(2:3));
+        end
+    else
+        targ_loc = NaN;
     end
     fclose(fileID);
 end
@@ -334,7 +353,7 @@ ylim([south north]);
 if isempty(loc_name)
     return
 else
-    plotout = fullfile(pd.trilatposdir, [loc_name '_triangle']);
+    plotout = fullfile(pd.trilatdir, [loc_name '_triangle']);
     print('-depsc', plotout)
     system(['cat ' fileout]);
 end

@@ -103,14 +103,14 @@ for ins = 1 : length(sgI)
     % reset toffset to zero so don't carry over from previous iteration of
     % loop
     toffset=0;
-    fidoff = fopen(pd.offsetfile,'r');
+    fidoff = fopen(pd.offset1file,'r');
     
     if fidoff<0
         
         %fprintf(fidlog,['Time offset file NOT found, \n NO check for ',...
         %    'potential offset in recorded time applied \n'],offsetfile)
-        fprintf(1,['Time offset file  NOT found, \n NO check for ',...
-            'potential offset in recorded time applied \n'],pd.offsetfile)
+        fprintf(1,['Initial time offset file  NOT found, \n NO check for ',...
+            'potential offset in recorded time applied \n'],pd.offset1file)
     else
         
         while 1
