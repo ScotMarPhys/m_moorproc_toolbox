@@ -24,9 +24,9 @@ ctdnum = sprintf('%03d',str2double(cast));
 ctdsen = input('Which CTD sensors (1 or 2 [or blank to use already-selected primary])?) ','s');
 oxysen = input('Which CTD oxygen (1 or 2 [or blank to use already-selected primary])?' , 's');
 
-diff_max.p = 5; 
-diff_max.c = 0.02; 
-diff_max.t = 0.005; 
+diff_max.p = 5;
+diff_max.c = 0.02;
+diff_max.t = 0.005;
 diff_max.o = 20;
 
 % --- get paths for data input and output ---
@@ -44,11 +44,11 @@ h = m_read_header(pd.ctdfile); if sum(strcmp(h.fldnam,'oxygen2')); cvars = [cvar
 d = mload(pd.ctdfile,[cvars ' ']);
 if strcmp(cruise,'d382')
     % Correction for Di382
-    d.cond1=d.cond1*10;  
-    d.cond2=d.cond2*10;  
+    d.cond1=d.cond1*10;
+    d.cond2=d.cond2*10;
 end
 %and rename primary(s)
-d.temp = d.(['temp' ctdsen]);    
+d.temp = d.(['temp' ctdsen]);
 dnum = m_commontime(d,'time',h,'datenum');
 d.dday = dnum - datenum(MOORPROC_G.YEAR,1,1);
 d.cond = d.(['cond' ctdsen]);
@@ -130,6 +130,10 @@ for i = 1:nvec
     % display( [,num2str(vec(i)),])
 
     infile = fullfile(pd.stage1path,sprintf(pd.stage1form,vec(i)));
+    if ~exist(infile,'file')
+        warning('no file %s, skipping',infile)
+        continue
+    end
     % --- load rodb data ---
     if id2(i)~=335 % checks if not ODO microcat
         [yy,mm,dd,hh,c,t,p] = rodbload(infile,'yy:mm:dd:hh:c:t:p');
@@ -148,13 +152,13 @@ for i = 1:nvec
     oi = interp1(d.dday, d.oxygen, dday);
 
     %% PLOT DATA AT BOTTLE STOPS
-    
-    dobotstop=0; 
-    
-    if dobotstop 
-        
-    % Edit ESDU, DY181 2024 - above plotting script not doing what it should
-        dp_=diff(pi);   
+
+    dobotstop=0;
+
+    if dobotstop
+
+        % Edit ESDU, DY181 2024 - above plotting script not doing what it should
+        dp_=diff(pi);
         dp(1,1)=NaN; dp(2:length(pi),1)=dp_;
         if id2(i)==337
             iis=find(dp<0.5 & dp>-0.5);
@@ -178,20 +182,20 @@ for i = 1:nvec
             end
         end
         % Calculate stop duration to select only caldip stops
-        stop_duration=(stop_end-stop_start)*sampint; 
+        stop_duration=(stop_end-stop_start)*sampint;
         stop_valid=find(stop_duration>300);
         % Calculate offsets at each stop
         off_p=p-pi;
         off_t=t-ti;
         off_c=c-ci;
         off_o=o-oi;
-        stop_p=nan(1,n_stops); 
-        stop_off_p=nan(1,n_stops); 
-        stop_off_t=nan(1,n_stops); 
-        stop_off_c=nan(1,n_stops); 
+        stop_p=nan(1,n_stops);
+        stop_off_p=nan(1,n_stops);
+        stop_off_t=nan(1,n_stops);
+        stop_off_c=nan(1,n_stops);
         stop_off_o=nan(1,n_stops);
         for ind_stop=stop_valid
-            stop_p(ind_stop)=nanmean(pi(stop_start(ind_stop)+300/sampint:stop_end(ind_stop)-2)); 
+            stop_p(ind_stop)=nanmean(pi(stop_start(ind_stop)+300/sampint:stop_end(ind_stop)-2));
             if stop_p(ind_stop)<10; stop_p(ind_stop)=NaN; end % remove surface soak
             stop_off_p(ind_stop)=nanmean(off_p(stop_start(ind_stop)+300/sampint:stop_end(ind_stop)-2));
             stop_off_t(ind_stop)=nanmean(off_t(stop_start(ind_stop)+300/sampint:stop_end(ind_stop)-2));
@@ -240,8 +244,8 @@ for i = 1:nvec
         print('-dpng',[pd.stage1fig '/microcat_check_caldip_cast_' cast '_' num2str(vec(i))])
 
         clear dp iis stop_* off_*
-end
-% end edit ESDU
+    end
+    % end edit ESDU
 
     %% Select data from period when CTD kept at maximum depth
     impt = dday>tm1p & dday < tm2p;
@@ -271,7 +275,7 @@ end
         o_ctd_m = nanmean(oix(impt));
         o_ctd_s = nanstd(oix(impt));
     end
-    
+
     % Select data close to microcat's nominal deployment depth
     pbin = 2;
     pbstep = 200;
@@ -283,14 +287,14 @@ end
     while length(ipx2)<36 && pbstep<1000 %have to stop somewhere
         % Edit DY181
         % If the ctd stops are too far away from the nominal microcat depth the
-        % script will pick a single data point while the ctd is moving (later 
+        % script will pick a single data point while the ctd is moving (later
         % returning NaNs for offsets calculations / producing gaps in plots).
-         pbstep = pbstep+100;
-         ipx = find(pi >zmic(i)-(pbstep/pbin) & pi < zmic(i)+pbstep/pbin);
-         [nh,px] = hist(pi(ipx),floor(pbstep/pbin));
-         nmhx = find(nh == max(nh));
-         ptest(i) = px(nmhx(1));
-         ipx2 = find(pi > ptest(i)-2*pbin & pi < ptest(i)+2*pbin);
+        pbstep = pbstep+100;
+        ipx = find(pi >zmic(i)-(pbstep/pbin) & pi < zmic(i)+pbstep/pbin);
+        [nh,px] = hist(pi(ipx),floor(pbstep/pbin));
+        nmhx = find(nh == max(nh));
+        ptest(i) = px(nmhx(1));
+        ipx2 = find(pi > ptest(i)-2*pbin & pi < ptest(i)+2*pbin);
     end
     % DY181 change: don't use first 5 minutes of stop***make this a cruise
     % option? yes, it doesn't work very well with 5-minute stops!
