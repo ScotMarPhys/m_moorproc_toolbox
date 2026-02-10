@@ -1352,6 +1352,9 @@ function save_signature_to_nc(Data, Config, nCells, Dist2Instr_CellMidpoint, Nom
     % 5. Write FULL Config structure as Global Attributes
     conf_fields = fieldnames(Config);
     for i = 1:numel(conf_fields)
+        if strcmp(f, 'Average_Time')
+            continue; 
+        end
         cf = conf_fields{i};
         cval = Config.(cf);
         

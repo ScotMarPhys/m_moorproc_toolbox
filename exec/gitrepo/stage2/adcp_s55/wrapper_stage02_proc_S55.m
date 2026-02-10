@@ -1,0 +1,84 @@
+% Call function to proces S55 ADCP data
+%
+% K Burmeister, S Jones 02/2026
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 1. PARAMETER PRAEMBLE
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Notes:
+% Need to be updated for:
+% - directories and file names
+% - add additional deployment periods (add moorX = 'filename')
+% - turn off/on checkplots
+% - edit start/end of total time period
+% - data version
+% - set depth of shallowest instrument (idepth)
+% - preamble for despiking
+% - if you add a deployment period, you need to edit steps 1-3
+%---------
+
+close all
+clear
+
+global MOORPROC_G
+
+if ~isempty(MOORPROC_G) && isstruct(MOORPROC_G) && isfield(MOORPROC_G, 'cruise')
+    if strcmp(MOORPROC_G.cruise, 'jc238')
+        moor = 'rhadcp_01_2020';
+    elseif strcmp(MOORPROC_G.cruise, 'dy181')
+        moor = 'rhadcp_02_2022';
+    end
+else
+    % moor = 'rhadcp_01_2020';
+    moor = 'rhadcp_02_2022';
+end
+
+% TO UPDATE <------------------------
+% in- and output directories
+pc_name = getenv('COMPUTERNAME');
+if strcmp(pc_name,'SA07KB-3JN9YY2');
+    basedir = 'C:\Users\sa07kb\Projects\Moor_Data_Proc\';
+    dataindir = fullfile(basedir,'moor_examples\osnap\data\moor\proc', ...
+        moor,'adcp_S55');
+    pathgit = [basedir 'm_moorproc_toolbox\'];
+    figureoutdir = fullfile(basedir,'moor_examples\osnap\data\moor\proc', ...
+        moor,'adcp_S55');
+    logfile = fullfile(figureoutdir,[moor '_ADCP_stage2.log']);
+    infofile = fullfile(basedir,'moor_examples\osnap\data\moor\proc', ...
+        moor, [moor 'info.dat']);
+    filename = '200044_data';
+    addpath(genpath(fullfile(pathgit,'exec','gitrepo')))
+    addpath(genpath('C:\Users\sa07kb\Matlab\toolboxes\gsw_matlab_v3_06_16'))
+elseif strcmp(pc_name,'SA01SJ-G9WC2J3')
+    basedir = 'D:\Work_computer_sync\OSNAP_postdoc\Python\';
+    dataindir = ''; %'E:\OSNAP\RHADCP\DY181\S200044A012_RHAD2_JC238\conversion2\';
+    pathgit = [basedir 'm_moorproc_toolbox\'];   
+    figureoutdir = ['D:\Work_computer_sync\OSNAP_postdoc\Mooring\RHADCP\plots\'];
+    filename = 'S200044A012_RHAD2_JC238';
+    logfile = fullfile(figureoutdir,[moor '_ADCP_stage2.log']);
+    infofile = fullfile('E:\OSNAP\RHADCP\DY181\S200044A012_RHAD2_JC238\conversion2\', [moor 'info.dat']);
+    filename = '200044_data';
+    addpath(genpath(fullfile(pathgit,'exec','gitrepo')))
+    addpath(genpath('D:\Work_computer_sync\MATLAB_functions')); % General functions
+else
+    error('Please add your path above')
+end
+
+
+if strcmp(pc_name,'SA07KB-3JN9YY2');
+    if ~isempty(MOORPROC_G)
+        addpath(genpath('C:\Users\sa07kb\Matlab\toolboxes\gsw_matlab_v3_06_16'))
+        stage02_proc_S55(moor)
+    else
+        stage02_proc_S55(moor,dataindir,...
+            infofile,logfile,figureoutdir)
+    end
+elseif strcmp(pc_name,'SA01SJ-G9WC2J3')
+    if ~isempty(MOORPROC_G)
+        addpath(genpath('D:\Work_computer_sync\MATLAB_functions'));
+        stage02_proc_S55(moor)
+    else
+        stage02_proc_S55(moor,dataindir,filename,...
+            infofile,logfile,figureoutdir)
+    end
+end
