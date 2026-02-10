@@ -1,17 +1,44 @@
-% stage01_read_qc_S55.mData.mask_QC_3D
-% Read and quality control Signature 55 ADCP data
-% raw ADCP data in .mat format as exported by Signature Viewer
+% STAGE01_READ_QC_S55 Read and perform initial QC on Signature 55 ADCP data.
+%   This function processes Nortek Signature 55 .mat files, performing 
+%   automated flagging for pressure, tilt, signal strength, sidelobe interference,
+%   and plots magnetometer hard-iron distortions and generell sensor
+%   diagnostics
 %
-% required inputs: moor - mooring name e.g. 'rhadcp_01_2020'
-%                  
-% optional inputs:     dataindir = varargin{1};
-%                      filename = varargin{2}
-%                      infofile = varargin{3};
-%                      logfile = varargin{4};
-%                      outdir = varargin{5}; #output dir (fig, data, logs)
-% functions called:    rodbload, gsw_z_from_p
+%   USAGE:
+%      stage01_read_qc_S55('rhadcp_01_2020')
+%      stage01_read_qc_S55(moor, dataindir, filename, infofile, logfile, outdir)
 %
-% 
+%   INPUTS:
+%      moor      - Mooring name (string), e.g., 'rhadcp_01_2020'
+%      dataindir - (Optional) Path to raw .mat files
+%      filename  - (Optional) Specific input filename
+%      infofile  - (Optional) Path to mooring info file
+%      logfile   - (Optional) Path for output log
+%      outdir    - (Optional) Path for output figures, data, and logs
+%
+%   QC CHECKS PERFORMED:
+%      1. Pressure: Validity check for deployment/retrieval periods.
+%         Orientation: Tilt thresholds (<10 deg good, >30 deg fail).
+%         Heading
+%      2. Signal/Corr: Surface bin dectection and noise floor (Corr < 50 flagged).
+%      3. Sidelobe: Range masking based on depth (H) and max tilt (beta).
+%      4. Velocity: Horizontal Spikes, statistical outliers (U,V) and unrealistic
+%                   velocities (U,V,W).
+%      5. Compass: Magnetometer circle-fit diagnostics (Hard-Iron check).
+%      5. Other sensor diagnostics.
+%
+%   OUTPUTS:
+%      - Stage 1 NetCDF file ([moor_id]_[sn]_stage1.nc)
+%      - 6 Diagnostic QC Figures
+%
+%   DEPENDENCIES:
+%      - [m_moorproc_toolbox](URL_TO_YOUR_REPO) (for rodbload.m)
+%      - [GSW Oceanographic Toolbox](https://www.teos-10.org) (v3.06+)
+%
+%   NOTE: This is a Stage 1 function. It FLAGS data only; physical 
+%   rotations and corrections (e.g., Hard-Iron U/V rotation) occur in Stage 2. 
+
+
 
 function stage01_read_qc_S55(moor, varargin)
 
