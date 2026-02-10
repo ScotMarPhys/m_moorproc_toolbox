@@ -9,7 +9,7 @@
 %                      infofile = varargin{3};
 %                      logfile = varargin{4};
 %                      outdir = varargin{5}; #output dir (fig, data, logs)
-% functions called:    rodbload
+% functions called:    rodbload, gsw_z_from_p
 %
 % 
 
@@ -663,7 +663,7 @@ mask_vd = [false(Tidx, 1), (abs(V_diff)>CUR_thr)];
 mask_vel_comb = (mask_u | mask_v | mask_s | mask_w | mask_ud | mask_vd);
 Data.mask_QC_3D(mask_vel_comb)= QC_BAD;
 
-prombt = ['Velocity QC Summary: Flagged cells as QC_BAD (%d) based on:\n' ...
+prombt = ['\n\nVelocity QC Summary: Flagged cells as QC_BAD (%d) based on:\n' ...
           ' - Horizontal spikes (|dU/dz|, |dV/dz|) > %0.2f m/s\n' ...
           ' - Statistical outliers > 3 standard deviations (per depth bin)\n' ...
           ' - Vertical velocity outliers (|W|) > %0.2f m/s\n'];

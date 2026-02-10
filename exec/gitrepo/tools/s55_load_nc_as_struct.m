@@ -1,4 +1,4 @@
-function DS = load_nc_as_struct(filename)
+function DS = s55_load_nc_as_struct(filename)
     % Load all variables and attributes into a structure
     info = ncinfo(filename);
     DS = struct();

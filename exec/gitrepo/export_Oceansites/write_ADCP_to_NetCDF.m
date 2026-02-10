@@ -28,7 +28,7 @@ function write_ADCP_to_NetCDF(filename, moorname, latitude, longitude, adcpinfo,
 %   vel_east-   eastward sea water veloicty [m/s]
 %   vel_north-  northward sea water veloicty [m/s]
 %   vel_vert-	vertical sea water veloicty [m/s]
-%   vel_err-	eorror in sea water velocity [m/s]
+%   vel_err-	error in sea water velocity [m/s]
 %
 % The following parameters are needed when available:
 %   dev2-           magnetic compass correction [degree]

@@ -22,9 +22,16 @@ clear
 
 global MOORPROC_G
 
-
-% moor = 'rhadcp_01_2020';
-moor = 'rhadcp_02_2022';
+if ~isempty(MOORPROC_G) && isstruct(MOORPROC_G) && isfield(MOORPROC_G, 'cruise')
+    if strcmp(MOORPROC_G.cruise, 'jc238')
+        moor = 'rhadcp_01_2020';
+    elseif strcmp(MOORPROC_G.cruise, 'dy181')
+        moor = 'rhadcp_02_2022';
+    end
+else
+    % moor = 'rhadcp_01_2020';
+    moor = 'rhadcp_02_2022';
+end
 
 % TO UPDATE <------------------------
 % in- and output directories
