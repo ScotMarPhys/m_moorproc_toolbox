@@ -42,7 +42,6 @@
 
 function stage01_read_qc_S55(moor, varargin)
 
-% 1. Handle Help and Initialization
 if nargin == 0
     help(mfilename);
     return;
@@ -50,7 +49,6 @@ end
 
 global MOORPROC_G
 
-% Parameter Assignment (Mapping Logic)
 if nargin == 1 && ~isempty(MOORPROC_G)
     operator    = MOORPROC_G.operator;
     pd          = moor_inoutpaths('adcp_S55', moor);
@@ -219,6 +217,8 @@ S = suggestTrimForShallowEdges_simple(P, min(yl_P));
 Data.mask_QC_1D(S.keepMask == 0) = QC_BAD; 
 Data.mask_QC_3D(S.keepMask == 0, :) = QC_BAD;
 
+z_mean = gsw_z_from_p(mean(P(Data.mask_QC_1D==0)),info_adcp.lat);
+
 % Pitch and Roll
 Pitch_Pgood = Pitch; Pitch_Pbad = Pitch;
 Pitch_Pgood(S.keepMask == 0) = NaN;Pitch_Pbad(S.keepMask == 1) = NaN;
@@ -301,6 +301,7 @@ h_bat = plot(T, B, 'b-', 'LineWidth', 1);
 ylabel('Battery (V)');
 ylim([0,20])
 set(gca, 'YColor', 'b'); 
+
 hold off
 
 % Create a neat text box on the figure (normalized figure coordinates)
@@ -320,6 +321,16 @@ bh = 0.28*axPos(4);
 hBox = annotation('textbox', [bx by bw bh], 'String', txt, ...
     'FitBoxToText', 'on', 'EdgeColor', 'none', ...
     'Interpreter', 'tex', 'HorizontalAlignment', 'left');
+
+bx = axPos(1) + 0.05*axPos(3);
+by = axPos(2) + 0.05*axPos(4);
+bw = 0.32*axPos(3);
+bh = 0.28*axPos(4);
+
+hBox = annotation('textbox', [bx by bw bh], 'String', sprintf('Z_{mean} = %4.0f m', z_mean), ...
+    'FitBoxToText', 'on', 'EdgeColor', 'none', ...
+    'Interpreter', 'tex', 'HorizontalAlignment', 'left');
+
 
 %%% Roll and pitch %%%%%%%%%%%%%%%%%%%%%%%%
 subplot(3,1,2) 
@@ -912,6 +923,7 @@ end
 
 save_signature_to_nc(Data, Config, nCells, Dist2Instr_CellMidpoint, ...
     Nominal_CellDepth,flag_vals,flag_mean,operator,moor,info_adcp, outfile);
+
 end
 fprintf(fidlog, '\n==== END ENTRY  =====\n');
 fclose(fidlog);
@@ -1280,6 +1292,7 @@ function save_signature_to_nc(Data, Config, nCells, Dist2Instr_CellMidpoint, Nom
 
     for i = 1:numel(all_fields)
         f = all_fields{i};
+        if strcmp(f, 'Average_Time'),continue;end
         val = Data.(f);
         [rows, cols] = size(val);
 
@@ -1362,9 +1375,7 @@ function save_signature_to_nc(Data, Config, nCells, Dist2Instr_CellMidpoint, Nom
     % 5. Write FULL Config structure as Global Attributes
     conf_fields = fieldnames(Config);
     for i = 1:numel(conf_fields)
-        if strcmp(f, 'Average_Time')
-            continue; 
-        end
+        
         cf = conf_fields{i};
         cval = Config.(cf);
         
