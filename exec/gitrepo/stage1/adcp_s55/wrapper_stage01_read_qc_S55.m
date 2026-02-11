@@ -1,6 +1,6 @@
-% WRAPPER_STAGE02_PROC_S55: Processes S55 ADCP mooring data.
+% WRAPPER_STAGE01_READ_QC_S55: Reads and QC raw S55 ADCP mooring data (Stage 1).
 %
-% This script manages environment setup and calls stage02_proc_S55.
+% This script manages environment setup and calls stage01_read_qc_S55.
 %
 % CONFIGURATION MODES:
 %   1. AUTOMATIC: Uses global MOORPROC_G (via m_moorprog_startupfiles).
@@ -14,7 +14,7 @@
 %   - m_moorproc_toolbox (for rodbload.m)
 %   - GSW Oceanographic Toolbox (v3.06+)
 %
-% Authors: K Burmeister, S Jones | Date: 02/2026
+% Authors: K Burmeister, S Jones | Date: 12/2025
 
 close all; clear;
 global MOORPROC_G
@@ -42,20 +42,20 @@ switch pc_name
     case 'SA07KB-3JN9YY2'
         basedir      = 'C:\Users\sa07kb\Projects\Moor_Data_Proc\';
         pathgit      = fullfile(basedir, 'm_moorproc_toolbox');
-        dataindir    = fullfile(basedir, 'moor_examples\osnap\data\moor\proc\', moor, 'adcp_S55');
-        infofile     = fullfile(basedir, 'moor_examples\osnap\data\moor\proc\', moor, [moor 'info.dat']);
-        outdir       = dataindir;
+        dataindir    = fullfile(basedir, 'moor_examples\osnap\data\moor\raw', cruise, 'adcp_s55');
+        outdir = fullfile(basedir, 'moor_examples\osnap\data\moor\proc', moor, 'adcp_S55');
+        infofile     = fullfile(basedir, 'moor_examples\osnap\data\moor\proc', moor, [moor 'info.dat']);
         toolbox_path = 'C:\Users\sa07kb\Matlab\toolboxes\gsw_matlab_v3_06_16';
         filename     = '200044_data';
 
     case 'SA01SJ-G9WC2J3'
         basedir      = 'D:\Work_computer_sync\OSNAP_postdoc\Python\';
         pathgit      = fullfile(basedir, 'm_moorproc_toolbox');   
-        dataindir    = 'D:\Work_computer_sync\OSNAP_postdoc\Mooring\RHADCP\plots\'; 
+        dataindir    = 'E:\OSNAP\RHADCP\DY181\S200044A012_RHAD2_JC238\conversion2\';
+        outdir = 'D:\Work_computer_sync\OSNAP_postdoc\Mooring\RHADCP\plots\';
         infofile     = fullfile('E:\OSNAP\RHADCP\DY181\S200044A012_RHAD2_JC238\conversion2\', [moor 'info.dat']);
-        outdir       = 'D:\Work_computer_sync\OSNAP_postdoc\Mooring\RHADCP\plots\';
         toolbox_path = 'D:\Work_computer_sync\MATLAB_functions';
-        filename     = 'S200044A012_RHAD2_JC238';
+        filename     = '200044_data'; %'S200044A012_RHAD2_JC238';
 
     otherwise
         error('PC name "%s" not recognized. Add your paths to Section 2.', pc_name);
@@ -64,12 +64,12 @@ end
 %% 3. Environment Setup and Execution
 addpath(genpath(fullfile(pathgit, 'exec', 'gitrepo')));
 addpath(genpath(toolbox_path));
-logfile = fullfile(outdir, [moor '_ADCP_stage2.log']);
+logfile = fullfile(outdir, [moor '_ADCP_stage1.log']);
 
 if ~isempty(MOORPROC_G)
     % Standard toolbox execution
-    stage02_proc_S55(moor);
+    stage01_read_qc_S55(moor);
 else
     % Manual execution with local variables
-    stage02_proc_S55(moor, dataindir, infofile, logfile, outdir);
+    stage01_read_qc_S55(moor, dataindir, filename, infofile, logfile, outdir);
 end
