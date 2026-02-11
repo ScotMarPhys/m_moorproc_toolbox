@@ -1,4 +1,4 @@
-function Data_corr = s55_hard_iron_compass_correction(Data,apl_cor)
+function Data_corr = s55_hard_iron_compass_correction(Data,flag_value,apl_cor)
 % S55_HARD_IRON_COMPASS_CORRECTION Corrects ENU velocities for magnetic interference.
 %
 % USAGE:
@@ -31,11 +31,11 @@ function Data_corr = s55_hard_iron_compass_correction(Data,apl_cor)
     % Apply QC masking
     mask_QC_3D = Data.mask_QC_3D;
     mask_QC_1D = Data.mask_QC_1D;
-    mx(mask_QC_1D ~= 1) = NaN;
-    my(mask_QC_1D ~= 1) = NaN;
+    mx(mask_QC_1D ~= flag_value) = NaN;
+    my(mask_QC_1D ~= flag_value) = NaN;
 
-    U(mask_QC_3D ~= 1) = NaN;
-    V(mask_QC_3D ~= 1) = NaN;
+    U(mask_QC_3D ~= flag_value) = NaN;
+    V(mask_QC_3D ~= flag_value) = NaN;
     
     %% 2. Solve for circle parameters using Least Squares
     valid = ~isnan(mx) & ~isnan(my);

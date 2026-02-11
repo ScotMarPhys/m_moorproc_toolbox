@@ -42,83 +42,111 @@
 
 function stage01_read_qc_S55(moor, varargin)
 
-if nargin==0
-    help stage01_read_qc_S55
-    return
+% 1. Handle Help and Initialization
+if nargin == 0
+    help(mfilename);
+    return;
 end
 
-if nargin==1
-    global MOORPROC_G
-    operator = MOORPROC_G.operator;
-    pd = moor_inoutpaths('adcp_S55',moor);
-    dataindir = pd.rawpath;
-    infofile = pd.infofile;
-    logfile = pd.stage1log;
-    outdir = pd.stage1path;
-    ouput_form = pd.stage1form;
+global MOORPROC_G
+
+% Parameter Assignment (Mapping Logic)
+if nargin == 1 && ~isempty(MOORPROC_G)
+    operator    = MOORPROC_G.operator;
+    pd          = moor_inoutpaths('adcp_S55', moor);
+    dataindir   = pd.rawpath;
+    infofile    = pd.infofile;
+    logfile     = pd.stage1log;
+    outdir      = pd.stage1path;
+    output_form = pd.stage1form;
 else
-    operator = getenv('COMPUTERNAME');    
-    dataindir = varargin{1};
-    filename = varargin{2};
-    infofile = varargin{3};
-    logfile = varargin{4};
-    outdir = varargin{5};
-    ouput_form = [moor '_%d_stage1.nc'];
+    try
+        operator = getenv('COMPUTERNAME');    
+        dataindir = varargin{1};
+        filename = varargin{2};
+        infofile = varargin{3};
+        logfile = varargin{4};
+        outdir = varargin{5};
+        ouput_form = [moor '_%d_stage1.nc'];
+    catch
+        error('Not enough manual arguments provided. Expected 5 additional arguments after "moor".');
+    end
 end
 
-if ~exist(outdir,'dir')
-    mkdir(outdir)
+% Directory and Logfile Validation
+if ~exist(outdir, 'dir'), mkdir(outdir); end
+
+[~, log_name, log_ext] = fileparts(logfile);
+expected_log = [moor '_ADCP_stage1'];
+
+if ~strcmp([log_name log_ext], [expected_log '.log'])
+    error('LOGFILE MISMATCH: Expected %s.log but got %s%s.', expected_log, log_name, log_ext);
 end
 
-% read in meta data
+% Metadata and Log Initialization
 info_adcp = read_adcp_infofile(infofile);
 
-% start log entry
-fidlog   = fopen(logfile,'a');
+% Timestamp conversion using simpler datetime logic
+info_adcp.start_timestamp = datenum(datetime([info_adcp.s_d.' , info_adcp.s_t.' , 0])); %start date and time bg
+info_adcp.end_timestamp   = datenum(datetime([info_adcp.e_d.' , info_adcp.e_t.' , 0])); %end date and time ed
+
+% Open Logfile
+fidlog = fopen(logfile, 'w');
+if fidlog == -1, error('Permission denied: Could not open %s', logfile); end
+
 fprintf(fidlog, '\n==== START ENTRY  =====\n');
-fprintf(fidlog,'Read and quality control Signature 55 ADCP data. \n');
-fprintf(fidlog,'Processing carried out by %s at %s\n\n\n',operator,datestr(clock));
-fprintf(fidlog,'Mooring   %s \n',moor);
-fprintf(fidlog,'Latitude  %6.3f \n',info_adcp.lat);
-fprintf(fidlog,'Longitude %6.3f \n\n\n',info_adcp.lon);
+fprintf(fidlog, 'Read and quality control Signature 55 ADCP data. \n');
+fprintf(fidlog, 'Processing carried out by %s at %s\n\n\n', operator, datestr(clock));
+fprintf(fidlog, 'Mooring   %s \n', moor);
+fprintf(fidlog, 'Latitude  %6.3f \n', info_adcp.lat);
+fprintf(fidlog, 'Longitude %6.3f \n\n\n', info_adcp.lon);
 
-info_adcp.start_timestamp = datenum(datetime([info_adcp.s_d.' , info_adcp.s_t.' , 0])); %start date and time gb
-info_adcp.end_timestamp = datenum(datetime([info_adcp.e_d.' , info_adcp.e_t.' , 0])); %end date and time ed
-
+% Serial Number Logic
 if isnan(info_adcp.id)
-   fprintf('No serial number given, use default 200044');
-   serial_nums=200044;
+    fprintf('No serial number given, using default 200044\n');
+    serial_nums = 200044;
 else
-    vec=find((info_adcp.id>=319) & (info_adcp.id <=328)); % Possible ADCP codes - taken from IMP moorings package
-    serial_nums=info_adcp.sn(vec);
+    % Filters IDs between 319 and 328
+    mask = (info_adcp.id >= 319) & (info_adcp.id <= 328);
+    serial_nums = info_adcp.sn(mask);
 end
 
 %% Load data: Config, Data, Description
 for i = 1:length(serial_nums)
-    fprintf('Processing sn %d',serial_nums(i));
-    if ~exist('filename',"var")
-        filename = sprintf('%d_data',serial_nums(i));
-    end
-outfile = fullfile(outdir,sprintf(ouput_form,serial_nums(i)));
-infile=fullfile(dataindir,[filename,'.mat']);
-load(infile); clear Descriptions %Description is not helpful as referring to raw data and not the matlab variables
-Data = cell2struct(cellfun(@double,struct2cell(Data),'uni',false),fieldnames(Data),1);
+fprintf('Processing sn %d\n', serial_nums(i));
 
-fprintf(fidlog,'infile : %s\n',infile);
-fprintf(fidlog,'ADCP serial number  : %d\n',serial_nums(i));
+% Handle filename if not pre-defined
+if ~exist('filename', 'var') || isempty(filename)
+    current_filename = sprintf('%d_data', serial_nums(i));
+else
+    current_filename = filename;
+end
 
-%% Build post-processing flag array
+outfile = fullfile(outdir, sprintf(ouput_form, serial_nums(i)));
+infile  = fullfile(dataindir, [current_filename, '.mat']);
 
-% 0: QC_NOT_EVALUATED
-% 1: QC_GOOD
-% 2: QC_UNKNOWN
-% 3: QC_PROBABLY_BAD
-% 4: QC_BAD
-% 5: QC_CHANGED
-% 6: QC_UNSAMPLED
-% 7: QC_INTERPOLATED
-% 8: ?
-% 9: QC_MISSING
+% Load and clean structure
+load(infile); 
+clear Descriptions % Not helpful for post-processing
+
+% Efficiently convert all struct fields to double (Improved syntax)
+Data = structfun(@(x) double(x), Data, 'UniformOutput', false);
+
+fprintf(fidlog, 'infile : %s\n', infile);
+fprintf(fidlog, 'ADCP serial number  : %d\n', serial_nums(i));
+
+% Build post-processing flag array
+% Reference values (Consistent with original)
+QC_NOT_EVALUATED = 0; 
+QC_GOOD = 1; 
+QC_UNKNOWN = 2; 
+QC_PROBABLY_BAD = 3;
+QC_BAD = 4; 
+QC_CHANGED = 5; 
+QC_UNSAMPLED = 6; 
+QC_INTERPOLATED = 7;
+%QC_COMPASS_BAD = 8; 
+QC_MISSING = 9;
 
 flag_vals = [0, 1, 2, 3, 4, 5, 6, 7, 9];
 flag_mean = ['1=QC_NOT_EVALUATED 1=QC_GOOD ' ...
@@ -126,55 +154,35 @@ flag_mean = ['1=QC_NOT_EVALUATED 1=QC_GOOD ' ...
     '5=QC_UNSAMPLED 6=QC_INTERPOLATED ' ...
     '9=QC_MISSING'];
 
-QC_NOT_EVALUATED = 0;
-QC_GOOD = 1;
-QC_UNKNOWN = 2;
-QC_PROBABLY_BAD = 3;
-QC_BAD = 4;
-QC_CHANGED = 5;
-QC_UNSAMPLED = 6;
-QC_INTERPOLATED = 7;
-QC_COMPASS_BAD = 8;
-QC_MISSING = 9;
+% Initialise QC masks using zeros (More efficient than 0 * double)
+Data.mask_QC_3D = zeros(size(Data.Average_VelEast));
+Data.mask_QC_1D = zeros(size(Data.Average_Pressure));
 
-Data.mask_QC_3D = 0*double(Data.Average_VelEast);
-Data.mask_QC_1D = 0*double(Data.Average_Pressure);
+% Checking Serial Number Consistency
+if serial_nums(i) ~= Config.SerialNo
+    error('Entered Serial Number %d does not match Config %d', ...
+        serial_nums(i), Config.SerialNo);
+end
 
-% NOTE: Do we want the ability to interactively flag and zoom on these early plots?
-% E.g. It's a good opportunity to remove deployment and recovery based on
-% pressure etc.  A bit of automatic flagging for demo in Fig. 1
+% Checking Configuration Consistency
+check_fields = {'Average_NBeams', 'Average_NCells', 'Average_BeamToChannelMapping', ...
+                'Average_AmbiguityVel', 'Average_NominalCorrelation', 'Average_Soundspeed'};
+check_labels = {'Number of beams', 'Number of cells', 'Beam to channel mapping', ...
+                'Ambiguity velocity', 'Nominal Correlation', 'Sound speed'};
 
+msg_suffix = ' is not equal for all time steps. Please check ';
 
-%% Checking few configuration which should be the same each time step
-if strcmp(getenv('COMPUTERNAME'),'SA07KB-3JN9YY2'); % Numunique in V2025a onwards, temporarily skip check
-    if serial_nums(i)~=Config.SerialNo
-        error('Entered Serial Number does not match Config-file')
+for k = 1:length(check_fields)
+    if size(unique(Data.(check_fields{k}), 'rows'), 1) ~= 1
+        prombt_2 = [check_labels{k}, msg_suffix, 'Data.', check_fields{k}];
+        disp(prombt_2); fprintf(fidlog, '%s\n', prombt_2);
     end
-    prombt = ' is not equal for all time steps. Please check ';
-    if numunique(Data.Average_NBeams,"rows") ~= 1
-        prombt = ['Number of beams',prombt,'Data.Average_NBeams'];
-        disp(prombt_2); fprintf(fidlog,[prombt_2,'\n']);
-    elseif numunique(Data.Average_NCells,"rows") ~= 1
-        prombt_2 = ['Number of cells',prombt,'Data.Average_NCells'];
-        disp(prombt_2); fprintf(fidlog,[prombt_2,'\n']);
-    elseif numunique(Data.Average_BeamToChannelMapping,"rows") ~= 1
-        prombt_2 = ['Beam to channel mapping',prombt,'Data.Average_BeamToChannelMapping'];
-        disp(prombt_2); fprintf(fidlog,[prombt_2,'\n']);
-    elseif numunique(Data.Average_AmbiguityVel,"rows") ~= 1
-        prombt_2 = ['Ambiduity velocity',prombt,'Data.Average_AmbiguityVel'];
-        disp(prombt_2); fprintf(fidlog,[prombt_2,'\n']);
-     elseif numunique(Data.Average_NominalCorrelation,"rows") ~= 1
-        prombt_2 = ['Nominal Correlation',prombt,'Data.Average_NominalCorrelation'];
-        disp(prombt_2); fprintf(fidlog,[prombt_2,'\n']);
-    elseif numunique(Data.Average_Error,'rows')~= 1 | Data.Average_Error(1)~=0
-        prombt_2 = ['Errors occured during measuring. Please check Data.Average_Error'];
-        disp(prombt_2); fprintf(fidlog,[prombt_2,'\n']);
-    elseif numunique(Data.Average_Soundspeed,'rows')~= 1
-        prombt_2 = ['Sound speed not constant. Please check Data.Average_Soundspeed'];
-        disp(prombt_2); fprintf(fidlog,[prombt_2,'\n']);
-    end
-else
+end
 
+% Specific Check for Average Error
+if size(unique(Data.Average_Error, 'rows'), 1) ~= 1 || Data.Average_Error(1) ~= 0
+    prombt_2 = 'Errors occurred during measuring. Please check Data.Average_Error';
+    disp(prombt_2); fprintf(fidlog, '%s\n', prombt_2);
 end
 
 %% STAGE 1.  Nortek suggested quality control steps %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -219,7 +227,7 @@ Roll_Pgood = Roll; %Roll_Pbad = Roll;
 Roll_Pgood(S.keepMask == 0) = NaN; %Roll_Pbad(S.keepMask == 0) = NaN;
 
 % Output logging for Pressure
-prompt = sprintf(['***Pressure check***\n', ...
+prompt = sprintf(['\n***Pressure check***\n', ...
     'Found %d shallow values at start and %d at end flagged bad (%d).\n\n'], ...
     S.nTrimStart, S.nTrimEnd, QC_BAD);
 fprintf(1, prompt); % Print to Command Window
@@ -587,7 +595,8 @@ clear ax
 %% prombts after plotting
 % surface bin
 srf_bins = min([SB,CB]);
-bins_to_process=input(['\nAutodetected ', num2str(srf_bins),...
+bins_to_process=input(['\n\n***Surface bins and sidelobe interference***', ...
+    '\nAutodetected ', num2str(srf_bins),...
     ' valid bins out of ',num2str(max(nCells)),' from the sensor head.',...
     '\nWill flag bins >', num2str(srf_bins),' as bad (',num2str(QC_BAD),')',...
     ' \nDo you want to adjust valid bin number?',...
@@ -694,11 +703,7 @@ prombt = ['\n\nVelocity QC Summary: Flagged cells as QC_BAD (%d) based on:\n' ..
           ' - Horizontal spikes (|dU/dz|, |dV/dz|) > %0.2f m/s\n' ...
           ' - Statistical outliers > 3 standard deviations (per depth bin)\n' ...
           ' - Vertical velocity outliers (|W|) > %0.2f m/s\n'];
-
-% 1. Print to the command window
 fprintf(1, prombt, QC_BAD, CUR_thr, W_thr); 
-
-% 2. Print to the log file
 fprintf(fidlog, prombt, QC_BAD, CUR_thr, W_thr);
 
 
@@ -766,17 +771,23 @@ set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
 print('-dpng',fullfile(outdir,[filename,'_f4_velocity_and_speed_QC.png']));
 clear ax
 
-% Update Mask to QC as all Data now has been checked
-Data.mask_QC_3D(Data.mask_QC_3D==0) = 1;
-Data.mask_QC_1D(Data.mask_QC_1D==0) = 1;
-
 %% Magnetometer Horizontal Intensity and Circle Fitting %%%%%%%%%%%%%%%%%%
-mx = Data.Average_Magnetometer(:,1); mx(Data.mask_QC_1D ~= 1) = NaN;
-my = Data.Average_Magnetometer(:,2); my(Data.mask_QC_1D ~= 1) = NaN;
-Data_corr = s55_hard_iron_compass_correction(Data,false);
+mx = Data.Average_Magnetometer(:,1); mx(Data.mask_QC_1D ~= 0) = NaN;
+my = Data.Average_Magnetometer(:,2); my(Data.mask_QC_1D ~= 0) = NaN;
+Data_corr = s55_hard_iron_compass_correction(Data,0,false);
 xc = Data_corr.hard_iron_offset_x;
 yc = Data_corr.hard_iron_offset_y;
 radius = Data_corr.radius;
+err_min = min(Data_corr.hard_iron_CCW_angle,[],'omitnan');
+err_max = max(Data_corr.hard_iron_CCW_angle,[],'omitnan');
+
+% Logfile output
+deg = char(176); 
+prombt = ['\n\n***Hard-Iron compass correction***\n' ...
+    'Simple circle fit shows error angle varies between %3.0f' deg ... 
+    'and %3.0f' deg '\n'];
+fprintf(1, prombt, err_min, err_max); 
+fprintf(fidlog, prombt, err_min, err_max); 
 
 % Ideal circle
 avg_radius = mean(sqrt(mx.^2 + my.^2), 'omitnan');
@@ -901,7 +912,6 @@ end
 
 save_signature_to_nc(Data, Config, nCells, Dist2Instr_CellMidpoint, ...
     Nominal_CellDepth,flag_vals,flag_mean,operator,moor,info_adcp, outfile);
-ncdisp(outfile);
 end
 fprintf(fidlog, '\n==== END ENTRY  =====\n');
 fclose(fidlog);
