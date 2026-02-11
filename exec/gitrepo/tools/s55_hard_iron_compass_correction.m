@@ -70,23 +70,23 @@ function Data_corr = s55_hard_iron_compass_correction(Data,apl_cor)
     angle_corr = atan2d(my_c, mx_c);
     
     % phi is the CCW angle needed to rotate the raw vectors to the corrected state
-    phi = angle_corr - angle_raw; 
+    angle_err = angle_corr - angle_raw; 
     
     % Normalize phi to [-180, 180] to prevent wrapping jumps (e.g., 359 to 1)
-    phi = atan2d(sind(phi), cosd(phi));
+    angle_err = atan2d(sind(angle_err), cosd(angle_err));
     
     %% 4. Apply Rotation to ENU Velocities
   
     % Apply the CCW rotation matrix
     % Note: If U/V are [Time x Bins], phi [Time x 1] expands automatically
-    Data_corr.U_hard_iron_corrected = U .* cosd(phi) - V .* sind(phi);
-    Data_corr.V_hard_iron_corrected = U .* sind(phi) + V .* cosd(phi);
+    Data_corr.U_hard_iron_corrected = U .* cosd(angle_err) - V .* sind(angle_err);
+    Data_corr.V_hard_iron_corrected = U .* sind(angle_err) + V .* cosd(angle_err);
 
     
     %% 5. Store Metadata
     Data_corr.hard_iron_offset_x = xc;
     Data_corr.hard_iron_offset_y = yc;
-    Data_corr.hard_iron_CCW_angle = phi;
+    Data_corr.hard_iron_CCW_angle = angle_err;
 
     if apl_cor==false
         Data_corr.radius = radius;
