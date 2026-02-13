@@ -93,20 +93,44 @@ for i = 1:length(serial_nums)
 fprintf('Processing sn %d',serial_nums(i));
 
 outfile = fullfile(outdir,sprintf(ouput_form,serial_nums(i)));
+[~, filename, ~] = fileparts(outfile);
 infile = fullfile(dataindir,sprintf(infile_form,serial_nums(i)));
 DS = s55_load_nc_as_struct(infile);
 
 fprintf(fidlog,'infile : %s\n',infile);
-fprintf(fidlog,'ADCP serial number  : %d\n',serial_nums(i));
+fprintf(fidlog,'ADCP serial number  : %d\n\n',serial_nums(i));
 
 %% Compass correction
 % 1. Fix the Hard-Iron (Compass) error first
-DS = s55_hard_iron_compass_correction2(DS, 0,true,true);
+[DS, h_fig] = s55_hard_iron_compass_correction(DS, 0, true, true, true);
+err_min = min(DS.hard_iron_CCW_angle,[],'omitnan');
+err_max = max(DS.hard_iron_CCW_angle,[],'omitnan');
+t_lim = datestr(DS.calibration_window);
+
+% Logfile output
+deg = char(176); 
+prombt = ['\n\n***Hard-Iron compass correction***\n' ...
+    'Simple circle fitted to data from %d to %d.\n' ...
+    'Velocity data corrected for error angle varying between %3.0f' deg ... 
+    'and %3.0f' deg '\n'];
+fprintf(1, prombt, t_lim(1),t_lim(2),err_min, err_max); 
+fprintf(fidlog, prombt,t_lim(1),t_lim(2), err_min, err_max); 
+
+% Save figure
+set(h_fig,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
+print(h_fig,'-dpng',fullfile(outdir,[filename,'_f1_hard_iron_correction.png']));
 
 % 2. Now rotate the corrected U/V to True North
 magdev = info_adcp.magdev;
 U_final = DS.U_hard_iron_corrected .* cosd(magdev) - DS.V_hard_iron_corrected .* sind(magdev);
 V_final = DS.U_hard_iron_corrected .* sind(magdev) + DS.V_hard_iron_corrected .* cosd(magdev);
+
+% Logfile output
+deg = char(176); 
+prombt = ['\n\n***Magnetic deviation***\n' ...
+    'Velocity data corrected for magnetic deviation of %3.0f' deg '\n'];
+fprintf(1, prombt, t_lim(1),t_lim(2),err_min, err_max); 
+fprintf(fidlog, prombt,t_lim(1),t_lim(2), err_min, err_max); 
 
 %% Calculate depth matrix
 

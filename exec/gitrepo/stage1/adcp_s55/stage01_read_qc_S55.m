@@ -398,7 +398,7 @@ annotation('textbox', [0 0.02 1 0.06], ...   % [x y w h] in normalized figure un
 
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[filename,'_f1_pressure_pitch_heading_QC.png']));
+print('-dpng',fullfile(outdir,[filename,'_stage1_f1_pressure_pitch_heading_QC.png']));
 
 
 %% 2. Beam amplitudes %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -554,7 +554,7 @@ end
 
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[filename,'_f2_beam_amplitude_correlation_QC.png']));
+print('-dpng',fullfile(outdir,[filename,'_stage1_f2_beam_amplitude_correlation_QC.png']));
 clear ax
 
 %% 3. suface bin detection %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -600,7 +600,7 @@ for k=1:numel(ax)
 end
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[filename,'_f3_beam_amplitude_correlation_QC.png']));
+print('-dpng',fullfile(outdir,[filename,'_stage1_f3_beam_amplitude_correlation_QC.png']));
 clear ax
 
 %% prombts after plotting
@@ -779,11 +779,11 @@ end
 
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[filename,'_f4_velocity_and_speed_QC.png']));
+print('-dpng',fullfile(outdir,[filename,'_stage1_f4_velocity_and_speed_QC.png']));
 clear ax
 
 %% Magnetometer Horizontal Intensity and Circle Fitting %%%%%%%%%%%%%%%%%%
-Data_corr = s55_hard_iron_compass_correction2(Data,0,false);
+Data_corr = s55_hard_iron_compass_correction(Data,0,false);
 err_min = min(Data_corr.hard_iron_CCW_angle,[],'omitnan');
 err_max = max(Data_corr.hard_iron_CCW_angle,[],'omitnan');
 
@@ -797,7 +797,7 @@ fprintf(fidlog, prombt, err_min, err_max);
 
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[filename,'_f5_horizontal_magnetometer_QC.png']));
+print('-dpng',fullfile(outdir,[filename,'_stage1_f5_horizontal_magnetometer_QC.png']));
 %% 6. Sensor diagnostics %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 f6 = figure(6); clf;
@@ -842,7 +842,7 @@ end
 sgtitle('ADCP Sensor Diagnostic');
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[filename,'_f6_sensor_diagnostics.png']));
+print('-dpng',fullfile(outdir,[filename,'_stage1_f6_sensor_diagnostics.png']));
 clear ax
 %%
 m_u=median(U_QC,"omitnan" )*1e2;m_v=median(V_QC,"omitnan" )*1e2;
