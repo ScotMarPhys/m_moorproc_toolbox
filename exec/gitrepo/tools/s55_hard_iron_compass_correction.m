@@ -54,8 +54,8 @@ function Data_corr = s55_hard_iron_compass_correction(Data,flag_value,apl_cor)
         radius = sqrt(params(3) + xc^2 + yc^2);
     else
         warning('Insufficient valid magnetometer data for circle fitting.');
-        Data_corr.U_corrected = U*NaN;
-        Data_corr.V_corrected = V*NaN;
+        Data_corr.U_hard_iron_corrected = U*NaN;
+        Data_corr.U_hard_iron_corrected = V*NaN;
         Data_corr.hard_iron_CCW_angle = NaN;
         return;
     end

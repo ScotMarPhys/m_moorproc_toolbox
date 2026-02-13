@@ -99,6 +99,15 @@ DS = s55_load_nc_as_struct(infile);
 fprintf(fidlog,'infile : %s\n',infile);
 fprintf(fidlog,'ADCP serial number  : %d\n',serial_nums(i));
 
+%% Compass correction
+% 1. Fix the Hard-Iron (Compass) error first
+DS = s55_hard_iron_compass_correction2(DS, 0,true,true);
+
+% 2. Now rotate the corrected U/V to True North
+magdev = info_adcp.magdev;
+U_final = DS.U_hard_iron_corrected .* cosd(magdev) - DS.V_hard_iron_corrected .* sind(magdev);
+V_final = DS.U_hard_iron_corrected .* sind(magdev) + DS.V_hard_iron_corrected .* cosd(magdev);
+
 %% Calculate depth matrix
 
 % Prompt user: 'y' for MicroCAT, anything else for ADCP
@@ -117,6 +126,13 @@ end
 
 fprintf(fidlog,prombt);
 fprintf(prombt);
+
+% Check if use_MC is active and intercept if it's not operational
+if use_MC
+    warning(['The option to use MicroCat data is currently not operational. ' ...
+             'Falling back to use internal ADCP sensors for pressure.']);
+    use_MC = false; % Force the flag to false
+end
 
 if use_MC
     % 1. Load MicroCAT (MC) data placeholder
@@ -170,6 +186,7 @@ fprintf(fidlog, '\n==== END ENTRY  =====\n');
 fclose(fidlog);
 end
 
+% correct range for speed of sound
 function [R_true] = correct_adcp_range_by_profile(R_nominal, c_inst, z_instr, z_ref, c_ref, orientation)
 % CORRECT_ADCP_RANGE_BY_PROFILE Calculates true acoustic range using a SS profile.
 %

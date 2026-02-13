@@ -783,12 +783,7 @@ print('-dpng',fullfile(outdir,[filename,'_f4_velocity_and_speed_QC.png']));
 clear ax
 
 %% Magnetometer Horizontal Intensity and Circle Fitting %%%%%%%%%%%%%%%%%%
-mx = Data.Average_Magnetometer(:,1); mx(Data.mask_QC_1D ~= 0) = NaN;
-my = Data.Average_Magnetometer(:,2); my(Data.mask_QC_1D ~= 0) = NaN;
-Data_corr = s55_hard_iron_compass_correction(Data,0,false);
-xc = Data_corr.hard_iron_offset_x;
-yc = Data_corr.hard_iron_offset_y;
-radius = Data_corr.radius;
+Data_corr = s55_hard_iron_compass_correction2(Data,0,false);
 err_min = min(Data_corr.hard_iron_CCW_angle,[],'omitnan');
 err_max = max(Data_corr.hard_iron_CCW_angle,[],'omitnan');
 
@@ -799,58 +794,6 @@ prombt = ['\n\n***Hard-Iron compass correction***\n' ...
     'and %3.0f' deg '\n'];
 fprintf(1, prombt, err_min, err_max); 
 fprintf(fidlog, prombt, err_min, err_max); 
-
-% Ideal circle
-avg_radius = mean(sqrt(mx.^2 + my.^2), 'omitnan');
-theta = linspace(0, 2*pi, 300);
-
-f5 = figure(5); clf;
-hold on;
-
-% Plot the raw horizontal data (Time x [1,2])
-scatter(mx, my, 5, T, 'filled', 'MarkerFaceAlpha', 0.5, 'DisplayName', ...
-    'Mag Data');
-
-% Plot the "Ideal" Circle centered at (0,0) based on raw data average
-plot(avg_radius*cos(theta), avg_radius*sin(theta), 'r--', 'LineWidth', 1, ...
-    'DisplayName', 'Ideal Path (at 0,0)');
-
-% Plot the FITTED circle centered at (xc, yc)
-plot(xc + radius*cos(theta), yc + radius*sin(theta), ...
-    'k-', 'LineWidth', 1.5, 'DisplayName', 'Fitted Circle');
-
-% Plot the Center of the Fit
-plot(xc, yc, 'kx', 'MarkerSize', 10, 'LineWidth', 2, 'DisplayName', ...
-    'Fit Center (Hard-Iron)');
-
-% Formatting
-axis equal; grid on;
-xlabel('Mag X (mG)'); ylabel('Mag Y (mG)');
-title(['Horizontal Mag Fit: ', filename], 'Interpreter', 'none');
-
-% Add center crosshairs at (0,0)
-xl = xlim; yl = ylim;
-line([min(xl) max(xl)], [0 0], 'Color', [0.5 0.5 0.5], 'HandleVisibility', 'off');
-line([0 0], [min(yl) max(yl)], 'Color', [0.5 0.5 0.5], 'HandleVisibility', 'off');
-
-% Colorbar Setup
-hcb = colorbar;
-ylabel(hcb, 'Deployment Time');
-ticks = get(hcb, 'Ticks');
-set(hcb, 'TickLabels', datestr(ticks, 'yyyy-mmm'));
-
-% Legend - including the new fitted items
-legend('Location', 'northeast');
-
-% Annotate the Offset
-% Annotate the Offset
-text(xc, yc-10, sprintf(['  Offset X: %.1f mG\n  Offset Y: %.1f mG\n  ' ...
-    'Radius: %.1f mG'], xc, yc, radius), ...
-    'VerticalAlignment', 'top','HorizontalAlignment','center', ...
-    'FontWeight', 'bold','Color', 'k');
-
-
-hold off;
 
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
@@ -912,11 +855,16 @@ dir_current = mod(atan2d(U_QC, V_QC), 360);
 m_spd=median(CSPD_QC,'omitnan')*1e2;
 m_dir=median(dir_current,'omitnan');
 
-for k=1:srf_bins;
-fprintf(fidlog,'\nBin %d : nominally %3.2f m - %3.2f m from sensor head\n\n', k, Nominal_CellDepth(k)-Cell_Size,Nominal_CellDepth(k)+Cell_Size);
+total_pings = size(Data.mask_QC_3D, 1);
+valid_pings = sum(Data.mask_QC_3D == 0, 1); 
+m_coverage = (valid_pings ./ total_pings) * 100;
+
+for k=1:srf_bins-1;
+fprintf(fidlog,'\nBin %d : nominally %3.2f m - %3.2f m from sensor head\n\n', k, Dist2Instr_CellMidpoint(k)-Cell_Size,Dist2Instr_CellMidpoint(k)+Cell_Size);
+fprintf(fidlog,'Data coverage [%%]                               : %4.1f%%\n', m_coverage(k));
 fprintf(fidlog,'Median velocity u / v / w [cm/s]                : %4.1f  %4.1f  %4.1f\n',m_u(k), m_v(k), m_w(k));
-fprintf(fidlog,'Median Amp Beam1 / Beam2 / Beam3 [db]           : %3.0f  %3.0f  %3.0f  \n',m_Amp1(k), m_Amp2(k), m_Amp3(k));
-fprintf(fidlog,'Median correlation Beam1 / Beam2 / Beam3 [%]    : %3.0f  %3.0f  %3.0f  \n',m_Cor1(k), m_Cor2(k), m_Cor3(k));
+fprintf(fidlog,'Median Amp Beam1 / Beam2 / Beam3 [db]           : %3.0f  %3.0f  %3.0f\n',m_Amp1(k), m_Amp2(k), m_Amp3(k));
+fprintf(fidlog,'Median correlation Beam1 / Beam2 / Beam3 [%%]    : %3.0f  %3.0f  %3.0f\n',m_Cor1(k), m_Cor2(k), m_Cor3(k));
 fprintf(fidlog,'Median speed [cm/s]                             : %4.1f\n',m_spd(k));
 fprintf(fidlog,'Median direction [deg]                         : %5.2f\n',m_dir(k));
 end
