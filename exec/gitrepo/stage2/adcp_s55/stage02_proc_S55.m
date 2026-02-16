@@ -110,11 +110,11 @@ t_lim = datestr(DS.calibration_window);
 % Logfile output
 deg = char(176); 
 prombt = ['\n\n***Hard-Iron compass correction***\n' ...
-    'Simple circle fitted to data from %d to %d.\n' ...
+    'Simple circle fitted to data from\n %s to %s.\n' ...
     'Velocity data corrected for error angle varying between %3.0f' deg ... 
     'and %3.0f' deg '\n'];
-fprintf(1, prombt, t_lim(1),t_lim(2),err_min, err_max); 
-fprintf(fidlog, prombt,t_lim(1),t_lim(2), err_min, err_max); 
+fprintf(1, prombt, t_lim(1,:),t_lim(2,:),err_min, err_max); 
+fprintf(fidlog, prombt,t_lim(1,:),t_lim(2,:), err_min, err_max); 
 
 % Save figure
 set(h_fig,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
@@ -160,8 +160,22 @@ end
 
 if use_MC
     % 1. Load MicroCAT (MC) data placeholder
-    % Assume MC structure exists with .time, .pres, .temp, .salt
-    % load('path_to_microcat_data.mat'); 
+    % pd = moor_inoutpaths('microcat',moor)
+      % case 'microcat'
+      %   moor = loc;
+      %   pd.rawpath = fullfile(mg.moordatadir, 'raw', mg.cruise, 'microcat');
+      %   pd.infofile = fullfile(mg.moordatadir, 'proc', moor, [moor 'info.dat']);
+      %   pd.stage1path = fullfile(mg.moordatadir, 'proc', moor, 'microcat');
+      %   pd.stage1form = [moor '_%4.4d.raw'];
+      %   pd.stage1log = fullfile(pd.stage1path,'stage1_log');
+      %   pd.stage2path = fullfile(mg.moordatadir, 'proc', moor, 'microcat');
+      %   pd.stage2form = [moor '_%4.4d.use'];
+      %   pd.stage2log = fullfile(pd.stage2path, ['stage2_log_' moor,'.log']);
+      %   pd.stage2figpath = fullfile(mg.reportdir, 'figs');
+    % mooringpath  = [pathosnap '/data/moor/proc']; use pd for mooringpath
+    % mc_path = [mooringpath,':',moor,':microcat:[',num2str(mc_ind),']'];  
+    % [yy_mc,mm,dd,hh,t,c,p,sn_mc,depth_mc] = ...
+    %     rodbload(mc_path,'yy:mm:dd:hh:t:c:p:SerialNumber:Instrdepth');
 
     % 2. Interpolate MC Pressure onto ADCP Time
     % interp1(source_time, source_data, target_time)
