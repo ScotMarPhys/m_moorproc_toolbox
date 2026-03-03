@@ -219,6 +219,83 @@ plot(DS.time,cell_depth')
 datetick('x', 'mmm-yyyy', 'keepticks', 'keeplimits');
 axis ij
 
+%% % side lobe interference
+%all angle in degrees
+% gamma = 20; %slant angle
+% alpha = [0, 120,240]; % beam 1 - aligned with x-axis, beam 2, beam 3
+% pitch = Data.Average_Pitch; pitch(Data.mask_QC_1D~=0)=NaN; % y-axis rotation, in deg
+% roll = Data.Average_Roll; roll(Data.mask_QC_1D~=0)=NaN; % x-axis rotation, in deg
+% 
+% % Pre-calculate trig terms (using 'd' versions for degrees)
+% cp = cosd(pitch); sp = sind(pitch);
+% cr = cosd(roll);  sr = sind(roll);
+% cg = cosd(gamma); sg = sind(gamma);
+% ca = cosd(alpha); sa = sind(alpha); % alpha is 1x3
+% 
+% % Angle to vertical for each beam (in degrees)
+% beta = acosd(-sp .* sg .* ca + cp .* sr .* sg .* sa + cp .* cr .* cg);
+% 
+% % Find the minimum angle to vertical across all three beams for each timestamp
+% max_beta = max(beta, [], 2);
+% 
+% % R contains buffer for upper range of cell
+% R =R_true*cosd(max_beta)-Cell_Size; 
+% % find(Dist2Instr_CellMidpoint <= R(i), 1, 'last') for each time step i
+% R(Data.mask_QC_1D~=0)=info_adcp.wd;
+% idx_valid = arrayfun(@(r) find(Dist2Instr_CellMidpoint <= r, 1, 'last'),...
+%     R);
+% idx_valid(Data.mask_QC_1D~=0)=0;
+% R(Data.mask_QC_1D~=0)=NaN;
+
+% plot it
+% hLine = plot(time(Data.mask_QC_1D==0), y(idx_valid(Data.mask_QC_1D==0)), 'r', 'LineWidth', 0.1);
+% hLine.DisplayName = 'Sidelobe interference';
+
+% sidelobe contamination
+% 
+% prompt = sprintf([ ...
+%   '\n\nSidelobe contamination for each time step varies between %d and %d ' ...
+%   'out of %d bins.\nSee red line in figure 2.\n Would you like to flag ' ...
+%   ' sidelobe contaminated bins for each time step as QC_BAD (%d). Y/N [Y]: '], ...
+%   min(idx_valid(Data.mask_QC_1D==0))+1, max(idx_valid(Data.mask_QC_1D==0))+1, max(nCells), QC_BAD);
+% 
+% reply = input(prompt, 's');
+% if isempty(reply)
+%     reply = 'Y';
+% end
+% 
+% while true
+%     if strcmpi(reply, 'Y') || strcmpi(reply, 'YES')
+%         mask = nCells > idx_valid(:);
+%         Data.mask_QC_3D(mask) = QC_BAD;
+% 
+%         prombt = ['Sidelobe contamination for each time step varies between ' ...
+%             ' %d and %d out of %d bins.\nBins contaminated by' ...
+%             ' sidelobe interference flagged as QC_BAD (%d).\n'];
+%         fprintf(fidlog, prombt, ...
+%             min(idx_valid(Data.mask_QC_1D==0))+1, max(idx_valid(Data.mask_QC_1D==0))+1, max(nCells), QC_BAD);
+%         break
+% 
+%     elseif strcmpi(reply, 'N') || strcmpi(reply, 'NO')
+%         prombt = ['Sidelobe contamination for each time step varies between ' ...
+%             'bin %d and %d out of %d bins.\nOperator chose NOT to flag ' ...
+%             'bins contaminated by sidelobe interference.\n'];
+%         fprintf(1, prombt, ...
+%             min(idx_valid(Data.mask_QC_1D==0))+1, max(idx_valid(Data.mask_QC_1D==0))+1, max(nCells)); % to screen
+%         fprintf(fidlog, prombt, ...
+%             min(idx_valid(Data.mask_QC_1D==0))+1, max(idx_valid(Data.mask_QC_1D==0))+1, max(nCells));
+%         break
+% 
+%     else
+%         fprintf('Invalid entry. Enter Y or N (press Return for default).\n');
+%         reply = input('Y/N [Y]: ', 's');   % re-prompt and read again
+%         if isempty(reply)
+%             reply = 'Y';
+%         end
+%     end
+% end
+
+
 end
 fprintf(fidlog, '\n==== END ENTRY  =====\n');
 fclose(fidlog);
