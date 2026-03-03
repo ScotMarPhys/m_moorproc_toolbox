@@ -111,7 +111,7 @@ t_lim = datestr(DS.calibration_window);
 deg = char(176); 
 prombt = ['\n\n***Hard-Iron compass correction***\n' ...
     'Simple circle fitted to data from\n %s to %s.\n' ...
-    'Velocity data corrected for error angle varying between %3.0f' deg ... 
+    'Horizontal velocity data corrected for error angle varying between %3.0f' deg ... 
     'and %3.0f' deg '\n'];
 fprintf(1, prombt, t_lim(1,:),t_lim(2,:),err_min, err_max); 
 fprintf(fidlog, prombt,t_lim(1,:),t_lim(2,:), err_min, err_max); 
@@ -128,9 +128,9 @@ V_final = DS.U_hard_iron_corrected .* sind(magdev) + DS.V_hard_iron_corrected .*
 % Logfile output
 deg = char(176); 
 prombt = ['\n\n***Magnetic deviation***\n' ...
-    'Velocity data corrected for magnetic deviation of %3.0f' deg '\n'];
-fprintf(1, prombt, t_lim(1),t_lim(2),err_min, err_max); 
-fprintf(fidlog, prombt,t_lim(1),t_lim(2), err_min, err_max); 
+    'Horizontal velocity data corrected for magnetic deviation of %3.0f' deg '\n'];
+fprintf(1, prombt, magdev); 
+fprintf(fidlog, prombt,magdev); 
 
 %% Calculate depth matrix
 
