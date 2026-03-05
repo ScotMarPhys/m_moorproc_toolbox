@@ -1,0 +1,401 @@
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests
+END
+test_inq_dimid.m
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_inq_dimid.m
+END
+test_inq_attlen.m
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_inq_attlen.m
+END
+test_rename_dim.m
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_rename_dim.m
+END
+test_attinq.m
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_attinq.m
+END
+test_set_fill.m
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_set_fill.m
+END
+test_create.m
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_create.m
+END
+test_put_get_var_double.m
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_put_get_var_double.m
+END
+test_inquire.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_inquire.m
+END
+test_inq_varid.m
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_inq_varid.m
+END
+test_del_att.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_del_att.m
+END
+test_put_get_att.m
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_put_get_att.m
+END
+test_vara_put_get.m
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_vara_put_get.m
+END
+test_attrename.m
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_attrename.m
+END
+test_endef.m
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_endef.m
+END
+test_strerror.m
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_strerror.m
+END
+test_attcopy.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_attcopy.m
+END
+test_def_dim.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_def_dim.m
+END
+test_varputg.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_varputg.m
+END
+test_redef_def_dim.m
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_redef_def_dim.m
+END
+test_inq_var.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_inq_var.m
+END
+test_vars_put_get.m
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_vars_put_get.m
+END
+test_put_get_var_float.m
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_put_get_var_float.m
+END
+test_vardef.m
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_vardef.m
+END
+test_mexnc.m
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_mexnc.m
+END
+test_get_var1_text.m
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_get_var1_text.m
+END
+test_inq_attid.m
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_inq_attid.m
+END
+test_copy_att.m
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_copy_att.m
+END
+test_put_get_var_text.m
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_put_get_var_text.m
+END
+create_test_ncfile.m
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/create_test_ncfile.m
+END
+test_lfs.m
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_lfs.m
+END
+test_inq_unlimdim.m
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_inq_unlimdim.m
+END
+test_dimid.m
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_dimid.m
+END
+test_inq.m
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_inq.m
+END
+test_dimdef.m
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_dimdef.m
+END
+test_put_get_var_int.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_put_get_var_int.m
+END
+test_attname.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_attname.m
+END
+test_put_varm.m
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_put_varm.m
+END
+test_put_get_var_schar.m
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_put_get_var_schar.m
+END
+test_inq_att.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_inq_att.m
+END
+test__open.m
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test__open.m
+END
+test_put_get_var_uchar.m
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_put_get_var_uchar.m
+END
+test_open.m
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_open.m
+END
+test_inq_atttype.m
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_inq_atttype.m
+END
+test__create.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test__create.m
+END
+test_varmget.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_varmget.m
+END
+test_varid.m
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_varid.m
+END
+test_varput_1g.m
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_varput_1g.m
+END
+test_attdel.m
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_attdel.m
+END
+test_rename_var.m
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_rename_var.m
+END
+test_typelen.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_typelen.m
+END
+test_inq_dim.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_inq_dim.m
+END
+test_varput.m
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_varput.m
+END
+test_put_get_var_short.m
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_put_get_var_short.m
+END
+test_varinq.m
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_varinq.m
+END
+test_put_var_bad_param_datatype.m
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_put_var_bad_param_datatype.m
+END
+test_dimrename.m
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_dimrename.m
+END
+test_varput1.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_varput1.m
+END
+README
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/README
+END
+test_def_var.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_def_var.m
+END
+test_get_var_bad_param_datatype.m
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_get_var_bad_param_datatype.m
+END
+test_sync.m
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_sync.m
+END
+test_rename_att.m
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_rename_att.m
+END
+test_varrename.m
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_varrename.m
+END
+test_attput.m
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_attput.m
+END
+test_diminq.m
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test_diminq.m
+END
+test__enddef.m
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/tests/test__enddef.m
+END

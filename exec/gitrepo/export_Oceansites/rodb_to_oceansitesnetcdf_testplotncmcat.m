@@ -29,19 +29,19 @@ set(fig,'PaperUnits','centimeters','PaperOrientation','portrait',...
 				    'Paperposition',figpos)
 subplot(3,1,1)
 plot(mcatncdata.time, mcatncdata.PRES);
-title([moor ' P (db)'], 'interpreter', 'none')
-datetick; grid on; axis ij;
-legend(string(mcatinfo.serial_num),'Location','best')
+title([moor ' P (db)'])
+datetick
+legend(string(mcatinfo.serial_num),'Location','eastoutside')
 
 subplot(3,1,2)
 plot(mcatncdata.time, mcatncdata.TEMP);
-title([moor ' T (C)'], 'interpreter', 'none')
-datetick; grid on;
+title([moor ' T (C)'])
+datetick
 
 subplot(3,1,3)
 plot(mcatncdata.time, mcatncdata.PSAL);
-title([moor ' SAL'], 'interpreter', 'none')
-datetick; grid on;
+title([moor ' SAL'])
+datetick
 
 print('-dpng',namefig1)
 

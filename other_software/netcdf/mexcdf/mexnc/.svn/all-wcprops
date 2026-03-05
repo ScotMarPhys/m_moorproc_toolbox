@@ -1,0 +1,161 @@
+K 25
+svn:wc:ra_dav:version-url
+V 53
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3
+END
+nc_float.m
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/nc_float.m
+END
+nc_share_mode.m
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/nc_share_mode.m
+END
+nc_noclobber_mode.m
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/nc_noclobber_mode.m
+END
+nc_double.m
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/nc_double.m
+END
+AUTHORS
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/AUTHORS
+END
+nc_clobber_mode.m
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/nc_clobber_mode.m
+END
+ChangeLog
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/ChangeLog
+END
+nc_char.m
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/nc_char.m
+END
+Contents.m
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/Contents.m
+END
+README
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/README
+END
+nc_nat.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/nc_nat.m
+END
+mexcdf.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/mexcdf.m
+END
+nc_nofill_mode.m
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/nc_nofill_mode.m
+END
+nc_int.m
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/nc_int.m
+END
+mexnc.m
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/mexnc.m
+END
+nc_fill_mode.m
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/nc_fill_mode.m
+END
+nc_nowrite_mode.m
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/nc_nowrite_mode.m
+END
+mexcdf60.m
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/mexcdf60.m
+END
+nc_lock_mode.m
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/nc_lock_mode.m
+END
+COPYING
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/COPYING
+END
+mexcdf53.m
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/mexcdf53.m
+END
+nc_write_mode.m
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/nc_write_mode.m
+END
+nc_short.m
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/nc_short.m
+END
+nc_global.m
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/nc_global.m
+END
+nc_64bit_offset_mode.m
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/nc_64bit_offset_mode.m
+END
+nc_byte.m
+K 25
+svn:wc:ra_dav:version-url
+V 63
+/svnroot/mexcdf/!svn/ver/2552/mexnc/tags/mexcdf-2.9.3/nc_byte.m
+END
