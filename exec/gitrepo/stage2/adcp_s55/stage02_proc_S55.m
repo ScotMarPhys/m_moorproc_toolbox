@@ -49,6 +49,19 @@ else
     end
 end
 
+% Build post-processing flag array
+% Reference values (Consistent with original)
+QC_NOT_EVALUATED = 0; 
+QC_GOOD = 1; 
+QC_UNKNOWN = 2; 
+QC_PROBABLY_BAD = 3;
+QC_BAD = 4; 
+QC_CHANGED = 5; 
+QC_UNSAMPLED = 6; 
+QC_INTERPOLATED = 7;
+%QC_COMPASS_BAD = 8; 
+QC_MISSING = 9;
+
 % Directory and Logfile Validation
 if ~exist(outdir, 'dir'), mkdir(outdir); end
 
@@ -135,56 +148,86 @@ fprintf(fidlog, prombt,magdev);
 %% Calculate depth matrix
 
 % Prompt user: 'y' for MicroCAT, anything else for ADCP
-user_choice = input('\n\nUse MicroCAT data for \nPressure/SoS correction? [y/n] (default n): ', 's');
+user_choice = input('\n\nUse MicroCAT data for pressure/speed of sound correction? [y/n] (default n): ', 's');
 
-if strcmpi(user_choice, 'y')
-    use_MC = true;
-    prombt = ['\n\nUsing MicroCAT sensors data and apply speed of sound\n' ...
-        ' correction for depth calculation.\n'];
-else
-    use_MC = false;
-    prombt = ['\n\nUsing internal ADCP pressure sensors and \nno speed of sound' ...
-        ' correction for depth calculation.\n'];
-    
+use_MC = strcmpi(user_choice, 'y');
+
+if use_MC
+    try
+        % 1. Determine folder
+        indir_microcat = fullfile(fileparts(dataindir), 'microcat');
+        if ~isfolder(indir_microcat)
+            indir_microcat = input('Microcat path not found. Please enter path: ', 's');
+        end
+        if ~isfolder(indir_microcat), error('Path invalid'); end
+
+        % 2. Find microcat closest to ADCP
+        [mc_num, mc_sn] = find_microcat_index(info_adcp, serial_nums(i));
+
+        mc_dlm_fn = sprintf('%s_%3.3d.microcat', moor, mc_num);
+        mc_st2_fn = sprintf('%s_%4.4d.use', moor, mc_sn);
+
+        if isfile(fullfile(indir_microcat, mc_dlm_fn))
+            mc_infile = fullfile(indir_microcat, mc_dlm_fn);;
+        elseif isfile(fullfile(indir_microcat, mc_st2_fn))
+            mc_infile = fullfile(indir_microcat, mc_st2_fn);
+        else
+            error(sprintf('Neither %s nor %s file found.',mc_dlm_fn,mc_st2_fn));
+        end
+        
+        % Updated prompt including the extension found
+        prombt = sprintf('\n Using MicroCAT data (%s) & speed of sound correction.\n', ...
+            strrep(mc_infile, '\', '\\'));
+
+    catch ME
+        % If any of the above fails, force use_MC to false and notify user
+        warning('MicroCAT failed: %s. Falling back to ADCP sensors.', ME.message);
+        use_MC = false;
+    end
 end
+
+% This 'if' handles the original 'else' case AND the 'catch' fallback
+if ~use_MC
+    prombt = "\n Using internal ADCP sensors. No speed of sound correction.\n";
+end
+
 
 fprintf(fidlog,prombt);
 fprintf(prombt);
 
-% Check if use_MC is active and intercept if it's not operational
-if use_MC
-    warning(['The option to use MicroCat data is currently not operational. ' ...
-             'Falling back to use internal ADCP sensors for pressure.']);
-    use_MC = false; % Force the flag to false
-end
 
 if use_MC
-    % 1. Load MicroCAT (MC) data placeholder
-    % pd = moor_inoutpaths('microcat',moor)
-      % case 'microcat'
-      %   moor = loc;
-      %   pd.rawpath = fullfile(mg.moordatadir, 'raw', mg.cruise, 'microcat');
-      %   pd.infofile = fullfile(mg.moordatadir, 'proc', moor, [moor 'info.dat']);
-      %   pd.stage1path = fullfile(mg.moordatadir, 'proc', moor, 'microcat');
-      %   pd.stage1form = [moor '_%4.4d.raw'];
-      %   pd.stage1log = fullfile(pd.stage1path,'stage1_log');
-      %   pd.stage2path = fullfile(mg.moordatadir, 'proc', moor, 'microcat');
-      %   pd.stage2form = [moor '_%4.4d.use'];
-      %   pd.stage2log = fullfile(pd.stage2path, ['stage2_log_' moor,'.log']);
-      %   pd.stage2figpath = fullfile(mg.reportdir, 'figs');
-    % mooringpath  = [pathosnap '/data/moor/proc']; use pd for mooringpath
-    % mc_path = [mooringpath,':',moor,':microcat:[',num2str(mc_ind),']'];  
-    % [yy_mc,mm,dd,hh,t,c,p,sn_mc,depth_mc] = ...
-    %     rodbload(mc_path,'yy:mm:dd:hh:t:c:p:SerialNumber:Instrdepth');
-
-    % 2. Interpolate MC Pressure onto ADCP Time
-    % interp1(source_time, source_data, target_time)
-    pres = interp1(MC.time, MC.pres, DS.Average_Time, 'linear', 'extrap');
+        
+    % 1. Load and Interpolate MicroCAT data onto ADCP timeline
+    MC = load_microcat_data(mc_infile);
     
-    % 3. Calculate Speed of Sound (SoS) profile from MC T and S
-    % If you have a string of MicroCATs, c_ref and z_ref would be vectors.
-    % If you only have one, it acts as a constant offset.
-    c_ref = gsw_speed_of_sound(MC.salt, MC.temp, MC.pres); % True SoS
+    % Interpolate all variables to ADCP's Average_Time
+    % 'pchip' or 'linear' are usually best; 'extrap' is risky but keeps the code running
+    mc_t_interp  = interp1(MC.time, MC.t,  DS.time, 'linear', 'extrap');
+    mc_p_interp  = interp1(MC.time, MC.p,  DS.time, 'linear', 'extrap');
+    mc_sp_interp = interp1(MC.time, MC.SP, DS.time, 'linear', 'extrap');
+    
+    % 2. Flag ADCP data outside MicroCAT time range
+    bad_in = (DS.time < min(MC.time, [], 'omitnan')) | ...
+             (DS.time > max(MC.time, [], 'omitnan'));
+    
+    if any(bad_in)
+        DS.mask_QC_1D(bad_in) = QC_BAD;
+        DS.mask_QC_3D(bad_in, :) = QC_BAD; 
+    end
+
+    mc_t_interp(DS.mask_QC_1D~=0)  = NaN;
+    mc_p_interp(DS.mask_QC_1D~=0)  = NaN;
+    mc_sp_interp(DS.mask_QC_1D~=0)  = NaN;
+    
+    % 3. Calculate Speed of Sound (SoS) using GSW
+    % Use the interpolated values so the dimensions match DS.Average_Time
+    [SA, ~] = gsw_SA_from_SP(mc_sp_interp, mc_p_interp, info_adcp.lon, info_adcp.lat);
+    CT      = gsw_CT_from_t(SA, mc_t_interp, mc_p_interp);
+    c_ref   = gsw_sound_speed(SA, CT, mc_p_interp); 
+    
+    
+    c_ref = gsw_sound_speed(SA,CT,pres); % True SoS
     z_ref = gsw_z_from_p(MC.pres, DS.latitude);           % MC Depth
     
     % 4. Calculate Instrument Depth (Negative for GSW consistency)
@@ -361,4 +404,26 @@ function [R_true] = correct_adcp_range_by_profile(R_nominal, c_inst, z_instr, z_
             R_true(t, k) = current_R;
         end
     end
+end
+
+function [idx, closest_sn] = find_microcat_index(info_adcp,sn)
+    % Find ADCP and Microcat indices based on ID ranges
+    is_adcp = info_adcp.sn == sn;
+    is_mc   = info_adcp.id >= 333 & info_adcp.id <= 337;
+    
+    % Get depth of the ADCP (assumes one ADCP; if multiple, uses the first)
+    adcp_z = info_adcp.z(find(is_adcp, 1));
+    
+    % Get depths and serial numbers of all Microcats
+    mc_zs = info_adcp.z(is_mc);
+    mc_sns = info_adcp.sn(is_mc);
+    
+    % Find which Microcat is closest to the ADCP depth
+    [~, closest_pos] = min(abs(mc_zs - adcp_z));
+    target_z = mc_zs(closest_pos);
+    closest_sn = mc_sns(closest_pos);
+    
+    % Count Microcats shallower than (or equal to) the target depth
+    % This returns the "n-th" Microcat from the surface
+    idx = sum(mc_zs <= target_z);
 end

@@ -59,6 +59,8 @@ switch datatype
         pd.stage2form = [moor '_%4.4d.use'];
         pd.stage2log = fullfile(pd.stage2path, ['stage2_log_' moor,'.log']);
         pd.stage2figpath = fullfile(mg.reportdir, 'figs');
+        pd.stage3path = stage2path;
+        pd.stage3form = [moor '_%3.3d.microcat'];
 
     case {'nor','nortek'}
         datatype = 'nor';
