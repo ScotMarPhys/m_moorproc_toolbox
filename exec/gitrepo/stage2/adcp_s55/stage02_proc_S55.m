@@ -115,7 +115,7 @@ fprintf(fidlog,'ADCP serial number  : %d\n\n',serial_nums(i));
 
 %% Compass correction
 % 1. Fix the Hard-Iron (Compass) error first
-[DS, h_fig] = s55_hard_iron_compass_correction(DS, 0, true, true, true);
+[DS, h_fig] = s55_hard_iron_compass_correction(DS, 0, true, true, true,outdir,filename);
 err_min = min(DS.hard_iron_CCW_angle,[],'omitnan');
 err_max = max(DS.hard_iron_CCW_angle,[],'omitnan');
 t_lim = datestr(DS.calibration_window);
@@ -133,6 +133,7 @@ fprintf(fidlog, prombt,t_lim(1,:),t_lim(2,:), err_min, err_max);
 set(h_fig,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
 print(h_fig,'-dpng',fullfile(outdir,[filename,'_f1_hard_iron_correction.png']));
 
+
 % 2. Now rotate the corrected U/V to True North
 magdev = info_adcp.magdev;
 U_final = DS.U_hard_iron_corrected .* cosd(magdev) - DS.V_hard_iron_corrected .* sind(magdev);
@@ -144,6 +145,69 @@ prombt = ['\n\n***Magnetic deviation***\n' ...
     'Horizontal velocity data corrected for magnetic deviation of %3.0f' deg '\n'];
 fprintf(1, prombt, magdev); 
 fprintf(fidlog, prombt,magdev); 
+
+%% plot data to check rotation is reasonable
+U_QC = DS.Average_VelEast; U_QC(DS.mask_QC_3D~=0)=NaN;
+V_QC = DS.Average_VelNorth; V_QC(DS.mask_QC_3D~=0)=NaN;
+U_HI = DS.U_hard_iron_corrected; U_HI(DS.mask_QC_3D~=0)=NaN;
+V_HI = DS.V_hard_iron_corrected; V_HI(DS.mask_QC_3D~=0)=NaN;
+U_final(DS.mask_QC_3D~=0)=NaN;
+V_final(DS.mask_QC_3D~=0)=NaN;
+y = DS.Nominal_CellDepth;
+
+f2 = figure(2); clf;
+% Create a 2x3 grid of 'groups', each group has a [Plot, Profile] pair
+tlo_main = tiledlayout(2, 3, 'TileSpacing', 'compact', 'Padding', 'tight'); 
+
+% Pre-calculate mean profiles (omit NaNs)
+y = DS.Nominal_CellDepth;
+data_list = {U_QC, U_HI, U_final, V_QC, V_HI, V_final};
+titles = {'Uncorrected U', 'Hard-Iron U', 'U Final', 'Uncorrected V', 'Hard-Iron V', 'V Final'};
+
+% High-Contrast Colormap: [Cyan; Blue-White-Red; Yellow]
+b_to_w = [linspace(0,1,11)', linspace(0,1,11)', ones(11,1)];
+w_to_r = [ones(10,1), linspace(0.9,0,10)', linspace(0.9,0,10)'];
+cmap = [[0 1 1]; b_to_w; w_to_r; [1 1 0]];
+
+for k = 1:6
+    % Create a nested layout for this specific data variable
+    tlo_sub = tiledlayout(tlo_main, 1, 10); 
+    tlo_sub.Layout.Tile = k;
+    
+    % --- 1. The Main Contour Plot (occupies 8/10 of the width) ---
+    ax_cont = nexttile(tlo_sub, 1, [1 7]);
+    im = imagesc(ax_cont, DS.time, y, data_list{k}');
+    set(ax_cont, 'YDir', 'reverse', 'Color', [0.8 0.8 0.8]);
+    set(ax_cont, 'YAxisLocation', 'right');
+    set(im, 'AlphaData', ~isnan(data_list{k}'));
+    datetick(ax_cont, 'x', 'mm-yy', 'keeplimits');
+    ylim(ax_cont, [0, 1080]);
+    colormap(ax_cont, cmap);
+    clim(ax_cont, [-1.1, 1.1]);
+    title(ax_cont, titles{k});
+    % Add colorbar to the contour plot specifically
+    cb = colorbar(ax_cont, 'westoutside'); % or 'eastoutside'
+    cb.Ticks = [-1, 0, 1];
+     title(cb, 'm/s')
+    
+    % --- 2. The Slim Profile Plot (occupies 2/10 of the width) ---
+    ax_prof = nexttile(tlo_sub, 8, [1 3]);
+    mean_vel = mean(data_list{k}, 1, 'omitnan'); % Mean along time
+    plot(ax_prof, mean_vel, y, 'k', 'LineWidth', 1);
+    
+    set(ax_prof, 'YDir', 'reverse', 'YTickLabel', [], 'Box', 'on');
+    grid(ax_prof, 'on');
+    ylim(ax_prof, [0, 1080]);
+    xlim(ax_prof, [-0.1 0.1]); % Adjust range based on your expected mean currents
+    xlabel(ax_prof, 'm/s');
+    title(ax_prof,'mean')
+    
+end
+
+% Save figure
+set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
+print('-dpng',fullfile(outdir,[filename,'_stage2_f2_UV_hard_iron_mag_dev_correction.png']));
+clear ax
 
 %% Calculate depth matrix
 

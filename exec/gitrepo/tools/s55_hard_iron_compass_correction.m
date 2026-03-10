@@ -1,8 +1,13 @@
-function [Data_corr, h_fig] = s55_hard_iron_compass_correction(Data, flag_value, apl_cor, plot_data, select_time_frame)
+function [Data_corr, h_fig] = s55_hard_iron_compass_correction(Data, flag_value, apl_cor, plot_data, select_time_frame,outdir,filename)
     % 1. Set Defaults
     if nargin < 3 || isempty(apl_cor),  apl_cor = false; end
     if nargin < 4 || isempty(plot_data), plot_data = true; end
     if nargin < 5 || isempty(select_time_frame), select_time_frame = false; end
+    if nargin < 7 || isempty(outdir) || isempty(filename)
+        select_time_file = false;
+    else
+        select_time_file = true;
+    end
 
     % 2. Initialize Outputs
     h_fig = [];
@@ -28,7 +33,19 @@ function [Data_corr, h_fig] = s55_hard_iron_compass_correction(Data, flag_value,
 
     % Variables for iterative fitting
     keep_refining = true;
-    time_mask = true(size(T)); % Initially use all data
+
+    if select_time_file
+        csv_path = fullfile(outdir, [filename, '_hard_iron_time_selection.csv']);
+        if exist(csv_path, 'file')
+            pre_selected_limits = readmatrix(csv_path);
+            if ~isempty(pre_selected_limits)
+                time_mask = (T >= pre_selected_limits(1)) & (T <= pre_selected_limits(2));
+            end
+        end
+    else
+        time_mask = true(size(T)); % Initially use all data
+    end
+        
 
     while keep_refining
         %% 5. Solve for circle parameters using valid data in the SELECTED window
@@ -112,6 +129,10 @@ function [Data_corr, h_fig] = s55_hard_iron_compass_correction(Data, flag_value,
                     time_mask = (T >= limits(1)) & (T <= limits(2));
                     fprintf('Selected: %s to %s\n', datestr(limits(1)), datestr(limits(2)));
                     close(h_sel);
+                    % SAVE the new selection
+                    if ~all(time_mask)
+                        writematrix(limits, csv_path);
+                    end
                 else
                     keep_refining = false;
                 end
@@ -126,7 +147,7 @@ function [Data_corr, h_fig] = s55_hard_iron_compass_correction(Data, flag_value,
     %% 8. Final Application and Metadata
     if apl_cor
         Data_corr.U_hard_iron_corrected = U .* cosd(angle_err) - V .* sind(angle_err);
-        Data_corr.V_hard_iron_corrected = V .* sind(angle_err) + V .* cosd(angle_err);
+        Data_corr.V_hard_iron_corrected = U .* sind(angle_err) + V .* cosd(angle_err);
     end 
     
     Data_corr.hard_iron_offset_x  = xc;
