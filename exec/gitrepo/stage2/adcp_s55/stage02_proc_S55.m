@@ -156,25 +156,29 @@ V_final(DS.mask_QC_3D~=0)=NaN;
 y = DS.Nominal_CellDepth;
 
 f2 = figure(2); clf;
-% Create a 2x3 grid of 'groups', each group has a [Plot, Profile] pair
-tlo_main = tiledlayout(2, 3, 'TileSpacing', 'compact', 'Padding', 'tight'); 
+% Change to 3 rows, 2 columns
+tlo_main = tiledlayout(3, 2, 'TileSpacing', 'compact', 'Padding', 'tight'); 
 
-% Pre-calculate mean profiles (omit NaNs)
-y = DS.Nominal_CellDepth;
-data_list = {U_QC, U_HI, U_final, V_QC, V_HI, V_final};
-titles = {'Uncorrected U', 'Hard-Iron U', 'U Final', 'Uncorrected V', 'Hard-Iron V', 'V Final'};
+% Reorder data so Row 1 = QC, Row 2 = HI, Row 3 = Final
+data_list = {U_QC, V_QC, ...      % Row 1
+             U_HI, V_HI, ...      % Row 2
+             U_final, V_final};   % Row 3
 
-% High-Contrast Colormap: [Cyan; Blue-White-Red; Yellow]
+titles = {'Uncorrected U', 'Uncorrected V', ...
+          'Hard-Iron U', 'Hard-Iron V', ...
+          'U Final', 'V Final'};
+
+% High-Contrast Colormap
 b_to_w = [linspace(0,1,11)', linspace(0,1,11)', ones(11,1)];
 w_to_r = [ones(10,1), linspace(0.9,0,10)', linspace(0.9,0,10)'];
 cmap = [[0 1 1]; b_to_w; w_to_r; [1 1 0]];
 
 for k = 1:6
-    % Create a nested layout for this specific data variable
+    % Nested layout remains the same
     tlo_sub = tiledlayout(tlo_main, 1, 10); 
     tlo_sub.Layout.Tile = k;
     
-    % --- 1. The Main Contour Plot (occupies 8/10 of the width) ---
+    % --- 1. The Main Contour Plot ---
     ax_cont = nexttile(tlo_sub, 1, [1 7]);
     im = imagesc(ax_cont, DS.time, y, data_list{k}');
     set(ax_cont, 'YDir', 'reverse', 'Color', [0.8 0.8 0.8]);
@@ -183,25 +187,24 @@ for k = 1:6
     datetick(ax_cont, 'x', 'mm-yy', 'keeplimits');
     ylim(ax_cont, [0, 1080]);
     colormap(ax_cont, cmap);
-    clim(ax_cont, [-1.1, 1.1]);
+    clim(ax_cont, [-.52, .52]);
     title(ax_cont, titles{k});
-    % Add colorbar to the contour plot specifically
-    cb = colorbar(ax_cont, 'westoutside'); % or 'eastoutside'
-    cb.Ticks = [-1, 0, 1];
-     title(cb, 'm/s')
     
-    % --- 2. The Slim Profile Plot (occupies 2/10 of the width) ---
+    cb = colorbar(ax_cont, 'westoutside');
+    cb.Ticks = [-.5, 0, .5];
+    title(cb, 'm/s')
+    
+    % --- 2. The Slim Profile Plot ---
     ax_prof = nexttile(tlo_sub, 8, [1 3]);
-    mean_vel = mean(data_list{k}, 1, 'omitnan'); % Mean along time
+    mean_vel = mean(data_list{k}, 1, 'omitnan');
     plot(ax_prof, mean_vel, y, 'k', 'LineWidth', 1);
     
     set(ax_prof, 'YDir', 'reverse', 'YTickLabel', [], 'Box', 'on');
     grid(ax_prof, 'on');
     ylim(ax_prof, [0, 1080]);
-    xlim(ax_prof, [-0.1 0.1]); % Adjust range based on your expected mean currents
+    xlim(ax_prof, [-0.1 0.1]); 
     xlabel(ax_prof, 'm/s');
     title(ax_prof,'mean')
-    
 end
 
 % Save figure
@@ -210,6 +213,11 @@ print('-dpng',fullfile(outdir,[filename,'_stage2_f2_UV_hard_iron_mag_dev_correct
 clear ax
 
 %% Calculate depth matrix
+
+% Use internal ADCP Sensors
+pres = DS.Average_Pressure; 
+pres(DS.mask_QC_1D ~= 0) = NaN; 
+instr_depth = gsw_z_from_p(pres, DS.latitude);
 
 % Prompt user: 'y' for MicroCAT, anything else for ADCP
 user_choice = input('\n\nUse MicroCAT data for pressure/speed of sound correction? [y/n] (default n): ', 's');
@@ -262,8 +270,11 @@ fprintf(prombt);
 
 if use_MC
         
-    % 1. Load and Interpolate MicroCAT data onto ADCP timeline
+    %% 1. Load and Interpolate MicroCAT data onto ADCP timeline
     MC = load_microcat_data(mc_infile);
+
+    R_old = DS.Dist2Instr_CellMidpoint;
+    c_old = DS.Average_Soundspeed;
     
     % Interpolate all variables to ADCP's Average_Time
     % 'pchip' or 'linear' are usually best; 'extrap' is risky but keeps the code running
@@ -277,37 +288,44 @@ if use_MC
     
     if any(bad_in)
         DS.mask_QC_1D(bad_in) = QC_BAD;
-        DS.mask_QC_3D(bad_in, :) = QC_BAD; 
+        DS.mask_QC_3D(bad_in, :) = QC_BAD;
     end
 
     mc_t_interp(DS.mask_QC_1D~=0)  = NaN;
     mc_p_interp(DS.mask_QC_1D~=0)  = NaN;
     mc_sp_interp(DS.mask_QC_1D~=0)  = NaN;
+    pres(DS.mask_QC_1D ~= 0) = NaN; 
+    c_old(DS.mask_QC_1D~=0)  = NaN;
+
+    % apply offset to MC data
+    offset = mean(pres-mc_p_interp,1,"omitmissing");
     
     % 3. Calculate Speed of Sound (SoS) using GSW
     % Use the interpolated values so the dimensions match DS.Average_Time
     [SA, ~] = gsw_SA_from_SP(mc_sp_interp, mc_p_interp, info_adcp.lon, info_adcp.lat);
     CT      = gsw_CT_from_t(SA, mc_t_interp, mc_p_interp);
-    c_ref   = gsw_sound_speed(SA, CT, mc_p_interp); 
+    c_true   = gsw_sound_speed(SA, CT, mc_p_interp); 
+    z_new = gsw_z_from_p(mc_p_interp+offset, info_adcp.lat); % MC Depth
     
+    scotia_fn = fullfile('C:\Users\sa07kb\OneDrive - SAMS\data\data_SCOTIA\SCOTIA_monthly_clim_V8.nc');
+    scotia = load_scotia_at_location(scotia_fn, info_adcp.lon);
+    scotia.z = gsw_z_from_p(scotia.pres, info_adcp.lat); % MC Depth
     
-    c_ref = gsw_sound_speed(SA,CT,pres); % True SoS
-    z_ref = gsw_z_from_p(MC.pres, DS.latitude);           % MC Depth
+    %%
+    scotia_sos_interp = interp1(-scotia.z, scotia.sos, ...
+        DS.Nominal_CellDepth, 'linear', 'extrap');
+
+    whos scotia_sos_interp c_old R_old
+    R_true = correct_adcp_range(c_true, c_old, R_old);
+    R_true_scotia = correct_adcp_range(scotia_sos_interp,1500*ones(1,12), R_old);
     
-    % 4. Calculate Instrument Depth (Negative for GSW consistency)
-    instr_depth = gsw_z_from_p(pres, DS.latitude);
-    
-    % 5. Correct Bin Range using the SoS Profile function
+    %% 5. Correct Bin Range using the SoS Profile function
     % R_nominal is DS.Dist2Instr_CellMidpoint
     % c_inst is DS.Average_Soundspeed
     R_true = correct_adcp_range_by_profile(DS.Dist2Instr_CellMidpoint, ...
                                            DS.Average_Soundspeed, ...
                                            instr_depth, z_ref, c_ref, 'up');
 else
-    % Use internal ADCP Sensors
-    pres = DS.Average_Pressure; 
-    pres(DS.mask_QC_1D ~= 0) = NaN; 
-    instr_depth = gsw_z_from_p(pres, DS.latitude);
     
     % Use nominal range (no profile correction)
     R_true = DS.Dist2Instr_CellMidpoint(:)';
@@ -409,65 +427,76 @@ fclose(fidlog);
 end
 
 % correct range for speed of sound
-function [R_true] = correct_adcp_range_by_profile(R_nominal, c_inst, z_instr, z_ref, c_ref, orientation)
-% CORRECT_ADCP_RANGE_BY_PROFILE Calculates true acoustic range using a SS profile.
-%
-% USAGE:
-%   R_true = correct_adcp_range_by_profile(R_nominal, c_inst, z_instr, z_ref, c_ref, 'up')
+function R_true = correct_adcp_range(c_true, c_old, R_old)
+% CORRECT_ADCP_RANGE Calculates true acoustic range using SOS ratio.
+% Works if c_true is (Time x 1), (1 x Depth), or (Time x Depth).
 %
 % INPUTS:
-%   R_nominal   : [1 x Cells] or [Cells x 1]Nominal distance from head to bin (positive m)
-%   c_inst      : [Time x 1] Speed of sound used by ADCP (m/s)
-%   z_instr     : [Time x 1] Depth of ADCP transducer (negative m, e.g., -500)
-%   z_ref       : [M x 1] Reference depths for the SS profile (negative m)
-%   c_ref       : [M x 1] Reference speed of sound values (m/s)
-%   orientation : 'up' or 'down' (string)
-%
-% OUTPUTS:
-%   R_true      : [Time x Cells] Physically corrected range from head (positive m)
+%   c_true : [T x 1], [1 x D], or [T x D] Correct sound speed
+%   c_old  : [T x 1] Sound speed used by instrument
+%   R_old  : [D x 1] or [1 x D] Nominal bin ranges
 
-    if ~isvector(R_nominal)
-        error('R_nominal must be a vector (1D array).');
-    end
-    R_nominal = R_nominal(:)'; 
+    % 1. Standardize inputs to ensure correct orientation for broadcasting
+    c_old = c_old(:);       % Force to [T x 1]
+    R_old = R_old(:)';      % Force to [1 x D] (Row vector)
+    
+    % 2. Handle c_true orientation based on its size
+    [rows, cols] = size(c_true);
+    nT = length(c_old);
+    nD = length(R_old);
 
-    nTime = length(c_inst);
-    nCells = length(R_nominal);
-    R_true = zeros(nTime, nCells);
-
-    % 1. Convert nominal range to travel time (one-way)
-    % This is the "Time Gate" the ADCP used to define each bin
-    T_nominal = R_nominal ./ c_inst; 
-
-    % 2. Iteratively integrate the profile for each time step
-    for t = 1:nTime
-        current_R = 0; % Distance from head starts at 0
-        
-        for k = 1:nCells
-            % Time increment for this bin segment
-            if k == 1
-                dt = T_nominal(t, k);
-            else
-                dt = T_nominal(t, k) - T_nominal(t, k-1);
-            end
-            
-            % Determine the depth of this specific bin segment
-            if strcmpi(orientation, 'up')
-                % Moving toward the surface: -500 + 10 = -490m
-                current_Z = z_instr(t) + current_R; 
-            else
-                % Moving toward the bottom: -500 - 10 = -510m
-                current_Z = z_instr(t) - current_R;
-            end
-            
-            % Find local Speed of Sound at this segment's depth
-            c_local = interp1(z_ref, c_ref, current_Z, 'linear', 'extrap');
-            
-            % Update "True" range
-            current_R = current_R + (c_local * dt);
-            R_true(t, k) = current_R;
+    if isvector(c_true)
+        if length(c_true) == nD
+            c_true = c_true(:)'; % Force to [1 x D]
+        else
+            c_true = c_true(:);  % Force to [T x 1]
         end
+    elseif rows == nD && cols == nT
+        c_true = c_true';        % Flip [D x T] to [T x D]
     end
+
+    % 3. Calculate using Implicit Expansion
+    % MATLAB automatically expands (T x 1), (1 x D), or (T x D) 
+    % to match the final result matrix [T x D].
+    R_true = (c_true ./ c_old) .* R_old;
+
+end
+
+function scotia = load_scotia_at_location(scotia_fn, adcp_lon)
+    % 1. Load longitude grid to find the nearest point
+    lon_grid = ncread(scotia_fn, 'lon');
+    
+    % Handle potential 0-360 vs -180-180 differences
+    adj_adcp_lon = adcp_lon;
+    if any(lon_grid < 0) && adcp_lon > 180, adj_adcp_lon = adcp_lon - 360; end
+    if any(lon_grid > 180) && adcp_lon < 0, adj_adcp_lon = adcp_lon + 360; end
+
+    % Find index of the closest longitude
+    [~, idx] = min(abs(lon_grid - adj_adcp_lon));
+    scotia.lon_match = lon_grid(idx);
+    
+    % 2. Load 1D variables
+    scotia.pres  = ncread(scotia_fn, 'pres');  % [251 x 1]
+    scotia.month = ncread(scotia_fn, 'month'); % [12 x 1]
+    
+    % 3. Extract 3D slices for the specific longitude point (idx)
+    % NC Dimensions are [pres, distance, month] -> [251, 652, 12]
+    start_idx = [1, idx, 1];
+    count_idx = [inf, 1, inf];
+    
+    % Use squeeze to get [Pressure x Month] matrices
+    scotia.CT = squeeze(ncread(scotia_fn, 'CT', start_idx, count_idx));
+    scotia.SA = squeeze(ncread(scotia_fn, 'SA', start_idx, count_idx));
+
+    all_nan_rows = all(isnan(scotia.CT), 2); 
+    
+    scotia.pres  = scotia.pres(~all_nan_rows);
+    scotia.CT    = scotia.CT(~all_nan_rows, :);
+    scotia.SA    = scotia.SA(~all_nan_rows, :);
+    scotia.sos = gsw_sound_speed(scotia.SA, scotia.CT, scotia.pres); 
+
+    fprintf('Matched ADCP Lon %.3f to SCOTIA Lon %.3f (Index %d)\n', ...
+            adcp_lon, scotia.lon_match, idx);
 end
 
 function [idx, closest_sn] = find_microcat_index(info_adcp,sn)

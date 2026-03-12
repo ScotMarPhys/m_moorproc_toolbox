@@ -89,7 +89,7 @@ function [Data_corr, h_fig] = s55_hard_iron_compass_correction(Data, flag_value,
         
         %% 7. Diagnostic Plotting
         if plot_data
-            h_fig = figure(5); clf; hold on;
+            h_fig = figure; clf; hold on;
             theta_vec = linspace(0, 2*pi, 300);
             avg_radius = mean(sqrt(mx.^2 + my.^2), 'omitnan');
 
