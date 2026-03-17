@@ -250,22 +250,37 @@ elseif ed_suggest~=info_adcp.end_timestamp
 end
 
 % --- 3. Pitch and Roll Check ---
-% Identify Excessive Pitch/Roll (> 30)
-badind_tilt_severe = find((Pitch>30 | Pitch<-30 | Roll>30 | Roll<-30) ...
-    & Data.mask_QC_1D == 0);
+% Convert degrees to radians for calculations
+p_rad = deg2rad(Pitch);
+r_rad = deg2rad(Roll);
+
+% Calculate Total Tilt Magnitude in degrees
+total_tilt = rad2deg(acos(min(1, cos(p_rad) .* cos(r_rad))));
+Tilt_Pgood = total_tilt; Tilt_Pbad = total_tilt;
+Tilt_Pgood(S.keepMask == 0) = NaN;Tilt_Pbad(S.keepMask == 1) = NaN;
+
+% Severe Tilt (>30 degrees) -> QC_BAD
+badind_tilt_severe = find(total_tilt > 30 & Data.mask_QC_1D == 0);
 Data.mask_QC_1D(badind_tilt_severe) = QC_BAD;
 Data.mask_QC_3D(badind_tilt_severe, :) = QC_BAD;
 
-% Identify Moderate Pitch/Roll (10 to 30)
-badind_tilt_mod = find(((abs(Pitch) > 10 & abs(Pitch) <= 30) | ...
-               (abs(Roll) > 10 & abs(Roll) <= 30)) & Data.mask_QC_1D == 0);
+% Moderate Tilt (10-30 degrees) -> QC_PROBABLY_BAD
+badind_tilt_mod = find(total_tilt >= 10 & total_tilt <= 30 & Data.mask_QC_1D == 0);
 Data.mask_QC_1D(badind_tilt_mod) = QC_PROBABLY_BAD;
 Data.mask_QC_3D(badind_tilt_mod, :) = QC_PROBABLY_BAD;
 
+% Identify Excessive Pitch/Roll (> 30)
+badind_pr_severe = find((Pitch>30 | Pitch<-30 | Roll>30 | Roll<-30) ...
+    & Data.mask_QC_1D == 0);
+
+% Identify Moderate Pitch/Roll (10 to 30)
+badind_pr_mod = find(((abs(Pitch) > 10 & abs(Pitch) <= 30) | ...
+               (abs(Roll) > 10 & abs(Roll) <= 30)) & Data.mask_QC_1D == 0);
+
 % Logging for Tilt
 prompt = sprintf(['***Pitch check***\n', ...
-    '%d timesteps flagged bad (%d) due to excessive pitch (>abs(30))\n', ...
-    '%d timesteps flagged probably bad (%d) due to pitch between 10 and 30\n', ...
+    '%d timesteps flagged bad (%d) due to excessive tilt (>abs(30))\n', ...
+    '%d timesteps flagged probably bad (%d) due to tilt between 10 and 30\n', ...
     'Post processing possible.\n\n'], ...
     length(badind_tilt_severe), QC_BAD, ...
     length(badind_tilt_mod), QC_PROBABLY_BAD);
@@ -338,8 +353,9 @@ title([current_filename ' pitch and roll'],'Interpreter','none');
 hold on; grid on;
 
 % plot data
-h.data = plot(T,Pitch_Pgood,'.','DisplayName', 'pitch raw bottom');
-plot(T,Pitch_Pbad,'.c','DisplayName', 'pitch QC_BAD sinking/rising');
+h.data = plot(T,Tilt_Pgood,'.','DisplayName', 'tilt raw bottom');
+plot(T,Tilt_Pbad,'.c','DisplayName', 'tilt QC_BAD sinking/rising');
+plot(T,Pitch_Pgood,'m','DisplayName', 'pitch raw bottom','LineWidth',0.5);
 plot(T,Roll_Pgood,'k','DisplayName', 'roll raw bottom','LineWidth',0.5);
 
 datetick('x', 'mmm-yyyy', 'keepticks', 'keeplimits');
@@ -363,8 +379,8 @@ ys_colors =  {'g','g','r','r'};
 
 annotateYLabels(ys_data, ys_labels, ys_colors);
 
-ylabel('Pitch (^o)');
-legend('Interpreter','none','Location','southeast')
+ylabel('Tilt (^o)');
+legend('NumColumns', 2,'Interpreter','none','Location','southeast')
 
 
 % heading %%%%%%%%%%%%%%%%%%%%%%%%
@@ -374,7 +390,7 @@ hold on; grid on;
 
 % Plot data
 plot(T,H,'k.','DisplayName', 'heading raw bottom');
-plot(T,H_trim,'.c','DisplayName', 'QC_BAD sinking/rising/pitch');
+plot(T,H_trim,'.c','DisplayName', 'QC_BAD sinking/rising/tilt');
 
 datetick('x', 'mmm-yyyy', 'keepticks', 'keeplimits');
 xlim([timemin timemax]);
@@ -398,7 +414,7 @@ annotation('textbox', [0 0.02 1 0.06], ...   % [x y w h] in normalized figure un
 
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[current_filename,'_stage1_f1_pressure_pitch_heading_QC.png']));
+print('-dpng',fullfile(outdir,[current_filename,'_stage1_f1_pressure_tilt_heading_QC.png']));
 
 
 %% 2. Beam amplitudes %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -666,15 +682,32 @@ fprintf(fidlog,sprintf('Flagged bin >%d as QC_BAD (%d).\n\n',...
 % end
 
 
-% spikes
-% find spikes - e.g. fish schools (short lived)
-% SDc =3;
-% fprintf('Amplitude 1\n')
-% mask_spikes_Amp1 = detect_spikes_amp(Amp1, SDc);
-% fprintf('Amplitude 2\n')
-% mask_spikes_Amp2 = detect_spikes_amp(Amp2, SDc);
-% fprintf('Amplitude 3\n')
-% mask_spikes_Amp3 = detect_spikes_amp(Amp3, SDc);
+%% --- Spike Detection (Acoustic Amplitude) ---
+% Identifies transient outliers (e.g., fish schools) using robust statistics.
+% Requires a >10 dB jump relative to the burst median, representing a 
+% 10-fold increase in acoustic power. This conservative threshold ensures 
+% only significant interference is flagged.
+
+% 1. Generate masks for all beams
+SDc =3; % 3 median absolute deviation interval
+fprintf('SDC=%d\n',SDc)
+fprintf('\nAmplitude 1')
+mask_spikes_Amp1 = detect_spikes_amp(Amp1, SDc);
+fprintf('\nAmplitude 2')
+mask_spikes_Amp2 = detect_spikes_amp(Amp2, SDc);
+fprintf('\nAmplitude 3')
+mask_spikes_Amp3 = detect_spikes_amp(Amp3, SDc);
+
+% 2. Combine: If ANY beam has a spike, the data point is BAD
+combined_spike_mask = mask_spikes_Amp1 | mask_spikes_Amp2 | mask_spikes_Amp3;
+
+% 3. Update your QC flag
+Data.mask_QC_3D(combined_spike_mask) = QC_BAD;
+
+prombt = ['Flagged Amplitude spikes (burst median ± %d*Median ' ...
+    'Absolute Deviation\n and >10dB jump) as QC_BAD (%d).\n\n'];
+fprintf(fidlog, prombt, SDc, QC_BAD);
+fprintf(prombt, SDc, QC_BAD);
 
 
 %% 4. Velocity %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -781,8 +814,6 @@ end
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
 print('-dpng',fullfile(outdir,[current_filename,'_stage1_f4_velocity_and_speed_QC.png']));
 clear ax
-
-%% Spike detection
 
 
 %% Magnetometer Horizontal Intensity and Circle Fitting %%%%%%%%%%%%%%%%%%
@@ -1154,60 +1185,66 @@ for k = 1:n
 end
 end
 
-function [mu_time,s_time,B] = calculate_block_mean_std(A)
+function [mu_time,s_time,B] = calculate_block_stats(A)
     % A: time_dim x depth
     block = 10;
     [T, D] = size(A);
     nBlocks = T/block;
-    % reshape to (block, nBlocks, depth)
-    B = reshape(A, block, nBlocks, D);
-    % mean and std over the first dimension (within each 10-s burst)
-    mu = median(B, 1);    % 1 x nBlocks x D
-    s  = std(B, 0, 1);  % 1 x nBlocks x D  (default normalization N-1)
     
-    % replicate to (block, nBlocks, D)
+    % Reshape to (block, nBlocks, depth)
+    B = reshape(A, block, nBlocks, D);
+    
+    % Use Median for the center (instead of mean)
+    mu = median(B, 1, 'omitnan');    
+    
+    % Use MAD * 1.4826 for the spread (robust equivalent of std)
+    % Syntax: mad(data, 1 for median-based, 1 for dimension)
+    s = mad(B, 1, 1) * 1.4826; 
+    
+    % Replicate to (block, nBlocks, D)
     mu_rep = repmat(mu, block, 1, 1);
     s_rep  = repmat(s,  block, 1, 1);
     
-    % reshape back to (time_dim_trimmed, depth)
-    mu_time = reshape(mu_rep, nBlocks*block, D);
-    s_time  = reshape(s_rep,  nBlocks*block, D);
+    % Reshape back to (time_dim, depth)
+    mu_time = reshape(mu_rep, T, D);
+    s_time  = reshape(s_rep,  T, D);
 end
+
 
 function mask = detect_spikes_amp(A, SDc)
     % A: time_dim x depth
     block = 10;
     [T, D] = size(A);
     nBlocks = T/block;
+    
+    % Minimum physical jump (counts) to consider something a "spike"
+    % This stops 1-2 count "fuzz" from being flagged at high SDc
+    min_jump = 10; 
 
     % --- Criterion 1: Amplitude spike along Time Dimension ---
-    [A_bm, A_bs, B] = calculate_block_mean_std(A);
-    mask_amp = (A > (A_bm + SDc*A_bs)) | (A < (A_bm - SDc*A_bs));
-
-    % --- Criterion 2: Sudden Amplitude Increase along depth (QARTOD) ---
-    % B is (10 x nBlocks x D)
-    B_md = median(B, 1);    % Result: 1 x nBlocks x D
+    [A_bm, A_bs, B] = calculate_block_stats(A);
     
-    % Diff along Depth (Dim 3 of the B_md matrix)
-    Z = diff(B_md, 1, 3);   % Result: 1 x nBlocks x (D-1)
+    % Hybrid Mask: Must be > SDc*MAD AND > min_jump
+    diff_time = abs(A - A_bm);
+    mask_amp = (diff_time > (SDc * A_bs)) & (diff_time > min_jump);
 
-    % Running stats along nBlocks (Time), which is Dim 2
-    window_size = 3;
-    Z_md_block = movmedian(Z, window_size, 2);
-    Z_sd_block = movstd(Z, window_size, 0, 2);
+    % --- Criterion 2: Sudden Amplitude Increase along depth ---
+    B_md = median(B, 1, 'omitnan'); 
+    
+    % Centred median check (size 3) along Depth (Dim 3)
+    % Pinpoints Bin 5 by comparing it to neighbors 4 and 6
+    B_depth_ref = movmedian(B_md, 3, 3, 'omitnan');
+    Z_resid = abs(B_md - B_depth_ref);
 
-    % Create the mask for Z (1 x nBlocks x D-1)
-    mask_z_block = (Z>(Z_md_block+SDc*Z_sd_block)) | (Z<(Z_md_block-SDc*Z_sd_block));
+    % Robust threshold for depth jumps
+    Z_thresh = mad(Z_resid(:), 1) * 1.4826;
+
+    % Create depth mask (must exceed statistical threshold AND min_jump)
+    mask_z_block = (Z_resid > (SDc * Z_thresh)) & (Z_resid > min_jump);
 
     % Replicate to match the 10 samples per block
-    % Result: 10 x nBlocks x D-1
     mask_z_rep = repmat(mask_z_block, block, 1, 1);
-
-    % Reshape back to (T x D-1)
-    mask_z_2d = reshape(mask_z_rep, T, D-1);
-
-    % Pad with false at the first depth column to return to (T x D)
-    mask_z = [false(T, 1), mask_z_2d]; 
+    mask_z = reshape(mask_z_rep, T, D);
 
     % --- Final Combined Mask ---
     mask = mask_amp | mask_z;
@@ -1215,11 +1252,12 @@ function mask = detect_spikes_amp(A, SDc)
     % Statistics
     total_points = numel(A);
     num_outliers = sum(mask(:));
-    if num_outliers>0
-    fprintf('\nTotal Amplitude Spikes Found: %d (%.2f%% of data)\n', num_outliers, (num_outliers/total_points)*100);
-    fprintf('Consider smoothing velocity ensembles\n\n')
+    if num_outliers > 0
+        fprintf('\nTotal Amplitude Spikes Found: %d (%.2f%% of data)\n', ...
+            num_outliers, (num_outliers/total_points)*100);
     end
 end
+
 
 function save_signature_to_nc(Data, Config, nCells, Dist2Instr_CellMidpoint, Nominal_CellDepth,flag_vals,flag_mean,operator,moor,info_adcp, filename)
 % SAVE_SIGNATURE_TO_NC Saves full Signature ADCP Data structure and Config attributes to NetCDF
