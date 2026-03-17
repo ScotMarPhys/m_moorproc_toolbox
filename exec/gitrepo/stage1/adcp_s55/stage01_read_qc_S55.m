@@ -65,7 +65,7 @@ else
         infofile = varargin{3};
         logfile = varargin{4};
         outdir = varargin{5};
-        ouput_form = [moor '_%d_stage1.nc'];
+        output_form = [moor '_%d_stage1.nc'];
     catch
         error('Not enough manual arguments provided. Expected 5 additional arguments after "moor".');
     end
@@ -120,7 +120,7 @@ else
     current_filename = filename;
 end
 
-outfile = fullfile(outdir, sprintf(ouput_form, serial_nums(i)));
+outfile = fullfile(outdir, sprintf(output_form, serial_nums(i)));
 infile  = fullfile(dataindir, [current_filename, '.mat']);
 
 % Load and clean structure
@@ -281,7 +281,7 @@ figure(1);clf
 
 % Pressure %%%%%%%%%%%%%%%%%%%%%%%%
 subplot(3,1,1)
-title([filename ' pressure'],'Interpreter','none');
+title([current_filename ' pressure'],'Interpreter','none');
 hold on; grid on;
 
 h.data = plot(T,P,'k.');
@@ -334,7 +334,7 @@ hBox = annotation('textbox', [bx by bw bh], 'String', sprintf('Z_{mean} = %4.0f 
 
 %%% Roll and pitch %%%%%%%%%%%%%%%%%%%%%%%%
 subplot(3,1,2) 
-title([filename ' pitch and roll'],'Interpreter','none');
+title([current_filename ' pitch and roll'],'Interpreter','none');
 hold on; grid on;
 
 % plot data
@@ -369,7 +369,7 @@ legend('Interpreter','none','Location','southeast')
 
 % heading %%%%%%%%%%%%%%%%%%%%%%%%
 subplot(3,1,3)
-title([filename ' heading'],'Interpreter','none');
+title([current_filename ' heading'],'Interpreter','none');
 hold on; grid on;
 
 % Plot data
@@ -398,7 +398,7 @@ annotation('textbox', [0 0.02 1 0.06], ...   % [x y w h] in normalized figure un
 
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[filename,'_stage1_f1_pressure_pitch_heading_QC.png']));
+print('-dpng',fullfile(outdir,[current_filename,'_stage1_f1_pressure_pitch_heading_QC.png']));
 
 
 %% 2. Beam amplitudes %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -554,7 +554,7 @@ end
 
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[filename,'_stage1_f2_beam_amplitude_correlation_QC.png']));
+print('-dpng',fullfile(outdir,[current_filename,'_stage1_f2_beam_amplitude_correlation_QC.png']));
 clear ax
 
 %% 3. suface bin detection %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -600,7 +600,7 @@ for k=1:numel(ax)
 end
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[filename,'_stage1_f3_beam_amplitude_correlation_QC.png']));
+print('-dpng',fullfile(outdir,[current_filename,'_stage1_f3_beam_amplitude_correlation_QC.png']));
 clear ax
 
 %% prombts after plotting
@@ -779,8 +779,11 @@ end
 
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[filename,'_stage1_f4_velocity_and_speed_QC.png']));
+print('-dpng',fullfile(outdir,[current_filename,'_stage1_f4_velocity_and_speed_QC.png']));
 clear ax
+
+%% Spike detection
+
 
 %% Magnetometer Horizontal Intensity and Circle Fitting %%%%%%%%%%%%%%%%%%
 Data_corr = s55_hard_iron_compass_correction(Data,0,false);
@@ -797,7 +800,7 @@ fprintf(fidlog, prombt, err_min, err_max);
 
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[filename,'_stage1_f5_horizontal_magnetometer_QC.png']));
+print('-dpng',fullfile(outdir,[current_filename,'_stage1_f5_horizontal_magnetometer_QC.png']));
 %% 6. Sensor diagnostics %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 f6 = figure(6); clf;
@@ -842,7 +845,7 @@ end
 sgtitle('ADCP Sensor Diagnostic');
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[filename,'_stage1_f6_sensor_diagnostics.png']));
+print('-dpng',fullfile(outdir,[current_filename,'_stage1_f6_sensor_diagnostics.png']));
 clear ax
 %%
 m_u=median(U_QC,"omitnan" )*1e2;m_v=median(V_QC,"omitnan" )*1e2;
