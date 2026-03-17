@@ -1,0 +1,443 @@
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem
+END
+rdivide.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/rdivide.m
+END
+ncclass.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/ncclass.m
+END
+options.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/options.m
+END
+ge.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/ge.m
+END
+minus.m
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/minus.m
+END
+id.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/id.m
+END
+mldivide.m
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/mldivide.m
+END
+mtimes.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/mtimes.m
+END
+mrdivide.m
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/mrdivide.m
+END
+subsindex.m
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/subsindex.m
+END
+display.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/display.m
+END
+vertcat.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/vertcat.m
+END
+mpower.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/mpower.m
+END
+horzcat.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/horzcat.m
+END
+ncid.m
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/ncid.m
+END
+ncitem.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/ncitem.m
+END
+uigetvar.m
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/uigetvar.m
+END
+parent.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/parent.m
+END
+ncsubsref.m
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/ncsubsref.m
+END
+disp.m
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/disp.m
+END
+ne.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/ne.m
+END
+isequal.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/isequal.m
+END
+ncsubsasgn.m
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/ncsubsasgn.m
+END
+rename.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/rename.m
+END
+uint8.m
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/uint8.m
+END
+colon.m
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/colon.m
+END
+datatype.m
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/datatype.m
+END
+quick.m
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/quick.m
+END
+lt.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/lt.m
+END
+times.m
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/times.m
+END
+plus.m
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/plus.m
+END
+version.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/version.m
+END
+uigetatt.m
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/uigetatt.m
+END
+permission.m
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/permission.m
+END
+ncsize.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/ncsize.m
+END
+power.m
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/power.m
+END
+not.m
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/not.m
+END
+delete.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/delete.m
+END
+and.m
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/and.m
+END
+iscoord.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/iscoord.m
+END
+recdim.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/recdim.m
+END
+eq.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/eq.m
+END
+end.m
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/end.m
+END
+uigetdim.m
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/uigetdim.m
+END
+gt.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/gt.m
+END
+transpose.m
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/transpose.m
+END
+op.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/op.m
+END
+desc.m
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/desc.m
+END
+or.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/or.m
+END
+name.m
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/name.m
+END
+uminus.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/uminus.m
+END
+ctranspose.m
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/ctranspose.m
+END
+length.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/length.m
+END
+mode.m
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/mode.m
+END
+subsasgn.m
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/subsasgn.m
+END
+dimid.m
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/dimid.m
+END
+recnum.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/recnum.m
+END
+feval.m
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/feval.m
+END
+le.m
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/le.m
+END
+autonan.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/autonan.m
+END
+varid.m
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/varid.m
+END
+attnum.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/attnum.m
+END
+uplus.m
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/uplus.m
+END
+subsref.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/subsref.m
+END
+listing.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/listing.m
+END
+size.m
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/size.m
+END
+double.m
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/double.m
+END
+unsigned.m
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/unsigned.m
+END
+recdimid.m
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/recdimid.m
+END
+numel.m
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/numel.m
+END
+autoscale.m
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/autoscale.m
+END
+ldivide.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/ldivide.m
+END
+mdivide.m
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svnroot/mexcdf/!svn/ver/2555/netcdf_toolbox/tags/mexcdf-2.9.3/netcdf/@ncitem/mdivide.m
+END

@@ -24,15 +24,14 @@
 %
 
 
-function ctd_instrdpth2(moor,varargin)
-global MOORPROC_G
+function ctd_instrdpth2(moor,pathprocess,varargin)
 
 if nargin>2
     sensor_id = varargin{1};
 else
     sensor_id = 337;
 end
-info_dir  = fullfile(MOORPROC_G.moordatadir, 'proc', moor);
+info_dir  = fullfile(pathprocess, 'data', 'moor', 'proc', moor);
 infofile  = fullfile(info_dir, [moor 'info.dat']);
 if sensor_id == 337
     datadir = fullfile(info_dir, 'microcat');
@@ -97,7 +96,7 @@ for proc = 1 : length(sn_mc)
         disp(['Instrument header depth: ', num2str(idp)])
         
         replace = input('Do you want to change nominal depth of instrument? ','s');
-        if strncmp(replace, 'y', 1)
+        if strcmp(replace, 'y')
             changed = 1;
             depth_replace = input('Input new instrument depth: ');
             z_mc(proc) = depth_replace;

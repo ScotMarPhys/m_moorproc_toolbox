@@ -53,7 +53,7 @@ if strfind(mfilename('fullpath'),'/Volumes/rpdmoc/rapid/data/exec/')
 % else % using NOC network
 %     basedir = '/home/mstar/osnap/data/';
 else % on pstar machine
-    basedir ='/data/pstar/projects/osnap/data/'
+    basedir ='/local/users/pstar/osnap/data/'
 end
 
 if nargin==0
