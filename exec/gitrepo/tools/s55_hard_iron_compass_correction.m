@@ -23,13 +23,13 @@ function [Data_corr, h_fig] = s55_hard_iron_compass_correction(Data, flag_value,
     my = Data.Average_Magnetometer(:,2); 
     U  = Data.Average_VelEast;
     V  = Data.Average_VelNorth;
-    mask_QC_1D = Data.mask_QC_1D;
-    mask_QC_3D = Data.mask_QC_3D;
+    mask_QC_time = Data.mask_QC_time;
+    mask_QC_2D = Data.mask_QC_2D;
     
-    mx(mask_QC_1D ~= flag_value) = NaN;
-    my(mask_QC_1D ~= flag_value) = NaN;
-    U(mask_QC_3D ~= flag_value)  = NaN;
-    V(mask_QC_3D ~= flag_value)  = NaN;
+    mx(mask_QC_time ~= flag_value) = NaN;
+    my(mask_QC_time ~= flag_value) = NaN;
+    U(mask_QC_2D ~= flag_value)  = NaN;
+    V(mask_QC_2D ~= flag_value)  = NaN;
 
     % Variables for iterative fitting
     keep_refining = true;
@@ -41,6 +41,8 @@ function [Data_corr, h_fig] = s55_hard_iron_compass_correction(Data, flag_value,
             if ~isempty(pre_selected_limits)
                 time_mask = (T >= pre_selected_limits(1)) & (T <= pre_selected_limits(2));
             end
+        else
+            time_mask = true(size(T)); % Initially use all data
         end
     else
         time_mask = true(size(T)); % Initially use all data
@@ -152,7 +154,7 @@ function [Data_corr, h_fig] = s55_hard_iron_compass_correction(Data, flag_value,
     
     Data_corr.hard_iron_offset_x  = xc;
     Data_corr.hard_iron_offset_y  = yc;
-    Data_corr.radius              = radius;
+    Data_corr.hard_iron_radius    = radius;
     Data_corr.hard_iron_CCW_angle = angle_err;
-    Data_corr.calibration_window  = [T(find(time_mask,1)) T(find(time_mask,1,'last'))];
+    Data_corr.hard_iron_time_window  = [T(find(time_mask,1)) T(find(time_mask,1,'last'))];
 end
