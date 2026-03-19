@@ -264,21 +264,11 @@ Tilt_Pgood(S.keepMask == 0) = NaN;Tilt_Pbad(S.keepMask == 1) = NaN;
 
 % Severe Tilt (>30 degrees) -> QC_BAD
 badind_tilt_severe = find(total_tilt > 30 & Data.mask_QC_time == 0);
-Data.mask_QC_time(badind_tilt_severe) = QC_BAD;
 Data.mask_QC_2D(badind_tilt_severe, :) = QC_BAD;
 
 % Moderate Tilt (10-30 degrees) -> QC_PROBABLY_BAD
 badind_tilt_mod = find(total_tilt >= 10 & total_tilt <= 30 & Data.mask_QC_time == 0);
-Data.mask_QC_time(badind_tilt_mod) = QC_PROBABLY_BAD;
 Data.mask_QC_2D(badind_tilt_mod, :) = QC_PROBABLY_BAD;
-
-% Identify Excessive Pitch/Roll (> 30)
-badind_pr_severe = find((Pitch>30 | Pitch<-30 | Roll>30 | Roll<-30) ...
-    & Data.mask_QC_time == 0);
-
-% Identify Moderate Pitch/Roll (10 to 30)
-badind_pr_mod = find(((abs(Pitch) > 10 & abs(Pitch) <= 30) | ...
-               (abs(Roll) > 10 & abs(Roll) <= 30)) & Data.mask_QC_time == 0);
 
 % Logging for Tilt
 prompt = sprintf(['***Pitch check***\n', ...
@@ -289,7 +279,7 @@ prompt = sprintf(['***Pitch check***\n', ...
     length(badind_tilt_mod), QC_PROBABLY_BAD);
 fprintf(1, prompt); fprintf(fidlog, prompt); clear prombt
 
-% Heading mark values with bad pitch/roll/pressure
+% Heading mark values with bad pressure
 H_trim = H;
 H_trim(Data.mask_QC_time == 0) = NaN;
 
@@ -393,7 +383,7 @@ hold on; grid on;
 
 % Plot data
 plot(T,H,'k.','DisplayName', 'heading raw bottom');
-plot(T,H_trim,'.c','DisplayName', 'QC_BAD sinking/rising/tilt');
+plot(T,H_trim,'.c','DisplayName', 'QC_BAD sinking/rising');
 
 datetick('x', 'mmm-yyyy', 'keepticks', 'keeplimits');
 xlim([timemin timemax]);
