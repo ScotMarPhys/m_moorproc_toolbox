@@ -313,12 +313,10 @@ if use_MC
     
     % Interpolate all variables to ADCP's Average_Time
     % 'pchip' or 'linear' are usually best; 'extrap' is risky but keeps the code running
-    mc_t_interp  = interp1(MC.time, MC.t,  DS_EM.time, 'linear', 'extrap');
-    mc_p_interp  = interp1(MC.time, MC.p,  DS_EM.time, 'linear', 'extrap');
-    mc_sp_interp = interp1(MC.time, MC.SP, DS_EM.time, 'linear', 'extrap');
+    mc_t_interp = interp1_avoid_nan(MC.time, MC.t,  DS_EM.time);
+    mc_p_interp = interp1_avoid_nan(MC.time, MC.p,  DS_EM.time);
+    mc_sp_interp = interp1_avoid_nan(MC.time, MC.SP, DS_EM.time);
     
-    
-
     % 2. Flag ADCP data outside MicroCAT time range
     bad_in = (DS_EM.time < min(MC.time, [], 'omitnan')) | ...
              (DS_EM.time > max(MC.time, [], 'omitnan'));
@@ -374,16 +372,16 @@ if use_MC
     subplot(3,1,1)
     plot(1:12,R_SC_A(:,good_zidx(:)))
     ylabel('Range anomaly (m)')
-    title('Speed of sound correction - anomaly per depth bin - scotia climatology (SC)')
+    title('Speed of sound correction - change per depth bin - scotia climatology (SC)')
     grid on
     subplot(3,1,2)
     plot(DS_EM.time,R_MC_A(:,good_zidx(:))),datetick('x')
-    title('Speed of sound correction - anomaly per depth bin - MicroCAT (MC)')
+    title('Speed of sound correction - change per depth bin - MicroCAT (MC)')
     ylabel('Range anomaly (m)')
     grid on
     subplot(3,1,3)
     plot(DS_EM.time,R_MS_A(:,good_zidx(:))),datetick('x')
-    title('Speed of sound correction - anomaly per depth bin - MC+SC_{Anomaly} ')
+    title('Speed of sound correction - change per depth bin - MC+SC_{Anomaly} ')
     ylabel('Range anomaly (m)')
     grid on
     % Save figure
@@ -424,89 +422,118 @@ if use_MC
 else
     
     % Use nominal range (no profile correction)
-    R_true = DS.Dist2Instr_CellMidpoint(:)';
+    R_true = DS_EM.Dist2Instr_CellMidpoint(:)';
+    bad_in =DS_EM.mask_QC_time==QC_BAD;
 end
 
 % --- Final Calculation ---
 % if microcat option is used, instr_depth is derived from calibrated MC data
 cell_depth = instr_depth + R_true; 
 
+y = mean(cell_depth,1,'omitnan');
 
-%% % side lobe interference
+%% side lobe interference
 %all angle in degrees
-% gamma = 20; %slant angle
-% alpha = [0, 120,240]; % beam 1 - aligned with x-axis, beam 2, beam 3
-% pitch = Data.Average_Pitch; pitch(Data.mask_QC_time~=0)=NaN; % y-axis rotation, in deg
-% roll = Data.Average_Roll; roll(Data.mask_QC_time~=0)=NaN; % x-axis rotation, in deg
-% 
-% % Pre-calculate trig terms (using 'd' versions for degrees)
-% cp = cosd(pitch); sp = sind(pitch);
-% cr = cosd(roll);  sr = sind(roll);
-% cg = cosd(gamma); sg = sind(gamma);
-% ca = cosd(alpha); sa = sind(alpha); % alpha is 1x3
-% 
-% % Angle to vertical for each beam (in degrees)
-% beta = acosd(-sp .* sg .* ca + cp .* sr .* sg .* sa + cp .* cr .* cg);
-% 
-% % Find the minimum angle to vertical across all three beams for each timestamp
-% max_beta = max(beta, [], 2);
-% 
-% % R contains buffer for upper range of cell
-% R =R_true*cosd(max_beta)-Cell_Size; 
-% % find(Dist2Instr_CellMidpoint <= R(i), 1, 'last') for each time step i
-% R(Data.mask_QC_time~=0)=info_adcp.wd;
-% idx_valid = arrayfun(@(r) find(Dist2Instr_CellMidpoint <= r, 1, 'last'),...
-%     R);
-% idx_valid(Data.mask_QC_time~=0)=0;
-% R(Data.mask_QC_time~=0)=NaN;
+gamma = 20; %slant angle
+alpha = [0, 120,240]; % beam 1 - aligned with x-axis, beam 2, beam 3
+pitch = DS_EM.Average_Pitch; % y-axis rotation, in deg
+roll = DS_EM.Average_Roll; % x-axis rotation, in deg
+Cell_Size = DS_EM.Attributes.Average_CellSize;
 
-% plot it
-% hLine = plot(time(Data.mask_QC_time==0), y(idx_valid(Data.mask_QC_time==0)), 'r', 'LineWidth', 0.1);
-% hLine.DisplayName = 'Sidelobe interference';
+% Pre-calculate trig terms (using 'd' versions for degrees)
+cp = cosd(pitch); sp = sind(pitch);
+cr = cosd(roll);  sr = sind(roll);
+cg = cosd(gamma); sg = sind(gamma);
+ca = cosd(alpha); sa = sind(alpha); % alpha is 1x3
 
-% sidelobe contamination
+% Angle to vertical for each beam (in degrees)
+beta = acosd(-sp .* sg .* ca + cp .* sr .* sg .* sa + cp .* cr .* cg);
+
+% Find the minimum angle to vertical across all three beams for each timestamp
+max_beta = max(beta, [], 2);
+
+% R_cutoff contains buffer for upper range of cell
+R_cutoff =abs(instr_depth).*cosd(max_beta)-Cell_Size; 
+
+%%
+%create mask
+sidelobe_mask = R_true > R_cutoff;
+[~, idx_first_bad] = max(sidelobe_mask, [], 2);
+
+amp = DS_EM.Average_AmpBeam1; amp(sidelobe_mask)=NaN;
+
+f4 = figure(4);clf
+cb_lim =[0,100];
+
+hold on; 
+b = imagesc(DS_EM.time, y, amp');
+set(b, 'AlphaData', ~isnan(amp'));
+
+% shift it by half a cell size to match lower lim of imagesc grid cell
+hLine = plot(DS_EM.time(~bad_in), y(idx_first_bad(~bad_in))-Cell_Size/2, 'r', 'LineWidth', 0.1);
+
+axis('xy');
+ylabel('Nominal cell depth (m)')
+datetick('x','mmm-yyyy','keepticks','keeplimits');
+hLine.DisplayName = 'Sidelobe interference';
+xlim([min(DS_EM.time),max(DS_EM.time)])
+ylim([min(y),max(y)])
+
+title('Amplitude Beam 1')
+caxis(cb_lim); 
+colorbar()
+
+lgd = legend('show', 'Location', 'none','Box','off','FontSize',10);
+lgd.Units = 'normalized';
+lgd.Position = [0.73 .8 0.12 0.3];  % [x y width height]
+
+% Save figure
+    set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
+    print('-dpng',fullfile(outdir,[filename,'_stage2_f4_sidelobe_interference.png']));
+
+%% sidelobe contamination
 % 
-% prompt = sprintf([ ...
-%   '\n\nSidelobe contamination for each time step varies between %d and %d ' ...
-%   'out of %d bins.\nSee red line in figure 2.\n Would you like to flag ' ...
-%   ' sidelobe contaminated bins for each time step as QC_BAD (%d). Y/N [Y]: '], ...
-%   min(idx_valid(Data.mask_QC_time==0))+1, max(idx_valid(Data.mask_QC_time==0))+1, max(nCells), QC_BAD);
-% 
-% reply = input(prompt, 's');
-% if isempty(reply)
-%     reply = 'Y';
-% end
-% 
-% while true
-%     if strcmpi(reply, 'Y') || strcmpi(reply, 'YES')
-%         mask = nCells > idx_valid(:);
-%         Data.mask_QC_2D(mask) = QC_BAD;
-% 
-%         prombt = ['Sidelobe contamination for each time step varies between ' ...
-%             ' %d and %d out of %d bins.\nBins contaminated by' ...
-%             ' sidelobe interference flagged as QC_BAD (%d).\n'];
-%         fprintf(fidlog, prombt, ...
-%             min(idx_valid(Data.mask_QC_time==0))+1, max(idx_valid(Data.mask_QC_time==0))+1, max(nCells), QC_BAD);
-%         break
-% 
-%     elseif strcmpi(reply, 'N') || strcmpi(reply, 'NO')
-%         prombt = ['Sidelobe contamination for each time step varies between ' ...
-%             'bin %d and %d out of %d bins.\nOperator chose NOT to flag ' ...
-%             'bins contaminated by sidelobe interference.\n'];
-%         fprintf(1, prombt, ...
-%             min(idx_valid(Data.mask_QC_time==0))+1, max(idx_valid(Data.mask_QC_time==0))+1, max(nCells)); % to screen
-%         fprintf(fidlog, prombt, ...
-%             min(idx_valid(Data.mask_QC_time==0))+1, max(idx_valid(Data.mask_QC_time==0))+1, max(nCells));
-%         break
-% 
-%     else
-%         fprintf('Invalid entry. Enter Y or N (press Return for default).\n');
-%         reply = input('Y/N [Y]: ', 's');   % re-prompt and read again
-%         if isempty(reply)
-%             reply = 'Y';
-%         end
-%     end
-% end
+nCells=DS_EM.Attributes.Average_NCells;
+prompt = sprintf([ ...
+  '\n\nSidelobe contamination for each time step varies between %d and %d ' ...
+  'out of %d bins.\nSee red line in figure 4.\n Would you like to flag ' ...
+  ' sidelobe contaminated bins for each time step as QC_BAD (%d). Y/N [Y]: '], ...
+  min(idx_first_bad(~bad_in)), max(idx_first_bad(~bad_in)), nCells, QC_BAD);
+
+reply = input(prompt, 's');
+if isempty(reply)
+    reply = 'Y';
+end
+
+while true
+    if strcmpi(reply, 'Y') || strcmpi(reply, 'YES')
+        DS_EM.mask_QC_2D(sidelobe_mask) = QC_BAD;
+
+        prombt = ['Sidelobe contamination for each time step varies between ' ...
+            ' %d and %d out of %d bins.\nBins contaminated by' ...
+            ' sidelobe interference flagged as QC_BAD (%d).\n'];
+        fprintf(fidlog, prombt, ...
+            min(idx_first_bad(~bad_in)), max(idx_first_bad(~bad_in)), nCells, QC_BAD);
+        break
+
+    elseif strcmpi(reply, 'N') || strcmpi(reply, 'NO')
+        prombt = ['Sidelobe contamination for each time step varies between ' ...
+            'bin %d and %d out of %d bins.\nOperator chose NOT to flag ' ...
+            'bins contaminated by sidelobe interference.\n'];
+        fprintf(1, prombt, ...
+            min(idx_first_bad(~bad_in)), max(idx_first_bad(~bad_in)), nCells); % to screen
+        fprintf(fidlog, prombt, ...
+            min(idx_first_bad(~bad_in)), max(idx_first_bad(~bad_in)), nCells);
+        break
+
+    else
+        fprintf('Invalid entry. Enter Y or N (press Return for default).\n');
+        reply = input('Y/N [Y]: ', 's');   % re-prompt and read again
+        if isempty(reply)
+            reply = 'Y';
+        end
+    end
+end
 
 
 end
@@ -685,4 +712,9 @@ function S_out = ensemble_mean_struct_QC(S_in, block,QC_GOOD,QC_BAD)
             S_out.(fname) = data; % Metadata
         end
     end
+end
+
+function data_intp = interp1_avoid_nan(time,data,new_time)
+    isGood = ~isnan(data);
+    data_intp  = interp1(time(isGood), data(isGood),new_time, 'linear', 'extrap');
 end
