@@ -21,8 +21,9 @@
 %         Orientation: Tilt thresholds (<10 deg good, >30 deg fail).
 %         Heading
 %      2. Signal/Corr: Surface bin dectection and noise floor (Corr < 50 flagged).
-%      3. Sidelobe: Range masking based on depth (H) and max tilt (beta).
-%      4. Velocity: Horizontal Spikes, statistical outliers (U,V) and unrealistic
+%      3. Removing extreme Amplitude spikes ((burst median ± 3*median  
+%         absolute deviation and >10dB jump) 
+%      4. Velocity: Vertical jumps of horizontal velocity, statistical outliers (U,V) and unrealistic
 %                   velocities (U,V,W).
 %      5. Compass: Magnetometer circle-fit diagnostics (Hard-Iron check).
 %      5. Other sensor diagnostics.
@@ -153,8 +154,10 @@ flag_mean = ['1=QC_NOT_EVALUATED 1=QC_GOOD ' ...
     '9=QC_MISSING'];
 
 % Initialise QC masks using zeros (More efficient than 0 * double)
-Data.mask_QC_3D = zeros(size(Data.Average_VelEast));
-Data.mask_QC_1D = zeros(size(Data.Average_Pressure));
+[nT,nD] = size(Data.Average_VelEast);
+Data.mask_QC_2D = zeros(nT,nD);
+Data.mask_QC_time = zeros(nT,1);
+Data.mask_QC_depth = zeros(1,nD);
 
 % Checking Serial Number Consistency
 if serial_nums(i) ~= Config.SerialNo
@@ -206,7 +209,7 @@ set(findall(gcf, '-property', 'FontSize'), 'FontUnits', 'points', 'FontSize', fs
 
 % ylims
 yl_P     = (P_median + n_std * [-P_std P_std]);
-yl_Pitch =  [-40 40];
+yl_Pitch =  [-15 15];
 yl_H = [-0 360];
 
 %% 1. Instrument orientation and pressure %%%%%%%%%%%%%%%%%%%%%%%%
@@ -214,10 +217,10 @@ yl_H = [-0 360];
 S = suggestTrimForShallowEdges_simple(P, min(yl_P));
 
 % Update Masks for Pressure
-Data.mask_QC_1D(S.keepMask == 0) = QC_BAD; 
-Data.mask_QC_3D(S.keepMask == 0, :) = QC_BAD;
+Data.mask_QC_time(S.keepMask == 0) = QC_BAD; 
+Data.mask_QC_2D(S.keepMask == 0, :) = QC_BAD;
 
-z_mean = gsw_z_from_p(mean(P(Data.mask_QC_1D==0)),info_adcp.lat);
+z_mean = gsw_z_from_p(mean(P(Data.mask_QC_time==0)),info_adcp.lat);
 
 % Pitch and Roll
 Pitch_Pgood = Pitch; Pitch_Pbad = Pitch;
@@ -260,22 +263,22 @@ Tilt_Pgood = total_tilt; Tilt_Pbad = total_tilt;
 Tilt_Pgood(S.keepMask == 0) = NaN;Tilt_Pbad(S.keepMask == 1) = NaN;
 
 % Severe Tilt (>30 degrees) -> QC_BAD
-badind_tilt_severe = find(total_tilt > 30 & Data.mask_QC_1D == 0);
-Data.mask_QC_1D(badind_tilt_severe) = QC_BAD;
-Data.mask_QC_3D(badind_tilt_severe, :) = QC_BAD;
+badind_tilt_severe = find(total_tilt > 30 & Data.mask_QC_time == 0);
+Data.mask_QC_time(badind_tilt_severe) = QC_BAD;
+Data.mask_QC_2D(badind_tilt_severe, :) = QC_BAD;
 
 % Moderate Tilt (10-30 degrees) -> QC_PROBABLY_BAD
-badind_tilt_mod = find(total_tilt >= 10 & total_tilt <= 30 & Data.mask_QC_1D == 0);
-Data.mask_QC_1D(badind_tilt_mod) = QC_PROBABLY_BAD;
-Data.mask_QC_3D(badind_tilt_mod, :) = QC_PROBABLY_BAD;
+badind_tilt_mod = find(total_tilt >= 10 & total_tilt <= 30 & Data.mask_QC_time == 0);
+Data.mask_QC_time(badind_tilt_mod) = QC_PROBABLY_BAD;
+Data.mask_QC_2D(badind_tilt_mod, :) = QC_PROBABLY_BAD;
 
 % Identify Excessive Pitch/Roll (> 30)
 badind_pr_severe = find((Pitch>30 | Pitch<-30 | Roll>30 | Roll<-30) ...
-    & Data.mask_QC_1D == 0);
+    & Data.mask_QC_time == 0);
 
 % Identify Moderate Pitch/Roll (10 to 30)
 badind_pr_mod = find(((abs(Pitch) > 10 & abs(Pitch) <= 30) | ...
-               (abs(Roll) > 10 & abs(Roll) <= 30)) & Data.mask_QC_1D == 0);
+               (abs(Roll) > 10 & abs(Roll) <= 30)) & Data.mask_QC_time == 0);
 
 % Logging for Tilt
 prompt = sprintf(['***Pitch check***\n', ...
@@ -288,7 +291,7 @@ fprintf(1, prompt); fprintf(fidlog, prompt); clear prombt
 
 % Heading mark values with bad pitch/roll/pressure
 H_trim = H;
-H_trim(Data.mask_QC_1D == 0) = NaN;
+H_trim(Data.mask_QC_time == 0) = NaN;
 
 % --- Visualization ---
 %% 1. Instrument orientation and pressure %%%%%%%%%%%%%%%%%%%%%%%%
@@ -368,7 +371,7 @@ hl1 = yline([-30 30],'color','r');  arrayfun(@(h) set(h.Annotation.LegendInforma
     'IconDisplayStyle', 'off'), hl1);
 
 xlim([timemin timemax]);
-ylim(yl_Pitch);
+dynamic_ylim(yl_Pitch, Tilt_Pgood);
 
 ys_data = [ 10, -10, 30, -30 ];
 ys_labels = { '10 < 30: Post processing possible', ...
@@ -443,27 +446,27 @@ else
     Nominal_CellDepth = info_adcp.wd-Dist2Instr_CellMidpoint;
 end
 
-fprintf(fidlog,'***Beams, surface bins, sidelobe check***\n');
+fprintf(fidlog,'***Beams, surface bins check***\n');
 fprintf(fidlog,sprintf('Nominal depth of instrument set as %d dbar.\n',info_adcp.wd));
 
 y=Nominal_CellDepth;
 cb_lim =[0,100];
 
 % define surface bins
-Amp1=Data.Average_AmpBeam1; Amp1(Data.mask_QC_1D~=0,:)=NaN;
-Amp2=Data.Average_AmpBeam2; Amp2(Data.mask_QC_1D~=0,:)=NaN;
-Amp3=Data.Average_AmpBeam3; Amp3(Data.mask_QC_1D~=0,:)=NaN;
-Cor1=Data.Average_CorBeam1; Cor1(Data.mask_QC_1D~=0,:)=NaN;
-Cor2=Data.Average_CorBeam2; Cor2(Data.mask_QC_1D~=0,:)=NaN;
-Cor3=Data.Average_CorBeam3; Cor3(Data.mask_QC_1D~=0,:)=NaN;
+Amp1=Data.Average_AmpBeam1; Amp1(Data.mask_QC_time~=0,:)=NaN;
+Amp2=Data.Average_AmpBeam2; Amp2(Data.mask_QC_time~=0,:)=NaN;
+Amp3=Data.Average_AmpBeam3; Amp3(Data.mask_QC_time~=0,:)=NaN;
+Cor1=Data.Average_CorBeam1; Cor1(Data.mask_QC_time~=0,:)=NaN;
+Cor2=Data.Average_CorBeam2; Cor2(Data.mask_QC_time~=0,:)=NaN;
+Cor3=Data.Average_CorBeam3; Cor3(Data.mask_QC_time~=0,:)=NaN;
 
 % mask any Cor<50 as bad
 mask_corr = (Cor1 < 50) | (Cor2 < 50) | (Cor3 < 50);
-Data.mask_QC_3D(mask_corr)=QC_BAD;
+Data.mask_QC_2D(mask_corr)=QC_BAD;
 
-U = Data.Average_VelEast;U(Data.mask_QC_1D~=0,:)=NaN;
-V = Data.Average_VelNorth;V(Data.mask_QC_1D~=0,:)=NaN;
-W = Data.Average_VelUp;W(Data.mask_QC_1D~=0,:)=NaN;
+U = Data.Average_VelEast;U(Data.mask_QC_time~=0,:)=NaN;
+V = Data.Average_VelNorth;V(Data.mask_QC_time~=0,:)=NaN;
+W = Data.Average_VelUp;W(Data.mask_QC_time~=0,:)=NaN;
 
 % surface bin detection
 Amp1_pro = nanmean(Amp1);SB1 = find(islocalmin(Amp1_pro),1,'last');
@@ -632,7 +635,9 @@ if (isempty(bins_to_process) || bins_to_process==0)
     bins_to_process=srf_bins;
 end
 
-Data.mask_QC_3D(:,bins_to_process+1:end)=QC_BAD;
+Data.mask_QC_2D(:,bins_to_process+1:end)=QC_BAD;
+Data.mask_QC_depth(bins_to_process+1:end)=QC_BAD;
+
 
 fprintf(fidlog,sprintf('Flagged bin >%d as QC_BAD (%d).\n\n',...
     bins_to_process,QC_BAD));
@@ -702,7 +707,7 @@ mask_spikes_Amp3 = detect_spikes_amp(Amp3, SDc);
 combined_spike_mask = mask_spikes_Amp1 | mask_spikes_Amp2 | mask_spikes_Amp3;
 
 % 3. Update your QC flag
-Data.mask_QC_3D(combined_spike_mask) = QC_BAD;
+Data.mask_QC_2D(combined_spike_mask) = QC_BAD;
 
 prombt = ['Flagged Amplitude spikes (burst median ± %d*Median ' ...
     'Absolute Deviation\n and >10dB jump) as QC_BAD (%d).\n\n'];
@@ -732,7 +737,7 @@ mask_v = abs(V - mV) > 3.*sV;
 mask_s = abs(CSPD - mS) > 3.*sS;
 mask_w = (W > W_thr) | (W < -W_thr);
 
-% spikes in velocity
+% spikes in velocity over depth
 U_diff = diff(U, 1, 2);
 V_diff = diff(V, 1, 2);
 [Tidx,Didx]=size(U);
@@ -741,20 +746,20 @@ mask_vd = [false(Tidx, 1), (abs(V_diff)>CUR_thr)];
 
 
 mask_vel_comb = (mask_u | mask_v | mask_s | mask_w | mask_ud | mask_vd);
-Data.mask_QC_3D(mask_vel_comb)= QC_BAD;
+Data.mask_QC_2D(mask_vel_comb)= QC_BAD;
 
 prombt = ['\n\nVelocity QC Summary: Flagged cells as QC_BAD (%d) based on:\n' ...
-          ' - Horizontal spikes (|dU/dz|, |dV/dz|) > %0.2f m/s\n' ...
-          ' - Statistical outliers > 3 standard deviations (per depth bin)\n' ...
+          ' - Vertical jumps of horizontal velocity |diff(U)|,|diff(V)|> %0.2f m/s\n' ...
+          ' - Temporal outliers > 3 standard deviations (per depth bin)\n' ...
           ' - Vertical velocity outliers (|W|) > %0.2f m/s\n'];
 fprintf(1, prombt, QC_BAD, CUR_thr, W_thr); 
 fprintf(fidlog, prombt, QC_BAD, CUR_thr, W_thr);
 
 
-U_QC = U; U_QC(Data.mask_QC_3D~=0)=NaN;
-V_QC = V; V_QC(Data.mask_QC_3D~=0)=NaN;
-W_QC = W; W_QC(Data.mask_QC_3D~=0)=NaN;
-CSPD_QC = CSPD; CSPD_QC(Data.mask_QC_3D~=0)=NaN;
+U_QC = U; U_QC(Data.mask_QC_2D~=0)=NaN;
+V_QC = V; V_QC(Data.mask_QC_2D~=0)=NaN;
+W_QC = W; W_QC(Data.mask_QC_2D~=0)=NaN;
+CSPD_QC = CSPD; CSPD_QC(Data.mask_QC_2D~=0)=NaN;
 
 f4 = figure(4); clf;
 
@@ -788,7 +793,7 @@ for k = 1:8
         title('Raw velocities')
     elseif k==2
         title_str = {
-    sprintf('QC velocities: |U|,|V|,|CSPD| < mean+3*STD; |dU/dz|,|dV/dz|<1 m/s'), ...
+    sprintf('QC velocities: |U|,|V|,|CSPD| < mean+3*STD; vertical |ΔU|, |ΔV|<1 m/s'), ...
     sprintf('|W|<0.1 m/s, and previous QCs')
 };
         title(title_str)
@@ -889,8 +894,8 @@ dir_current = mod(atan2d(U_QC, V_QC), 360);
 m_spd=median(CSPD_QC,'omitnan')*1e2;
 m_dir=median(dir_current,'omitnan');
 
-total_pings = size(Data.mask_QC_3D, 1);
-valid_pings = sum(Data.mask_QC_3D == 0, 1); 
+total_pings = size(Data.mask_QC_2D, 1);
+valid_pings = sum(Data.mask_QC_2D == 0, 1); 
 m_coverage = (valid_pings ./ total_pings) * 100;
 
 for k=1:srf_bins-1;
@@ -1288,6 +1293,8 @@ function save_signature_to_nc(Data, Config, nCells, Dist2Instr_CellMidpoint, Nom
         % --- Determine Dimensions and Create Variable ---
         if rows == nTime && cols == 1
             nccreate(filename, f, 'Dimensions', {'time', nTime});
+        elseif rows == 1 && cols == nBins
+            nccreate(filename, f, 'Dimensions', {'cell', nBins});
         elseif rows == nTime && cols == nBins
             nccreate(filename, f, 'Dimensions', {'time', nTime, 'cell', nBins});
         elseif rows == nTime && cols == 3
