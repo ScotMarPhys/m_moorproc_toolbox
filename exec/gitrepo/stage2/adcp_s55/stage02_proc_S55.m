@@ -129,6 +129,13 @@ prombt = ['\n\n***Hard-Iron compass correction***\n' ...
 fprintf(1, prombt, t_lim(1,:),t_lim(2,:),err_min, err_max); 
 fprintf(fidlog, prombt,t_lim(1,:),t_lim(2,:), err_min, err_max); 
 
+hist_hard_iron = sprintf(['Hard-iron correction: circle fit applied to compass data ' ...
+    'from %s to %s. Horizontal velocity corrected for error angles ' ...
+    'ranging from %5.2f deg to %5.2f deg.'], ...
+    datestr(t_lim(1,:), 'yyyy-mm-dd HH:MM'), ...
+    datestr(t_lim(2,:), 'yyyy-mm-dd HH:MM'), ...
+    err_min, err_max);
+
 % Save figure
 set(h_fig,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
 print(h_fig,'-dpng',fullfile(outdir,[filename,'_f1_hard_iron_correction.png']));
@@ -136,6 +143,7 @@ print(h_fig,'-dpng',fullfile(outdir,[filename,'_f1_hard_iron_correction.png']));
 
 % 2. Now rotate the corrected U/V to True North
 mag_dev = info_adcp.magdev;
+DS.mag_dev = mag_dev;
 U_final = DS.U_hard_iron_corrected .* cosd(mag_dev) - DS.V_hard_iron_corrected .* sind(mag_dev);
 V_final = DS.U_hard_iron_corrected .* sind(mag_dev) + DS.V_hard_iron_corrected .* cosd(mag_dev);
 
@@ -148,6 +156,9 @@ prombt = ['\n\n***Magnetic deviation***\n' ...
     'Horizontal velocity data corrected for magnetic deviation of %5.2f' deg '\n'];
 fprintf(1, prombt, mag_dev); 
 fprintf(fidlog, prombt,mag_dev); 
+
+hist_mag_def = sprintf(['Horizontal velocity data corrected for magnetic ' ...
+    'deviation of %5.2f' deg '.'], mag_dev)
 
 %% plot data to check rotation is reasonable
 U_QC = DS.Average_VelEast; U_QC(DS.mask_QC_2D~=0)=NaN;
@@ -400,35 +411,51 @@ if use_MC
         % Combined (Default)
         R_true = R_MS; 
         prompt_text = 'MicroCAT and SCOTIA combined';
+        sos_method_S = 'Speed of Sound (SoS) from MicroCAT and SCOTIA monthly climatology combined (time and depth varying)';
     elseif choice == 1
         % Scotia Only
         % (Note: month_indices must be defined from your time vector previously)
         R_true = R_SC(:, month_indices); 
         prompt_text = 'Scotia only';
+        sos_method_S = 'Speed of Sound (SoS) from SCOTIA monthly climatology (time-interpolated profile)';
     elseif choice == 2
         % MicroCAT Only
         R_true = R_MC;
         prompt_text = 'MicroCAT only';
+        sos_method_S = 'Speed of Sound (SoS) from MicroCAT and SCOTIA combined (time and depth varying)';;
     else
         error('Invalid selection. Please run the script again and choose 1, 2, or 3.');
     end
-    
+
     % 3. Format the log message
     full_prompt = sprintf('%s was used for speed of sound correction of ADCP range\n', prompt_text);
     
     % 4. Output to log file (fidlog) and Command Window
     fprintf(fidlog, '%s', full_prompt);
     fprintf('%s', full_prompt);
+
+    % for history later
+    sos_method = sprintf(['Acoustic range and bin depths corrected using %s via GSW (TEOS-10).'], ...
+    sos_method);
+    depth_source = 'Instrument depth derived from CTD-calibrated MicroCAT pressure (offset-corrected to ADCP transducer head).';
 else
-    
     % Use nominal range (no profile correction)
     R_true = DS_EM.Dist2Instr_CellMidpoint(:)';
     bad_in =DS_EM.mask_QC_time==QC_BAD;
+
+    % for history later
+    depth_source = 'Instrument depth derived from internal ADCP pressure sensor.';
+    sos_method = ['Acoustic range calculated using nominal (fixed) speed of sound. No external correction applied.'];
 end
 
 % --- Final Calculation ---
 % if microcat option is used, instr_depth is derived from calibrated MC data
-cell_depth = instr_depth + R_true; 
+cell_depth = instr_depth + R_true;
+DS_EM.corrected_cell_depth = cell_depth;
+DS_EM.corrected_instr_depth = instr_depth;
+DS_EM.corrected_Dist2Instr_CellMidpoint = R_true;
+DS_EM.corrected_pres = gsw_p_from_z(cell_depth,info_adcp.lat);
+DS_EM.corrected_instr_pres = gsw_p_from_z(instr_depth,info_adcp.lat);
 
 y = mean(cell_depth,1,'omitnan');
 
@@ -514,6 +541,8 @@ while true
             ' sidelobe interference flagged as QC_BAD (%d).\n'];
         fprintf(fidlog, prombt, ...
             min(idx_first_bad(~bad_in)), max(idx_first_bad(~bad_in)), nCells, QC_BAD);
+        hist_sidelobe = sprintf(prombt, ...
+            min(idx_first_bad(~bad_in)), max(idx_first_bad(~bad_in)), nCells, QC_BAD);
         break
 
     elseif strcmpi(reply, 'N') || strcmpi(reply, 'NO')
@@ -523,6 +552,8 @@ while true
         fprintf(1, prombt, ...
             min(idx_first_bad(~bad_in)), max(idx_first_bad(~bad_in)), nCells); % to screen
         fprintf(fidlog, prombt, ...
+            min(idx_first_bad(~bad_in)), max(idx_first_bad(~bad_in)), nCells);
+        hist_sidelobe = sprintf(prombt, ...
             min(idx_first_bad(~bad_in)), max(idx_first_bad(~bad_in)), nCells);
         break
 
@@ -534,6 +565,36 @@ while true
         end
     end
 end
+
+hist_sidelobe = sprintf(prombt, ...
+            min(idx_first_bad(~bad_in)), max(idx_first_bad(~bad_in)), nCells);
+
+%% to save data later
+% history_date = datestr(now, 'yyyy-mm-dd HH:MM:SS');
+% stage2_logic = sprintf(['Stage 2 corrections: Instrument depth derived from %s. ' ...
+%     'ADCP range and bin depths corrected using %s profile via GSW (TEOS-10). ' ...
+%     'Data trimmed to MicroCAT QC valid time range.'], depth_source, sos_method);
+% stage2_block = sprintf(['Stage 2 processing (%s):\n' ...
+%     '- %s\n- %s\n- %s\n- %s\n- %s'], ...
+%     datestr(now, 'yyyy-mm-dd HH:MM'), ...
+%     depth_source, ...
+%     sos_method, ...
+%     hist_hard_iron, ...
+%     hist_mag_def, ...
+%     hist_sidelobe);
+% 
+% % 3. Retrieve Stage 1 and Merge
+% try
+%     % Get existing Stage 1 history from the DS or the file
+%     stage1_history = ncreadatt(filename, '/', 'history');
+%     full_history = sprintf('%s\n\n%s', stage1_history, stage2_block);
+% catch
+%     % Fallback if Stage 1 isn't found
+%     full_history = stage2_block;
+% end
+% 
+% % 4. Write back to the NetCDF
+% ncwriteatt(filename, '/', 'history', full_history);
 
 
 end
