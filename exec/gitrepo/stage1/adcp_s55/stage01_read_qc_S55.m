@@ -467,41 +467,6 @@ Cor2_pro = nanmean(Cor2);CB2 = find(Cor2_pro>=50,1,'last');
 Cor3_pro = nanmean(Cor3);CB3 = find(Cor3_pro>=50,1,'last');
 SB = min([SB1,SB2,SB3]);
 CB = min([CB1,CB2,CB3]);
-% 
-% % side lobe interference
-% SM1 = find(islocalmax(Amp1_pro),1,'last');
-% SM2 = find(islocalmax(Amp2_pro),1,'last');
-% SM3 = find(islocalmax(Amp3_pro),1,'last');
-% SM = min([SM1,SM2,SM3]);
-% A(1) = gsw_z_from_p(nanmean(Data.Average_Pressure(Data.mask_QC_1D==0)),info_adcp.lat); % range based on pressure sensor
-% A(2) = Dist2Instr_CellMidpoint(SM); % range based on nominal cell distance
-% 
-% %all angle in degrees
-% gamma = 20; %slant angle
-% alpha = [0, 120,240]; % beam 1 - aligned with x-axis, beam 2, beam 3
-% pitch = Data.Average_Pitch; pitch(Data.mask_QC_1D~=0)=NaN; % y-axis rotation, in deg
-% roll = Data.Average_Roll; roll(Data.mask_QC_1D~=0)=NaN; % x-axis rotation, in deg
-% 
-% % Pre-calculate trig terms (using 'd' versions for degrees)
-% cp = cosd(pitch); sp = sind(pitch);
-% cr = cosd(roll);  sr = sind(roll);
-% cg = cosd(gamma); sg = sind(gamma);
-% ca = cosd(alpha); sa = sind(alpha); % alpha is 1x3
-% 
-% % Angle to vertical for each beam (in degrees)
-% beta = acosd(-sp .* sg .* ca + cp .* sr .* sg .* sa + cp .* cr .* cg);
-% 
-% % Find the minimum angle to vertical across all three beams for each timestamp
-% max_beta = max(beta, [], 2);
-% 
-% % R contains buffer for upper range of cell
-% R =max(A)*cosd(max_beta)-Cell_Size; 
-% % find(Dist2Instr_CellMidpoint <= R(i), 1, 'last') for each time step i
-% R(Data.mask_QC_1D~=0)=info_adcp.wd;
-% idx_valid = arrayfun(@(r) find(Dist2Instr_CellMidpoint <= r, 1, 'last'),...
-%     R);
-% idx_valid(Data.mask_QC_1D~=0)=0;
-% R(Data.mask_QC_1D~=0)=NaN;
 
 
 % Visualisation Amplides and Correlation
@@ -519,8 +484,6 @@ for k = 1:numel(ax)
     ylim(ax(k),[0,1080])
     ylabel(ax(k),'Nominal cell depth (m)')
     datetick(ax(k),'x','mmm-yyyy','keepticks','keeplimits');
-    % hLine = plot(ax(k),T(Data.mask_QC_1D==0), y(idx_valid(Data.mask_QC_1D==0)), 'r', 'LineWidth', 0.1);
-    % hLine.DisplayName = 'Sidelobe interference';
     xlim(ax(k),[min(T),max(T)])
 end
 
@@ -571,7 +534,6 @@ figure(3),clf
 ax(1) = subplot(1,3,1);
 plot(Amp1_pro,y),hold on,plot(Amp2_pro,y),plot(Amp3_pro,y)
 yline(y(SB),'--','LineWidth',1.5)
-% yline(y([min(idx_valid(Data.mask_QC_1D==0)),max(idx_valid(Data.mask_QC_1D==0))]),'r--')
 xlabel('Temporal mean amplitude [dB]')
 ylabel('Nominal cell depth')
 axis ij
@@ -580,7 +542,6 @@ title([num2str(SB),' valid bins before surface'])
 ax(2) = subplot(1,3,2);
 plot(Cor1_pro,y),hold on,plot(Cor2_pro,y),plot(Cor3_pro,y)
 yline(y(CB),'--','LineWidth',1.5)
-% yline(y([min(idx_valid(Data.mask_QC_1D==0)),max(idx_valid(Data.mask_QC_1D==0))]),'r--')
 xline(50,'--')
 xlabel('Temporal mean correlation [%]')
 title([num2str(CB),' valid bins before surface'])
@@ -594,7 +555,6 @@ axis ij
 grid on
 xlim([-0.05 0.2])
 yline(y(CB),'--')
-% yline(y([min(idx_valid(Data.mask_QC_1D==0)),max(idx_valid(Data.mask_QC_1D==0))]),'r--')
 xline(0,'--')
 legend('U','V','W','surface bins','Sidelobe range','Location','southeast')
 
@@ -631,50 +591,6 @@ Data.mask_QC_depth(bins_to_process+1:end)=QC_BAD;
 
 fprintf(fidlog,sprintf('Flagged bin >%d as QC_BAD (%d).\n\n',...
     bins_to_process,QC_BAD));
-
-% % sidelobe contamination
-% 
-% prompt = sprintf([ ...
-%   '\n\nSidelobe contamination for each time step varies between %d and %d ' ...
-%   'out of %d bins.\nSee red line in figure 2.\n Would you like to flag ' ...
-%   ' sidelobe contaminated bins for each time step as QC_BAD (%d). Y/N [Y]: '], ...
-%   min(idx_valid(Data.mask_QC_1D==0))+1, max(idx_valid(Data.mask_QC_1D==0))+1, max(nCells), QC_BAD);
-% 
-% reply = input(prompt, 's');
-% if isempty(reply)
-%     reply = 'Y';
-% end
-% 
-% while true
-%     if strcmpi(reply, 'Y') || strcmpi(reply, 'YES')
-%         mask = nCells > idx_valid(:);
-%         Data.mask_QC_3D(mask) = QC_BAD;
-% 
-%         prombt = ['Sidelobe contamination for each time step varies between ' ...
-%             ' %d and %d out of %d bins.\nBins contaminated by' ...
-%             ' sidelobe interference flagged as QC_BAD (%d).\n'];
-%         fprintf(fidlog, prombt, ...
-%             min(idx_valid(Data.mask_QC_1D==0))+1, max(idx_valid(Data.mask_QC_1D==0))+1, max(nCells), QC_BAD);
-%         break
-% 
-%     elseif strcmpi(reply, 'N') || strcmpi(reply, 'NO')
-%         prombt = ['Sidelobe contamination for each time step varies between ' ...
-%             'bin %d and %d out of %d bins.\nOperator chose NOT to flag ' ...
-%             'bins contaminated by sidelobe interference.\n'];
-%         fprintf(1, prombt, ...
-%             min(idx_valid(Data.mask_QC_1D==0))+1, max(idx_valid(Data.mask_QC_1D==0))+1, max(nCells)); % to screen
-%         fprintf(fidlog, prombt, ...
-%             min(idx_valid(Data.mask_QC_1D==0))+1, max(idx_valid(Data.mask_QC_1D==0))+1, max(nCells));
-%         break
-% 
-%     else
-%         fprintf('Invalid entry. Enter Y or N (press Return for default).\n');
-%         reply = input('Y/N [Y]: ', 's');   % re-prompt and read again
-%         if isempty(reply)
-%             reply = 'Y';
-%         end
-%     end
-% end
 
 
 %% --- Spike Detection (Acoustic Amplitude) ---
@@ -738,7 +654,7 @@ mask_vd = [false(Tidx, 1), (abs(V_diff)>CUR_thr)];
 mask_vel_comb = (mask_u | mask_v | mask_s | mask_w | mask_ud | mask_vd);
 Data.mask_QC_2D(mask_vel_comb)= QC_BAD;
 
-prombt = ['\n\nVelocity QC Summary: Flagged cells as QC_BAD (%d) based on:\n' ...
+prombt = ['Velocity QC Summary: Flagged cells as QC_BAD (%d) based on:\n' ...
           ' - Vertical jumps of horizontal velocity |diff(U)|,|diff(V)|> %0.2f m/s\n' ...
           ' - Temporal outliers > 3 standard deviations (per depth bin)\n' ...
           ' - Vertical velocity outliers (|W|) > %0.2f m/s\n'];
@@ -818,7 +734,7 @@ err_max = max(Data_corr.hard_iron_CCW_angle,[],'omitnan');
 
 % Logfile output
 deg = char(176); 
-prombt = ['\n\n***Hard-Iron compass correction***\n' ...
+prombt = ['***Hard-Iron compass correction***\n' ...
     'Simple circle fit shows error angle varies between %3.0f' deg ... 
     'and %3.0f' deg '\n'];
 fprintf(1, prombt, err_min, err_max); 
@@ -1380,6 +1296,11 @@ function save_signature_to_nc(Data, Config, nCells, Dist2Instr_CellMidpoint, Nom
             ncwriteatt(filename, '/', cf, char(string(cval)));
         end
     end
+    history_date = datestr(now, 'yyyy-mm-dd HH:MM:SS');
+    history_qc_logic = 'Stage 1 quality control: data flagged based on pressure, tilt, beam correlation < 50%, surface bins, and velocity/amplitude spikes.';
+    
+    ncwriteatt(filename, '/', 'history', [history_date, ': ', history_qc_logic]);
+
     fprintf('NetCDF file "%s" created successfully with full attributes.\n', filename);
 end
 
