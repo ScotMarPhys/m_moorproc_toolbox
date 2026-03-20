@@ -120,6 +120,7 @@ switch datatype
         moor = loc;
         pd.rawpath = fullfile(mg.moordatadir, 'raw', mg.cruise, datatype);
         pd.infofile = fullfile(mg.moordatadir, 'proc', moor, [moor 'info.dat']);
+        pd.scotiafile = fullfile(fileparts(fileparts(mg.moordatadir)), 'scotia/SCOTIA_monthly_clim_V8.nc');
         pd.stage1path = fullfile(mg.moordatadir, 'proc', moor, datatype);
         pd.stage1log = fullfile(pd.stage1path, [moor '_ADCP_stage1.log']);
         pd.stage1form = [moor '_%d_stage1.nc'];
