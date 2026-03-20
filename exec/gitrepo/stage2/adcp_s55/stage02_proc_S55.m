@@ -35,6 +35,7 @@ if nargin == 1 && ~isempty(MOORPROC_G)
     outdir = pd.stage1path;
     infile_form = pd.stage1form;
     ouput_form = pd.stage2form;
+    scotiafile = pd.scotiafile;
 else
     try
         operator = getenv('COMPUTERNAME');    
@@ -42,12 +43,14 @@ else
         infofile = varargin{2};
         logfile = varargin{3};
         outdir = varargin{4};
+        scotiafile = varargin{5};
         infile_form =  [moor '_%d_stage1.nc'];
         ouput_form = [moor '_%d_stage2.nc'];
     catch
         error('Not enough manual arguments provided. Expected 5 additional arguments after "moor".');
     end
 end
+
 
 % Build post-processing flag array
 % Reference values (Consistent with original)
@@ -223,7 +226,7 @@ end
 
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[filename,'_stage2_f2_UV_hard_iron_mag_dev_correction.png']));
+print('-dpng',fullfile(outdir,[filename,'_f2_UV_hard_iron_mag_dev_correction.png']));
 clear ax
 
 %% Apply QC and ensemble mean
@@ -258,7 +261,7 @@ DS_EM = ensemble_mean_struct_QC(DS, 10,QC_GOOD,QC_BAD);
 % 
 % % Save figure
 % set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-% print('-dpng',fullfile(outdir,[filename,'_stage2_f3_uv_first_bint.png']));
+% print('-dpng',fullfile(outdir,[filename,'_f3_uv_first_bint.png']));
 %% Calculate depth matrix
 
 % Use internal ADCP Sensors
@@ -356,8 +359,18 @@ if use_MC
     
 
     %%
-    scotia_fn = fullfile('C:\Users\sa07kb\OneDrive - SAMS\data\data_SCOTIA\SCOTIA_monthly_clim_V8.nc');
-    scotia = load_scotia_at_location(scotia_fn, info_adcp.lon);
+    while ~isfile(scotiafile)
+        fprintf('File not found: %s\n', scotiafile);
+        
+        % Prompt user to enter a new path and filename
+        scotiafile = input('Please enter path and filename of scotia clim: ', 's');
+        
+        % Optional: break if user enters nothing to avoid infinite loop
+        if isempty(scotiafile)
+            error('No file path provided. Exiting.');
+        end
+    end
+    scotia = load_scotia_at_location(scotiafile, info_adcp.lon);
     scotia.z = gsw_z_from_p(scotia.pres, info_adcp.lat); % MC Depth
     
     %% Extrapolate onto adcp depth and time:
@@ -397,7 +410,7 @@ if use_MC
     grid on
     % Save figure
     set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-    print('-dpng',fullfile(outdir,[filename,'_stage2_f3_SoS_correction_range.png']));
+    print('-dpng',fullfile(outdir,[filename,'_f3_SoS_correction_range.png']));
   
     % 1. Prompt user for input with a default option
     disp('Which speed of sound correction do you want to apply?');
@@ -517,7 +530,7 @@ lgd.Position = [0.73 .8 0.12 0.3];  % [x y width height]
 
 % Save figure
     set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-    print('-dpng',fullfile(outdir,[filename,'_stage2_f4_sidelobe_interference.png']));
+    print('-dpng',fullfile(outdir,[filename,'_f4_sidelobe_interference.png']));
 
 %% sidelobe contamination
 % 
