@@ -158,7 +158,7 @@ fprintf(1, prombt, mag_dev);
 fprintf(fidlog, prombt,mag_dev); 
 
 hist_mag_def = sprintf(['Horizontal velocity data corrected for magnetic ' ...
-    'deviation of %5.2f' deg '.'], mag_dev)
+    'deviation of %5.2f' deg '.'], mag_dev);
 
 %% plot data to check rotation is reasonable
 U_QC = DS.Average_VelEast; U_QC(DS.mask_QC_2D~=0)=NaN;
@@ -436,12 +436,13 @@ if use_MC
 
     % for history later
     sos_method = sprintf(['Acoustic range and bin depths corrected using %s via GSW (TEOS-10).'], ...
-    sos_method);
+    sos_method_S);
     depth_source = 'Instrument depth derived from CTD-calibrated MicroCAT pressure (offset-corrected to ADCP transducer head).';
 else
     % Use nominal range (no profile correction)
     R_true = DS_EM.Dist2Instr_CellMidpoint(:)';
     bad_in =DS_EM.mask_QC_time==QC_BAD;
+    instr_depth(bad_in)=NaN;
 
     % for history later
     depth_source = 'Instrument depth derived from internal ADCP pressure sensor.';
@@ -451,7 +452,7 @@ end
 % --- Final Calculation ---
 % if microcat option is used, instr_depth is derived from calibrated MC data
 cell_depth = instr_depth + R_true;
-DS_EM.corrected_cell_depth = cell_depth;
+DS_EM.corrected_cell_depth = cell_depth ();
 DS_EM.corrected_instr_depth = instr_depth;
 DS_EM.corrected_Dist2Instr_CellMidpoint = R_true;
 DS_EM.corrected_pres = gsw_p_from_z(cell_depth,info_adcp.lat);
@@ -568,6 +569,36 @@ end
 
 hist_sidelobe = sprintf(prombt, ...
             min(idx_first_bad(~bad_in)), max(idx_first_bad(~bad_in)), nCells);
+
+%%
+m_u=median(DS_EM.U_all_corrected,"omitnan" )*1e2;
+m_v=median(DS_EM.V_all_corrected,"omitnan" )*1e2;
+m_w=median(DS_EM.Average_VelUp,"omitnan" )*1e2;
+m_Amp1=median(DS_EM.Average_AmpBeam1,"omitnan" ); 
+m_Amp2=median(DS_EM.Average_AmpBeam2,"omitnan" ); 
+m_Amp3=median(DS_EM.Average_AmpBeam3,"omitnan" );
+m_Cor1=median(DS_EM.Average_CorBeam1,"omitnan" ); 
+m_Cor2=median(DS_EM.Average_CorBeam2,"omitnan" ); 
+m_Cor3=median(DS_EM.Average_CorBeam3,"omitnan" ); 
+CSPD = sqrt(DS_EM.U_all_corrected.^2+DS_EM.V_all_corrected.^2);
+dir_current = mod(atan2d(DS_EM.U_all_corrected, DS_EM.V_all_corrected), 360);
+m_spd=median(CSPD,'omitnan')*1e2;
+m_dir=median(dir_current,'omitnan');
+
+total_pings = size(DS_EM.mask_QC_2D, 1);
+valid_pings = sum(DS_EM.mask_QC_2D == QC_GOOD, 1); 
+m_coverage = (valid_pings ./ total_pings) * 100;
+
+for k= 1:max(DS_EM.cell(DS_EM.mask_QC_depth==QC_GOOD));
+fprintf(fidlog,'\nBin %d : nominally %3.2f m - %3.2f m from sensor head\n\n', k, DS_EM.Dist2Instr_CellMidpoint(k)-Cell_Size, DS_EM.Dist2Instr_CellMidpoint(k)+Cell_Size);
+fprintf(fidlog,'Data coverage [%%]                               : %4.1f%%\n', m_coverage(k));
+fprintf(fidlog,'Median velocity u / v / w [cm/s]                : %4.1f  %4.1f  %4.1f\n',m_u(k), m_v(k), m_w(k));
+fprintf(fidlog,'Median Amp Beam1 / Beam2 / Beam3 [db]           : %3.0f  %3.0f  %3.0f\n',m_Amp1(k), m_Amp2(k), m_Amp3(k));
+fprintf(fidlog,'Median correlation Beam1 / Beam2 / Beam3 [%%]    : %3.0f  %3.0f  %3.0f\n',m_Cor1(k), m_Cor2(k), m_Cor3(k));
+fprintf(fidlog,'Median speed [cm/s]                             : %4.1f\n',m_spd(k));
+fprintf(fidlog,'Median direction [deg]                         : %5.2f\n',m_dir(k));
+end
+
 
 %% to save data later
 % history_date = datestr(now, 'yyyy-mm-dd HH:MM:SS');
