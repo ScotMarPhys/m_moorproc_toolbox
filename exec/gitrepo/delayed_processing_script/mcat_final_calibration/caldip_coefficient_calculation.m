@@ -17,16 +17,16 @@ close all
 % For cruise ar304, casts for IB moorings = [1,2]
 % For cruise dy120: cast= [1,3,4,5,8,9,10]
 % For cruise jc238: cast= [1,3,4,19,33,37,38,43]
-p_insitucal.cruise           =  'jc238' ;%'ar304'; %'ar304' %'dy078';%'dy053';%'pe400'; %'kn221-02'; %'pe399';       % campaign cd177 / cd170 / d304 / kn182, ...
-p_insitucal.cast             = 19;   
+p_insitucal.cruise           =  MOORPROC_G.cruise; % 'dy120' ;%'ar304'; %'ar304' %'dy078';%'dy053';%'pe400'; %'kn221-02'; %'pe399';       % campaign cd177 / cd170 / d304 / kn182, ...
+p_insitucal.cast             = 38;   
 p_insitucal.depl_period      = 'osnap6'; %'osnap2'    % move1; move2; rapid 1; rapid 2
 
 % ---- parameters ----------------------------------------------------
 p_insitucal.sensorselec      = 1;
 p_insitucal.sensor_id        = [332 337];  % MicroCAT ID range (in info.dat)
-p_insitucal.basedir          = pathosnap; % base directory for osnap mooring
-p_insitucal.datadir          = [p_insitucal.basedir filesep 'data']; % data directory 
-p_insitucal.coef_dir         = [pathgit '/data/moor/cal_coef/']; 
+p_insitucal.basedir          = [basedir 'osnap']; % base directory for osnap mooring
+p_insitucal.datadir          = [p_insitucal.basedir 'osnap\']; % data directory 
+p_insitucal.coef_dir         = [pathgit '/metadata/cal_coef/osnap/']; 
 p_insitucal.apply_offset   = 'n'; % if offset == 'y'/'n'/'i', time offset between CTD and MC 
                      % will / will not be applied / individual offsets
                      % applied  
@@ -202,7 +202,7 @@ elseif strcmp(p_insitucal.cruise,'dy120') & p_insitucal.cast == 5
     p_insitucal.t_interval     = [-.02 .02];
     p_insitucal.dp_interval    = [-10 10];   
     p_insitucal.p_interval       = [0  2050];
-    p_insitucal.average_interval = [1500 2050];% [1000 2150];
+    p_insitucal.average_interval = [500 1600];% [1000 2150];
 elseif strcmp(p_insitucal.cruise,'dy120') & p_insitucal.cast == 8
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
@@ -227,6 +227,18 @@ elseif strcmp(p_insitucal.cruise,'jc238') & p_insitucal.cast == 19
     p_insitucal.dp_interval    = [-10 10];   
     p_insitucal.p_interval       = [0  1200];
     p_insitucal.average_interval = [1500 2950];% [1000 2150];
+elseif strcmp(p_insitucal.cruise,'jc238') & p_insitucal.cast == 3
+    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0  2200];
+    p_insitucal.average_interval = [1200 2200];% [1000 2150];
+elseif strcmp(p_insitucal.cruise,'dy181') & p_insitucal.cast == 66
+    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0  3000];
+    p_insitucal.average_interval = [1200 2200];% [1000 2150];
 else
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];

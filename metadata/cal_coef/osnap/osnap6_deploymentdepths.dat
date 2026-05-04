@@ -6,6 +6,7 @@ Mooring    = rtwb2_06_2020
 Mooring    = ib3_02_2020
 Mooring    = ib4_02_2020
 Mooring    = ib5_02_2020
+Mooring    = rhadcp_01_2020
 Columns    = z:instrument:serialnumber
 52	337	9141
 53	375	004
@@ -94,3 +95,4 @@ Columns    = z:instrument:serialnumber
  731    337    11320
  920    337     9375
  927    370    11063
+1075	337	9113

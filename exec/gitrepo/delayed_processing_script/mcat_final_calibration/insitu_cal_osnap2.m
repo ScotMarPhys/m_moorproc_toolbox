@@ -200,6 +200,17 @@ elseif strcmp('jc238',cruise)
   ctd_cunit   = 'S/m'; % cond. unit in .cnv file
   ctd_1hz     = 'mS/cm'; % cond. unit in 1 hz file
   mc_cunit    = 'mS/cm';  
+elseif strcmp('dy181',cruise)
+  mc_ext      = '.raw';  
+  mc_dir      = [basedir,'/data/moor/proc_calib/',cruise,'/cal_dip/',sensor,'/'];
+  info_dir    = [basedir,'/data/moor/proc_calib/',cruise,'/cal_dip/'];
+  ctd_dir     = [basedir '/cruise_data/',cruise,'/ctd/'];
+  ctdraw_dir  = [basedir '/cruise_data/',cruise,'/ctd/ASCII_FILES/'];
+  btldir      = [basedir '/cruise_data/',cruise,'/ctd/ASCII_FILES/'];  
+  ctdformat   = 'mstar'; % NOC format
+  ctd_cunit   = 'S/m'; % cond. unit in .cnv file
+  ctd_1hz     = 'mS/cm'; % cond. unit in 1 hz file
+  mc_cunit    = 'mS/cm'; 
 else
   error('Cruise unknown')  
 end
@@ -262,6 +273,12 @@ elseif strcmp('dy120',cruise)
   ctd_file    = ['ctd_jc238_',sprintf('%3.3d',cast),'_psal.nc']; % post-calibrated data from crusie dy120, processed by Yvonne Firing
   bottle_file = ['JC238_CTD_',sprintf('%3.3d',cast),'.ros']; % .ros
   ctd_cnvfile = ['JC238_CTD_',sprintf('%3.3d',cast),'.cnv']; 
+  mc_file     = ['cast',num2str(cast),'/cast',num2str(cast),'_'];
+  info_file   = ['cast',num2str(cast),'info.dat'];
+ elseif strcmp('dy181',cruise)
+  ctd_file    = ['ctd_dy181_',sprintf('%3.3d',cast),'_psal.nc']; % post-calibrated data from crusie dy120, processed by Yvonne Firing
+  bottle_file = ['DY181_CTD',sprintf('%3.3d',cast),'.ros']; % .ros
+  ctd_cnvfile = ['DY181_CTD',sprintf('%3.3d',cast),'.cnv']; 
   mc_file     = ['cast',num2str(cast),'/cast',num2str(cast),'_'];
   info_file   = ['cast',num2str(cast),'info.dat'];
 end  
@@ -371,7 +388,7 @@ elseif strcmp(ctdformat,'mstar')
       d.datnum       = d.time/86400 + ctd_time_ori; % ctd time in datenum
         d = rmfield(d,'time');
     % if strcmp(cruise,'jc064')
-    elseif strcmp(cruise,'dy120') | strcmp(cruise,'ar304') | strcmp(cruise,'dy078') | strcmp(cruise,'dy053') | strcmp(cruise,'pe399') 
+    elseif strcmp(cruise,'dy120') | strcmp(cruise,'ar304') | strcmp(cruise,'dy078') | strcmp(cruise,'dy053') | strcmp(cruise,'pe399')
         ctd_file
         if sensorselec==1    
             [d h]=mload(ctd_file,'time','press','temp1','cond1',' ','q');
@@ -387,6 +404,14 @@ elseif strcmp(ctdformat,'mstar')
     elseif strcmp(cruise,'jc238')
         ctd_file
         [d, h] = mload(ctd_file,'time','press','temp','cond',' ','q');
+         d.datnum=datenum(h.data_time_origin)+d.time/86400;    
+  d = rmfield(d,'time');
+    elseif strcmp(cruise,'dy181')
+        ctd_file
+        [d, h] = mload(ctd_file,'time','press','temp1','cond1',' ','q');
+        d.cond = d.cond1;
+        d.temp = d.temp1;
+        h.data_time_origin = [2024 7 16 03 43 57]; % Missing from mstar file!
          d.datnum=datenum(h.data_time_origin)+d.time/86400;    
   d = rmfield(d,'time');
     else
@@ -894,7 +919,7 @@ print([mc_dir,'cast',num2str(cast),'/',output_name,'.png'],'-dpng');
 set(0,'currentfigure',figure(2))  
 orient landscape
 
-print([mc_dir,'cast',num2str(cast),'/',output_name,'.ps'],'-dpsc');
+print([mc_dir,'cast',num2str(cast),'/',output_name,'.ps'],'-dpdf');
     
 
 if ~isempty(pproblem) 

@@ -22,30 +22,31 @@ global basedir datadir execdir pathgit pathosnap
 
 % moor = 'rteb1_06_2020';
 % moor = 'rtwb1_06_2020';
-moor = 'rtwb2_06_2020';
-
+% moor = 'rtwb2_06_2020';
+% moor = 'rhadcp_01_2020';
+moor = 'rhadcp_02_2022';
 
 %=========================================================================
 % Apply calibration coefficients to series, removes bad data. If required, applies
 % constant offsets, and conductivity pressure correction
-p_applycal.operator  = 'LD';
+p_applycal.operator  = 'SJ';
 p_applycal.mooring  = moor;   
-p_applycal.sensortyp = 'seaphox';%'microcat';   % arg / microcat / rbr / idr
+p_applycal.sensortyp = 'microcat';%'microcat';   % arg / microcat / rbr / idr
 p_applycal.delim = ',';
 
 % input directories & files
 p_applycal.mooring_dir         = [pathosnap '/data/moor/proc/'];
 p_applycal.mooring_outdir      = [pathosnap '/data/moor/proc/'];
-p_applycal.coef_dir            = [pathgit '/data/moor/cal_coef/']; 
+p_applycal.coef_dir            = [pathgit '/metadata/cal_coef/osnap/']; 
 p_applycal.external_ctd_dir    = [pathosnap '/cruise_data/'];
 p_applycal.ctd_ref_cruises     = {''};%{'pe400'}; %{'kn221-02';'pe399'}; % references cruises for the QC
 p_applycal.distrangectd        = 100e3; % distance of the reference ctd from the mooring
-p_applycal.strformat.mctemptxt = repmat('%s',1,35);
-p_applycal.strformat.mctempnum = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,8)];
-p_applycal.strformat.mcsaltxt  = repmat('%s',1,35);
-p_applycal.strformat.mcsalnum  = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,8)];
-p_applycal.strformat.mcprestxt = repmat('%s',1,77);
-p_applycal.strformat.mcpresnum = ['%f' repmat('%s%f%s%s',1,19)];
+p_applycal.strformat.mctemptxt = repmat('%s',1,38); % Add 3 columns for new cruise instance
+p_applycal.strformat.mctempnum = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,9)]; % Add 1 to the repmat for new cruise
+p_applycal.strformat.mcsaltxt  = repmat('%s',1,38); % Add 3 columns for new cruise instance
+p_applycal.strformat.mcsalnum  = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,9)]; % Add 1 to the repmat for new cruise
+p_applycal.strformat.mcprestxt = repmat('%s',1,81); % Add 4 columns for new cruise instance
+p_applycal.strformat.mcpresnum = ['%f' repmat('%s%f%s%s',1,20)]; % Add 1 to the repmat for new cruise
 
 loclegend = 'north';
 
@@ -666,7 +667,7 @@ end
   s = sw_salt(c/c3515,t*t90_68,p);
   
   figure(6);clf; hold on
-  plot(jd(ii)-jd(1),s,'b')
+  plot(jd(ii)-jd(1),s(ii),'b')
   plot(jd(ii)-jd(1),sn,'r')
   legend('Pre-cal','post-cal','Location','Best')
   ylabel('Salinity')
@@ -679,8 +680,8 @@ end
 %   sss=sw_salt(c/c3515,t*t90_68,p);
   
   figure(8);clf; hold on
-  plot(s,t,'b.')
-  plot(sn,t,'r.')
+  plot(s(ii),t(ii),'b.')
+  plot(sn,t(ii),'r.')
   title('Black = pre-cal, Red = post-cal')
   xlabel('Salinity')
   ylabel('Temperature')
@@ -701,7 +702,7 @@ if strcmp(acc_cpcor,'y')
   cn(dumI) = dum;
   figure(6)
     sn = sw_salt(cn(ii)/c3515,tn(ii)*t90_68,pref*ones(length(ii),1));
-    plot(jd(ii)-jd(1),sn,'r')
+    plot(jd(ii)-jd(1),sn(ii),'r')
     grid on
     legend('raw','P corr.')
 

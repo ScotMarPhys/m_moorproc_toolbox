@@ -68,6 +68,7 @@ while 1
   end
 
   for  j = 1 : size(vars,1)
+      a = a(1);
     varstr =   zeile(a+ln+3:a+ln+4);
     if  strcmp(varstr,vars(j,1:2)) == 1
      if strcmp(varstr,'ti')  
