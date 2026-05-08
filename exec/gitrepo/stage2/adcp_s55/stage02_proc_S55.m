@@ -35,6 +35,7 @@ if nargin == 1 && ~isempty(MOORPROC_G)
     outdir = pd.stage1path;
     infile_form = pd.stage1form;
     ouput_form = pd.stage2form;
+    scotiafile = pd.scotiafile;
 else
     try
         operator = getenv('COMPUTERNAME');    
@@ -42,12 +43,14 @@ else
         infofile = varargin{2};
         logfile = varargin{3};
         outdir = varargin{4};
+        scotiafile = varargin{5};
         infile_form =  [moor '_%d_stage1.nc'];
         ouput_form = [moor '_%d_stage2.nc'];
     catch
         error('Not enough manual arguments provided. Expected 5 additional arguments after "moor".');
     end
 end
+
 
 % Build post-processing flag array
 % Reference values (Consistent with original)
@@ -118,16 +121,23 @@ fprintf(fidlog,'ADCP serial number  : %d\n\n',serial_nums(i));
 [DS, h_fig] = s55_hard_iron_compass_correction(DS, 0, true, true, true,outdir,filename);
 err_min = min(DS.hard_iron_CCW_angle,[],'omitnan');
 err_max = max(DS.hard_iron_CCW_angle,[],'omitnan');
-t_lim = datestr(DS.calibration_window);
+t_lim = datestr(DS.hard_iron_time_window);
 
 % Logfile output
 deg = char(176); 
 prombt = ['\n\n***Hard-Iron compass correction***\n' ...
     'Simple circle fitted to data from\n %s to %s.\n' ...
-    'Horizontal velocity data corrected for error angle varying between %3.0f' deg ... 
-    'and %3.0f' deg '\n'];
+    'Horizontal velocity data corrected for error angle varying between %5.2f' deg ... 
+    'and %5.2f' deg '\n'];
 fprintf(1, prombt, t_lim(1,:),t_lim(2,:),err_min, err_max); 
 fprintf(fidlog, prombt,t_lim(1,:),t_lim(2,:), err_min, err_max); 
+
+hist_hard_iron = sprintf(['Hard-iron correction: circle fit applied to compass data ' ...
+    'from %s to %s. Horizontal velocity corrected for error angles ' ...
+    'ranging from %5.2f deg to %5.2f deg.'], ...
+    datestr(t_lim(1,:), 'yyyy-mm-dd HH:MM'), ...
+    datestr(t_lim(2,:), 'yyyy-mm-dd HH:MM'), ...
+    err_min, err_max);
 
 % Save figure
 set(h_fig,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
@@ -135,24 +145,31 @@ print(h_fig,'-dpng',fullfile(outdir,[filename,'_f1_hard_iron_correction.png']));
 
 
 % 2. Now rotate the corrected U/V to True North
-magdev = info_adcp.magdev;
-U_final = DS.U_hard_iron_corrected .* cosd(magdev) - DS.V_hard_iron_corrected .* sind(magdev);
-V_final = DS.U_hard_iron_corrected .* sind(magdev) + DS.V_hard_iron_corrected .* cosd(magdev);
+mag_dev = info_adcp.magdev;
+DS.mag_dev = mag_dev;
+U_final = DS.U_hard_iron_corrected .* cosd(mag_dev) - DS.V_hard_iron_corrected .* sind(mag_dev);
+V_final = DS.U_hard_iron_corrected .* sind(mag_dev) + DS.V_hard_iron_corrected .* cosd(mag_dev);
+
+DS.U_all_corrected = U_final;
+DS.V_all_corrected = V_final;
 
 % Logfile output
 deg = char(176); 
 prombt = ['\n\n***Magnetic deviation***\n' ...
-    'Horizontal velocity data corrected for magnetic deviation of %3.0f' deg '\n'];
-fprintf(1, prombt, magdev); 
-fprintf(fidlog, prombt,magdev); 
+    'Horizontal velocity data corrected for magnetic deviation of %5.2f' deg '\n'];
+fprintf(1, prombt, mag_dev); 
+fprintf(fidlog, prombt,mag_dev); 
+
+hist_mag_def = sprintf(['Horizontal velocity data corrected for magnetic ' ...
+    'deviation of %5.2f' deg '.'], mag_dev);
 
 %% plot data to check rotation is reasonable
-U_QC = DS.Average_VelEast; U_QC(DS.mask_QC_3D~=0)=NaN;
-V_QC = DS.Average_VelNorth; V_QC(DS.mask_QC_3D~=0)=NaN;
-U_HI = DS.U_hard_iron_corrected; U_HI(DS.mask_QC_3D~=0)=NaN;
-V_HI = DS.V_hard_iron_corrected; V_HI(DS.mask_QC_3D~=0)=NaN;
-U_final(DS.mask_QC_3D~=0)=NaN;
-V_final(DS.mask_QC_3D~=0)=NaN;
+U_QC = DS.Average_VelEast; U_QC(DS.mask_QC_2D~=0)=NaN;
+V_QC = DS.Average_VelNorth; V_QC(DS.mask_QC_2D~=0)=NaN;
+U_HI = DS.U_hard_iron_corrected; U_HI(DS.mask_QC_2D~=0)=NaN;
+V_HI = DS.V_hard_iron_corrected; V_HI(DS.mask_QC_2D~=0)=NaN;
+U_final(DS.mask_QC_2D~=0)=NaN;
+V_final(DS.mask_QC_2D~=0)=NaN;
 y = DS.Nominal_CellDepth;
 
 f2 = figure(2); clf;
@@ -209,15 +226,47 @@ end
 
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[filename,'_stage2_f2_UV_hard_iron_mag_dev_correction.png']));
+print('-dpng',fullfile(outdir,[filename,'_f2_UV_hard_iron_mag_dev_correction.png']));
 clear ax
 
+%% Apply QC and ensemble mean
+DS_EM = ensemble_mean_struct_QC(DS, 10,QC_GOOD,QC_BAD);
+
+%% 
+%
+% [U_QC_mean,time_mean] = calculate_ensemble_mean(U_QC,DS.time);
+% [V_QC_mean,~] = calculate_ensemble_mean(V_QC,DS.time);
+% CSPD = sqrt(U_QC_mean.^2+V_QC_mean.^2);
+% 
+% figure(3),clf
+% subplot(3,1,1)
+% plot(time_mean, U_QC_mean(:,1))
+% datetick( 'x', 'mm-yy', 'keeplimits');
+% ylabel('U (m/s)')
+% title(sprintf('%s - ensemble mean uncorrected', moor), 'Interpreter', 'none')
+% grid()
+% 
+% subplot(3,1,2)
+% plot(time_mean, V_QC_mean(:,1))
+% datetick( 'x', 'mm-yy', 'keeplimits');
+% ylabel('V (m/s)')
+% grid()
+% 
+% 
+% subplot(3,1,3)
+% plot(time_mean, CSPD(:,1))
+% datetick( 'x', 'mm-yy', 'keeplimits');
+% ylabel('Speed (m/s)')
+% grid()
+% 
+% % Save figure
+% set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
+% print('-dpng',fullfile(outdir,[filename,'_f3_uv_first_bint.png']));
 %% Calculate depth matrix
 
 % Use internal ADCP Sensors
-pres = DS.Average_Pressure; 
-pres(DS.mask_QC_1D ~= 0) = NaN; 
-instr_depth = gsw_z_from_p(pres, DS.latitude);
+pres = DS_EM.Average_Pressure; 
+instr_depth = gsw_z_from_p(pres, DS_EM.latitude);
 
 % Prompt user: 'y' for MicroCAT, anything else for ADCP
 user_choice = input('\n\nUse MicroCAT data for pressure/speed of sound correction? [y/n] (default n): ', 's');
@@ -273,154 +322,322 @@ if use_MC
     %% 1. Load and Interpolate MicroCAT data onto ADCP timeline
     MC = load_microcat_data(mc_infile);
 
-    R_old = DS.Dist2Instr_CellMidpoint;
-    c_old = DS.Average_Soundspeed;
+    R_old = DS_EM.Dist2Instr_CellMidpoint;
+    sos_old = DS_EM.Average_Soundspeed;
     
     % Interpolate all variables to ADCP's Average_Time
     % 'pchip' or 'linear' are usually best; 'extrap' is risky but keeps the code running
-    mc_t_interp  = interp1(MC.time, MC.t,  DS.time, 'linear', 'extrap');
-    mc_p_interp  = interp1(MC.time, MC.p,  DS.time, 'linear', 'extrap');
-    mc_sp_interp = interp1(MC.time, MC.SP, DS.time, 'linear', 'extrap');
+    mc_t_interp = interp1_avoid_nan(MC.time, MC.t,  DS_EM.time);
+    mc_p_interp = interp1_avoid_nan(MC.time, MC.p,  DS_EM.time);
+    mc_sp_interp = interp1_avoid_nan(MC.time, MC.SP, DS_EM.time);
     
     % 2. Flag ADCP data outside MicroCAT time range
-    bad_in = (DS.time < min(MC.time, [], 'omitnan')) | ...
-             (DS.time > max(MC.time, [], 'omitnan'));
+    bad_in = (DS_EM.time < min(MC.time, [], 'omitnan')) | ...
+             (DS_EM.time > max(MC.time, [], 'omitnan'));
     
     if any(bad_in)
-        DS.mask_QC_1D(bad_in) = QC_BAD;
-        DS.mask_QC_3D(bad_in, :) = QC_BAD;
+        DS_EM.mask_QC_time(bad_in) = QC_BAD;
+        DS_EM.mask_QC_2D(bad_in, :) = QC_BAD;
     end
 
-    mc_t_interp(DS.mask_QC_1D~=0)  = NaN;
-    mc_p_interp(DS.mask_QC_1D~=0)  = NaN;
-    mc_sp_interp(DS.mask_QC_1D~=0)  = NaN;
-    pres(DS.mask_QC_1D ~= 0) = NaN; 
-    c_old(DS.mask_QC_1D~=0)  = NaN;
-
+    mc_t_interp(bad_in)  = NaN;
+    mc_p_interp(bad_in)  = NaN;
+    mc_sp_interp(bad_in)  = NaN;
+    pres(bad_in) = NaN; 
+    sos_old(bad_in)  = NaN;
     % apply offset to MC data
-    offset = mean(pres-mc_p_interp,1,"omitmissing");
+    offset = mean(pres-mc_p_interp,1,"omitnan");
+    instr_depth = gsw_z_from_p(mc_p_interp+offset, info_adcp.lat); % MC Depth
+
     
     % 3. Calculate Speed of Sound (SoS) using GSW
     % Use the interpolated values so the dimensions match DS.Average_Time
     [SA, ~] = gsw_SA_from_SP(mc_sp_interp, mc_p_interp, info_adcp.lon, info_adcp.lat);
     CT      = gsw_CT_from_t(SA, mc_t_interp, mc_p_interp);
-    c_true   = gsw_sound_speed(SA, CT, mc_p_interp); 
-    z_new = gsw_z_from_p(mc_p_interp+offset, info_adcp.lat); % MC Depth
-    
-    % scotia_fn = fullfile('C:\Users\sa07kb\OneDrive - SAMS\data\data_SCOTIA\SCOTIA_monthly_clim_V8.nc');
-    scotia_fn = fullfile('D:\Work_computer_sync\OSNAP_postdoc\PAPERS_NEW\OSNAPi_development_2023\Matlab\Climatology\SCOTIA_monthly_clim_V8.nc');
+    sos_true  = gsw_sound_speed(SA, CT, mc_p_interp); 
+        
 
-    scotia = load_scotia_at_location(scotia_fn, info_adcp.lon);
+    %%
+    while ~isfile(scotiafile)
+        fprintf('File not found: %s\n', scotiafile);
+        
+        % Prompt user to enter a new path and filename
+        scotiafile = input('Please enter path and filename of scotia clim: ', 's');
+        
+        % Optional: break if user enters nothing to avoid infinite loop
+        if isempty(scotiafile)
+            error('No file path provided. Exiting.');
+        end
+    end
+    scotia = load_scotia_at_location(scotiafile, info_adcp.lon);
     scotia.z = gsw_z_from_p(scotia.pres, info_adcp.lat); % MC Depth
     
-    %%
+    %% Extrapolate onto adcp depth and time:
     scotia_sos_interp = interp1(-scotia.z, scotia.sos, ...
-        DS.Nominal_CellDepth, 'linear', 'extrap');
+        DS_EM.Nominal_CellDepth, 'linear', 'extrap');
+    scotia_sos_a = scotia_sos_interp-scotia_sos_interp(1,:);
+    month_indices = month(DS_EM.time);
+    scotia_sos_adcp = scotia_sos_a(:,month_indices);
+    scotia_sos_adcp = scotia_sos_adcp+sos_true';
+    figure,imagesc(scotia_sos_adcp)
 
-    whos scotia_sos_interp c_old R_old
-    R_true = correct_adcp_range(c_true, c_old, R_old);
-    R_true_scotia = correct_adcp_range(scotia_sos_interp,1500*ones(1,12), R_old);
+    R_MC = correct_adcp_range(sos_true, sos_old, R_old);
+    R_SC = correct_adcp_range(scotia_sos_interp,1500*ones(1,12), R_old);
+    R_MS = correct_adcp_range(scotia_sos_adcp,sos_old, R_old);
+
+    R_SC_A = R_SC-mean(R_SC,1);
+    R_MC_A = R_MC-mean(R_MC,1,'omitnan');
+    R_MS_A = R_MS-mean(R_MS,1,'omitnan');
+
+    good_zidx = find(DS_EM.mask_QC_depth==QC_GOOD);
+
+    figure(3),clf,
+    subplot(3,1,1)
+    plot(1:12,R_SC_A(:,good_zidx(:)))
+    ylabel('Range anomaly (m)')
+    title('Speed of sound correction - change per depth bin - scotia climatology (SC)')
+    grid on
+    subplot(3,1,2)
+    plot(DS_EM.time,R_MC_A(:,good_zidx(:))),datetick('x')
+    title('Speed of sound correction - change per depth bin - MicroCAT (MC)')
+    ylabel('Range anomaly (m)')
+    grid on
+    subplot(3,1,3)
+    plot(DS_EM.time,R_MS_A(:,good_zidx(:))),datetick('x')
+    title('Speed of sound correction - change per depth bin - MC+SC_{Anomaly} ')
+    ylabel('Range anomaly (m)')
+    grid on
+    % Save figure
+    set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
+    print('-dpng',fullfile(outdir,[filename,'_f3_SoS_correction_range.png']));
+  
+    % 1. Prompt user for input with a default option
+    disp('Which speed of sound correction do you want to apply?');
+    disp('1: Scotia only');
+    disp('2: MicroCAT only');
+    disp('3: MicroCAT and SCOTIA combined (Default)');
+    choice = input('Enter choice (1-3) [3]: ');
     
-    %% 5. Correct Bin Range using the SoS Profile function
-    % R_nominal is DS.Dist2Instr_CellMidpoint
-    % c_inst is DS.Average_Soundspeed
-    R_true = correct_adcp_range_by_profile(DS.Dist2Instr_CellMidpoint, ...
-                                           DS.Average_Soundspeed, ...
-                                           instr_depth, z_ref, c_ref, 'up');
+    % 2. Handle default and set variables/prompt strings
+    if isempty(choice) || choice == 3
+        % Combined (Default)
+        R_true = R_MS; 
+        prompt_text = 'MicroCAT and SCOTIA combined';
+        sos_method_S = 'Speed of Sound (SoS) from MicroCAT and SCOTIA monthly climatology combined (time and depth varying)';
+    elseif choice == 1
+        % Scotia Only
+        % (Note: month_indices must be defined from your time vector previously)
+        R_true = R_SC(:, month_indices); 
+        prompt_text = 'Scotia only';
+        sos_method_S = 'Speed of Sound (SoS) from SCOTIA monthly climatology (time-interpolated profile)';
+    elseif choice == 2
+        % MicroCAT Only
+        R_true = R_MC;
+        prompt_text = 'MicroCAT only';
+        sos_method_S = 'Speed of Sound (SoS) from MicroCAT and SCOTIA combined (time and depth varying)';;
+    else
+        error('Invalid selection. Please run the script again and choose 1, 2, or 3.');
+    end
+
+    % 3. Format the log message
+    full_prompt = sprintf('%s was used for speed of sound correction of ADCP range\n', prompt_text);
+    
+    % 4. Output to log file (fidlog) and Command Window
+    fprintf(fidlog, '%s', full_prompt);
+    fprintf('%s', full_prompt);
+
+    % for history later
+    sos_method = sprintf(['Acoustic range and bin depths corrected using %s via GSW (TEOS-10).'], ...
+    sos_method_S);
+    depth_source = 'Instrument depth derived from CTD-calibrated MicroCAT pressure (offset-corrected to ADCP transducer head).';
 else
-    
     % Use nominal range (no profile correction)
-    R_true = DS.Dist2Instr_CellMidpoint(:)';
+    R_true = DS_EM.Dist2Instr_CellMidpoint(:)';
+    bad_in =DS_EM.mask_QC_time==QC_BAD;
+    instr_depth(bad_in)=NaN;
+
+    % for history later
+    depth_source = 'Instrument depth derived from internal ADCP pressure sensor.';
+    sos_method = ['Acoustic range calculated using nominal (fixed) speed of sound. No external correction applied.'];
 end
 
 % --- Final Calculation ---
-% Since instr_depth and z_ref are negative (e.g. -500m) 
-% and R_true is positive distance from head (e.g. +100m)
-% For an UPWARD looking ADCP: Depth = instr_depth + R_true
-cell_depth = instr_depth + R_true; 
+% if microcat option is used, instr_depth is derived from calibrated MC data
+cell_depth = instr_depth + R_true;
+DS_EM.corrected_cell_depth = cell_depth ();
+DS_EM.corrected_instr_depth = instr_depth;
+DS_EM.corrected_Dist2Instr_CellMidpoint = R_true;
+DS_EM.corrected_pres = gsw_p_from_z(cell_depth,info_adcp.lat);
+DS_EM.corrected_instr_pres = gsw_p_from_z(instr_depth,info_adcp.lat);
 
-fig = figure(1);
-clf(fig); % Clear old plots from the previous ADCP loop
-set(fig, 'Name', sprintf('Cell Depth - SN %d', serial_nums(i)), 'NumberTitle', 'off');
-plot(DS.time,cell_depth')
-datetick('x', 'mmm-yyyy', 'keepticks', 'keeplimits');
-axis ij
+y = mean(cell_depth,1,'omitnan');
 
-%% % side lobe interference
+%% side lobe interference
 %all angle in degrees
-% gamma = 20; %slant angle
-% alpha = [0, 120,240]; % beam 1 - aligned with x-axis, beam 2, beam 3
-% pitch = Data.Average_Pitch; pitch(Data.mask_QC_1D~=0)=NaN; % y-axis rotation, in deg
-% roll = Data.Average_Roll; roll(Data.mask_QC_1D~=0)=NaN; % x-axis rotation, in deg
-% 
-% % Pre-calculate trig terms (using 'd' versions for degrees)
-% cp = cosd(pitch); sp = sind(pitch);
-% cr = cosd(roll);  sr = sind(roll);
-% cg = cosd(gamma); sg = sind(gamma);
-% ca = cosd(alpha); sa = sind(alpha); % alpha is 1x3
-% 
-% % Angle to vertical for each beam (in degrees)
-% beta = acosd(-sp .* sg .* ca + cp .* sr .* sg .* sa + cp .* cr .* cg);
-% 
-% % Find the minimum angle to vertical across all three beams for each timestamp
-% max_beta = max(beta, [], 2);
-% 
-% % R contains buffer for upper range of cell
-% R =R_true*cosd(max_beta)-Cell_Size; 
-% % find(Dist2Instr_CellMidpoint <= R(i), 1, 'last') for each time step i
-% R(Data.mask_QC_1D~=0)=info_adcp.wd;
-% idx_valid = arrayfun(@(r) find(Dist2Instr_CellMidpoint <= r, 1, 'last'),...
-%     R);
-% idx_valid(Data.mask_QC_1D~=0)=0;
-% R(Data.mask_QC_1D~=0)=NaN;
+gamma = 20; %slant angle
+alpha = [0, 120,240]; % beam 1 - aligned with x-axis, beam 2, beam 3
+pitch = DS_EM.Average_Pitch; % y-axis rotation, in deg
+roll = DS_EM.Average_Roll; % x-axis rotation, in deg
+Cell_Size = DS_EM.Attributes.Average_CellSize;
 
-% plot it
-% hLine = plot(time(Data.mask_QC_1D==0), y(idx_valid(Data.mask_QC_1D==0)), 'r', 'LineWidth', 0.1);
-% hLine.DisplayName = 'Sidelobe interference';
+% Pre-calculate trig terms (using 'd' versions for degrees)
+cp = cosd(pitch); sp = sind(pitch);
+cr = cosd(roll);  sr = sind(roll);
+cg = cosd(gamma); sg = sind(gamma);
+ca = cosd(alpha); sa = sind(alpha); % alpha is 1x3
 
-% sidelobe contamination
+% Angle to vertical for each beam (in degrees)
+beta = acosd(-sp .* sg .* ca + cp .* sr .* sg .* sa + cp .* cr .* cg);
+
+% Find the minimum angle to vertical across all three beams for each timestamp
+max_beta = max(beta, [], 2);
+
+% R_cutoff contains buffer for upper range of cell
+R_cutoff =abs(instr_depth).*cosd(max_beta)-Cell_Size; 
+
+%%
+%create mask
+sidelobe_mask = R_true > R_cutoff;
+[~, idx_first_bad] = max(sidelobe_mask, [], 2);
+
+amp = DS_EM.Average_AmpBeam1; amp(sidelobe_mask)=NaN;
+
+f4 = figure(4);clf
+cb_lim =[0,100];
+
+hold on; 
+b = imagesc(DS_EM.time, y, amp');
+set(b, 'AlphaData', ~isnan(amp'));
+
+% shift it by half a cell size to match lower lim of imagesc grid cell
+hLine = plot(DS_EM.time(~bad_in), y(idx_first_bad(~bad_in))-Cell_Size/2, 'r', 'LineWidth', 0.1);
+
+axis('xy');
+ylabel('Nominal cell depth (m)')
+datetick('x','mmm-yyyy','keepticks','keeplimits');
+hLine.DisplayName = 'Sidelobe interference';
+xlim([min(DS_EM.time),max(DS_EM.time)])
+ylim([min(y),max(y)])
+
+title('Amplitude Beam 1')
+caxis(cb_lim); 
+colorbar()
+
+lgd = legend('show', 'Location', 'none','Box','off','FontSize',10);
+lgd.Units = 'normalized';
+lgd.Position = [0.73 .8 0.12 0.3];  % [x y width height]
+
+% Save figure
+    set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
+    print('-dpng',fullfile(outdir,[filename,'_f4_sidelobe_interference.png']));
+
+%% sidelobe contamination
 % 
-% prompt = sprintf([ ...
-%   '\n\nSidelobe contamination for each time step varies between %d and %d ' ...
-%   'out of %d bins.\nSee red line in figure 2.\n Would you like to flag ' ...
-%   ' sidelobe contaminated bins for each time step as QC_BAD (%d). Y/N [Y]: '], ...
-%   min(idx_valid(Data.mask_QC_1D==0))+1, max(idx_valid(Data.mask_QC_1D==0))+1, max(nCells), QC_BAD);
+nCells=DS_EM.Attributes.Average_NCells;
+prompt = sprintf([ ...
+  '\n\nSidelobe contamination for each time step varies between %d and %d ' ...
+  'out of %d bins.\nSee red line in figure 4.\n Would you like to flag ' ...
+  ' sidelobe contaminated bins for each time step as QC_BAD (%d). Y/N [Y]: '], ...
+  min(idx_first_bad(~bad_in)), max(idx_first_bad(~bad_in)), nCells, QC_BAD);
+
+reply = input(prompt, 's');
+if isempty(reply)
+    reply = 'Y';
+end
+
+while true
+    if strcmpi(reply, 'Y') || strcmpi(reply, 'YES')
+        DS_EM.mask_QC_2D(sidelobe_mask) = QC_BAD;
+
+        prombt = ['Sidelobe contamination for each time step varies between ' ...
+            ' %d and %d out of %d bins.\nBins contaminated by' ...
+            ' sidelobe interference flagged as QC_BAD (%d).\n'];
+        fprintf(fidlog, prombt, ...
+            min(idx_first_bad(~bad_in)), max(idx_first_bad(~bad_in)), nCells, QC_BAD);
+        hist_sidelobe = sprintf(prombt, ...
+            min(idx_first_bad(~bad_in)), max(idx_first_bad(~bad_in)), nCells, QC_BAD);
+        break
+
+    elseif strcmpi(reply, 'N') || strcmpi(reply, 'NO')
+        prombt = ['Sidelobe contamination for each time step varies between ' ...
+            'bin %d and %d out of %d bins.\nOperator chose NOT to flag ' ...
+            'bins contaminated by sidelobe interference.\n'];
+        fprintf(1, prombt, ...
+            min(idx_first_bad(~bad_in)), max(idx_first_bad(~bad_in)), nCells); % to screen
+        fprintf(fidlog, prombt, ...
+            min(idx_first_bad(~bad_in)), max(idx_first_bad(~bad_in)), nCells);
+        hist_sidelobe = sprintf(prombt, ...
+            min(idx_first_bad(~bad_in)), max(idx_first_bad(~bad_in)), nCells);
+        break
+
+    else
+        fprintf('Invalid entry. Enter Y or N (press Return for default).\n');
+        reply = input('Y/N [Y]: ', 's');   % re-prompt and read again
+        if isempty(reply)
+            reply = 'Y';
+        end
+    end
+end
+
+hist_sidelobe = sprintf(prombt, ...
+            min(idx_first_bad(~bad_in)), max(idx_first_bad(~bad_in)), nCells);
+
+%%
+m_u=median(DS_EM.U_all_corrected,"omitnan" )*1e2;
+m_v=median(DS_EM.V_all_corrected,"omitnan" )*1e2;
+m_w=median(DS_EM.Average_VelUp,"omitnan" )*1e2;
+m_Amp1=median(DS_EM.Average_AmpBeam1,"omitnan" ); 
+m_Amp2=median(DS_EM.Average_AmpBeam2,"omitnan" ); 
+m_Amp3=median(DS_EM.Average_AmpBeam3,"omitnan" );
+m_Cor1=median(DS_EM.Average_CorBeam1,"omitnan" ); 
+m_Cor2=median(DS_EM.Average_CorBeam2,"omitnan" ); 
+m_Cor3=median(DS_EM.Average_CorBeam3,"omitnan" ); 
+CSPD = sqrt(DS_EM.U_all_corrected.^2+DS_EM.V_all_corrected.^2);
+dir_current = mod(atan2d(DS_EM.U_all_corrected, DS_EM.V_all_corrected), 360);
+m_spd=median(CSPD,'omitnan')*1e2;
+m_dir=median(dir_current,'omitnan');
+
+total_pings = size(DS_EM.mask_QC_2D, 1);
+valid_pings = sum(DS_EM.mask_QC_2D == QC_GOOD, 1); 
+m_coverage = (valid_pings ./ total_pings) * 100;
+
+for k= 1:max(DS_EM.cell(DS_EM.mask_QC_depth==QC_GOOD));
+fprintf(fidlog,'\nBin %d : nominally %3.2f m - %3.2f m from sensor head\n\n', k, DS_EM.Dist2Instr_CellMidpoint(k)-Cell_Size, DS_EM.Dist2Instr_CellMidpoint(k)+Cell_Size);
+fprintf(fidlog,'Data coverage [%%]                               : %4.1f%%\n', m_coverage(k));
+fprintf(fidlog,'Median velocity u / v / w [cm/s]                : %4.1f  %4.1f  %4.1f\n',m_u(k), m_v(k), m_w(k));
+fprintf(fidlog,'Median Amp Beam1 / Beam2 / Beam3 [db]           : %3.0f  %3.0f  %3.0f\n',m_Amp1(k), m_Amp2(k), m_Amp3(k));
+fprintf(fidlog,'Median correlation Beam1 / Beam2 / Beam3 [%%]    : %3.0f  %3.0f  %3.0f\n',m_Cor1(k), m_Cor2(k), m_Cor3(k));
+fprintf(fidlog,'Median speed [cm/s]                             : %4.1f\n',m_spd(k));
+fprintf(fidlog,'Median direction [deg]                         : %5.2f\n',m_dir(k));
+end
+
+
+%% to save data later
+% history_date = datestr(now, 'yyyy-mm-dd HH:MM:SS');
+% stage2_logic = sprintf(['Stage 2 corrections: Instrument depth derived from %s. ' ...
+%     'ADCP range and bin depths corrected using %s profile via GSW (TEOS-10). ' ...
+%     'Data trimmed to MicroCAT QC valid time range.'], depth_source, sos_method);
+% stage2_block = sprintf(['Stage 2 processing (%s):\n' ...
+%     '- %s\n- %s\n- %s\n- %s\n- %s'], ...
+%     datestr(now, 'yyyy-mm-dd HH:MM'), ...
+%     depth_source, ...
+%     sos_method, ...
+%     hist_hard_iron, ...
+%     hist_mag_def, ...
+%     hist_sidelobe);
 % 
-% reply = input(prompt, 's');
-% if isempty(reply)
-%     reply = 'Y';
+% % 3. Retrieve Stage 1 and Merge
+% try
+%     % Get existing Stage 1 history from the DS or the file
+%     stage1_history = ncreadatt(filename, '/', 'history');
+%     full_history = sprintf('%s\n\n%s', stage1_history, stage2_block);
+% catch
+%     % Fallback if Stage 1 isn't found
+%     full_history = stage2_block;
 % end
 % 
-% while true
-%     if strcmpi(reply, 'Y') || strcmpi(reply, 'YES')
-%         mask = nCells > idx_valid(:);
-%         Data.mask_QC_3D(mask) = QC_BAD;
-% 
-%         prombt = ['Sidelobe contamination for each time step varies between ' ...
-%             ' %d and %d out of %d bins.\nBins contaminated by' ...
-%             ' sidelobe interference flagged as QC_BAD (%d).\n'];
-%         fprintf(fidlog, prombt, ...
-%             min(idx_valid(Data.mask_QC_1D==0))+1, max(idx_valid(Data.mask_QC_1D==0))+1, max(nCells), QC_BAD);
-%         break
-% 
-%     elseif strcmpi(reply, 'N') || strcmpi(reply, 'NO')
-%         prombt = ['Sidelobe contamination for each time step varies between ' ...
-%             'bin %d and %d out of %d bins.\nOperator chose NOT to flag ' ...
-%             'bins contaminated by sidelobe interference.\n'];
-%         fprintf(1, prombt, ...
-%             min(idx_valid(Data.mask_QC_1D==0))+1, max(idx_valid(Data.mask_QC_1D==0))+1, max(nCells)); % to screen
-%         fprintf(fidlog, prombt, ...
-%             min(idx_valid(Data.mask_QC_1D==0))+1, max(idx_valid(Data.mask_QC_1D==0))+1, max(nCells));
-%         break
-% 
-%     else
-%         fprintf('Invalid entry. Enter Y or N (press Return for default).\n');
-%         reply = input('Y/N [Y]: ', 's');   % re-prompt and read again
-%         if isempty(reply)
-%             reply = 'Y';
-%         end
-%     end
-% end
+% % 4. Write back to the NetCDF
+% ncwriteatt(filename, '/', 'history', full_history);
 
 
 end
@@ -521,4 +738,87 @@ function [idx, closest_sn] = find_microcat_index(info_adcp,sn)
     % Count Microcats shallower than (or equal to) the target depth
     % This returns the "n-th" Microcat from the surface
     idx = sum(mc_zs <= target_z);
+end
+
+function [B,time] = calculate_ensemble_mean(A,time)
+    % A: time_dim x depth
+    block = 10;
+    [T, D] = size(A);
+    nBlocks = T/block;
+    
+    % Reshape to (block, nBlocks, depth)
+    B = reshape(A, block, nBlocks, D);
+    time = reshape(time, block, nBlocks);
+    
+    % Calc ensemble mean
+    B = squeeze(mean(B, 1, 'omitnan'));    
+    time = squeeze(mean(time, 1, 'omitnan')); time = time(:);   
+end
+
+function S_out = ensemble_mean_struct_QC(S_in, block,QC_GOOD,QC_BAD)
+    fields = fieldnames(S_in);
+    T_target = size(S_in.time, 1);
+    nBlocks = floor(T_target / block);
+    min_valid = 3; 
+
+    % Use a cell array {} for strings to keep them separate
+    var_list = {'Average_VelEast','Average_VelNorth','Average_VelUp',...
+                'Average_AmpBeam1','Average_AmpBeam2','Average_AmpBeam3',...
+                'U_hard_iron_corrected','V_hard_iron_corrected',...
+                'U_all_corrected','V_all_corrected',...
+                'mask_QC_2D','mask_QC_time'};
+    
+    % Extract masks for cleaning
+    mask1D = S_in.mask_QC_time(1:nBlocks*block) ~= 0;
+    mask3D = S_in.mask_QC_2D(1:nBlocks*block, :) ~= 0;
+    
+    S_out = struct(); % Start fresh to avoid dimension mismatches with original
+
+    for i = 1:numel(fields)
+        fname = fields{i};
+        data = S_in.(fname);
+        
+        if size(data, 1) == T_target
+            D = size(data, 2);
+            data_trunc = data(1:nBlocks*block, :);
+            
+            % ONLY apply QC if the variable is in your var_list
+            if ismember(fname, var_list)
+                if D == 1
+                    data_trunc(mask1D) = NaN;
+                elseif D == size(mask3D, 2)
+                    data_trunc(mask3D) = NaN;
+                end
+            end
+            
+            % Reshape and calculate mean
+            reshaped = reshape(data_trunc, block, nBlocks, D);
+            valid_counts = sum(~isnan(reshaped), 1); 
+            mu = squeeze(mean(reshaped, 1, 'omitnan'));
+            
+            % Apply "Minimum 3" Rule or Mask Logic
+            if strcmp(fname, 'mask_QC_time') || strcmp(fname, 'mask_QC_2D')
+                % Logic: If < 3 pings were good, the ensemble is BAD
+                final_mask = ones(size(mu)) * QC_GOOD; 
+                final_mask(squeeze(valid_counts < min_valid)) = QC_BAD;
+                mu = final_mask;
+            elseif ismember(fname, var_list)
+                % Only NaN-out velocity/amp if they fail the 3-ping rule
+                mu(squeeze(valid_counts < min_valid)) = NaN;
+            end
+            
+            % Save to output
+            if D == 1, S_out.(fname) = mu(:); else, S_out.(fname) = mu; end
+        elseif strcmp(fname, 'mask_QC_depth')
+            data(data==0)=QC_GOOD;
+            S_out.(fname) = data;
+        else
+            S_out.(fname) = data; % Metadata
+        end
+    end
+end
+
+function data_intp = interp1_avoid_nan(time,data,new_time)
+    isGood = ~isnan(data);
+    data_intp  = interp1(time(isGood), data(isGood),new_time, 'linear', 'extrap');
 end

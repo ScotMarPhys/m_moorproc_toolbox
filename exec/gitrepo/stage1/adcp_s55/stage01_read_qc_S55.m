@@ -21,8 +21,9 @@
 %         Orientation: Tilt thresholds (<10 deg good, >30 deg fail).
 %         Heading
 %      2. Signal/Corr: Surface bin dectection and noise floor (Corr < 50 flagged).
-%      3. Sidelobe: Range masking based on depth (H) and max tilt (beta).
-%      4. Velocity: Horizontal Spikes, statistical outliers (U,V) and unrealistic
+%      3. Removing extreme Amplitude spikes ((burst median ± 3*median  
+%         absolute deviation and >10dB jump) 
+%      4. Velocity: Vertical jumps of horizontal velocity, statistical outliers (U,V) and unrealistic
 %                   velocities (U,V,W).
 %      5. Compass: Magnetometer circle-fit diagnostics (Hard-Iron check).
 %      5. Other sensor diagnostics.
@@ -65,7 +66,7 @@ else
         infofile = varargin{3};
         logfile = varargin{4};
         outdir = varargin{5};
-        ouput_form = [moor '_%d_stage1.nc'];
+        output_form = [moor '_%d_stage1.nc'];
     catch
         error('Not enough manual arguments provided. Expected 5 additional arguments after "moor".');
     end
@@ -121,6 +122,7 @@ else
     current_filename = filename;
 end
 
+figure_base = sprintf('%s_%d',moor,serial_nums(i));
 outfile = fullfile(outdir, sprintf(output_form, serial_nums(i)));
 infile  = fullfile(dataindir, [current_filename, '.mat']);
 
@@ -154,8 +156,10 @@ flag_mean = ['1=QC_NOT_EVALUATED 1=QC_GOOD ' ...
     '9=QC_MISSING'];
 
 % Initialise QC masks using zeros (More efficient than 0 * double)
-Data.mask_QC_3D = zeros(size(Data.Average_VelEast));
-Data.mask_QC_1D = zeros(size(Data.Average_Pressure));
+[nT,nD] = size(Data.Average_VelEast);
+Data.mask_QC_2D = zeros(nT,nD);
+Data.mask_QC_time = zeros(nT,1);
+Data.mask_QC_depth = zeros(1,nD);
 
 % Checking Serial Number Consistency
 if serial_nums(i) ~= Config.SerialNo
@@ -207,7 +211,7 @@ set(findall(gcf, '-property', 'FontSize'), 'FontUnits', 'points', 'FontSize', fs
 
 % ylims
 yl_P     = (P_median + n_std * [-P_std P_std]);
-yl_Pitch =  [-40 40];
+yl_Pitch =  [-15 15];
 yl_H = [-0 360];
 
 %% 1. Instrument orientation and pressure %%%%%%%%%%%%%%%%%%%%%%%%
@@ -215,10 +219,10 @@ yl_H = [-0 360];
 S = suggestTrimForShallowEdges_simple(P, min(yl_P));
 
 % Update Masks for Pressure
-Data.mask_QC_1D(S.keepMask == 0) = QC_BAD; 
-Data.mask_QC_3D(S.keepMask == 0, :) = QC_BAD;
+Data.mask_QC_time(S.keepMask == 0) = QC_BAD; 
+Data.mask_QC_2D(S.keepMask == 0, :) = QC_BAD;
 
-z_mean = gsw_z_from_p(mean(P(Data.mask_QC_1D==0)),info_adcp.lat);
+z_mean = gsw_z_from_p(mean(P(Data.mask_QC_time==0)),info_adcp.lat);
 
 % Pitch and Roll
 Pitch_Pgood = Pitch; Pitch_Pbad = Pitch;
@@ -251,30 +255,35 @@ elseif ed_suggest~=info_adcp.end_timestamp
 end
 
 % --- 3. Pitch and Roll Check ---
-% Identify Excessive Pitch/Roll (> 30)
-badind_tilt_severe = find((Pitch>30 | Pitch<-30 | Roll>30 | Roll<-30) ...
-    & Data.mask_QC_1D == 0);
-Data.mask_QC_1D(badind_tilt_severe) = QC_BAD;
-Data.mask_QC_3D(badind_tilt_severe, :) = QC_BAD;
+% Convert degrees to radians for calculations
+p_rad = deg2rad(Pitch);
+r_rad = deg2rad(Roll);
 
-% Identify Moderate Pitch/Roll (10 to 30)
-badind_tilt_mod = find(((abs(Pitch) > 10 & abs(Pitch) <= 30) | ...
-               (abs(Roll) > 10 & abs(Roll) <= 30)) & Data.mask_QC_1D == 0);
-Data.mask_QC_1D(badind_tilt_mod) = QC_PROBABLY_BAD;
-Data.mask_QC_3D(badind_tilt_mod, :) = QC_PROBABLY_BAD;
+% Calculate Total Tilt Magnitude in degrees
+total_tilt = rad2deg(acos(min(1, cos(p_rad) .* cos(r_rad))));
+Tilt_Pgood = total_tilt; Tilt_Pbad = total_tilt;
+Tilt_Pgood(S.keepMask == 0) = NaN;Tilt_Pbad(S.keepMask == 1) = NaN;
+
+% Severe Tilt (>30 degrees) -> QC_BAD
+badind_tilt_severe = find(total_tilt > 30 & Data.mask_QC_time == 0);
+Data.mask_QC_2D(badind_tilt_severe, :) = QC_BAD;
+
+% Moderate Tilt (10-30 degrees) -> QC_PROBABLY_BAD
+badind_tilt_mod = find(total_tilt >= 10 & total_tilt <= 30 & Data.mask_QC_time == 0);
+Data.mask_QC_2D(badind_tilt_mod, :) = QC_PROBABLY_BAD;
 
 % Logging for Tilt
 prompt = sprintf(['***Pitch check***\n', ...
-    '%d timesteps flagged bad (%d) due to excessive pitch (>abs(30))\n', ...
-    '%d timesteps flagged probably bad (%d) due to pitch between 10 and 30\n', ...
+    '%d timesteps flagged bad (%d) due to excessive tilt (>abs(30))\n', ...
+    '%d timesteps flagged probably bad (%d) due to tilt between 10 and 30\n', ...
     'Post processing possible.\n\n'], ...
     length(badind_tilt_severe), QC_BAD, ...
     length(badind_tilt_mod), QC_PROBABLY_BAD);
 fprintf(1, prompt); fprintf(fidlog, prompt); clear prombt
 
-% Heading mark values with bad pitch/roll/pressure
+% Heading mark values with bad pressure
 H_trim = H;
-H_trim(Data.mask_QC_1D == 0) = NaN;
+H_trim(Data.mask_QC_time == 0) = NaN;
 
 % --- Visualization ---
 %% 1. Instrument orientation and pressure %%%%%%%%%%%%%%%%%%%%%%%%
@@ -282,7 +291,7 @@ figure(1);clf
 
 % Pressure %%%%%%%%%%%%%%%%%%%%%%%%
 subplot(3,1,1)
-title([filename ' pressure'],'Interpreter','none');
+title([current_filename ' pressure'],'Interpreter','none');
 hold on; grid on;
 
 h.data = plot(T,P,'k.');
@@ -335,12 +344,13 @@ hBox = annotation('textbox', [bx by bw bh], 'String', sprintf('Z_{mean} = %4.0f 
 
 %%% Roll and pitch %%%%%%%%%%%%%%%%%%%%%%%%
 subplot(3,1,2) 
-title([filename ' pitch and roll'],'Interpreter','none');
+title([current_filename ' pitch and roll'],'Interpreter','none');
 hold on; grid on;
 
 % plot data
-h.data = plot(T,Pitch_Pgood,'.','DisplayName', 'pitch raw bottom');
-plot(T,Pitch_Pbad,'.c','DisplayName', 'pitch QC_BAD sinking/rising');
+h.data = plot(T,Tilt_Pgood,'.','DisplayName', 'tilt raw bottom');
+plot(T,Tilt_Pbad,'.c','DisplayName', 'tilt QC_BAD sinking/rising');
+plot(T,Pitch_Pgood,'m','DisplayName', 'pitch raw bottom','LineWidth',0.5);
 plot(T,Roll_Pgood,'k','DisplayName', 'roll raw bottom','LineWidth',0.5);
 
 datetick('x', 'mmm-yyyy', 'keepticks', 'keeplimits');
@@ -353,7 +363,7 @@ hl1 = yline([-30 30],'color','r');  arrayfun(@(h) set(h.Annotation.LegendInforma
     'IconDisplayStyle', 'off'), hl1);
 
 xlim([timemin timemax]);
-ylim(yl_Pitch);
+dynamic_ylim(yl_Pitch, Tilt_Pgood);
 
 ys_data = [ 10, -10, 30, -30 ];
 ys_labels = { '10 < 30: Post processing possible', ...
@@ -364,18 +374,18 @@ ys_colors =  {'g','g','r','r'};
 
 annotateYLabels(ys_data, ys_labels, ys_colors);
 
-ylabel('Pitch (^o)');
-legend('Interpreter','none','Location','southeast')
+ylabel('Tilt (^o)');
+legend('NumColumns', 2,'Interpreter','none','Location','southeast')
 
 
 % heading %%%%%%%%%%%%%%%%%%%%%%%%
 subplot(3,1,3)
-title([filename ' heading'],'Interpreter','none');
+title([current_filename ' heading'],'Interpreter','none');
 hold on; grid on;
 
 % Plot data
 plot(T,H,'k.','DisplayName', 'heading raw bottom');
-plot(T,H_trim,'.c','DisplayName', 'QC_BAD sinking/rising/pitch');
+plot(T,H_trim,'.c','DisplayName', 'QC_BAD sinking/rising');
 
 datetick('x', 'mmm-yyyy', 'keepticks', 'keeplimits');
 xlim([timemin timemax]);
@@ -399,7 +409,7 @@ annotation('textbox', [0 0.02 1 0.06], ...   % [x y w h] in normalized figure un
 
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[filename,'_stage1_f1_pressure_pitch_heading_QC.png']));
+print('-dpng',fullfile(outdir,[figure_base,'_stage1_f1_pressure_tilt_heading_QC.png']));
 
 
 %% 2. Beam amplitudes %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -428,27 +438,27 @@ else
     Nominal_CellDepth = info_adcp.wd-Dist2Instr_CellMidpoint;
 end
 
-fprintf(fidlog,'***Beams, surface bins, sidelobe check***\n');
+fprintf(fidlog,'***Beams, surface bins check***\n');
 fprintf(fidlog,sprintf('Nominal depth of instrument set as %d dbar.\n',info_adcp.wd));
 
 y=Nominal_CellDepth;
 cb_lim =[0,100];
 
 % define surface bins
-Amp1=Data.Average_AmpBeam1; Amp1(Data.mask_QC_1D~=0,:)=NaN;
-Amp2=Data.Average_AmpBeam2; Amp2(Data.mask_QC_1D~=0,:)=NaN;
-Amp3=Data.Average_AmpBeam3; Amp3(Data.mask_QC_1D~=0,:)=NaN;
-Cor1=Data.Average_CorBeam1; Cor1(Data.mask_QC_1D~=0,:)=NaN;
-Cor2=Data.Average_CorBeam2; Cor2(Data.mask_QC_1D~=0,:)=NaN;
-Cor3=Data.Average_CorBeam3; Cor3(Data.mask_QC_1D~=0,:)=NaN;
+Amp1=Data.Average_AmpBeam1; Amp1(Data.mask_QC_time~=0,:)=NaN;
+Amp2=Data.Average_AmpBeam2; Amp2(Data.mask_QC_time~=0,:)=NaN;
+Amp3=Data.Average_AmpBeam3; Amp3(Data.mask_QC_time~=0,:)=NaN;
+Cor1=Data.Average_CorBeam1; Cor1(Data.mask_QC_time~=0,:)=NaN;
+Cor2=Data.Average_CorBeam2; Cor2(Data.mask_QC_time~=0,:)=NaN;
+Cor3=Data.Average_CorBeam3; Cor3(Data.mask_QC_time~=0,:)=NaN;
 
 % mask any Cor<50 as bad
 mask_corr = (Cor1 < 50) | (Cor2 < 50) | (Cor3 < 50);
-Data.mask_QC_3D(mask_corr)=QC_BAD;
+Data.mask_QC_2D(mask_corr)=QC_BAD;
 
-U = Data.Average_VelEast;U(Data.mask_QC_1D~=0,:)=NaN;
-V = Data.Average_VelNorth;V(Data.mask_QC_1D~=0,:)=NaN;
-W = Data.Average_VelUp;W(Data.mask_QC_1D~=0,:)=NaN;
+U = Data.Average_VelEast;U(Data.mask_QC_time~=0,:)=NaN;
+V = Data.Average_VelNorth;V(Data.mask_QC_time~=0,:)=NaN;
+W = Data.Average_VelUp;W(Data.mask_QC_time~=0,:)=NaN;
 
 % surface bin detection
 Amp1_pro = nanmean(Amp1);SB1 = find(islocalmin(Amp1_pro),1,'last');
@@ -459,41 +469,6 @@ Cor2_pro = nanmean(Cor2);CB2 = find(Cor2_pro>=50,1,'last');
 Cor3_pro = nanmean(Cor3);CB3 = find(Cor3_pro>=50,1,'last');
 SB = min([SB1,SB2,SB3]);
 CB = min([CB1,CB2,CB3]);
-% 
-% % side lobe interference
-% SM1 = find(islocalmax(Amp1_pro),1,'last');
-% SM2 = find(islocalmax(Amp2_pro),1,'last');
-% SM3 = find(islocalmax(Amp3_pro),1,'last');
-% SM = min([SM1,SM2,SM3]);
-% A(1) = gsw_z_from_p(nanmean(Data.Average_Pressure(Data.mask_QC_1D==0)),info_adcp.lat); % range based on pressure sensor
-% A(2) = Dist2Instr_CellMidpoint(SM); % range based on nominal cell distance
-% 
-% %all angle in degrees
-% gamma = 20; %slant angle
-% alpha = [0, 120,240]; % beam 1 - aligned with x-axis, beam 2, beam 3
-% pitch = Data.Average_Pitch; pitch(Data.mask_QC_1D~=0)=NaN; % y-axis rotation, in deg
-% roll = Data.Average_Roll; roll(Data.mask_QC_1D~=0)=NaN; % x-axis rotation, in deg
-% 
-% % Pre-calculate trig terms (using 'd' versions for degrees)
-% cp = cosd(pitch); sp = sind(pitch);
-% cr = cosd(roll);  sr = sind(roll);
-% cg = cosd(gamma); sg = sind(gamma);
-% ca = cosd(alpha); sa = sind(alpha); % alpha is 1x3
-% 
-% % Angle to vertical for each beam (in degrees)
-% beta = acosd(-sp .* sg .* ca + cp .* sr .* sg .* sa + cp .* cr .* cg);
-% 
-% % Find the minimum angle to vertical across all three beams for each timestamp
-% max_beta = max(beta, [], 2);
-% 
-% % R contains buffer for upper range of cell
-% R =max(A)*cosd(max_beta)-Cell_Size; 
-% % find(Dist2Instr_CellMidpoint <= R(i), 1, 'last') for each time step i
-% R(Data.mask_QC_1D~=0)=info_adcp.wd;
-% idx_valid = arrayfun(@(r) find(Dist2Instr_CellMidpoint <= r, 1, 'last'),...
-%     R);
-% idx_valid(Data.mask_QC_1D~=0)=0;
-% R(Data.mask_QC_1D~=0)=NaN;
 
 
 % Visualisation Amplides and Correlation
@@ -511,8 +486,6 @@ for k = 1:numel(ax)
     ylim(ax(k),[0,1080])
     ylabel(ax(k),'Nominal cell depth (m)')
     datetick(ax(k),'x','mmm-yyyy','keepticks','keeplimits');
-    % hLine = plot(ax(k),T(Data.mask_QC_1D==0), y(idx_valid(Data.mask_QC_1D==0)), 'r', 'LineWidth', 0.1);
-    % hLine.DisplayName = 'Sidelobe interference';
     xlim(ax(k),[min(T),max(T)])
 end
 
@@ -555,7 +528,7 @@ end
 
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[filename,'_stage1_f2_beam_amplitude_correlation_QC.png']));
+print('-dpng',fullfile(outdir,[figure_base,'_stage1_f2_beam_amplitude_correlation_QC.png']));
 clear ax
 
 %% 3. suface bin detection %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -563,7 +536,6 @@ figure(3),clf
 ax(1) = subplot(1,3,1);
 plot(Amp1_pro,y),hold on,plot(Amp2_pro,y),plot(Amp3_pro,y)
 yline(y(SB),'--','LineWidth',1.5)
-% yline(y([min(idx_valid(Data.mask_QC_1D==0)),max(idx_valid(Data.mask_QC_1D==0))]),'r--')
 xlabel('Temporal mean amplitude [dB]')
 ylabel('Nominal cell depth')
 axis ij
@@ -572,7 +544,6 @@ title([num2str(SB),' valid bins before surface'])
 ax(2) = subplot(1,3,2);
 plot(Cor1_pro,y),hold on,plot(Cor2_pro,y),plot(Cor3_pro,y)
 yline(y(CB),'--','LineWidth',1.5)
-% yline(y([min(idx_valid(Data.mask_QC_1D==0)),max(idx_valid(Data.mask_QC_1D==0))]),'r--')
 xline(50,'--')
 xlabel('Temporal mean correlation [%]')
 title([num2str(CB),' valid bins before surface'])
@@ -586,7 +557,6 @@ axis ij
 grid on
 xlim([-0.05 0.2])
 yline(y(CB),'--')
-% yline(y([min(idx_valid(Data.mask_QC_1D==0)),max(idx_valid(Data.mask_QC_1D==0))]),'r--')
 xline(0,'--')
 legend('U','V','W','surface bins','Sidelobe range','Location','southeast')
 
@@ -601,7 +571,7 @@ for k=1:numel(ax)
 end
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[filename,'_stage1_f3_beam_amplitude_correlation_QC.png']));
+print('-dpng',fullfile(outdir,[figure_base,'_stage1_f3_beam_amplitude_correlation_QC.png']));
 clear ax
 
 %% prombts after plotting
@@ -617,65 +587,40 @@ if (isempty(bins_to_process) || bins_to_process==0)
     bins_to_process=srf_bins;
 end
 
-Data.mask_QC_3D(:,bins_to_process+1:end)=QC_BAD;
+Data.mask_QC_2D(:,bins_to_process+1:end)=QC_BAD;
+Data.mask_QC_depth(bins_to_process+1:end)=QC_BAD;
+
 
 fprintf(fidlog,sprintf('Flagged bin >%d as QC_BAD (%d).\n\n',...
     bins_to_process,QC_BAD));
 
-% % sidelobe contamination
-% 
-% prompt = sprintf([ ...
-%   '\n\nSidelobe contamination for each time step varies between %d and %d ' ...
-%   'out of %d bins.\nSee red line in figure 2.\n Would you like to flag ' ...
-%   ' sidelobe contaminated bins for each time step as QC_BAD (%d). Y/N [Y]: '], ...
-%   min(idx_valid(Data.mask_QC_1D==0))+1, max(idx_valid(Data.mask_QC_1D==0))+1, max(nCells), QC_BAD);
-% 
-% reply = input(prompt, 's');
-% if isempty(reply)
-%     reply = 'Y';
-% end
-% 
-% while true
-%     if strcmpi(reply, 'Y') || strcmpi(reply, 'YES')
-%         mask = nCells > idx_valid(:);
-%         Data.mask_QC_3D(mask) = QC_BAD;
-% 
-%         prombt = ['Sidelobe contamination for each time step varies between ' ...
-%             ' %d and %d out of %d bins.\nBins contaminated by' ...
-%             ' sidelobe interference flagged as QC_BAD (%d).\n'];
-%         fprintf(fidlog, prombt, ...
-%             min(idx_valid(Data.mask_QC_1D==0))+1, max(idx_valid(Data.mask_QC_1D==0))+1, max(nCells), QC_BAD);
-%         break
-% 
-%     elseif strcmpi(reply, 'N') || strcmpi(reply, 'NO')
-%         prombt = ['Sidelobe contamination for each time step varies between ' ...
-%             'bin %d and %d out of %d bins.\nOperator chose NOT to flag ' ...
-%             'bins contaminated by sidelobe interference.\n'];
-%         fprintf(1, prombt, ...
-%             min(idx_valid(Data.mask_QC_1D==0))+1, max(idx_valid(Data.mask_QC_1D==0))+1, max(nCells)); % to screen
-%         fprintf(fidlog, prombt, ...
-%             min(idx_valid(Data.mask_QC_1D==0))+1, max(idx_valid(Data.mask_QC_1D==0))+1, max(nCells));
-%         break
-% 
-%     else
-%         fprintf('Invalid entry. Enter Y or N (press Return for default).\n');
-%         reply = input('Y/N [Y]: ', 's');   % re-prompt and read again
-%         if isempty(reply)
-%             reply = 'Y';
-%         end
-%     end
-% end
 
+%% --- Spike Detection (Acoustic Amplitude) ---
+% Identifies transient outliers (e.g., fish schools) using robust statistics.
+% Requires a >10 dB jump relative to the burst median, representing a 
+% 10-fold increase in acoustic power. This conservative threshold ensures 
+% only significant interference is flagged.
 
-% spikes
-% find spikes - e.g. fish schools (short lived)
-% SDc =3;
-% fprintf('Amplitude 1\n')
-% mask_spikes_Amp1 = detect_spikes_amp(Amp1, SDc);
-% fprintf('Amplitude 2\n')
-% mask_spikes_Amp2 = detect_spikes_amp(Amp2, SDc);
-% fprintf('Amplitude 3\n')
-% mask_spikes_Amp3 = detect_spikes_amp(Amp3, SDc);
+% 1. Generate masks for all beams
+SDc =3; % 3 median absolute deviation interval
+fprintf('SDC=%d\n',SDc)
+fprintf('\nAmplitude 1')
+mask_spikes_Amp1 = detect_spikes_amp(Amp1, SDc);
+fprintf('\nAmplitude 2')
+mask_spikes_Amp2 = detect_spikes_amp(Amp2, SDc);
+fprintf('\nAmplitude 3')
+mask_spikes_Amp3 = detect_spikes_amp(Amp3, SDc);
+
+% 2. Combine: If ANY beam has a spike, the data point is BAD
+combined_spike_mask = mask_spikes_Amp1 | mask_spikes_Amp2 | mask_spikes_Amp3;
+
+% 3. Update your QC flag
+Data.mask_QC_2D(combined_spike_mask) = QC_BAD;
+
+prombt = ['\nFlagged Amplitude spikes (burst median ± %d*Median ' ...
+    'Absolute Deviation\n and >10dB jump) as QC_BAD (%d).\n\n'];
+fprintf(fidlog, prombt, SDc, QC_BAD);
+fprintf(prombt, SDc, QC_BAD);
 
 
 %% 4. Velocity %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -700,7 +645,7 @@ mask_v = abs(V - mV) > 3.*sV;
 mask_s = abs(CSPD - mS) > 3.*sS;
 mask_w = (W > W_thr) | (W < -W_thr);
 
-% spikes in velocity
+% spikes in velocity over depth
 U_diff = diff(U, 1, 2);
 V_diff = diff(V, 1, 2);
 [Tidx,Didx]=size(U);
@@ -709,20 +654,20 @@ mask_vd = [false(Tidx, 1), (abs(V_diff)>CUR_thr)];
 
 
 mask_vel_comb = (mask_u | mask_v | mask_s | mask_w | mask_ud | mask_vd);
-Data.mask_QC_3D(mask_vel_comb)= QC_BAD;
+Data.mask_QC_2D(mask_vel_comb)= QC_BAD;
 
-prombt = ['\n\nVelocity QC Summary: Flagged cells as QC_BAD (%d) based on:\n' ...
-          ' - Horizontal spikes (|dU/dz|, |dV/dz|) > %0.2f m/s\n' ...
-          ' - Statistical outliers > 3 standard deviations (per depth bin)\n' ...
+prombt = ['\nVelocity QC Summary: Flagged cells as QC_BAD (%d) based on:\n' ...
+          ' - Vertical jumps of horizontal velocity |diff(U)|,|diff(V)|> %0.2f m/s\n' ...
+          ' - Temporal outliers > 3 standard deviations (per depth bin)\n' ...
           ' - Vertical velocity outliers (|W|) > %0.2f m/s\n'];
 fprintf(1, prombt, QC_BAD, CUR_thr, W_thr); 
 fprintf(fidlog, prombt, QC_BAD, CUR_thr, W_thr);
 
 
-U_QC = U; U_QC(Data.mask_QC_3D~=0)=NaN;
-V_QC = V; V_QC(Data.mask_QC_3D~=0)=NaN;
-W_QC = W; W_QC(Data.mask_QC_3D~=0)=NaN;
-CSPD_QC = CSPD; CSPD_QC(Data.mask_QC_3D~=0)=NaN;
+U_QC = U; U_QC(Data.mask_QC_2D~=0)=NaN;
+V_QC = V; V_QC(Data.mask_QC_2D~=0)=NaN;
+W_QC = W; W_QC(Data.mask_QC_2D~=0)=NaN;
+CSPD_QC = CSPD; CSPD_QC(Data.mask_QC_2D~=0)=NaN;
 
 f4 = figure(4); clf;
 
@@ -756,7 +701,7 @@ for k = 1:8
         title('Raw velocities')
     elseif k==2
         title_str = {
-    sprintf('QC velocities: |U|,|V|,|CSPD| < mean+3*STD; |dU/dz|,|dV/dz|<1 m/s'), ...
+    sprintf('QC velocities: |U|,|V|,|CSPD| < mean+3*STD; vertical |ΔU|, |ΔV|<1 m/s'), ...
     sprintf('|W|<0.1 m/s, and previous QCs')
 };
         title(title_str)
@@ -780,8 +725,9 @@ end
 
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[filename,'_stage1_f4_velocity_and_speed_QC.png']));
+print('-dpng',fullfile(outdir,[figure_base,'_stage1_f4_velocity_and_speed_QC.png']));
 clear ax
+
 
 %% Magnetometer Horizontal Intensity and Circle Fitting %%%%%%%%%%%%%%%%%%
 Data_corr = s55_hard_iron_compass_correction(Data,0,false);
@@ -790,7 +736,7 @@ err_max = max(Data_corr.hard_iron_CCW_angle,[],'omitnan');
 
 % Logfile output
 deg = char(176); 
-prombt = ['\n\n***Hard-Iron compass correction***\n' ...
+prombt = ['\n***Hard-Iron compass correction***\n' ...
     'Simple circle fit shows error angle varies between %3.0f' deg ... 
     'and %3.0f' deg '\n'];
 fprintf(1, prombt, err_min, err_max); 
@@ -798,7 +744,7 @@ fprintf(fidlog, prombt, err_min, err_max);
 
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[filename,'_stage1_f5_horizontal_magnetometer_QC.png']));
+print('-dpng',fullfile(outdir,[figure_base,'_stage1_f5_horizontal_magnetometer_QC.png']));
 %% 6. Sensor diagnostics %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 f6 = figure(6); clf;
@@ -843,7 +789,7 @@ end
 sgtitle('ADCP Sensor Diagnostic');
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[filename,'_stage1_f6_sensor_diagnostics.png']));
+print('-dpng',fullfile(outdir,[figure_base,'_stage1_f6_sensor_diagnostics.png']));
 clear ax
 %%
 m_u=median(U_QC,"omitnan" )*1e2;m_v=median(V_QC,"omitnan" )*1e2;
@@ -856,8 +802,8 @@ dir_current = mod(atan2d(U_QC, V_QC), 360);
 m_spd=median(CSPD_QC,'omitnan')*1e2;
 m_dir=median(dir_current,'omitnan');
 
-total_pings = size(Data.mask_QC_3D, 1);
-valid_pings = sum(Data.mask_QC_3D == 0, 1); 
+total_pings = size(Data.mask_QC_2D, 1);
+valid_pings = sum(Data.mask_QC_2D == 0, 1); 
 m_coverage = (valid_pings ./ total_pings) * 100;
 
 for k=1:srf_bins-1;
@@ -1152,60 +1098,66 @@ for k = 1:n
 end
 end
 
-function [mu_time,s_time,B] = calculate_block_mean_std(A)
+function [mu_time,s_time,B] = calculate_block_stats(A)
     % A: time_dim x depth
     block = 10;
     [T, D] = size(A);
     nBlocks = T/block;
-    % reshape to (block, nBlocks, depth)
-    B = reshape(A, block, nBlocks, D);
-    % mean and std over the first dimension (within each 10-s burst)
-    mu = median(B, 1);    % 1 x nBlocks x D
-    s  = std(B, 0, 1);  % 1 x nBlocks x D  (default normalization N-1)
     
-    % replicate to (block, nBlocks, D)
+    % Reshape to (block, nBlocks, depth)
+    B = reshape(A, block, nBlocks, D);
+    
+    % Use Median for the center (instead of mean)
+    mu = median(B, 1, 'omitnan');    
+    
+    % Use MAD * 1.4826 for the spread (robust equivalent of std)
+    % Syntax: mad(data, 1 for median-based, 1 for dimension)
+    s = mad(B, 1, 1) * 1.4826; 
+    
+    % Replicate to (block, nBlocks, D)
     mu_rep = repmat(mu, block, 1, 1);
     s_rep  = repmat(s,  block, 1, 1);
     
-    % reshape back to (time_dim_trimmed, depth)
-    mu_time = reshape(mu_rep, nBlocks*block, D);
-    s_time  = reshape(s_rep,  nBlocks*block, D);
+    % Reshape back to (time_dim, depth)
+    mu_time = reshape(mu_rep, T, D);
+    s_time  = reshape(s_rep,  T, D);
 end
+
 
 function mask = detect_spikes_amp(A, SDc)
     % A: time_dim x depth
     block = 10;
     [T, D] = size(A);
     nBlocks = T/block;
+    
+    % Minimum physical jump (counts) to consider something a "spike"
+    % This stops 1-2 count "fuzz" from being flagged at high SDc
+    min_jump = 10; 
 
     % --- Criterion 1: Amplitude spike along Time Dimension ---
-    [A_bm, A_bs, B] = calculate_block_mean_std(A);
-    mask_amp = (A > (A_bm + SDc*A_bs)) | (A < (A_bm - SDc*A_bs));
-
-    % --- Criterion 2: Sudden Amplitude Increase along depth (QARTOD) ---
-    % B is (10 x nBlocks x D)
-    B_md = median(B, 1);    % Result: 1 x nBlocks x D
+    [A_bm, A_bs, B] = calculate_block_stats(A);
     
-    % Diff along Depth (Dim 3 of the B_md matrix)
-    Z = diff(B_md, 1, 3);   % Result: 1 x nBlocks x (D-1)
+    % Hybrid Mask: Must be > SDc*MAD AND > min_jump
+    diff_time = abs(A - A_bm);
+    mask_amp = (diff_time > (SDc * A_bs)) & (diff_time > min_jump);
 
-    % Running stats along nBlocks (Time), which is Dim 2
-    window_size = 3;
-    Z_md_block = movmedian(Z, window_size, 2);
-    Z_sd_block = movstd(Z, window_size, 0, 2);
+    % --- Criterion 2: Sudden Amplitude Increase along depth ---
+    B_md = median(B, 1, 'omitnan'); 
+    
+    % Centred median check (size 3) along Depth (Dim 3)
+    % Pinpoints Bin 5 by comparing it to neighbors 4 and 6
+    B_depth_ref = movmedian(B_md, 3, 3, 'omitnan');
+    Z_resid = abs(B_md - B_depth_ref);
 
-    % Create the mask for Z (1 x nBlocks x D-1)
-    mask_z_block = (Z>(Z_md_block+SDc*Z_sd_block)) | (Z<(Z_md_block-SDc*Z_sd_block));
+    % Robust threshold for depth jumps
+    Z_thresh = mad(Z_resid(:), 1) * 1.4826;
+
+    % Create depth mask (must exceed statistical threshold AND min_jump)
+    mask_z_block = (Z_resid > (SDc * Z_thresh)) & (Z_resid > min_jump);
 
     % Replicate to match the 10 samples per block
-    % Result: 10 x nBlocks x D-1
     mask_z_rep = repmat(mask_z_block, block, 1, 1);
-
-    % Reshape back to (T x D-1)
-    mask_z_2d = reshape(mask_z_rep, T, D-1);
-
-    % Pad with false at the first depth column to return to (T x D)
-    mask_z = [false(T, 1), mask_z_2d]; 
+    mask_z = reshape(mask_z_rep, T, D);
 
     % --- Final Combined Mask ---
     mask = mask_amp | mask_z;
@@ -1213,11 +1165,12 @@ function mask = detect_spikes_amp(A, SDc)
     % Statistics
     total_points = numel(A);
     num_outliers = sum(mask(:));
-    if num_outliers>0
-    fprintf('\nTotal Amplitude Spikes Found: %d (%.2f%% of data)\n', num_outliers, (num_outliers/total_points)*100);
-    fprintf('Consider smoothing velocity ensembles\n\n')
+    if num_outliers > 0
+        fprintf('\nTotal Amplitude Spikes Found: %d (%.2f%% of data)\n', ...
+            num_outliers, (num_outliers/total_points)*100);
     end
 end
+
 
 function save_signature_to_nc(Data, Config, nCells, Dist2Instr_CellMidpoint, Nominal_CellDepth,flag_vals,flag_mean,operator,moor,info_adcp, filename)
 % SAVE_SIGNATURE_TO_NC Saves full Signature ADCP Data structure and Config attributes to NetCDF
@@ -1248,6 +1201,8 @@ function save_signature_to_nc(Data, Config, nCells, Dist2Instr_CellMidpoint, Nom
         % --- Determine Dimensions and Create Variable ---
         if rows == nTime && cols == 1
             nccreate(filename, f, 'Dimensions', {'time', nTime});
+        elseif rows == 1 && cols == nBins
+            nccreate(filename, f, 'Dimensions', {'cell', nBins});
         elseif rows == nTime && cols == nBins
             nccreate(filename, f, 'Dimensions', {'time', nTime, 'cell', nBins});
         elseif rows == nTime && cols == 3
@@ -1343,6 +1298,11 @@ function save_signature_to_nc(Data, Config, nCells, Dist2Instr_CellMidpoint, Nom
             ncwriteatt(filename, '/', cf, char(string(cval)));
         end
     end
+    history_date = datestr(now, 'yyyy-mm-dd HH:MM:SS');
+    history_qc_logic = 'Stage 1 quality control: data flagged based on pressure, tilt, beam correlation < 50%, surface bins, and velocity/amplitude spikes.';
+    
+    ncwriteatt(filename, '/', 'history', [history_date, ': ', history_qc_logic]);
+
     fprintf('NetCDF file "%s" created successfully with full attributes.\n', filename);
 end
 

@@ -47,7 +47,7 @@ switch pc_name
         outdir       = dataindir;
         toolbox_path = 'C:\Users\sa07kb\Matlab\toolboxes\gsw_matlab_v3_06_16';
         filename     = '200044_data';
-
+        scotiafile = fullfile(basedir, 'moor_examples\osnap\scotia/SCOTIA_monthly_clim_V8.nc');
     case 'SA01SJ-G9WC2J3'
         basedir      = 'D:\Work_computer_sync\OSNAP_postdoc\Moorproc_toolbox\RHADCP\';
         pathgit      = fullfile(basedir, 'm_moorproc_toolbox');    
@@ -56,7 +56,6 @@ switch pc_name
         outdir       = dataindir;
         toolbox_path = 'D:\Work_computer_sync\MATLAB_functions\gsw';
         filename     = '200044_data';
-
     otherwise
         error('PC name "%s" not recognized. Add your paths to Section 2.', pc_name);
 end
@@ -71,5 +70,5 @@ if ~isempty(MOORPROC_G)
     stage02_proc_S55(moor);
 else
     % Manual execution with local variables
-    stage02_proc_S55(moor, dataindir, infofile, logfile, outdir);
+    stage02_proc_S55(moor, dataindir, infofile, logfile, outdir,scotiafile);
 end
