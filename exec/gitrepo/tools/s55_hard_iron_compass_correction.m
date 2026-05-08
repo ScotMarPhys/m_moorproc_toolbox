@@ -41,6 +41,8 @@ function [Data_corr, h_fig] = s55_hard_iron_compass_correction(Data, flag_value,
             if ~isempty(pre_selected_limits)
                 time_mask = (T >= pre_selected_limits(1)) & (T <= pre_selected_limits(2));
             end
+        else
+            time_mask = true(size(T)); % Initially use all data
         end
     else
         time_mask = true(size(T)); % Initially use all data

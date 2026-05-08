@@ -307,7 +307,9 @@ if use_MC
     c_true   = gsw_sound_speed(SA, CT, mc_p_interp); 
     z_new = gsw_z_from_p(mc_p_interp+offset, info_adcp.lat); % MC Depth
     
-    scotia_fn = fullfile('C:\Users\sa07kb\OneDrive - SAMS\data\data_SCOTIA\SCOTIA_monthly_clim_V8.nc');
+    % scotia_fn = fullfile('C:\Users\sa07kb\OneDrive - SAMS\data\data_SCOTIA\SCOTIA_monthly_clim_V8.nc');
+    scotia_fn = fullfile('D:\Work_computer_sync\OSNAP_postdoc\PAPERS_NEW\OSNAPi_development_2023\Matlab\Climatology\SCOTIA_monthly_clim_V8.nc');
+
     scotia = load_scotia_at_location(scotia_fn, info_adcp.lon);
     scotia.z = gsw_z_from_p(scotia.pres, info_adcp.lat); % MC Depth
     
