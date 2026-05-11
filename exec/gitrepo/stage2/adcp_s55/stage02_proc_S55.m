@@ -355,8 +355,7 @@ if use_MC
     [SA, ~] = gsw_SA_from_SP(mc_sp_interp, mc_p_interp, info_adcp.lon, info_adcp.lat);
     CT      = gsw_CT_from_t(SA, mc_t_interp, mc_p_interp);
     sos_true  = gsw_sound_speed(SA, CT, mc_p_interp); 
-    
-    
+        
 
     %%
     while ~isfile(scotiafile)

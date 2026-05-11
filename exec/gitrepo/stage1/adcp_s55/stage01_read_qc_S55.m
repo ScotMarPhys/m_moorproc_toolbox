@@ -117,12 +117,12 @@ fprintf('Processing sn %d\n', serial_nums(i));
 % Handle filename if not pre-defined
 if ~exist('filename', 'var') || isempty(filename)
     current_filename = sprintf('%d_data', serial_nums(i));
+    filename = current_filename;
 else
     current_filename = filename;
 end
 
 figure_base = sprintf('%s_%d',moor,serial_nums(i));
-
 outfile = fullfile(outdir, sprintf(output_form, serial_nums(i)));
 infile  = fullfile(dataindir, [current_filename, '.mat']);
 

@@ -49,12 +49,12 @@ switch pc_name
         filename     = '200044_data';
 
     case 'SA01SJ-G9WC2J3'
-        basedir      = 'D:\Work_computer_sync\OSNAP_postdoc\Python\';
+        basedir      = 'D:\Work_computer_sync\OSNAP_postdoc\Moorproc_toolbox\RHADCP\';
         pathgit      = fullfile(basedir, 'm_moorproc_toolbox');   
-        dataindir    = 'E:\OSNAP\RHADCP\DY181\S200044A012_RHAD2_JC238\conversion2\';
-        outdir = 'D:\Work_computer_sync\OSNAP_postdoc\Mooring\RHADCP\plots\';
-        infofile     = fullfile('E:\OSNAP\RHADCP\DY181\S200044A012_RHAD2_JC238\conversion2\', [moor 'info.dat']);
-        toolbox_path = 'D:\Work_computer_sync\MATLAB_functions';
+        dataindir    = fullfile(basedir, 'moor_examples\osnap\data\moor\raw', cruise, 'adcp_s55');
+        outdir = fullfile(basedir, 'moor_examples\osnap\data\moor\proc', moor, 'adcp_s55');
+        infofile     = fullfile(basedir, 'moor_examples\osnap\data\moor\proc', moor, [moor 'info.dat']);
+        toolbox_path = 'D:\Work_computer_sync\MATLAB_functions\gsw';
         filename     = '200044_data'; %'S200044A012_RHAD2_JC238';
 
     otherwise

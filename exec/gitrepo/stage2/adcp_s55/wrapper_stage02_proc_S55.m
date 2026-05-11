@@ -49,14 +49,13 @@ switch pc_name
         filename     = '200044_data';
         scotiafile = fullfile(basedir, 'moor_examples\osnap\scotia/SCOTIA_monthly_clim_V8.nc');
     case 'SA01SJ-G9WC2J3'
-        basedir      = 'D:\Work_computer_sync\OSNAP_postdoc\Python\';
-        pathgit      = fullfile(basedir, 'm_moorproc_toolbox');   
-        dataindir    = 'D:\Work_computer_sync\OSNAP_postdoc\Mooring\RHADCP\plots\'; 
-        infofile     = fullfile('E:\OSNAP\RHADCP\DY181\S200044A012_RHAD2_JC238\conversion2\', [moor 'info.dat']);
-        outdir       = 'D:\Work_computer_sync\OSNAP_postdoc\Mooring\RHADCP\plots\';
-        toolbox_path = 'D:\Work_computer_sync\MATLAB_functions';
-        filename     = 'S200044A012_RHAD2_JC238';
-        scotiafile = '';
+        basedir      = 'D:\Work_computer_sync\OSNAP_postdoc\Moorproc_toolbox\RHADCP\';
+        pathgit      = fullfile(basedir, 'm_moorproc_toolbox');    
+        dataindir    = fullfile(basedir, 'moor_examples\osnap\data\moor\proc', moor, 'adcp_s55');
+        infofile     = fullfile(basedir, 'moor_examples\osnap\data\moor\proc', moor, [moor 'info.dat']);
+        outdir       = dataindir;
+        toolbox_path = 'D:\Work_computer_sync\MATLAB_functions\gsw';
+        filename     = '200044_data';
     otherwise
         error('PC name "%s" not recognized. Add your paths to Section 2.', pc_name);
 end
