@@ -377,8 +377,14 @@ if use_MC
     scotia_sos_interp = interp1(-scotia.z, scotia.sos, ...
         DS_EM.Nominal_CellDepth, 'linear', 'extrap');
     scotia_sos_a = scotia_sos_interp-scotia_sos_interp(1,:);
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % replace by linear interpolation onto ADCP time
     month_indices = month(DS_EM.time);
     scotia_sos_adcp = scotia_sos_a(:,month_indices);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    % combine with MC data
     scotia_sos_adcp = scotia_sos_adcp+sos_true';
     figure,imagesc(scotia_sos_adcp)
 
