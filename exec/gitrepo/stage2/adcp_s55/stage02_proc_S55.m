@@ -470,7 +470,7 @@ end
 % --- Final Calculation ---
 % if microcat option is used, instr_depth is derived from calibrated MC data
 cell_depth = instr_depth + R_true;
-DS_EM.corrected_cell_depth = cell_depth ();
+DS_EM.corrected_cell_depth = cell_depth;
 DS_EM.corrected_instr_depth = instr_depth;
 DS_EM.corrected_Dist2Instr_CellMidpoint = R_true;
 DS_EM.corrected_pres = gsw_p_from_z(cell_depth,info_adcp.lat);
@@ -585,6 +585,10 @@ while true
     end
 end
 
+% Apply sidelobe mask to final U and V vels (if no sidelobe flagged, won't make any difference)
+DS_EM.U_all_corrected(DS_EM.mask_QC_2D~=1)=NaN;
+DS_EM.V_all_corrected(DS_EM.mask_QC_2D~=1)=NaN;
+
 hist_sidelobe = sprintf(prombt, ...
             min(idx_first_bad(~bad_in)), max(idx_first_bad(~bad_in)), nCells);
 
@@ -640,15 +644,24 @@ catch
     % Fallback if Stage 1 isn't found
     full_history = stage2_block;
 end
-% 
-% % 4. Write back to the NetCDF
+
+
+%% 4. Write back to the NetCDF
 % ncwriteatt(filename, '/', 'history', full_history);
+
+save_signature_to_nc(Data, Config, nCells, Dist2Instr_CellMidpoint, ...
+    Nominal_CellDepth,flag_vals,flag_mean,operator,moor,info_adcp, outfile);
 
 
 end
 fprintf(fidlog, '\n==== END ENTRY  =====\n');
 fclose(fidlog);
 end
+
+
+%% nested fuctions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 
 % correct range for speed of sound
 function R_true = correct_adcp_range(c_true, c_old, R_old)
@@ -768,7 +781,6 @@ function S_out = ensemble_mean_struct_QC(S_in, block,QC_GOOD,QC_BAD)
 
     % Use a cell array {} for strings to keep them separate
     var_list = {'Average_VelEast','Average_VelNorth','Average_VelUp',...
-                'Average_AmpBeam1','Average_AmpBeam2','Average_AmpBeam3',...
                 'U_hard_iron_corrected','V_hard_iron_corrected',...
                 'U_all_corrected','V_all_corrected',...
                 'mask_QC_2D','mask_QC_time'};
@@ -826,4 +838,141 @@ end
 function data_intp = interp1_avoid_nan(time,data,new_time)
     isGood = ~isnan(data);
     data_intp  = interp1(time(isGood), data(isGood),new_time, 'linear', 'extrap');
+end
+
+
+
+
+function save_signature_to_nc(Data, Config, nCells, Dist2Instr_CellMidpoint, Nominal_CellDepth,flag_vals,flag_mean,operator,moor,info_adcp, filename)
+% SAVE_SIGNATURE_TO_NC Saves full Signature ADCP Data structure and Config attributes to NetCDF
+%
+% USAGE:
+%   save_signature_to_nc(Data, Config, nCells, Dist2Instr, Nominal_Depth, 'filename.nc')
+
+    if exist(filename, 'file'), delete(filename); end
+
+    % 1. Determine Dimensions
+    [nTime, nBins] = size(Data.Average_VelEast);
+    
+    % 2. Create Dimensions
+    nccreate(filename, 'time', 'Dimensions', {'time', nTime});
+    nccreate(filename, 'cell', 'Dimensions', {'cell', nBins});
+    nccreate(filename, 'xyz',  'Dimensions', {'xyz', 3});
+    nccreate(filename, 'beam_map', 'Dimensions', {'beam_map', 4});
+
+    % 3. Write Data Variables and Assign Units
+    all_fields = fieldnames(Data);
+
+    for i = 1:numel(all_fields)
+        f = all_fields{i};
+        if strcmp(f, 'Average_Time'),continue;end
+        val = Data.(f);
+        [rows, cols] = size(val);
+
+        % --- Determine Dimensions and Create Variable ---
+        if rows == nTime && cols == 1
+            nccreate(filename, f, 'Dimensions', {'time', nTime});
+        elseif rows == 1 && cols == nBins
+            nccreate(filename, f, 'Dimensions', {'cell', nBins});
+        elseif rows == nTime && cols == nBins
+            nccreate(filename, f, 'Dimensions', {'time', nTime, 'cell', nBins});
+        elseif rows == nTime && cols == 3
+            nccreate(filename, f, 'Dimensions', {'time', nTime, 'xyz', 3});
+        elseif rows == nTime && cols == 4
+            nccreate(filename, f, 'Dimensions', {'time', nTime, 'beam_map', 4});
+        else
+            continue; % Skip if dimensions don't match known patterns
+        end
+
+        % --- Write Data ---
+        ncwrite(filename, f, double(val));
+
+        % --- Assign Units Attribute ---
+        unit_str = '';
+        if contains(f, 'Vel'), unit_str = 'm/s';
+        elseif contains(f, 'Amp'), unit_str = 'dB';
+        elseif contains(f, 'Cor'), unit_str = '%';
+        elseif contains(f, 'Temp'), unit_str = 'degC';
+        elseif (contains(f, 'Pressure') || contains(f, 'PressureSensor')) && ~contains(f, 'Temp')
+            unit_str = 'dbar';
+        elseif contains(f, 'Magnetometer') && ~contains(f, 'Temp'), unit_str = 'mG';
+        elseif contains(f, 'Accelerometer'), unit_str = 'g';
+        elseif contains(f, 'Energy'), unit_str = 'Joules';
+        elseif contains(f, 'Heading') || contains(f, 'Pitch') || contains(f, 'Roll')
+            unit_str = 'degrees';
+            if contains(f, 'mask_QC')              
+                ncwriteatt(filename, f, 'flag_values', int8(flag_vals));
+                ncwriteatt(filename, f, 'flag_meanings', flag_mean);
+            end
+        elseif contains(f, 'Time'), unit_str = 'datenum';
+        elseif contains(f, 'mask') || contains(f, 'Status') || contains(f, 'Error'), unit_str = 'flag';
+        elseif contains(f, 'Soundspeed'), unit_str = 'm/s';
+        elseif contains(f, 'Battery'), unit_str = 'V';
+        end
+        
+        if ~isempty(unit_str)
+            ncwriteatt(filename, f, 'units', unit_str);
+        end
+    end
+
+    % 4. Write Coordinates (Dimensions)
+    ncwrite(filename, 'time', Data.Average_Time);
+    ncwriteatt(filename, 'time', 'units', 'datenum');
+
+    ncwrite(filename, 'cell', double(nCells));
+    ncwriteatt(filename, 'cell', 'long_name', 'Cell Index');
+
+    nccreate(filename, 'Dist2Instr_CellMidpoint', 'Dimensions', {'cell', nBins});
+    ncwrite(filename, 'Dist2Instr_CellMidpoint', double(Dist2Instr_CellMidpoint));
+    ncwriteatt(filename, 'Dist2Instr_CellMidpoint', 'units', 'm');
+
+    nccreate(filename, 'Nominal_CellDepth', 'Dimensions', {'cell', nBins});
+    ncwrite(filename, 'Nominal_CellDepth', double(Nominal_CellDepth));
+    ncwriteatt(filename, 'Nominal_CellDepth', 'units', 'm');
+
+    % Latitude Variable
+    nccreate(filename, 'latitude', 'Datatype', 'double');
+    ncwrite(filename, 'latitude', double(info_adcp.lat));
+    ncwriteatt(filename, 'latitude', 'units', 'degrees_north');
+    ncwriteatt(filename, 'latitude', 'long_name', 'Latitude');
+    
+    % Longitude Variable
+    nccreate(filename, 'longitude', 'Datatype', 'double');
+    ncwrite(filename, 'longitude', double(info_adcp.lon));
+    ncwriteatt(filename, 'longitude', 'units', 'degrees_east');
+    ncwriteatt(filename, 'longitude', 'long_name', 'Longitude');
+
+    % Final Global Metadata
+    ncwriteatt(filename, '/', 'history', ['Created on ', datestr(now)]);
+    ncwriteatt(filename, '/', 'Operator', operator);
+    ncwriteatt(filename, '/', 'Mooring', moor);
+    ncwriteatt(filename, '/', 'nominal_water_depth_m', double(info_adcp.wd));
+    % 5. Write FULL Config structure as Global Attributes
+    conf_fields = fieldnames(Config);
+    for i = 1:numel(conf_fields)
+        
+        cf = conf_fields{i};
+        cval = Config.(cf);
+        
+        if isempty(cval), continue; end
+        
+        % Special Case: Matrix Beam2xyz cannot be a global attribute
+        if strcmp(cf, 'Average_Beam2xyz')
+            nccreate(filename, 'Config_Average_Beam2xyz', 'Dimensions', {'row', 3, 'col', 3});
+            ncwrite(filename, 'Config_Average_Beam2xyz', double(cval));
+            ncwriteatt(filename, 'Config_Average_Beam2xyz', 'description', 'Beam to XYZ transformation matrix');
+        elseif isnumeric(cval) && isscalar(cval)
+            % Write numeric scalars directly
+            ncwriteatt(filename, '/', cf, double(cval));
+        else
+            % Convert strings, booleans, and multi-element chars to char arrays
+            ncwriteatt(filename, '/', cf, char(string(cval)));
+        end
+    end
+    history_date = datestr(now, 'yyyy-mm-dd HH:MM:SS');
+    history_qc_logic = 'Stage 1 quality control: data flagged based on pressure, tilt, beam correlation < 50%, surface bins, and velocity/amplitude spikes.';
+    
+    ncwriteatt(filename, '/', 'history', [history_date, ': ', history_qc_logic]);
+
+    fprintf('NetCDF file "%s" created successfully with full attributes.\n', filename);
 end
