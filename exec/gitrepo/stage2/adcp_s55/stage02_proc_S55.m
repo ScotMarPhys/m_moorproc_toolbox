@@ -557,11 +557,11 @@ while true
 
         prombt = ['Sidelobe contamination for each time step varies between ' ...
             ' %d and %d out of %d bins.\nBins contaminated by' ...
-            ' sidelobe interference flagged as QC_BAD (%d).\n'];
+            ' sidelobe interference flagged as QC_BAD.\n'];
         fprintf(fidlog, prombt, ...
-            min(idx_first_bad(~bad_in)), max(idx_first_bad(~bad_in)), nCells, QC_BAD);
+            min(idx_first_bad(~bad_in)), max(idx_first_bad(~bad_in)), nCells);
         hist_sidelobe = sprintf(prombt, ...
-            min(idx_first_bad(~bad_in)), max(idx_first_bad(~bad_in)), nCells, QC_BAD);
+            min(idx_first_bad(~bad_in)), max(idx_first_bad(~bad_in)), nCells);
         break
 
     elseif strcmpi(reply, 'N') || strcmpi(reply, 'NO')
@@ -649,8 +649,7 @@ end
 %% 4. Write back to the NetCDF
 % ncwriteatt(filename, '/', 'history', full_history);
 
-save_signature_to_nc(Data, Config, nCells, Dist2Instr_CellMidpoint, ...
-    Nominal_CellDepth,flag_vals,flag_mean,operator,moor,info_adcp, outfile);
+save_nc(DS_EM,operator,moor,full_history,outfile);
 
 
 end
@@ -843,136 +842,220 @@ end
 
 
 
-function save_signature_to_nc(Data, Config, nCells, Dist2Instr_CellMidpoint, Nominal_CellDepth,flag_vals,flag_mean,operator,moor,info_adcp, filename)
+function save_nc(DS_EM,operator,moor,fullhistory,filename)
 % SAVE_SIGNATURE_TO_NC Saves full Signature ADCP Data structure and Config attributes to NetCDF
 %
 % USAGE:
 %   save_signature_to_nc(Data, Config, nCells, Dist2Instr, Nominal_Depth, 'filename.nc')
 
-    if exist(filename, 'file'), delete(filename); end
+if exist(filename, 'file'), delete(filename); end
 
-    % 1. Determine Dimensions
-    [nTime, nBins] = size(Data.Average_VelEast);
-    
-    % 2. Create Dimensions
-    nccreate(filename, 'time', 'Dimensions', {'time', nTime});
-    nccreate(filename, 'cell', 'Dimensions', {'cell', nBins});
-    nccreate(filename, 'xyz',  'Dimensions', {'xyz', 3});
-    nccreate(filename, 'beam_map', 'Dimensions', {'beam_map', 4});
+% 1. Determine Dimensions
+[nTime, nBins] = size(DS_EM.U_all_corrected);
 
-    % 3. Write Data Variables and Assign Units
-    all_fields = fieldnames(Data);
+% 2. Create Dimensions
+nccreate(filename, 'TIME', 'Dimensions', {'TIME', nTime});
+nccreate(filename, 'DEPTH', 'Dimensions', {'DEPTH', nBins});
+nccreate(filename, 'LATITUDE',  'Dimensions', {'LATITUDE', 1});
+nccreate(filename, 'LONGITUDE', 'Dimensions', {'LONGITUDE', 1});
 
-    for i = 1:numel(all_fields)
-        f = all_fields{i};
-        if strcmp(f, 'Average_Time'),continue;end
-        val = Data.(f);
-        [rows, cols] = size(val);
+% Write dimensions
+basetime = datenum('01-01-1950');
+time2 = DS_EM.time-basetime;
+ncwrite(filename, 'TIME', time2);
+ncwriteatt(filename, 'TIME', 'long_name', 'time');
+ncwriteatt(filename, 'TIME', 'units', 'days since 1950-01-01 00:00:00 UTC');
+ncwriteatt(filename, 'TIME', 'calendar', 'gregorian');
+ncwriteatt(filename, 'TIME', 'comment', 'add 712224.0 to time to get Matlab datenum equivalent');
+ncwriteatt(filename, 'TIME', 'valid_min', min(time2));
+ncwriteatt(filename, 'TIME', 'valid_max', max(time2));
+ncwriteatt(filename, 'TIME', 'axis', 'T');
 
-        % --- Determine Dimensions and Create Variable ---
-        if rows == nTime && cols == 1
-            nccreate(filename, f, 'Dimensions', {'time', nTime});
-        elseif rows == 1 && cols == nBins
-            nccreate(filename, f, 'Dimensions', {'cell', nBins});
-        elseif rows == nTime && cols == nBins
-            nccreate(filename, f, 'Dimensions', {'time', nTime, 'cell', nBins});
-        elseif rows == nTime && cols == 3
-            nccreate(filename, f, 'Dimensions', {'time', nTime, 'xyz', 3});
-        elseif rows == nTime && cols == 4
-            nccreate(filename, f, 'Dimensions', {'time', nTime, 'beam_map', 4});
-        else
-            continue; % Skip if dimensions don't match known patterns
-        end
+ncwrite(filename, 'DEPTH', DS_EM.Nominal_CellDepth);
+ncwriteatt(filename, 'DEPTH', 'standard_name', 'depth');
+ncwriteatt(filename, 'DEPTH', 'long_name', 'average or nominal depth below sea surface');
+ncwriteatt(filename, 'DEPTH', 'units', 'meter');
+ncwriteatt(filename, 'DEPTH', 'positive', 'down');
+ncwriteatt(filename, 'DEPTH', 'axis', 'Z');
+ncwriteatt(filename, 'DEPTH', 'reference', 'sea level');
+ncwriteatt(filename, 'DEPTH', 'coordinate_reference_frame', 'urn:ogc:crs:EPSG::5831');
+ncwriteatt(filename, 'DEPTH', 'valid_min', min(DS_EM.Nominal_CellDepth));
+ncwriteatt(filename, 'DEPTH', 'valid_max', max(DS_EM.Nominal_CellDepth));
 
-        % --- Write Data ---
-        ncwrite(filename, f, double(val));
+ncwrite(filename, 'LATITUDE', DS_EM.latitude);
+ncwriteatt(filename, 'LATITUDE', 'standard_name', 'latitude');
+ncwriteatt(filename, 'LATITUDE', 'units', 'degrees_north');
+ncwriteatt(filename, 'LATITUDE', 'axis', 'Y');
+ncwriteatt(filename, 'LATITUDE', 'long_name', 'Latitude');
+ncwriteatt(filename, 'LATITUDE', 'reference', 'WGS84');
+ncwriteatt(filename, 'LATITUDE', 'coordinate_reference_frame', 'urn:ogc:crs:EPSG::4326');
+ncwriteatt(filename, 'LATITUDE', 'valid_min', '-90');
+ncwriteatt(filename, 'LATITUDE', 'valid_max', '90');
 
-        % --- Assign Units Attribute ---
-        unit_str = '';
-        if contains(f, 'Vel'), unit_str = 'm/s';
-        elseif contains(f, 'Amp'), unit_str = 'dB';
-        elseif contains(f, 'Cor'), unit_str = '%';
-        elseif contains(f, 'Temp'), unit_str = 'degC';
-        elseif (contains(f, 'Pressure') || contains(f, 'PressureSensor')) && ~contains(f, 'Temp')
-            unit_str = 'dbar';
-        elseif contains(f, 'Magnetometer') && ~contains(f, 'Temp'), unit_str = 'mG';
-        elseif contains(f, 'Accelerometer'), unit_str = 'g';
-        elseif contains(f, 'Energy'), unit_str = 'Joules';
-        elseif contains(f, 'Heading') || contains(f, 'Pitch') || contains(f, 'Roll')
-            unit_str = 'degrees';
-            if contains(f, 'mask_QC')              
-                ncwriteatt(filename, f, 'flag_values', int8(flag_vals));
-                ncwriteatt(filename, f, 'flag_meanings', flag_mean);
-            end
-        elseif contains(f, 'Time'), unit_str = 'datenum';
-        elseif contains(f, 'mask') || contains(f, 'Status') || contains(f, 'Error'), unit_str = 'flag';
-        elseif contains(f, 'Soundspeed'), unit_str = 'm/s';
-        elseif contains(f, 'Battery'), unit_str = 'V';
-        end
-        
-        if ~isempty(unit_str)
-            ncwriteatt(filename, f, 'units', unit_str);
-        end
-    end
+ncwrite(filename, 'LONGITUDE', DS_EM.longitude);
+ncwriteatt(filename, 'LONGITUDE', 'standard_name', 'longitude');
+ncwriteatt(filename, 'LONGITUDE', 'units', 'degrees_east');
+ncwriteatt(filename, 'LONGITUDE', 'axis', 'X');
+ncwriteatt(filename, 'LONGITUDE', 'long_name', 'Longitude');
+ncwriteatt(filename, 'LONGITUDE', 'reference', 'WGS84');
+ncwriteatt(filename, 'LONGITUDE', 'coordinate_reference_frame', 'urn:ogc:crs:EPSG::4326');
+ncwriteatt(filename, 'LONGITUDE', 'valid_min', '-180');
+ncwriteatt(filename, 'LONGITUDE', 'valid_max', '180');
 
-    % 4. Write Coordinates (Dimensions)
-    ncwrite(filename, 'time', Data.Average_Time);
-    ncwriteatt(filename, 'time', 'units', 'datenum');
+% Write main variables
+nccreate(filename, 'PRES', 'Dimensions', {'TIME', nTime, 'DEPTH', nBins});
+ncwrite(filename, 'PRES', DS_EM.corrected_pres);
+ncwriteatt(filename, 'PRES', 'standard_name', 'sea_water_pressure');
+ncwriteatt(filename, 'PRES', 'units', 'decibar');
+ncwriteatt(filename, 'PRES', 'reference', 'sea_level');
+ncwriteatt(filename, 'PRES', 'long_name', 'pressure of measurement');
+ncwriteatt(filename, 'PRES', 'coordinates', 'TIME DEPTH');
+ncwriteatt(filename, 'PRES', 'valid_min', 0);
+ncwriteatt(filename, 'PRES', 'valid_max', 12000);
+ncwriteatt(filename, 'PRES', 'units', 'decibar');
 
-    ncwrite(filename, 'cell', double(nCells));
-    ncwriteatt(filename, 'cell', 'long_name', 'Cell Index');
+nccreate(filename, 'VCUR', 'Dimensions', {'TIME', nTime, 'DEPTH', nBins});
+ncwrite(filename, 'VCUR', DS_EM.V_all_corrected);
+ncwriteatt(filename, 'VCUR', 'standard_name', 'northward_sea_water_velocity');
+ncwriteatt(filename, 'VCUR', 'coordinates', 'TIME DEPTH');
+ncwriteatt(filename, 'VCUR', 'long_name', 'current north component');
+ncwriteatt(filename, 'VCUR', 'units', 'meter/second');
+ncwriteatt(filename, 'VCUR', 'valid_min', min(min(DS_EM.V_all_corrected)));
+ncwriteatt(filename, 'VCUR', 'valid_max', max(max(DS_EM.V_all_corrected)));
+ncwriteatt(filename, 'VCUR', 'comment', 'excludes bins flagged as bad during delayed mode processing (see ''history'' in global attributes)');
 
-    nccreate(filename, 'Dist2Instr_CellMidpoint', 'Dimensions', {'cell', nBins});
-    ncwrite(filename, 'Dist2Instr_CellMidpoint', double(Dist2Instr_CellMidpoint));
-    ncwriteatt(filename, 'Dist2Instr_CellMidpoint', 'units', 'm');
+nccreate(filename, 'UCUR', 'Dimensions', {'TIME', nTime, 'DEPTH', nBins});
+ncwrite(filename, 'UCUR', DS_EM.U_all_corrected);
+ncwriteatt(filename, 'UCUR', 'standard_name', 'eastward_sea_water_velocity');
+ncwriteatt(filename, 'UCUR', 'coordinates', 'TIME DEPTH');
+ncwriteatt(filename, 'UCUR', 'long_name', 'current east component');
+ncwriteatt(filename, 'UCUR', 'units', 'meter/second');
+ncwriteatt(filename, 'UCUR', 'valid_min', min(min(DS_EM.U_all_corrected)));
+ncwriteatt(filename, 'UCUR', 'valid_max', max(max(DS_EM.U_all_corrected)));
+ncwriteatt(filename, 'UCUR', 'comment', 'excludes bins flagged as bad during delayed mode processing (see ''history'' in global attributes)');
 
-    nccreate(filename, 'Nominal_CellDepth', 'Dimensions', {'cell', nBins});
-    ncwrite(filename, 'Nominal_CellDepth', double(Nominal_CellDepth));
-    ncwriteatt(filename, 'Nominal_CellDepth', 'units', 'm');
+nccreate(filename, 'AMP_BEAM1', 'Dimensions', {'TIME', nTime, 'DEPTH', nBins});
+ncwrite(filename, 'AMP_BEAM1', DS_EM.Average_AmpBeam1);
+ncwriteatt(filename, 'AMP_BEAM1', 'standard_name', 'Amplitude_Beam_1');
+ncwriteatt(filename, 'AMP_BEAM1', 'units', 'dB');
+ncwriteatt(filename, 'AMP_BEAM1', 'coordinates', 'TIME DEPTH');
+ncwriteatt(filename, 'AMP_BEAM1', 'long_name', 'ADCP_Amplitude_Beam_1');
+ncwriteatt(filename, 'AMP_BEAM1', 'valid_min', min(min(DS_EM.Average_AmpBeam1)));
+ncwriteatt(filename, 'AMP_BEAM1', 'valid_max', max(max(DS_EM.Average_AmpBeam1)));
+ncwriteatt(filename, 'AMP_BEAM1', 'comment', 'flagged bins not excluded');
 
-    % Latitude Variable
-    nccreate(filename, 'latitude', 'Datatype', 'double');
-    ncwrite(filename, 'latitude', double(info_adcp.lat));
-    ncwriteatt(filename, 'latitude', 'units', 'degrees_north');
-    ncwriteatt(filename, 'latitude', 'long_name', 'Latitude');
-    
-    % Longitude Variable
-    nccreate(filename, 'longitude', 'Datatype', 'double');
-    ncwrite(filename, 'longitude', double(info_adcp.lon));
-    ncwriteatt(filename, 'longitude', 'units', 'degrees_east');
-    ncwriteatt(filename, 'longitude', 'long_name', 'Longitude');
+nccreate(filename, 'AMP_BEAM2', 'Dimensions', {'TIME', nTime, 'DEPTH', nBins});
+ncwrite(filename, 'AMP_BEAM2', DS_EM.Average_AmpBeam2);
+ncwriteatt(filename, 'AMP_BEAM2', 'standard_name', 'Amplitude_Beam_2');
+ncwriteatt(filename, 'AMP_BEAM2', 'units', 'dB');
+ncwriteatt(filename, 'AMP_BEAM2', 'coordinates', 'TIME DEPTH');
+ncwriteatt(filename, 'AMP_BEAM2', 'long_name', 'ADCP_Amplitude_Beam_2');
+ncwriteatt(filename, 'AMP_BEAM2', 'valid_min', min(min(DS_EM.Average_AmpBeam2)));
+ncwriteatt(filename, 'AMP_BEAM2', 'valid_max', max(max(DS_EM.Average_AmpBeam2)));
+ncwriteatt(filename, 'AMP_BEAM2', 'comment', 'flagged bins not excluded');
 
-    % Final Global Metadata
-    ncwriteatt(filename, '/', 'history', ['Created on ', datestr(now)]);
-    ncwriteatt(filename, '/', 'Operator', operator);
-    ncwriteatt(filename, '/', 'Mooring', moor);
-    ncwriteatt(filename, '/', 'nominal_water_depth_m', double(info_adcp.wd));
-    % 5. Write FULL Config structure as Global Attributes
-    conf_fields = fieldnames(Config);
-    for i = 1:numel(conf_fields)
-        
-        cf = conf_fields{i};
-        cval = Config.(cf);
-        
-        if isempty(cval), continue; end
-        
-        % Special Case: Matrix Beam2xyz cannot be a global attribute
-        if strcmp(cf, 'Average_Beam2xyz')
-            nccreate(filename, 'Config_Average_Beam2xyz', 'Dimensions', {'row', 3, 'col', 3});
-            ncwrite(filename, 'Config_Average_Beam2xyz', double(cval));
-            ncwriteatt(filename, 'Config_Average_Beam2xyz', 'description', 'Beam to XYZ transformation matrix');
-        elseif isnumeric(cval) && isscalar(cval)
-            % Write numeric scalars directly
-            ncwriteatt(filename, '/', cf, double(cval));
-        else
-            % Convert strings, booleans, and multi-element chars to char arrays
-            ncwriteatt(filename, '/', cf, char(string(cval)));
-        end
-    end
-    history_date = datestr(now, 'yyyy-mm-dd HH:MM:SS');
-    history_qc_logic = 'Stage 1 quality control: data flagged based on pressure, tilt, beam correlation < 50%, surface bins, and velocity/amplitude spikes.';
-    
-    ncwriteatt(filename, '/', 'history', [history_date, ': ', history_qc_logic]);
+nccreate(filename, 'AMP_BEAM3', 'Dimensions', {'TIME', nTime, 'DEPTH', nBins});
+ncwrite(filename, 'AMP_BEAM3', DS_EM.Average_AmpBeam3);
+ncwriteatt(filename, 'AMP_BEAM3', 'standard_name', 'Amplitude_Beam_3');
+ncwriteatt(filename, 'AMP_BEAM3', 'units', 'dB');
+ncwriteatt(filename, 'AMP_BEAM3', 'coordinates', 'TIME DEPTH');
+ncwriteatt(filename, 'AMP_BEAM3', 'long_name', 'ADCP_Amplitude_Beam_3');
+ncwriteatt(filename, 'AMP_BEAM3', 'valid_min', min(min(DS_EM.Average_AmpBeam3)));
+ncwriteatt(filename, 'AMP_BEAM3', 'valid_max', max(max(DS_EM.Average_AmpBeam3)));
+ncwriteatt(filename, 'AMP_BEAM3', 'comment', 'flagged bins not excluded');
 
-    fprintf('NetCDF file "%s" created successfully with full attributes.\n', filename);
+nccreate(filename, 'COR_BEAM1', 'Dimensions', {'TIME', nTime, 'DEPTH', nBins});
+ncwrite(filename, 'COR_BEAM1', DS_EM.Average_CorBeam1);
+ncwriteatt(filename, 'COR_BEAM1', 'standard_name', 'Correlation_Beam_1');
+ncwriteatt(filename, 'COR_BEAM1', 'units', 'percentage');
+ncwriteatt(filename, 'COR_BEAM1', 'coordinates', 'TIME DEPTH');
+ncwriteatt(filename, 'COR_BEAM1', 'long_name', 'ADCP_beam_correlation_Beam_1');
+ncwriteatt(filename, 'COR_BEAM1', 'valid_min', min(min(DS_EM.Average_CorBeam1)));
+ncwriteatt(filename, 'COR_BEAM1', 'valid_max', max(max(DS_EM.Average_CorBeam1)));
+ncwriteatt(filename, 'COR_BEAM1', 'comment', 'flagged bins not excluded');
+
+nccreate(filename, 'COR_BEAM2', 'Dimensions', {'TIME', nTime, 'DEPTH', nBins});
+ncwrite(filename, 'COR_BEAM2', DS_EM.Average_CorBeam2);
+ncwriteatt(filename, 'COR_BEAM2', 'standard_name', 'Correlation_Beam_2');
+ncwriteatt(filename, 'COR_BEAM2', 'units', 'percentage');
+ncwriteatt(filename, 'COR_BEAM2', 'coordinates', 'TIME DEPTH');
+ncwriteatt(filename, 'COR_BEAM2', 'long_name', 'ADCP_beam_correlation_Beam_2');
+ncwriteatt(filename, 'COR_BEAM2', 'valid_min', min(min(DS_EM.Average_CorBeam2)));
+ncwriteatt(filename, 'COR_BEAM2', 'valid_max', max(max(DS_EM.Average_CorBeam2)));
+ncwriteatt(filename, 'COR_BEAM2', 'comment', 'flagged bins not excluded');
+
+nccreate(filename, 'COR_BEAM3', 'Dimensions', {'TIME', nTime, 'DEPTH', nBins});
+ncwrite(filename, 'COR_BEAM3', DS_EM.Average_CorBeam3);
+ncwriteatt(filename, 'COR_BEAM3', 'standard_name', 'Correlation_Beam_3');
+ncwriteatt(filename, 'COR_BEAM3', 'units', 'percentage');
+ncwriteatt(filename, 'COR_BEAM3', 'coordinates', 'TIME DEPTH');
+ncwriteatt(filename, 'COR_BEAM3', 'long_name', 'ADCP_beam_correlation_Beam_3');
+ncwriteatt(filename, 'COR_BEAM3', 'valid_min', min(min(DS_EM.Average_CorBeam3)));
+ncwriteatt(filename, 'COR_BEAM3', 'valid_max', max(max(DS_EM.Average_CorBeam3)));
+ncwriteatt(filename, 'COR_BEAM3', 'comment', 'flagged bins not excluded');
+
+% Write global attributes
+ncwriteatt(filename, '/', 'site_code','OSNAP');
+ncwriteatt(filename, '/', 'platform_code',['OSNAP-' moor]);
+ncwriteatt(filename, '/', 'data_mode','D');
+ncwriteatt(filename, '/', 'title',['OSNAP ' moor ' ADCP DATA ' datestr(DS_EM.time(1),'mm/yyyy') ' - ' datestr(DS_EM.time(end),'mm/yyyy')]);
+nomdepth = DS_EM.Nominal_CellDepth; nomdepth = nomdepth(nomdepth >= 0);
+ncwriteatt(filename, '/', 'summary',['current records for depth range ' num2str(nomdepth(1)) 'm-' num2str(nomdepth(end)) 'm']);
+ncwriteatt(filename, '/', 'naming_authority','OceanSITES');
+ncwriteatt(filename, '/', 'source','subsurface mooring');
+ncwriteatt(filename, '/', 'principal_investigator','Kristin Burmeister');
+ncwriteatt(filename, '/', 'principal_investigator_email','Kristin Burmeister@sams.ac.uk');
+ncwriteatt(filename, '/', 'principal_investigator_url','www.sams.ac.uk');
+ncwriteatt(filename, '/', 'institution','Scottish Association for Marine Science, SAMS');
+ncwriteatt(filename, '/', 'project','OSNAP');
+ncwriteatt(filename, '/', 'array','OSNAP');
+ncwriteatt(filename, '/', 'network','OSNAP');
+
+ncwriteatt(filename, '/', 'sensor_manufacturer','Nortek');
+ncwriteatt(filename, '/', 'sensor_model','Signature55');
+ncwriteatt(filename, '/', 'sensor_serial_number',DS_EM.Attributes.SerialNo);
+ncwriteatt(filename, '/', 'sensor_orientation','upward');
+
+ncwriteatt(filename, '/', 'area','North Atlantic Ocean');
+ncwriteatt(filename, '/', 'geospatial_lat_min',num2str(DS_EM.latitude));
+ncwriteatt(filename, '/', 'geospatial_lat_max',num2str(DS_EM.latitude));
+ncwriteatt(filename, '/', 'geospatial_lon_min',num2str(DS_EM.longitude));
+ncwriteatt(filename, '/', 'geospatial_lon_max',num2str(DS_EM.longitude));
+ncwriteatt(filename, '/', 'geospatial_lat_units','degree_north');
+ncwriteatt(filename, '/', 'geospatial_lon_units','degree_east');
+ncwriteatt(filename, '/', 'geospatial_vertical_min',nomdepth(end));
+ncwriteatt(filename, '/', 'geospatial_vertical_max',nomdepth(1));
+ncwriteatt(filename, '/', 'geospatial_vertical_positive','down');
+ncwriteatt(filename, '/', 'geospatial_vertical_units','meter');
+ncwriteatt(filename, '/', 'time_coverage_start',datestr(DS_EM.time(1),'yyyy-mm-ddTHH:MM:SSZ'));
+ncwriteatt(filename, '/', 'time_coverage_end',datestr(DS_EM.time(end),'yyyy-mm-ddTHH:MM:SSZ'));
+timeinterval = DS_EM.time(end) - DS_EM.time(1);
+intstring = ['P' num2str(floor(timeinterval)) 'D' datestr(timeinterval,'HH') 'H'];
+ncwriteatt(filename, '/', 'time_coverage_duration',intstring);
+resol_min = (DS_EM.time(2) - DS_EM.time(1)) * 24 * 60;
+ncwriteatt(filename, '/', 'time_coverage_resolution',['PT' num2str(resol_min) 'M']);
+ncwriteatt(filename, '/', 'cdm_data_type','Station');
+ncwriteatt(filename, '/', 'featureType','timeSeries');
+ncwriteatt(filename, '/', 'data_type','OceanSITES time-series data');
+ncwriteatt(filename, '/', 'format_version','1.3');
+ncwriteatt(filename, '/', 'Conventions','CF-1.6,OceanSITES-1.3,ACDD-1.2');
+ncwriteatt(filename, '/', 'netcdf_version','4.3');
+ncwriteatt(filename, '/', 'publisher_name','Kristin Burmeister');
+ncwriteatt(filename, '/', 'publisher_email','Kristin.Burmeister@sams.ac.uk');
+ncwriteatt(filename, '/', 'publisher_url','http://www.o-snap.org');
+ncwriteatt(filename, '/', 'references','http://www.o-snap.org,http://www.oceansites.org');
+ncwriteatt(filename, '/', 'data_assembly_center','BODC');
+ncwriteatt(filename, '/', 'update_interval','void');
+ncwriteatt(filename, '/', 'licence','Follows CLIVAR (Climate Variability and Predictability) standards, cf. http://www.clivar.org/data/data_policy.php. Data available free of charge. User assumes all risk for use of data. User must display citation in any publication or product using data. User must contact PI prior to any commercial use of data.');
+ncwriteatt(filename, '/', 'citation','These data were collected and made freely available by the OSNAP project and the national programs that contribute to it.');
+ncwriteatt(filename, '/', 'acknowledgement','Funding source: the UK Natural Environment Research Council (NERC), UK OSNAP project');
+ncwriteatt(filename, '/', 'date_created',datestr(now,'yyyy-mm-ddTHH:MM:SSZ'));
+ncwriteatt(filename, '/', 'date_modified',datestr(now,'yyyy-mm-ddTHH:MM:SSZ'));
+ncwriteatt(filename, '/', 'history',fullhistory);
+ncwriteatt(filename, '/', 'processing_level','speed of sound and magnetic deviation corrections; data manually reviewed');
+ncwriteatt(filename, '/', 'contributor_name','Kristin Burmeister; Sam Jones; Helen Smith; Lewis Drysdale');
+ncwriteatt(filename, '/', 'contributor_name','data processing and interpretation');
+ncwriteatt(filename, '/', 'contributor_email','Kristin.Burmeister@sams.ac.uk; Sam.Jones@sams.ac.uk; Helen.Smith@sams.ac.uk; Lewis.Drysdale@sams.ac.uk');
+
+fprintf('NetCDF file "%s" created successfully with full attributes.\n', filename);
 end
