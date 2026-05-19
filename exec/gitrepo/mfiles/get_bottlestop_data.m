@@ -28,13 +28,13 @@ end
 
 if strcmp(calp.apply_offset,'y')
   bot_start = bot_start - calp.offset;
-  bot_end   = bot_end - calp.offset;
+  % bot_end   = bot_end - calp.offset;
   fprintf(1,' O F F S E T   H A S   B E E N   A P P L I E D  ! ! !\n')
 elseif  strcmp(calp.apply_offset,'n')
   fprintf(1,' O F F S E T   H A S   N O T   B E E N   A P P L I E D  ! ! !\n')
 elseif  strcmp(calp.apply_offset,'i')
   fprintf(1,' D A N G E R !!! INDIV.  OFFSETS  HAVE  BEEN   APPLIED  ! ! !\n')
-  mc.datnum  = mc.datnum + ones(size(mc.datnum,1),1)*calp.impact_offset' ;
+  mc.datnum  = mc.datnum + ones(size(mc.datnum,1),size(mc.datnum,2)).*calp.impact_offset ;
 end
 
 
@@ -117,7 +117,7 @@ end
 
 if rms(calp.interval_move) ~= 0
   if  calp.apply_offset   == 'y'
-    ctd.time =  - offset + ctd.datnum; 
+    ctd.time =  - calp.offset + ctd.datnum; 
   else 
     ctd.time =  ctd.datnum;
   end
