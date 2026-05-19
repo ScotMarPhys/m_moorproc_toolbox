@@ -1298,7 +1298,7 @@ function save_signature_to_nc(Data, Config, nCells, Dist2Instr_CellMidpoint, Nom
             ncwriteatt(filename, '/', cf, char(string(cval)));
         end
     end
-    history_date = datestr(now, 'yyyy-mm-dd HH:MM:SS');
+    history_date = datestr(now,'yyyy-mm-ddTHH:MM:SSZ');
     history_qc_logic = 'Stage 1 quality control: data flagged based on pressure, tilt, beam correlation < 50%, surface bins, and velocity/amplitude spikes.';
     
     ncwriteatt(filename, '/', 'history', [history_date, ': ', history_qc_logic]);
