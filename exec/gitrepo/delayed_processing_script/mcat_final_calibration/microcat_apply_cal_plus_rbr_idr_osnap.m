@@ -20,31 +20,32 @@ global basedir datadir execdir pathgit pathosnap progdir % 14/01/2025
 
 % path of the mooring data define in the startup file under osnap/
 
-moor = 'rteb1_07_2022';
+% moor = 'rteb1_07_2022';
 % moor = 'rtwb1_07_2022';
 % moor = 'rtwb2_07_2022';
 %moor = 'rhadcp_02_2022';
-moor = 'ib3_03_2022'
+%moor = 'ib3_03_2022';
+moor = 'rteb1s_01_2024';
 %=========================================================================
 % Apply calibration coefficients to series, removes bad data. If required, applies
 % constant offsets, and conductivity pressure correction
-p_applycal.operator  = 'TSD';
+p_applycal.operator  = 'HS';
 p_applycal.mooring  = moor;   
 p_applycal.sensortyp = 'microcat';%'microcat';   % seaphox / arg / microcat / rbr / idr
 p_applycal.delim = ',';
 % input directories & files
-p_applycal.mooring_dir         = [basedir '/osnap/data/moor/proc/'];
-p_applycal.mooring_outdir      = [basedir '/osnap/data/moor/proc/'];
-p_applycal.coef_dir            = [progdir '/m_moorproc_toolbox/metadata/cal_coef/osnap/']; % 14/01/2025
-p_applycal.external_ctd_dir    = [basedir '/cruise_data/'];
+p_applycal.mooring_dir         = [basedir 'odissea/data/moor/proc/'];
+p_applycal.mooring_outdir      = [basedir 'odissea/data/moor/proc/'];
+p_applycal.coef_dir            = [progdir 'm_moorproc_toolbox/metadata/cal_coef/odissea/']; % 14/01/2025
+p_applycal.external_ctd_dir    = [basedir 'odissea/cruise_data'];
 p_applycal.ctd_ref_cruises     = {''};%{'pe400'}; %{'kn221-02';'pe399'}; % references cruises for the QC
 p_applycal.distrangectd        = 100e3; % distance of the reference ctd from the mooring
-p_applycal.strformat.mctemptxt = repmat('%s',1,38);
-p_applycal.strformat.mctempnum = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,9)];
-p_applycal.strformat.mcsaltxt  = repmat('%s',1,38);
-p_applycal.strformat.mcsalnum  = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,9)];
-p_applycal.strformat.mcprestxt = repmat('%s',1,81);
-p_applycal.strformat.mcpresnum = ['%f' repmat('%s%f%s%s',1,20)];
+p_applycal.strformat.mctemptxt = repmat('%s',1,44);
+p_applycal.strformat.mctempnum = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,11)];
+p_applycal.strformat.mcsaltxt  = repmat('%s',1,44);
+p_applycal.strformat.mcsalnum  = ['%f%f%s%s%f%s%s%f%f%s%s' repmat('%f%s%s',1,11)];
+p_applycal.strformat.mcprestxt = repmat('%s',1,93);
+p_applycal.strformat.mcpresnum = ['%f' repmat('%s%f%s%s',1,23)];
 loclegend = 'north';
 opts.Interpreter = 'tex';
 opts.Default = 'No';
