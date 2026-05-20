@@ -834,7 +834,7 @@ Number of samples: 48367; expected: 46440
  W A R N I N G: Record already ends before end of mooring deployment period: 
  Recorded time could be wrong!! 
 Transformation of ascii data to rodb format 
-Processing carried out by sa02sd at 13-Aug-2025 10:20:12
+Processing carried out by sams\sa03hs at 13-Aug-2025 10:20:54
 
 
 Mooring   rteb1s_01_2024 
@@ -925,6 +925,7 @@ Longitude -16.910
 
 infile: /Users/sa02sd/m_moorproc_toolbox/odissea/data/moor/raw/CE25007/microcat/9141_data.cnv
 outfile: /Users/sa02sd/m_moorproc_toolbox/odissea/data/moor/proc/rteb1s_01_2024/microcat/rteb1s_01_2024_9141.raw
+
 serial number: 9141
 Median Temperature 12.72
 Median Conductivity 41.28
@@ -942,6 +943,7 @@ Number of samples: 46311; expected: 46311
 
 infile: /Users/sa02sd/m_moorproc_toolbox/odissea/data/moor/raw/CE25007/microcat/7923_data.cnv
 outfile: /Users/sa02sd/m_moorproc_toolbox/odissea/data/moor/proc/rteb1s_01_2024/microcat/rteb1s_01_2024_7923.raw
+
 serial number: 7923
 Median Temperature 12.33
 Median Conductivity 40.94
@@ -959,6 +961,7 @@ Number of samples: 46319; expected: 46319
 
 infile: /Users/sa02sd/m_moorproc_toolbox/odissea/data/moor/raw/CE25007/microcat/5509_data.asc
 outfile: /Users/sa02sd/m_moorproc_toolbox/odissea/data/moor/proc/rteb1s_01_2024/microcat/rteb1s_01_2024_5509.raw
+
 serial number: 5509
 Median Temperature 11.64
 Median Conductivity 40.29
@@ -976,6 +979,7 @@ Number of samples: 46315; expected: 46315
 
 infile: /Users/sa02sd/m_moorproc_toolbox/odissea/data/moor/raw/CE25007/microcat/5510_data.asc
 outfile: /Users/sa02sd/m_moorproc_toolbox/odissea/data/moor/proc/rteb1s_01_2024/microcat/rteb1s_01_2024_5510.raw
+
 serial number: 5510
 Median Temperature 10.70
 Median Conductivity 39.39
@@ -993,6 +997,7 @@ Number of samples: 23633; expected: 23633
 
 infile: /Users/sa02sd/m_moorproc_toolbox/odissea/data/moor/raw/CE25007/microcat/16363_data.cnv
 outfile: /Users/sa02sd/m_moorproc_toolbox/odissea/data/moor/proc/rteb1s_01_2024/microcat/rteb1s_01_2024_16363.raw
+
 serial number: 16363
 Median Temperature  9.14
 Median Conductivity 37.95
@@ -1010,6 +1015,7 @@ Number of samples: 46329; expected: 46329
 
 infile: /Users/sa02sd/m_moorproc_toolbox/odissea/data/moor/raw/CE25007/microcat/16379_data.cnv
 outfile: /Users/sa02sd/m_moorproc_toolbox/odissea/data/moor/proc/rteb1s_01_2024/microcat/rteb1s_01_2024_16379.raw
+
 serial number: 16379
 Median Temperature  7.24
 Median Conductivity 36.19
@@ -1027,6 +1033,7 @@ Number of samples: 46330; expected: 46330
 
 infile: /Users/sa02sd/m_moorproc_toolbox/odissea/data/moor/raw/CE25007/microcat/21269_data.cnv
 outfile: /Users/sa02sd/m_moorproc_toolbox/odissea/data/moor/proc/rteb1s_01_2024/microcat/rteb1s_01_2024_21269.raw
+
 serial number: 21269
 Median Temperature  5.29
 Median Conductivity 34.32
@@ -1044,6 +1051,7 @@ Number of samples: 46299; expected: 46299
 
 infile: /Users/sa02sd/m_moorproc_toolbox/odissea/data/moor/raw/CE25007/microcat/23829_data.cnv
 outfile: /Users/sa02sd/m_moorproc_toolbox/odissea/data/moor/proc/rteb1s_01_2024/microcat/rteb1s_01_2024_23829.raw
+
 serial number: 23829
 Median Temperature  4.22
 Median Conductivity 33.38
@@ -1061,6 +1069,7 @@ Number of samples: 46298; expected: 46298
 
 infile: /Users/sa02sd/m_moorproc_toolbox/odissea/data/moor/raw/CE25007/microcat/23830_data.cnv
 outfile: /Users/sa02sd/m_moorproc_toolbox/odissea/data/moor/proc/rteb1s_01_2024/microcat/rteb1s_01_2024_23830.raw
+
 serial number: 23830
 Median Temperature  3.70
 Median Conductivity 33.00
