@@ -111,7 +111,7 @@ fprintf('Processing sn %d',serial_nums(i));
 outfile = fullfile(outdir,sprintf(ouput_form,serial_nums(i)));
 [~, filename, ~] = fileparts(outfile);
 infile = fullfile(dataindir,sprintf(infile_form,serial_nums(i)));
-DS = s55_load_nc_as_struct(infile);
+DS = s55_load_nc_as_struct(infile,0);
 
 fprintf(fidlog,'infile : %s\n',infile);
 fprintf(fidlog,'ADCP serial number  : %d\n\n',serial_nums(i));
@@ -156,7 +156,7 @@ DS.V_all_corrected = V_final;
 % Logfile output
 deg = char(176); 
 prombt = ['\n\n***Magnetic deviation***\n' ...
-    'Horizontal velocity data corrected for magnetic deviation of %5.2f' deg '\n'];
+    'Horizontal velocity data corrected for magnetic declination of %5.2f' deg '\n'];
 fprintf(1, prombt, mag_dev); 
 fprintf(fidlog, prombt,mag_dev); 
 
@@ -1052,6 +1052,9 @@ ncwriteatt(filename, '/', 'acknowledgement','Funding source: the UK Natural Envi
 ncwriteatt(filename, '/', 'date_created',datestr(now,'yyyy-mm-ddTHH:MM:SSZ'));
 ncwriteatt(filename, '/', 'date_modified',datestr(now,'yyyy-mm-ddTHH:MM:SSZ'));
 ncwriteatt(filename, '/', 'history',fullhistory);
+ncwriteatt(filename, '/', 'magnetic_variation', -7.07);
+ncwriteatt(filename, '/', 'magnetic_variation_units', 'degree');
+ncwriteatt(filename, '/', 'magnetic_variation_comment', 'Fixed magnetic declination angle applied to rotate horizontal velocity fields from magnetic to true north.');
 ncwriteatt(filename, '/', 'processing_level','Level 2 - Quality controlled data with corrections applied');
 ncwriteatt(filename, '/', 'contributor_name','Kristin Burmeister; Sam Jones; Helen Smith; Lewis Drysdale');
 ncwriteatt(filename, '/', 'contributor_role','Data quality control and post-processing');
