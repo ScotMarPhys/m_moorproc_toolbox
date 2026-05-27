@@ -31,9 +31,11 @@ p_hydrogrid.fss          = 2;  % final sub-sampling frequency [1/days]
 
 % 4.SET DIRECTORIES FOR MERGE
 hydrodir                = [basedir filesep 'odissea/data/moor/proc/hydro_grid/'];
+if exist(hydrodir,'dir')==0;mkdir(hydrodir);end
 grdatdir                = [basedir filesep 'odissea/data/moor/proc/hydro_grid_merged/'];
 if exist(grdatdir,'dir')==0;mkdir(grdatdir);end
 boundarydir             = [pathgit filesep 'gitrepo/stage3/gridding/MCAT/DAT/'];
+if exist(boundarydir,'dir')==0;mkdir(boundarydir);end
 
 % 5.MERGE INITIALISATION 
 
