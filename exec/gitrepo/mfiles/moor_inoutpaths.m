@@ -173,7 +173,7 @@ end
 % (keep above defaults more readable)
 switch datatype
     case 'cal_coef'
-        defs = {'dy053' 'dy078' 'ar304' 'dy120' 'jc238' 'dy181'};
+        defs = {'dy053' 'dy078' 'ar304' 'dy120' 'jc238' 'dy181' 'tc24015' 'ce25007'};
         if ~ismember(mg.cruise,defs)
         %cruise, ctdformat, ctdcnv_cunit, ctd1hz_cunit, mc_cunit, mc_ext
         a = {'kn221-02' 'aoml' 'S/m' 'S/m' 'S/m' '.raw';...
@@ -210,9 +210,12 @@ switch datatype
                 pd.ctd_cnvfile = fullfile(mg.ctddir,'ASCII_FILES',sprintf('ar30-04%3.3d.cnv',cast));
             case 'dy181'
                 pd.bottle_file = fullfile(mg.ctddir,sprintf('fir_%s_%03d.nc',mg.cruise,cast));
-            case 'ce25007'
-                pd.ctd_1hzfile = fullfile(mg.ctddir,sprintf('ctd_%s_%3.3d_raw.nc',mg.cruise,cast));
-                pd.bottle_file = fullfile(mg.ctddir,'ASCII_FILES',sprintf('ar30-04%3.3d.ros',cast));
-                pd.ctd_cnvfile = fullfile(mg.ctddir,'ASCII_FILES',sprintf('ar30-04%3.3d.cnv',cast));
+            case 'tc24015'
+                % pd.ctd1hz_file = fullfile(mg.ctddir,sprintf('ctd_%s_%3.3d_raw.nc',mg.cruise,cast)); %HS added 15/01/2026
+                % pd.ctdcnv_file = fullfile(mg.ctddir,sprintf('ctd_%s_%3d.cnv',mg.cruise,cast));
+            % case 'ce25007'
+            %     pd.ctd_1hzfile = fullfile(mg.ctddir,sprintf('ctd_%s_%3.3d_raw.nc',mg.cruise,cast));
+            %     pd.bottle_file = fullfile(mg.ctddir,'ASCII_FILES',sprintf('ar30-04%3.3d.ros',cast));
+            %     pd.ctd_cnvfile = fullfile(mg.ctddir,'ASCII_FILES',sprintf('ar30-04%3.3d.cnv',cast));
             end
 end
