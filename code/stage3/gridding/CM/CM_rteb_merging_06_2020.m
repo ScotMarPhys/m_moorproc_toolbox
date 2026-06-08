@@ -29,7 +29,7 @@
 % - set depth of shallowest instrument (idepth)
 % - praembel for despiking
 % - if you add a deployment period, you need to edit steps 1-3
-% Now in 'setup' function - LewisD-Jan2025
+% Now in 'setup' function - LewisD-Jan2025 renamed to CM_setup_load - YLF Jun2026
 %---------
 
 % add last year of data and mooring name below
@@ -39,7 +39,7 @@ MOOR = 'RTEB1';
 [hydrodir,grdatdir,boundarydir,fmoor,cm_check_plot,data_version,...
             outputfile,outputfile_stacked,...
             stddy_tol,std_win,nloop,...
-            graphics,JG,pgg,idepth] = setup(lastyear,MOOR,basedir);
+            graphics,JG,pgg,idepth] = CM_setup_load(lastyear,MOOR,basedir);
 
 moor1=char(fmoor(1));
 moor2=char(fmoor(2));
