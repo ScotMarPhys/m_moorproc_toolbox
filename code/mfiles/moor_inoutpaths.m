@@ -60,6 +60,8 @@ switch datatype
         pd.stage2form = [moor '_%4.4d.use'];
         pd.stage2log = fullfile(pd.stage2path, ['stage2_log_' moor,'.log']);
         pd.stage2figpath = fullfile(mg.reportdir, 'figs');
+        pd.stage3path = fullfile(mg.moordatadir, 'proc', moor, 'microcat');
+        pd.stage3form = [moor '_%0.3d.microcat'];
 
     case {'nor','nortek'}
         datatype = 'nor';
@@ -94,7 +96,7 @@ switch datatype
         pd.stage1log = fullfile(pd.stage1path, [moor '_seaguard_stage1.log']);
         pd.stage1form = [moor '_%5.5d.raw'];
 
-    case 'adcp'
+    case {'adcp' 'adp'}
         disp(datatype)
         moor = loc;
         pd.rawpath = fullfile(mg.moordatadir, 'raw', mg.cruise, datatype);
@@ -165,6 +167,18 @@ switch datatype
         pd.ctd1hz_cunit = 'mS/cm';
         pd.mc_cunit = 'mS/cm';
         pd.mc_ext = '.raw';
+
+    case 'mcgrid'
+        pd.hydrodir = fullfile(mg.moordatadir,'proc','hydro_grid');
+        pd.grdatdir = fullfile(mg.moordatadir,'proc','hydro_grid_merged');
+        pd.figdir = fullfile(mg.moordatadir,'Figures');
+        pd.mooringpath = fullfile(mg.moordatadir,'proc');
+
+    case 'oceansites'
+        moor = loc;
+        pd.infofile = fullfile(mg.moordatadir,'proc',moor,[moor 'info.dat']);
+        pd.ncpre = fullfile(mg.moordatadir,'oceansites_format',moor);
+
 
 end
 
