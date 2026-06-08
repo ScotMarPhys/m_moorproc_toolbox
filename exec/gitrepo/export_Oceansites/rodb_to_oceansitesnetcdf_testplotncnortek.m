@@ -1,6 +1,6 @@
 
-namefignor1 = [netcdffilepath '_uv'];
-namefignor2 = [netcdffilepath '_pw'];
+namefignor1 = [ncfilep '_uv'];
+namefignor2 = [ncfilep '_pw'];
 nortekncdata.time = nortekncdata.TIME; %repmat(nortekncdata.TIME',length(nortekncdata.DEPTH),1);
 
 % ------------------------------

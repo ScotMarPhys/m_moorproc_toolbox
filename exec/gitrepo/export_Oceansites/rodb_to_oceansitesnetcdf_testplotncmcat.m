@@ -1,5 +1,5 @@
 
-namefig1 = [netcdffilepath '_ptc'];
+namefig1 = [ncfilep '_ptc'];
 mcatncdata.time = mcatncdata.TIME; %repmat(nortekncdata.TIME',length(nortekncdata.DEPTH),1);
 
 % ------------------------------
