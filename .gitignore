@@ -20,10 +20,10 @@
 **/*.mat.zip
 
 # sometimes keep (in metadata), sometimes ignore
-exec/gitrepo/**/*.dat
+gitrepo/**/*.dat
 
 # ignore oceansites_format folder
-exec/gitrepo/export_Oceansites/oceansites_format/
+gitrepo/export_Oceansites/oceansites_format/
 
 # temporary matlab file:
 *~**
