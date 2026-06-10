@@ -50,29 +50,6 @@ function Anchor_seabed_triang(varargin)
 
 global MEXEC_G MOORPROC_G
 
-switch MEXEC_G.Mshipdatasystem
-    case 'techsas'
-        nav_stream = 'cnav';
-        dep_stream = 'sim';
-    case 'scs'
-        nav_stream = 'posfur';
-        nav_vars   = 'time GPS-Furuno-GGA-lat GPS-Furuno-GGA-lon';
-        dep_stream = 'singleb';
-        dep_vars = 'time waterdepth';
-        %	ms_raw_to_sed(57);
-        %	update_allmat;
-    case 'rvdas'
-        nav_stream = 'posmv_gpgga';
-        nav_vars = 'time latitude longitude';
-        dep_stream = 'ea640_sddbs';
-        dep_vars = 'time waterdepth';
-
-end
-
-mcruise = MOORPROC_G.cruise;
-opt1 = 'ship'; opt2 = 'datasys_best'; get_cropt %default_navstream
-nav_stream = default_navstream;
-dirout = fullfile(MOORPROC_G.moordatadir,'raw',mcruise,'moor_positions');
 iscor = 0;
 
 % User input
@@ -86,9 +63,7 @@ if nargin>0
     end
 else
     fprintf(1,'\n Enter mooring name (e.g. ebh3)). Times will then be read from <name>_times.txt: \n');
-    fprintf(1,' - in the folder %s \n',dirout)
     fprintf(1,' - with one range per line in format  YYYY MM DD HH MM SS range. \n')
-    fprintf(1, ' Output will be saved to <name>_triangle.txt in the same directory. \n\n');
     loc_name = input('Enter mooring name (e.g. ebh3): ','s');
 end
 if ~exist('rht','var')
@@ -97,151 +72,131 @@ end
 if ~exist('td','var')
     td =input('Enter approximate transducer depth in metres: ');
 end
+if isempty(loc_name)
+    return
+end
+pd = moor_inoutpaths('reports',loc_name);
+fprintf(1, ' Output will be saved to <name>_triangle.txt in %s\n\n',pd.trilatdir);
 
-target_fn = fullfile([dirout,'/targets_',MOORPROC_G.cruise,'.txt']);
+%target positions
 targ_loc=NaN(2,1);
-if exist(target_fn,'file')==2
+target_fn = pd.target_fn;
+if exist(target_fn,'file')
     fileID = fopen(target_fn,'r');
     txt = textscan(fileID,'%s','delimiter','\n');
-    for i=1:length(txt{1})
-        if strfind(txt{1}{i},[loc_name,' '])
-            targ_loc = sscanf(txt{1}{i},[loc_name,' %f %f']);
+    l = txt{1}(~cellfun('isempty',strfind(txt{1},loc_name)));
+    found = 0; n = 1;
+    while ~found && n<=length(l)
+        s = strsplit(replace(l{n},whitespacePattern,','),','); %space or tab delimited
+        if sum(strcmp(s,loc_name))
+            found = 1;
+            break
+        else
+            n = n+1;
         end
+    end
+    if found
+        if abs(str2num(s{2}))>90
+            %rapid format ddmm.mm
+            d = str2num(s{2}(1:end-5)); m = str2num(s{2}(end-4:end));
+            if d>=0; targ_loc(1) = d+m/60; else; targ_loc(1) = d-m/60; end
+            d = str2num(s{3}(1:end-5)); m = str2num(s{3}(end-4:end));
+            if d>=0; targ_loc(2) = d+m/60; else; targ_loc(2) = d-m/60; end
+        else
+            %dd.dd
+            targ_loc = cellfun(@(x) str2num(x), s(2:3));
+        end
+    else
+        targ_loc = NaN;
     end
     fclose(fileID);
 end
-
 if numel(find(isnan(targ_loc)))>0      
     fprintf('No target position found for %s \n',loc_name)
     ta_str = input('Would you like to enter a target position? yes=1, no=0 (default=0) :');
     if ta_str
-        targ_loc(1)=input('Please enter target latitude as decimal degrees N: ')
-        targ_loc(2)=input('Please enter target longitude as decimal degrees E: ')
-        fileID=fopen(target_fn,'w')
+        targ_loc(1)=input('Please enter target latitude as decimal degrees N: ');
+        targ_loc(2)=input('Please enter target longitude as decimal degrees E: ');
+        fileID=fopen(target_fn,'w');
         fprintf(fileID,'%s %f %f \n',loc_name,targ_loc(1), targ_loc(2));
-        fclose(fileID)
+        fclose(fileID);
     end
 end
-  
 
-if strmatch(loc_name, '')
+filein = fullfile(pd.trilatdir, [loc_name '_times.txt']);
+if ~exist(filein,'file')
+    warning('input file %s not found',filein)
     return
-else
-    if ~exist(dirout,'dir')
-        warning('making directory %s', dirout)
-        mkdir(dirout)
-    end
-    filein = fullfile(dirout, [loc_name '_times.txt']);
-    fileout = fullfile(dirout, [loc_name '_triangle.txt']);
-    disp(['Reading times from ' filein]);
-    if exist(filein,'file')
-        indata = load(filein);
-    else
-        warning('input file %s does not exist',filein)
-        return
-    end
-    disp(['Opening output file ' fileout]);
-    disp('If file exists contents will be overwritten')
-    iout = fopen(fileout,'w+');
 end
 
-% Read in data from text file assume first point is anchor drop
+%load times and ranges
+disp(['Reading times from ' pd.trilatdir]);
+indata = load(filein);
 tme = datenum(indata(:,1:6));
-range = indata(:,7); range(1) = -999;
-if size(indata,2) == 8
-    dptvl = indata(:,8);
-else
+range = indata(:,7);
+if size(indata,2)<8
+    %add depth column
     dptvl = -999+zeros(size(range));
+else
+    dptvl = indata(:,8);
 end
+dptvl = indata(:,8);
 
-% Now get data from underway data system
-switch MEXEC_G.Mshipdatasystem
-    case 'techsas'
-        pos = mtload(nav_stream,datevec(tme(1)-0.04), ...
-            datevec(tme(end)+0.01),'time lat long');
-        pos.time = pos.time + MEXEC_G.uway_torg;
-        pos.lon = pos.long;
-    case 'rvdas'
-        pos = mrload(nav_stream,datevec(tme(1)-0.04), ...
-            datevec(tme(end)+0.01),'time latitude longitude');
-        pos.lat = pos.latitude;
-        pos.lon = pos.longitude;
-        pos.time = pos.dnum;
-    case 'scs'
-        pos = msload(nav_stream,datevec(tme(1)-0.04), ...
-            datevec(tme(end)+0.01),nav_vars);
-        pos.lat = pos.GPS_Furuno_GGA_lat;
-        pos.lon = pos.GPS_Furuno_GGA_lon;
-        [pos.time, IA, IC] = unique(pos.time);
-        pos.lat = pos.lat(IA);
-        pos.lon = pos.lon(IA);
-end
+%anchor drop is first line
+tmeD = tme(1); tme = tme(2:end);
+rangeD = range(1); range = range(2:end);
+dptvlD = dptvl(1); dptvl = dptvl(2:end);
 
-% interpolate for positions then depths
+% get ship position and depth on ship track between anchor drop and last
+% ranging
+[pos, dep] = get_uway([tmeD-0.1 max(tme)+0.1]);
+
+% interpolate for positions
+latD = interp1(pos.time,pos.lat,tmeD);
+lonD = interp1(pos.time,pos.lon,tmeD);
 lat = interp1(pos.time,pos.lat,tme);
 lon = interp1(pos.time,pos.lon,tme);
 
-% information on depth
-if dptvl(1) < 0
-    switch MEXEC_G.Mshipdatasystem
-        case 'techsas'
-            dep = mtload(dep_stream,datevec(tme(1)-0.01), ...
-                datevec(tme(1)+0.01),'time depthm');
-            dep.time = dep.time + MEXEC_G.uway_torg;
-        case 'rvdas'
-            dep = mrload(dep_stream,datevec(tme(1)-0.01), ...
-                datevec(tme(1)+0.01),'time waterdepthmeters');
-        case 'scs'
-            dep = msload(dep_stream,datevec(tme(1)-0.01), ...
-                datevec(tme(1)+0.01),dep_vars);
-            dep.depthm = dep.waterdepth;
-            [dep.time, IA, IC] = unique(dep.time);
-            dep.depthm = dep.depthm(IA);
+%depth at anchor drop
+if dptvlD>0
+    if iscor %***
+        %corrected depth on first line of file
+        wd_corr = dptvlD;
+    else
+        %uncorrected depth on first line of file
+        wd = dptvlD;
+        corr_struct = mcarter(latD,lonD,wd);
+        wd_corr = corr_struct.cordep;
     end
 
-    % Need to check the depths
-    iabs = dep.depthm == 0;
-    if sum(~iabs)>2;
-        wd2 = dinterp1(dep.time(~iabs),dep.depthm(~iabs),tme);
-        f1 = figure;
-        plot(dep.time(~iabs),dep.depthm(~iabs));
-        hold on; grid on;
-        y1 = ylim; t1 = tme(1);
-        plot([t1 t1],y1,'r');grid on;
-        datetick;xlabel('Time'),ylabel('Depth');
-    else wd2 = 0;
-    end;
-    fprintf(1,'Uncorrected water depth at anchor drop %5.1f m \n',wd2(1));
-    ich = input('Enter 1 to accept or 2 to change values: ');
-    if ich == 2
-        wd=input('Enter uncorrected water depth in metres: ');
-    else
-        wd = wd2(1);
-    end
-    %   close(f1)
-    % The corrected water depth
-    corr_struct = 	mcarter(lat(1),lon(1),wd);
-    wd_corr = corr_struct.cordep;
 else
-    wd0 = dptvl(1);
-    corr_struct = 	mcarter(lat(1),lon(1),wd0);
-    wd_corr = corr_struct.cordep;
-    wd = 2*wd0-wd_corr;
-    if iscor; wd_corr = wd0; end %***
+   %interpolate data from underway
+   wd = dinterp1(dep.time,dep.depthm,tme);
+   figure(1); clf
+   plot(dep.time,dep.depthm);
+   hold on;
+   y1 = ylim; t1 = tme(1);
+   plot([t1 t1], y1,'r'); grid on;
+   datetick; xlabel('Time'); ylabel('Depth');
+   fprintf(1,'Uncorrected water depth at anchor drop %5.1f m \n',wd(1));
+   ich = input('Enter 1 to accept or 2 to change values: ');
+   if ich == 2
+       wd=input('Enter uncorrected water depth in metres: ');
+   end
+   %and correct
+   corr_struct = mcarter(lat(1),lon(1),wd);
+   wd_corr = corr_struct.cordep;
+
 end
 
+% open output file
+fileout = fullfile(pd.trilatdir, [loc_name '_triangle.txt']);
+disp(['Opening output file ' fileout]);
+disp('If file exists contents will be overwritten'); pause(0.1)
+iout = fopen(fileout,'w+');
 
-% Separate the anchor drop position
-latD = lat(1);
-lonD = lon(1);
-tmeD = tme(1);
-range = range(2:end);
-lat = lat(2:end);
-lon = lon(2:end);
-tme = tme(2:end);
+% If no fixes then just give anchor drop position info
 no_fixes=length(range);
-
-% If no fixes then just give anchor drop position
 if no_fixes == 0
     fprintf(1,'Anchor drop at: %s %8.4f %8.4f Corr. water depth: %6.1f \n', ...
         datestr(tmeD,31),latD,lonD,wd_corr);
@@ -251,38 +206,32 @@ if no_fixes == 0
     fprintf(iout,'Anchor drop at: %s %8.4f %8.4f Corr. water depth: %6.1f \n', ...
         datestr(tmeD,31),latD,lonD,wd_corr);
     fprintf(iout,'%8.4f %8.4f \n',dd2dm(latD),dd2dm(lonD));
-    latdeg = floor(latD);
-    londeg = floor(-lonD);
-    latmin = 60*(latD-latdeg);
-    lonmin = 60*(-lonD-londeg);
-
-    title4 = sprintf('Latitude %i %5.2f N, Longitude %i %5.2f W',latdeg,latmin,londeg,lonmin);
+    isn = lat>0; ise = lon>0;
+    latdeg = floor(abs(latD));
+    latmin = 60*(abs(latD)-latdeg);
+    londeg = floor(abs(lonD));
+    lonmin = 60*(abs(lonD)-londeg);
+    if isn; latdstr = 'N'; else; latdstr = 'S'; end
+    if ise; londstr = 'E'; else; londstr = 'W'; end
+    title4 = sprintf('Latitude %i %5.2f %s, Longitude %i %5.2f %s',latdeg,latmin,latdstr,londeg,lonmin,londstr);
     fprintf(iout,'%s',title4);
     return
 end
 
-% Work out effective horizontal range
-% Not sure about sound speed correction - i think option 2 is correct
-irn = 3;
-if max(range) > 8000
-    % Otherwise mcarter fails
-    irn = 3
-end
-for i=1:no_fixes
-    % Horizontal range from ship to position vertically above release
-    if irn == 1
-        rangeh(i)=sqrt((range(i))^2 - (wd_corr-rht-td)^2);
-    elseif irn == 2
-        corr_struct = 	mcarter(lat(1),lon(1),range(i));
-        rangeC = corr_struct.cordep;
-        rangeh(i)=sqrt((rangeC)^2 - (wd_corr-rht-td)^2);
-    elseif irn == 3
-        rangeh(i)=sqrt((range(i))^2 - (wd-rht-td)^2);
-    end
-end
+% Work out effective horizontal range 
+% Sound speed correction: apply the carter table correction (based on
+% vertical profiles of sound speed) as though slant range is depth only if
+% the vector is close to vertical; otherwise just use the same % correction
+% as for the anchor-drop depth 
+mo = (wd_corr-wd)./wd;
+rangeC = range*(1+mo);
+m = acos(wd./range)<=10/180*pi;
+corr_struct = mcarter(lat(m),lon(m),range(m));
+rangeC(m) = corr_struct.cordep;
+rangeh = sqrt(rangeC.^2 - (wd_corr-rht-td).^2);
 
 % Open a new plot
-figure
+figure(2); clf
 % Decide on boudaries for plot
 mpd = 111.2*1000;
 axylim = 1.05;
@@ -294,25 +243,15 @@ m_proj('lambert','lon',[west, east],'lat',[south, north]);
 % Following is if use m_map to plot - but this does not allow zooming so have disabled
 % m_grid('box','on','color','k','linewidth',[1],'fontsize',[14]);
 hold on
-% plot ships track
+% plot ship's track
 plot(pos.lon,pos.lat,'k--')
 
+%make circles
 xdegr = -180:2:180;
-for i=1:no_fixes
-    [clon,clat,az3] = m_fdist(lon(i),lat(i),xdegr,rangeh(i));
-    clon = clon-360;
-    if i < 4
-        plot(lon(i),lat(i),'b+');
-    else
-        plot(lon(i),lat(i),'r+')
-    end
-    if i < 4
-        plot(clon,clat,'b');
-    else
-        plot(clon,clat,'r');
-    end
-end
-
+[clon,clat,~] = m_fdist(lon,lat,xdegr,rangeh); %works as vector as long as length(rangeh) is not the same as length(xdegr), which it shouldn't be!
+clon = clon-360;
+hl = plot([lon lon]',[lat lat]','b+'); if length(hl)>3; set(hl(4:end),'color','r'); end
+hlc = plot(clon',clat','b'); if length(hlc)>3; set(hlc(4:end),'color','r'); end
 titletext={sprintf('Triangulation Survey for: %s',loc_name);...
     sprintf('Corrected water depth: %5.0f m.',wd_corr);... 
     sprintf('Release Height: %3.1f m. Transducer depth: %3.1f',rht,td)};
@@ -322,24 +261,24 @@ xlabel('Longitude'); ylabel('Latitude')
 
 % Calculate triangulation point by solving least squares problem
 % Nb take differences of equations to make linear
-
-[long1,latg1,x,y,reser0] = solve_anchor(lonD,latD,lon,lat,rangeh,no_fixes);
-[APlon,APlat,x,y,reser] = solve_anchor(long1,latg1,lon,lat,rangeh,no_fixes);
-
+[long1,latg1,~,~,reser0] = solve_anchor(lonD,latD,lon(:),lat(:),rangeh(:)',no_fixes);
+[APlon,APlat,x,y,reser] = solve_anchor(long1,latg1,lon(:),lat(:),rangeh(:)',no_fixes);
 if max(reser0-reser) > 0.1
     fprintf(1,'Something not right')
     keyboard
 end
 
-% plot estimate and anchor drop point
+% plot estimated anchor seabed locations and anchor drop point
 h1 = plot(APlon,APlat,'mo');
-text((east-west)*0.1+west,(north-south)*0.90+south,['Anchor drop'],'color','g');
+text((east-west)*0.1+west,(north-south)*0.90+south,'Anchor drop','color','g');
 plot(lonD,latD,'g+');
 plot(lonD,latD,'go');
 grid on
 %hh = plot(tlon,tlat,'MarkerSize',20,'LineWidth',1.5);
 
-% determine anchor position from figure(1)
+% prompt user to determine anchor position from plot %***allow user to pick
+% point using ginput? either way this plot should be in a geographical
+% projection or at least be scaled so that angles are about right***
 disp('Estimated position:' )
 fprintf(1,'Latitude %8.4f Longitude %8.4f \n',APlat,APlon)
 fprintf(1,'Max residual error: %6.1f m and RMS residual error: %6.1f m\n',max(reser),sqrt(sum(reser.^2)/no_fixes))
@@ -350,7 +289,7 @@ if ich == 2
     APlon = input('Longitude = ');
     sol(1) = mpd*(APlon-lon0);
     sol(2) = mpd*(APlat-lat0);
-    [dis,az12,az21] = m_idist(lon0,lat0,APlon,APlat);
+    [dis,az12,~] = m_idist(lon0,lat0,APlon,APlat);
     az = az12*pi/180;
     sol(1) = dis*sin(az);
     sol(2) = dis*cos(az);
@@ -403,73 +342,64 @@ title(titletext);
 
 % Text for plot
 text((east-west)*0.1+west,(north-south)*0.95+south,['Fallback = ' fallback 'm/' fallbacknm 'nm'],'color','k');
-text((east-west)*0.1+west,(north-south)*0.90+south,['Anchor drop'],'color','g');
-text((east-west)*0.1+west,(north-south)*0.85+south,['Anchor seabed location'],'color','r');
+text((east-west)*0.1+west,(north-south)*0.90+south,'Anchor drop','color','g');
+text((east-west)*0.1+west,(north-south)*0.85+south,'Anchor seabed location','color','r');
 
 % Finish plot
 xlim([west east]);
 ylim([south north]);
 
 % Plot to file is saving
-if strmatch(loc_name, '')
+if isempty(loc_name)
     return
 else
-    plotout = fullfile(dirout, [loc_name '_triangle']);
+    plotout = fullfile(pd.trilatdir, [loc_name '_triangle']);
     print('-depsc', plotout)
-    eval(['!cat ' fileout])
+    system(['cat ' fileout]);
 end
 
-% Check bathymetry from swath if available - might want to rerun again after this
-if strcmp(loc_name(1:2),'wb') & ~strcmp(loc_name(1:3),'wb4');
-    topo_map = 'gr_kn182_plot.mat';
-elseif strcmp(loc_name(1:2),'ma')
-    loc_sh = loc_name(1:4);
-    if strmatch(loc_sh,char([{'mar3'}])) > 0
-        topo_map = 'mar34.mat';
-    elseif strmatch(loc_sh,char([{'mar2'},{'mar1'}])) > 0
-        topo_map = 'mar12.mat';
-    elseif strmatch(loc_sh,char([{'mar0'}])) > 0
-        topo_map = 'mar0_JC064_swath.mat';
+% again check against mapped and ship track bathymetry
+[swtx,mdep] = get_mapbathy(loc_name,APlon,APlat,wd_corr);
+% bathymetry when ship passed over the calculated anchor point
+[pos, dep] = get_uway([tmeD-0.5 max(tme)+0.5]);
+[wd_sh, dis_sh, im] = shipdep(pos, dep, APlon, APlat);
+fprintf(1,'Depth at closest ship track to anchor position was %6.1f m (%6.1f nm away)\n',wd_sh,dis_sh(im));
+if abs(wd_sh-wd)>200 || dis_sh(im)>2
+    figure(5); clf; 
+    if ~isempty(mdep); contour(mdep.lon,mdep.lat,mdep.depth); end
+    hold on
+    scatter(pos.lon,pos.lat,10,dep.depthm,'filled'); colorbar
+    plot(APlon,APlat,'ok',lonD,latD,'xk'); grid on
+    axis([APlon-.1 APlon+.1 APlat-.1 APlat+.1])
+    title('raw underway depths (colors), anchor position (o), drop position (x)')
+    fprintf(1,'there may be bad depth data;\n');
+    a = input('edit data and recalculate (e), select new point (s), or enter to continue  ', 's');
+    if strcmp(a,'e')
+        clear igood
+        fprintf(1,'set igood, index of good points in dep.depthm, then dbcont\n');
+        keyboard
+        if exist('igood','var')
+            dep.time = dep.time(igood); dep.depthm = dep.depthm(igood);
+            pos.time = pos.time(igood); pos.lat = pos.lat(igood); pos.lon = pos.lon(igood);
+            [wd_sh, dis_sh, im] = shipdep(pos, dep, APlon, APlat);
+            fprintf(1,'Depth at closest ship track (with good depth) to anchor position was %6.1f m (%6.1f nm away)\n',wd_sh,dis_sh(im));
+        end
+    elseif strcmp(a,'s')
+        fprintf(1,'zoom if necessary then press enter\n'); pause
+        fprintf(1,'choose new point on figure\n');
+        [x,y] = ginput(1);
+        if ~isempty(x)
+            [wd_sh,~,im] = shipdep(pos, dep, x, y);
+            dnew = sw_dist([pos.lat(im) APlat],[pos.lon(im) APlon]);
+            fprintf(1,'Depth at chosen ship track point was %6.1f m (%6.1f nm away)\n',wd_sh,dnew);
+        end
     end
-else
-    topo_map = 'none';
 end
-if strcmp(topo_map,'none')
-    swtx = sprintf('No swath data available depth used was %7.1f \n',wd_corr);
-else
-    rdpath = '/local/users/pstar/projects/rpdmoc/bathym_data/from_cruises/';
-    load([rdpath topo_map]);
-    newdep = interp2(lon,lat,depth,APlon,APlat);
-    swtx = sprintf('Depth used was %7.1f but corrected depth from swath map at\n trilaterated position is %7.1f;\n you may want to edit input file and rerun\n',wd_corr,newdep);
-end
-fprintf(1,'%s',swtx)
-
-% Check what bathymetry was when ship passed over the anchor point
-ixt = pos.time > tme(1)-0.5 & pos.time < tme(1) +0.5;
-lat_sh = pos.lat(ixt);lon_sh = pos.lon(ixt); tme_sh = pos.time(ixt);
-dis_sh = 1000*111.2*sqrt( (lat_sh-APlat).^2+cos(APlat*pi/180)^2*(lon_sh-APlon).^2);
-im = find(dis_sh == min(dis_sh));
-if length(im) > 1
-    im = im(1);
-end
-tp_sh = tme_sh(im);
-
-if dptvl(1) < 0 && sum(~iabs) > 2
-    wd_sh = dinterp1(dep.time(~iabs),dep.depthm(~iabs),tp_sh);
-    corr_struct = mcarter(lat(1),lon(1),wd);
-    wd_corr_sh = corr_struct.cordep;
-else
-    corr_struct = mcarter(lat(1),lon(1),wd);
-    wd_corr_sh = corr_struct.cordep;
-    %     wd_corr_sh = 0;
-end
-
-fprintf(1,'\n Closest ship track to anchor was %6.1f m \n',dis_sh(im));
-fprintf(1,' at time %s \n',datestr(tp_sh));
-fprintf(1,' Where depth was %6.1f m \n',wd_corr_sh);
+corr_struct = mcarter(APlat,APlon,wd_sh);
+wd_corr_sh = corr_struct.cordep;
 
 
-% Now data that we save ni the output file
+% Now data that we save in the output file
 fprintf(iout,'%s  %s \n',loc_name,datestr(tmeD,1));
 fprintf(iout,'Anchor drop at: %s %8.4f %8.4f Corr. water depth: %6.1f \n', ...
     datestr(tmeD,31),latD,lonD,wd_corr);
@@ -486,3 +416,105 @@ fprintf(iout,'%s \n',title4);
 fprintf(iout,'Fallback  %s m \n',fallback);
 fprintf(iout,'%s \n', title5);
 fprintf(iout,'Comments: %s \n',us_com);
+
+
+function [pos, dep] = get_uway(t_range)
+% load nav and depth data, interpolate depth to nav times, 
+% subsample to 30 s
+
+global MEXEC_G
+
+%where to get position and uncorrected (singlebeam) depth on this ship
+opt1 = 'ship'; opt2 = 'datasys_best'; get_cropt %default_navstream
+
+if exist('default_navstream','var')
+    nav_stream = default_navstream;
+else
+    nav_stream = {'techsas' 'cnav'; 'scs' 'posfur'; 'rvdas' 'posmv_gpgga'};
+    nav_stream = nav_stream(strcmp(MEXEC_G.Mshipdatasystem,nav_stream(:,1)),2);
+end
+
+dv1 = datevec(t_range(1));
+dv2 = datevec(t_range(2));
+
+% Now get data from underway data system
+switch MEXEC_G.Mshipdatasystem
+    case 'techsas'
+        dep_stream = 'sim';
+        pos = mtload(nav_stream,dv1,dv2,'time lat long');
+        pos.time = pos.time + MEXEC_G.uway_torg;
+        pos.lon = pos.long;
+        dep = mtload(dep_stream,dv1,dv2,'time depthm');
+        dep.time = dep.time + MEXEC_G.uway_torg;
+        dep.depthm = dep.waterdepth;
+    case 'rvdas'
+        nav_vars = 'time latitude longitude';
+        dep_stream = 'ea640_sddbs';
+        dep_vars = 'time waterdepth';
+        pos = mrload(nav_stream,dv1,dv2,'time latitude longitude','q');
+        pos.lat = pos.latitude;
+        pos.lon = pos.longitude;
+        pos.time = pos.dnum;
+        dep = mrload(dep_stream,dv1,dv2,'time waterdepthmetres','q');
+        dep.depthm = dep.waterdepthfromsurface;
+        dep.time = dep.dnum;
+    case 'scs'
+        nav_vars   = 'time GPS-Furuno-GGA-lat GPS-Furuno-GGA-lon';
+        dep_stream = 'singleb';
+        dep_vars = 'time waterdepth';
+        pos = msload(nav_stream,dv1,dv2,nav_vars);
+        pos.lat = pos.GPS_Furuno_GGA_lat;
+        pos.lon = pos.GPS_Furuno_GGA_lon;
+        [pos.time, IA, ~] = unique(pos.time);
+        pos.lat = pos.lat(IA);
+        pos.lon = pos.lon(IA);
+        dep = msload(dep_stream,dv1,dv2,dep_vars);
+        dep.depthm = dep.waterdepth;
+        [dep.time, IA, ~] = unique(dep.time);
+        dep.depthm = dep.depthm(IA);
+end
+iit = 1:30:length(pos.time);
+pos.time = pos.time(iit); pos.lat = pos.lat(iit); pos.lon = pos.lon(iit);
+igood = dep.depthm>0;
+dep.depthm = interp1(dep.time(igood),dep.depthm(igood),pos.time);
+dep.time = pos.time;
+
+function [swtx, mdep] = get_mapbathy(loc_name, APlon, APlat, wd_corr)
+% Check bathymetry from swath if available - might want to rerun again after this
+if strncmp(loc_name,'wb',2) & ~strcmp(loc_name(3),'4')
+    topo_map = 'gr_kn182_plot.mat';
+elseif strncmp(loc_name,'ma',2)
+    if strncmp(loc_name,'mar3',4)
+        topo_map = 'mar34.mat';
+    elseif sum(strncmp(loc_name,{'mar2' 'mar1'},4))>0
+        topo_map = 'mar12.mat';
+    elseif strncmp(loc_name,'mar0',4)
+        topo_map = 'mar0_JC064_swath.mat';
+    end
+else
+    topo_map = 'none';
+end
+if strcmp(topo_map,'none')
+    swtx = sprintf('No swath data available depth used was %7.1f \n',wd_corr);
+    mdep = [];
+else
+    rdpath = '/data/pstar/projects/rpdmoc/other_datasets/for_sea/bathym_data/from_cruises/';
+    mdep = load(fullfile(rdpath,topo_map),'lon','lat','depth');
+    newdep = interp2(mdep.lon,mdep.lat,mdep.depth,APlon,APlat);
+    swtx = sprintf('Depth used was %7.1f,\nbut corrected depth from swath map at trilaterated position is %7.1f;\n you may want to edit input file and rerun\n\n',wd_corr,newdep);
+end
+fprintf(1,'%s',swtx)
+
+function [wd_sh,dis_sh,im] = shipdep(pos, dep, APlon, APlat)
+
+dy = [pos.lat repmat(APlat,size(pos.lat))]'; dx = [pos.lon repmat(APlon,size(pos.lon))]';
+dis_sh = sw_dist(dy(:),dx(:)); dis_sh = dis_sh(1:2:end);
+
+m = dis_sh<5; 
+dis_sh = dis_sh(m); 
+pos.lon = pos.lon(m); pos.lat = pos.lat(m); pos.time = pos.time(m);
+dep.time = dep.time(m); dep.depthm = dep.depthm(m);
+
+[~,im] = min(dis_sh);
+
+wd_sh = dinterp1(dep.time,dep.depthm,pos.time(im));

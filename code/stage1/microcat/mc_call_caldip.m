@@ -37,7 +37,7 @@
 % modified on AR30 July 2018 by LOH to load ctd data in native cnv format without header , 
 % dotctd has to be set to 99 (1 if mstar format)
 % modified on AR30 July 2018 by LOH: Add if/else conditions in the script
-% to be able to process specific cases when microcat starting jday is >365
+% to be able to process specific cases when microcat starting yday is >365
 
 % modified Clare Johnson, Nov 2018 to include basic calibration for CTD
 % oxygen sensor (comparison with bottle stops only)
@@ -92,11 +92,11 @@ if ~exist(pd.stage1fig,'dir')
     mkdir(pd.stage1fig)
 end
 
-jd0 = julian(MOORPROC_G.YEAR,1,0); %use to get yearday
+t0 = datenum(MOORPROC_G.YEAR,1,0,0,0,0);
 if ~exist('doctd','var') || doctd == 1
     [d, h]=mload(pd.ctdfile,'/');
     dnum = m_commontime(d,'time',h,'datenum');
-    d.yd = dnum - datenum(MOORPROC_G.YEAR,1,0);
+    d.yd = dnum - t0;
     if ~isfield(d,'oxygen2')
         d.oxygen2 = d.oxygen1;
     end
@@ -122,8 +122,8 @@ end
 
 % --  Start and end times
 [stdt,stti,endt,enti]= rodbload(pd.infofile,'StartDate:StartTime:EndDate:EndTime');
-jdstt = julian([stdt;stti(1)+stti(2)/60]')-jd0;
-jdend = julian([endt;enti(1)+enti(2)/60]')-jd0;
+ydstt = datenum([stdt;stti(1);stti(2);0]')-t0;
+ydend = datenum([endt;enti(1);enti(2);0]')-t0;
 
 % --- vector of serial numbers ---
 ii = find(id >= 332 & id <= 337);
@@ -151,31 +151,7 @@ for i = 1:length(sn)
     
     %ylf dy146 condensed this part
     % try to find infile in list of possibilities
-    infiles = {[sprintf('%4.4d',sn(i)),'cal2.asc'];
-        [sprintf('%4.4d',sn(i)),'cal.asc'];
-        [sprintf('%3.3d',sn(i)),'cal.asc'];
-        [sprintf('%4.4d',sn(i)),'CAL.asc'];
-        [sprintf('%3.3d',sn(i)),'CAL.asc'];
-        ['cal',sprintf('%4.4d',sn(i)),'.asc'];
-        [sprintf('%4.4d',sn(i)),'_cal_dip2.asc'];
-        [sprintf('%4.4d',sn(i)),'_cal_dip_data2.asc'];
-        [sprintf('%4.4d',sn(i)),'_test.asc'];
-        [sprintf('%4.4d',sn(i)),'_data.asc'];
-        [sprintf('%4.4d',sn(i)),'_cal_dip.asc'];
-        [sprintf('%4.4d',sn(i)),'_cal_dip_data.asc'];
-        [sprintf('%4.4d',sn(i)),'_cal_dip_data.cnv'];
-        [sprintf('%4.4d',sn(i)),'_Cal_Dip_Data.cnv']};
-    for n = 1:length(infiles)
-        infile = fullfile(pd.rawpath,infiles{n});
-        if exist(infile,'file')
-            datfileinfo = dir(infile);
-            if datfileinfo.bytes>0
-               %found it
-               break
-            end
-        end
-    end
-    infile = fullfile(pd.rawpath,infiles{n});
+    infile = mc_raw_filenames(sn(i),pd);
     outfile = fullfile(pd.stage1path,sprintf(pd.stage1form,sn(i)));
 
     % --- convert from raw to rodb format ---
@@ -183,7 +159,7 @@ for i = 1:length(sn)
     if exist(infile,'file')
         valid_sn(i)=true;
         %------------------------------------------------------------
-        % specific cases when microcat time is "jd" (really year-day) or
+        % specific cases when microcat time is "yd" (really year-day) or
         % when an offset needs to be applied due to clock error
         if(contains(cruise,'ar30') && sn(i) == 11327 && contains(cast,'6'))
             dateoffsetmc = 2017;
@@ -195,6 +171,8 @@ for i = 1:length(sn)
             dateoffsetmc=-1/24; %note: this is subtracted from mc times
         elseif strcmp(cruise,'dy181') && strcmp(cast,'3') %after this, use seconds
             dateoffsetmc=MOORPROC_G.YEAR;
+        elseif strcmp(cruise,'dy186') && strcmp(cast,'7') && sn(i)==5763
+            dateoffsetmc=-60/86400; %record appeared 1 minute early
         else
             dateoffsetmc = 0;
         end
@@ -213,18 +191,18 @@ for i = 1:length(sn)
         else % treats as ODO
             [yy,mm,dd,hh,c,t,p,ot,o2] = rodbload(outfile,'yy:mm:dd:hh:c:t:p:ot:o2');
         end
-        yd = julian(yy,mm,dd,hh)-jd0;
+        yd = datenum(yy,mm,dd,hh,zeros(size(hh)),zeros(size(hh)))-t0;
         %ylf dy146 files can be different sizes anyway, so no need to keep
-        %all the NaNs we would put at the ends (~ixjd), right?
-        ixjd = yd >jdstt & yd < jdend;
-        mx_length = max(mx_length,length(ixjd));
-        data(i).jd = yd(ixjd);
-        data(i).c = c(ixjd);
-        data(i).t = t(ixjd);
-        data(i).p = p(ixjd);
+        %all the NaNs we would put at the ends (~ixyd), right?
+        ixyd = yd >ydstt & yd < ydend;
+        mx_length = max(mx_length,length(ixyd));
+        data(i).yd = yd(ixyd);
+        data(i).c = c(ixyd);
+        data(i).t = t(ixyd);
+        data(i).p = p(ixyd);
         if id2(i)==335
-            data(i).ot = ot(ixjd);
-            data(i).o2 = o2(ixjd);
+            data(i).ot = ot(ixyd);
+            data(i).o2 = o2(ixyd);
         end
     end
 
@@ -251,8 +229,8 @@ ctdot = ones(length(sn),mx_length)+nan;
 ctdo2 = ones(length(sn),mx_length)+nan;
 
 for i = 1:length(sn)
-    ll = length(data(i).jd);
-    yd(i,1:ll) = data(i).jd;
+    ll = length(data(i).yd);
+    yd(i,1:ll) = data(i).yd;
     t(i,1:ll) = data(i).t;
     c(i,1:ll) = data(i).c;
     p(i,1:ll) = data(i).p;
@@ -317,7 +295,7 @@ if doctd
     set(hl(3),'color',[0 0 0]);set(hl(4),'color',[.4 .4 .4]); % ylf jc145 plot both
     title(['CAST ' cast  ' Calibration Dip (-k=CTD1,gray=CTD2)'])
 end
-xlim(sort([jdstt-.01 jdend+.01])); grid
+xlim(sort([ydstt-.01 ydend+.01])); grid
 orient tall
 figname = fullfile(pd.stage1fig,['cast' cast '_all_cond']);
 print(gcf,figform,figname)
@@ -337,7 +315,7 @@ if doctd
     set(hl(3),'color',[0 0 0]);set(hl(4),'color',[.4 .4 .4]); % ylf jc145 plot both
     title(['CAST ' cast  ' Calibration Dip (-k=CTD1,gray=CTD2)'])
 end
-xlim([jdstt-0.01 jdend+0.01]); grid
+xlim([ydstt-0.01 ydend+0.01]); grid
 orient tall
 figname = fullfile(pd.stage1fig,['cast' cast '_all_temp']);
 print(gcf,figform,figname)
@@ -357,7 +335,7 @@ if doctd
     set(hl(3),'color',[0 0 0])
     title(['CAST ' cast ' Calibration Dip (-k=CTD)'])
 end
-xlim([jdstt-0.01 jdend+0.01]); grid
+xlim([ydstt-0.01 ydend+0.01]); grid
 orient tall
 figname = fullfile(pd.stage1fig,['cast' cast '_all_press']);
 print(gcf,figform,figname)
@@ -379,7 +357,7 @@ if find(id2==335)
         set(hl(3),'color',[0 0 0]); set(hl(4),'color',[.4 .4 .4]); % ylf jc145 plot both
         title(['CAST ' cast ' Calibration Dip (-k=CTD)'])
     end
-    xlim([jdstt-0.01 jdend+0.01]); grid
+    xlim([ydstt-0.01 ydend+0.01]); grid
     orient tall
     figname = fullfile(pd.stage1fig,['cast' cast '_all_oxy']);
     print(gcf,figform,figname)

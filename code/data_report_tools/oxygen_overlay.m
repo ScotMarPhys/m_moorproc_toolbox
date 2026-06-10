@@ -169,7 +169,7 @@ plot_string={};
 % START OF READING IN INSTRUMENT DATA
 % -----------------------------------
 for iid=1:length(id_z_sn.id)
-    if ~isempty(id_z_sn.dirs{iid}) && contains(id_z_sn.vars{iid},'o')
+    if ~isempty(id_z_sn.dirs{iid}) && contains(id_z_sn.vars_st{iid},'o')
         if ~non_verbose
             disp('*************************************************************')
             disp(['Reading ' id_z_sn.inst{iid} ' - ',num2str(id_z_sn.sn(iid))])
