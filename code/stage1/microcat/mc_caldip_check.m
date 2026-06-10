@@ -297,7 +297,12 @@ for i = 1:nvec
         ipx2 = find(pi > ptest(i)-2*pbin & pi < ptest(i)+2*pbin);
     end
     % DY181 change: don't use first 5 minutes of stop***make this a cruise
-    % option? yes, it doesn't work very well with 5-minute stops!
+    % option? yes, it doesn't work very well with 5-minute stops! ***
+    % should be some way to detect if particular (casts?) stops were longer
+    % than 5 min?
+    % should maybe use the last N minutes rather than cutting off a fixed
+    % amount?*** these processing parameters/choices should ideally be in
+    % another place (see mc_caldip_check)
     if strcmp(MOORPROC_G.cruise,'dy181'); mcut = 5; else; mcut = 1; end
     ipx3 = ipx2(mcut*60/sampint:end-2);
     nimpt(i,2) = length(ipx3);
