@@ -1,5 +1,6 @@
 # directories
 /data
+/cruise_data
 /users
 /matlab_diaries
 **.
@@ -19,10 +20,10 @@
 **/*.mat.zip
 
 # sometimes keep (in metadata), sometimes ignore
-exec/gitrepo/**/*.dat
+code/**/*.dat
 
 # ignore oceansites_format folder
-exec/gitrepo/export_Oceansites/oceansites_format/
+code/export_Oceansites/oceansites_format/
 
 # temporary matlab file:
 *~**
@@ -34,5 +35,5 @@ exec/gitrepo/export_Oceansites/oceansites_format/
 **/._*
 
 # exclude any cruise specific startup files
-startup*
+*startup*.m
 
