@@ -6,10 +6,17 @@ function moor_setup(varargin)
 %
 % input parameter-value input pairs can include structure MOORPROC_G itself,
 % and/or can include: 
-%   datadir (top-level prefix like '/local/users/pstar/projects/rpdmoc/rapid'; if not set, query)
+%   basedir (top-level prefix like '/local/users/pstar/projects/rpdmoc'; if not set, query)
 %   cruise (e.g. 'jc238'; otherwise, if MEXEC_G set, use that, else query)
 %   YEAR (e.g. 2022; otherwise, if MEXEC_G set, use that, else query)
 %   cruise_ctd (defaults to same as cruise)
+%
+% will try to set paths as usual for RAPID and OSNAP projects, otherwise
+% will query the user where to find ctd data, moored data, and where to put
+% summaries/plots
+% to avoid the default paths for RAPID and OSNAP, do:
+% MOORPROC_G.basedir = '';
+% moor_setup(MOORPROC_G)
 %
 %% set paths and information like deployment year for moored data processing
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -32,7 +39,7 @@ end
 
 % Add to the path mooring functions to go with this file:
 pathgit = fileparts(which(mfilename));
-addpath(genpath(fullfile(pathgit,'exec','gitrepo')))
+addpath(genpath(fullfile(pathgit, 'code')))
 
 %cruise, cruise_ctd, YEAR, project, operator
 if isstruct(MEXEC_G)
@@ -73,62 +80,36 @@ if ~isfield(MOORPROC_G,'operator')
 end
 
 % Define where to find the mooring and other data (formerly pathdata)
-% if ~isfield(MOORPROC_G,'moordatadir') || ~isfield(MOORPROC_G,'reportdir') || ~isfield(MOORPROC_G,'ctddir')
-%     %define or request these directories
-%     if ~isfield(MOORPROC_G,'datadir') || isempty(MOORPROC_G.datadir)
-%         MOORPROC_G.datadir = input('base data directory (e.g. /data/pstar/projects/osnap, or D:\osnap) containing subdirectories data and documents ','s');
-%     end
-    if ~isfield(MOORPROC_G,'datadir') || isempty(MOORPROC_G.datadir)
-        MOORPROC_G.datadir = input('base data directory (e.g. /data/pstar/projects/osnap, or D:\osnap) containing subdirectories data and documents ','s');
+dirs_req = {'ctddatadir', 'reportdir', 'moordatadir'};
+fn = fieldnames(MOORPROC_G);
+if isfield(MOORPROC_G,'basedir') && isempty(MOORPROC_G.basedir)
+    MOORPROC_G = rmfield(MOORPROC_G,'basedir');
+elseif sum(ismember(fn,dirs_req))<length(dirs_req)
+    MOORPROC_G = project_default_dirs(MOORPROC_G);
+end
+fn = fieldnames(MOORPROC_G);
+if sum(ismember(fn,dirs_req))<length(dirs_req)
+    if ~isfield(MOORPROC_G,'ctddatadir')
+        MOORPROC_G.ctddatadir = input('directory containing 1 Hz CTD data   ','s');
     end
     if ~isfield(MOORPROC_G,'moordatadir')
-        MOORPROC_G.moordatadir = fullfile(MOORPROC_G.datadir,'data','moor');
-        MOORPROC_G.reportdir = fullfile(MOORPROC_G.datadir,'documents','datareports'); %for RAPID
-        if ~exist(MOORPROC_G.reportdir,'dir')
-            MOORPROC_G.reportdir = fullfile(MOORPROC_G.datadir,'Documents','datareports'); %for OSNAP
-        end
-        if ~exist(MOORPROC_G.reportdir,'dir')
-            MOORPROC_G.reportdir = input('directory to contain datareports (e.g. /data/pstar/projects/osnap/Documents/datareports) ','s');
-        end
-        if strcmp(MOORPROC_G.reportdir(end),'/') || strcmp(MOORPROC_G.reportdir(end),'\')
-            MOORPROC_G.reportdir = MOORPROC_G.reportdir(1:end-1);
-        end
-        [~,d1] = fileparts(MOORPROC_G.reportdir);
-        if ~strcmp(d1,MOORPROC_G.cruise)
-            MOORPROC_G.reportdir = fullfile(MOORPROC_G.reportdir,MOORPROC_G.cruise);
-        end
+        MOORPROC_G.moordatadir = input('directory containing moored data (should have subdirectories proc, proc_calib, raw)   ','s');
     end
-
-    if ~isfield(MOORPROC_G,'ctddir')
-        MOORPROC_G.ctddir = fullfile(fileparts(MOORPROC_G.datadir),MOORPROC_G.cruise,'mcruise','data','ctd'); %RAPID
-        if ~exist(MOORPROC_G.ctddir,'dir')
-            MOORPROC_G.ctddir = fullfile(MOORPROC_G.datadir,'cruise_data',MOORPROC_G.cruise,'data','ctd'); %OSNAP
-        end
-        if ~exist(MOORPROC_G.ctddir,'dir')
-            MOORPROC_G.ctddir = fullfile(MOORPROC_G.datadir,'cruise_data',MOORPROC_G.cruise,'mcruise','data','ctd'); %OSNAP
-        end
-        if ~exist(MOORPROC_G.ctddir,'dir')
-            MOORPROC_G.ctddir = input('directory containing CTD data (e.g. /data/pstar/projects/osnap/cruise_data/jc238/mcruise/data/ctd ','s');
-        end
-        MOORPROC_G = rmfield(MOORPROC_G,'datadir');
+    if ~isfield(MOORPROC_G,'reportdir')
+        MOORPROC_G.reportdir = input('directory for data reporting (statistics and figures)   ','s');
     end
-    
-
-if ~exist(MOORPROC_G.reportdir,'dir')
-    mkdir(MOORPROC_G.reportdir);
-end
-MOORPROC_G.logdir  = fullfile(MOORPROC_G.moordatadir, 'logs');
-if ~exist(MOORPROC_G.logdir,'dir')
-    mkdir(MOORPROC_G.logdir);
 end
 if ~exist(MOORPROC_G.reportdir,'dir')
-    mkdir(MOORPROC_G.reportdir);
+    c = input(sprintf('data report directory %s does not exist; create it? (y/n)  ',MOORPROC_G.reportdir),'s');
+    if strcmp(c,'y')
+        mkdir(MOORPROC_G.reportdir)
+    end
 end
 
 %check directories at this stage
 n = 0;
 while n<4 && ~exist(MOORPROC_G.moordatadir,'dir')
-    c = input(sprintf('directory for mooring data, %s, not found\n; create (1), change setting (2), or skip(3)?  ',MOORPROC_G.moordatadir));
+    c = input(sprintf('directory for mooring data, %s, not found\n; create (1), change setting (2), or skip(3)?  ',MOORPROC_G.moordatadir),'s');
     if c==1
         mkdir(MOORPROC_G.moordatadir);
     elseif c==2
@@ -139,10 +120,10 @@ while n<4 && ~exist(MOORPROC_G.moordatadir,'dir')
     n = n+1;
 end
 n = 0;
-while n<4 && (~isfield(MOORPROC_G,'ctddir') || ~exist(MOORPROC_G.ctddir,'dir'))
-    c = input(sprintf('directory for ctd data, %s, not found\n; create (1), change setting (2), or skip(3)?  ',MOORPROC_G.ctddir));
+while n<4 && (~isfield(MOORPROC_G,'ctddatadir') || ~exist(MOORPROC_G.ctddatadir,'dir'))
+    c = input(sprintf('directory for ctd data, %s, not found\n; create (1), change setting (2), or skip(3)?  ',MOORPROC_G.ctddatadir));
     if c==1
-        mkdir(MOORPROC_G.ctddir);
+        mkdir(MOORPROC_G.ctddatadir);
     elseif c==2
         MOORPROC_G.ctddatadir = input('directory for mooring data:    ','s');
     elseif c==3
@@ -153,13 +134,13 @@ end
 if ~exist(MOORPROC_G.moordatadir,'dir')
     warning('timed out on setting valid MOORPROC_G.moordatadir; expect mooring processing to fall over')
 end
-if ~exist(MOORPROC_G.ctddir,'dir')
-    warning('timed out on setting valid MOORPROC_G.ctddir; expect mooring processing to fall over')
+if ~exist(MOORPROC_G.ctddatadir,'dir')
+    warning('timed out on setting valid MOORPROC_G.ctddatadir; expect mooring processing to fall over')
 end
 
 disp ([upper(MOORPROC_G.cruise) ', ' num2str(MOORPROC_G.YEAR)])
 disp ('-----------------------------------------------------------------------------------------------')
-fprintf(1,'ran the %s setup file to open the paths to\n%s\n%s\n%s\n',MOORPROC_G.cruise,pathgit,MOORPROC_G.moordatadir,MOORPROC_G.ctddir);
+fprintf(1,'ran the %s setup file to open the paths to\n%s\n%s\n%s\n',MOORPROC_G.cruise,pathgit,MOORPROC_G.moordatadir,MOORPROC_G.ctddatadir);
 
 % display version of m_moorproc_toolbox
 d = pwd; cd(pathgit)
@@ -174,5 +155,39 @@ disp('MOORPROC_G contains:')
 disp(MOORPROC_G)
 
 
+function MOORPROC_G = project_default_dirs(MOORPROC_G)
 
+if ~isfield(MOORPROC_G,'project') || ~isfield(MOORPROC_G,'location')
+    return
+end
 
+pl = [MOORPROC_G.project '_' MOORPROC_G.location];
+switch pl
+    case 'RAPID_atnoc'
+        if ~isfield(MOORPROC_G,'basedir')
+            MOORPROC_G.basedir = input('base data directory (e.g. /data/pstar/projects/rpdmoc, containing subdirectories cruise_data and rapid) ','s');
+        end
+        MOORPROC_G.cruisedir = fullfile(MOORPROC_G.basedir,'cruise_data',MOORPROC_G.cruise);
+        if ~exist(MOORPROC_G.cruisedir,'dir')
+            MOORPROC_G.cruisedir = fullfile(MOORPROC_G.basedir,MOORPROC_G.cruise);
+        end
+        MOORPROC_G.ctddatadir = fullfile(MOORPROC_G.cruisedir,'mcruise','data','ctd');
+        MOORPROC_G.reportdir = fullfile(MOORPROC_G.cruisedir,'report_tables');
+        MOORPROC_G.moordatadir = fullfile(MOORPROC_G.basedir,'rapid','data','moor');
+    case 'RAPID_atsea'
+        if ~isfield(MOORPROC_G,'basedir')
+            MOORPROC_G.basedir = input('base data directory (e.g. /data/pstar/projects/rpdmoc, containing subdirectories cruise_data and rapid) ','s');
+        end
+        MOORPROC_G.cruisedir = fullfile(MOORPROC_G.basedir,'cruises',MOORPROC_G.cruise);
+        MOORPROC_G.ctddatadir = fullfile(MOORPROC_G.cruisedir,'data','ctd');
+        MOORPROC_G.reportdir = fullfile(MOORPROC_G.cruisedir,'report_tables');
+        MOORPROC_G.moordatadir = fullfile(MOORPROC_G.basedir,'moorings');
+    case 'OSNAP_atsea'
+        if ~isfield(MOORPROC_G,'basedir')
+            MOORPROC_G.basedir = input('base data directory (e.g. /data/pstar/projects/osnap, containing subdirectories cruise_data and data) ','s');
+        end
+        MOORPROC_G.cruisedir = fullfile(MOORPROC_G.basedir,'cruises',MOORPROC_G.cruise);
+        MOORPROC_G.ctddatadir = fullfile(MOORPROC_G.cruisedir,'data','ctd');
+        MOORPROC_G.reportdir = fullfile(MOORPROC_G.cruisedir,'report_tables');
+        MOORPROC_G.moordatadir = fullfile(MOORPROC_G.basedir,'moorings');
+end
