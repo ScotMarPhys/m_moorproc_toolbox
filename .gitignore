@@ -6,6 +6,9 @@
 /osnap
 /rpdmoc
 /cruise_data
+/cruises
+/moor
+/moorings
 # data (or plot) file types, but not info file types
 **/*.raw
 **/*.use*

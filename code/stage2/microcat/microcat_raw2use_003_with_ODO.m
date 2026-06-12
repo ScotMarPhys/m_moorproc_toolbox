@@ -91,6 +91,8 @@ dummy    = -9999;
 % --- preprocessing loop -------------------
 % ----------------------------------------
 
+close all
+
 inst = 1;
 
 jd_s  = julian(s_d(1),s_d(2),s_d(3),s_t(1)+s_t(2)/60);  % start time
@@ -157,7 +159,7 @@ for proc = 1 : length(sn)
 
         end
 
-        close(989)
+        %close(989)
 
 
 
@@ -388,7 +390,12 @@ for proc = 1 : length(sn)
 
         end
         orient tall
-        print(gcf,'-dpng','-r300',fullfile(pd.stage2figpath,[sprintf(pd.stage2form,sn(proc)),'.png']));
+        if ~exist(pd.stage2figpath,'dir')
+            mkdir(pd.stage2figpath)
+        end
+        figname = fullfile(pd.stage2figpath,sprintf(pd.stage2form,sn(proc)));
+        print(gcf,'-dpng','-r300',figname);
+        savefig([figname '.fig']);
 
         sampling_rate = 1/median(diff(jd));
         
@@ -488,9 +495,10 @@ for proc = 1 : length(sn)
         end
 
         orient tall
-        print(gcf,'-dpng','-r300',fullfile(pd.stage2figpath,[sprintf(pd.stage2form,sn(proc)) '_lowpass.png']));
+        figname = fullfile(pd.stage2figpath,[sprintf(pd.stage2form,sn(proc)) '_lowpass']);
+        print(gcf,'-dpng','-r300',figname);
+        savefig([figname '.fig']);
         disp('pause (press any key to continue)'); pause
-        close all
     end % if exist(infile)
 
 end % for proc = 1 : length(sn),

@@ -1,5 +1,6 @@
-% function microcat2rodb_5('infile','outfile','infofile',fidlog,[graphics],[toffset])
-%
+% microcat2rodb('infile','outfile','infofile',fidlog,[graphics],[toffset])
+% wrote = microcat2rodb('infile','outfile','infofile',fidlog,[graphics],[toffset])
+% 
 % reads ACSII output from SBE-37 MicroCAT and converts
 % writes it to RODB file
 % So far the input format contain (temp,cond,day,month,year,time)
@@ -44,7 +45,7 @@
 %          (length of header ~= length of data)
 %                     - Add the possibility to read time as Julian day (timeJV2)  
 %
-function microcat2rodb(infile,outfile,infofile,fidlog,graphics,toffset)
+function varargout = microcat2rodb(infile,outfile,infofile,fidlog,graphics,toffset)
 
 if nargin < 4
     disp('not enough input arguments')
@@ -67,19 +68,19 @@ forto      = '%4.4d  %2.2d  %2.2d  %7.5f   %6.4f  %6.4f  %5.1f %6.4f %5.2f'; %da
 
 % check if infile and infofile exist
 
-if exist(infofile) ~= 2
+if ~exist(infofile,'file')
     disp(['infofile:  ',infofile,' does not exist'])
     pause
     return
 end
 
-if exist(infile) ~= 2
+if ~exist(infile,'file')
     disp(['infile:  ',infile,' does not exist'])
     pause
     return
 end
 
-if exist(outfile) == 2
+if exist(outfile,'file')
     
     answer = questdlg('Overwrite previous output?', ...
 	'Output', ...
@@ -90,6 +91,7 @@ if exist(outfile) == 2
             disp('Overwriting previous file.')
         case 'No'
             disp('Data conversion stopped.')
+            if nargout>0; varargout{1} = 0; end %did not write to file
         return
     end
 end
@@ -123,8 +125,7 @@ end
 zeile = fscanf(fid1,'%c');  %read data into string
 fclose(fid1); %close file
 
-ret = sprintf('\n');
-retx = findstr(zeile,ret);% car. return indices
+retx = strfind(zeile,newline);% car. return indices
 
 if length(retx)< 10
     disp('input file does not contain data ')
@@ -137,16 +138,15 @@ end
 %--------------------------------------------------------
 
 if cnv==0
-    a = findstr(zeile,'SERIAL NO.'); %find serial number
+    a = strfind(zeile,'SERIAL NO.'); %find serial number
     if ~isempty(a)
         SerialNumber = str2num(zeile(a+10:a+15))
     else
         disp('unable to find serial number\n\n')
-        input('please enter valid serial number')
-        SerialNumber = str2num(input('please enter valid serial number'));
+        SerialNumber = input('please enter valid serial number');
     end
 else
-    a=findstr(zeile,'Temperature SN'); % find serial number for .cnv files
+    a=strfind(zeile,'Temperature SN'); % find serial number for .cnv files
     % currently uses Temperature sensor serial number as this is the same
     % as the instrument serial number and is unique in the header info but
     % may run into problems if temperature serial number does not match
@@ -157,8 +157,7 @@ else
         SerialNumber = str2num(zeile(a+17:a+22));
     else
         disp('unable to find serial number\n\n')
-        input('please enter valid serial number')
-        SerialNumber = str2num(input('please enter valid serial number'));
+        SerialNumber = input('please enter valid serial number');
     end
 end
 
@@ -182,6 +181,9 @@ if iscell(mo)
 end
 
 ii = find(SerialNumber == sn & ( id >= 333 & id <= 337 ) );
+if ~isscalar(ii)
+    error('more than one entry in info.dat file for S/N %d',SerialNumber)
+end
 z  = z(ii)         % instrument depth
 
 
@@ -198,13 +200,13 @@ z  = z(ii)         % instrument depth
 % detect data column length
 if length(retx)<700 %in case of short record from test (added by Loic H on DY078)
     if SerialNumber==4608
-            [XXX,data_length] = max(hist(diff(retx(73:end)),1:300));% length of data columns 
+            [~,data_length] = max(hist(diff(retx(73:end)),1:300));% length of data columns 
     else
-            [XXX,data_length] = max(hist(diff(retx(304:end)),1:300));% length of data columns 
+            [~,data_length] = max(hist(diff(retx(304:end)),1:300));% length of data columns 
 
     end
 else
-    [XXX,data_length] = max(hist(diff(retx),1:300));% length of data columns   
+    [~,data_length] = max(hist(diff(retx),1:300));% length of data columns   
 end
 % DR increased final term to 200 from 100 due to longer header in .cnv
 % files   % changed to 300 PW
@@ -245,27 +247,20 @@ end
 
 % define data stream
 dt = zeile(data_begin:data_end);
-dret = find(dt == ret);
-comx = findstr(dt(1:dret(1)),',');
-retn = length(dret);% number of data columns
-
-ii = findstr(dt,','); % replace comma by space
-dt(ii) = ' ';
-ii = findstr(dt,':'); % replace colon by space
-dt(ii) = ' ';
+dt = replace(dt,',',' '); % replace comma by space
+dt = replace(dt,':',' '); % replace colon by space
 
 if cnv==0 %microcat_month2 only valid for .asc format files
     dt = microcat_month2(dt);
 end
 
-whos dt;
-ii = findstr(dt,' .'); % temp. check for missing number
+ii = strfind(dt,' .'); % temp. check for missing number
 
 if ~isempty(ii)
     disp('insert dummies for missing elements')
     disp(['missing element element ',num2str(ii+1)])
     fprintf(fidlog,'warning: missing element %s \n',num2str(ii+1));
-    for i = 1 : length(ii);
+    for i = 1 : length(ii)
         dt(ii(i):ii(i)+1) = '99';
     end
     
@@ -280,12 +275,12 @@ dt = str2num(dt);
 
 % unique fix for d345 cal dip files for MCs 7347 and 7348 which have C in
 % wrong format
-if (strfind(infile,'d345') & strfind(infile,'7347_cal_dip'));
+if (contains(infile,'d345') && contains(infile,'7347_cal_dip'))
     check1=1;
 else
     check1=0;
 end
-if check1|(strfind(infile,'d345') & strfind(infile,'7348_cal_dip'));
+if check1 || (contains(infile,'d345') && contains(infile,'7348_cal_dip'))
     dt(:,2)=dt(:,2)/10;
 end
 
@@ -295,9 +290,9 @@ sz = size(dt);
 % scans for whatever reason. Typically these come at the end of the record,
 % but on D382 we found some bad data in the middle of a record that was
 % difficult to track down
-if isempty(dt);
+if isempty(dt)
     load tmp.mat % reload dt data
-    k2=1;
+    k2=1; 
     for k=1:length(dt)/57
         string=dt(57*(k-1)+1:57*(k-1)+55);
         dt_convert=str2num(string);
@@ -319,48 +314,47 @@ end
 % --- aditional conditions added by bim dy039, to enable DR PC conversion files to be used.
 
 if cnv
-    namei = findstr(zeile,'name');
-    spani = findstr(zeile,'span');
+    namei = strfind(zeile,'name');
+    spani = strfind(zeile,'span');
     toti = [namei spani(1)];
     
     for k = 1:length(toti)-1
         varstr=zeile(toti(k):toti(k+1)-5);
         
-        if ~isempty( strfind(varstr(10), 't') ) & ~isempty( strfind(varstr, '90') )
-            
+        if  contains(varstr(10), 't')  &&  contains(varstr, '90')             
             tempi = k;
-            continue;
-        elseif ~isempty(strfind(varstr(10), 'c')) & ~isempty(strfind(varstr, '0S/m'))
-            
+
+        elseif contains(varstr(10), 'c') && contains(varstr, '0S/m')
             condi = k;
-            continue;
-        elseif ~isempty(strfind(varstr, 'pr')) |  ~isempty(strfind(varstr, 'prdM'))
-            
+
+        elseif contains(varstr, 'pr') ||  contains(varstr, 'prdM')
             presi = k;
-            continue;
-        elseif ~isempty(strfind(varstr, 'sbeoxTC'))
-            
+
+        elseif contains(varstr, 'sbeoxTC')    
             oxyti = k;
-            continue;
-        elseif ~isempty(strfind(varstr, 'sbeopoxMm/Kg'))
-            
+
+        elseif contains(varstr, 'sbeopoxMm/Kg')
             oxyi = k;
-            continue;
-        elseif ~isempty(strfind(varstr, 'timeK'))|  ~isempty(strfind(varstr, 'timeS'))
+
+        elseif contains(varstr, 'timeK') 
             timeformat = 'sec';
             timei = k;
-            continue;
-        elseif ~isempty(strfind(varstr, 'timeJ'))
+            timebase = julian(2000,1,1,0);
+
+        elseif contains(varstr, 'timeS') %***always?
+            timeformat = 'sec';
+            timei = k;
+            starti = strfind(zeile,'start_time'); starti = starti(starti>spani(end)); starti = starti(1); %ylf added dy204 to be able to read .cnv files with timeS (which unlike timeK appears to not be converted to 2000-01-01 reference)
+            tb = datevec(datenum(zeile(starti+[13:32])));
+            timebase = julian(tb(1:4))+tb(5)/60+tb(6)/3600;
+
+        elseif contains(varstr, 'timeJ')
             timeformat = 'JD';
             timei = k;
-            continue;            
-        elseif ~isempty(strfind(varstr(10), 'c')) & ~isempty(strfind(varstr, '0mS/cm'))
+
+        elseif contains(varstr(10), 'c') && contains(varstr, '0mS/cm')
             condi = k;
             dt(:,condi)=dt(:,condi)/10;
-            
-            continue;
-            
-        else
         end
         
     end
@@ -385,7 +379,7 @@ if cnv==0 % data is in .asc file
         End_Date   = dt(dtl,[5 4 3]);
         jd         = julian([dt(:,[5 4 3]) HH]) - toffset;
         
-    elseif  size(dt,2) ==9;
+    elseif  size(dt,2) ==9
         
         HH         = hms2h(dt(:,7),dt(:,8),dt(:,9)); % decimal hour
         Start_Date = dt(1,[6 5 4]);
@@ -394,10 +388,10 @@ if cnv==0 % data is in .asc file
         
     end
 else % data is in cnv file
-  if ~isempty(strfind(timeformat, 'sec'))
+  if contains(timeformat, 'sec')
     if size(dt,2)==5 % SMP with pressure
         cnv_secs=dt(:,timei); % seconds since 1st Jan 2000.
-        jd=cnv_secs/(60*60*24)+julian(2000,1,1,0) - toffset;
+        jd=cnv_secs/(60*60*24)+timebase - toffset;
         disp(['toffset : ',num2str(toffset)]);
         gtime=gregorian(jd);
         HH=hms2h(gtime(:,4),gtime(:,5),gtime(:,6));
@@ -405,14 +399,14 @@ else % data is in cnv file
         End_Date = gtime(dtl,[1 2 3]);
     elseif size(dt,2)==7 % SMP-ODO with pressure
         cnv_secs=dt(:,timei); % seconds since 1st Jan 2000.
-        jd=cnv_secs/(60*60*24)+julian(2000,1,1,0) - toffset;
+        jd=cnv_secs/(60*60*24)+timebase - toffset;
         disp(['toffset : ',num2str(toffset)]);
         gtime=gregorian(jd);
         HH=hms2h(gtime(:,4),gtime(:,5),gtime(:,6));
         Start_Date = gtime(1,[1 2 3]);
         End_Date = gtime(dtl,[1 2 3]);
     end
-  elseif ~isempty(strfind(timeformat, 'JD'))
+  elseif contains(timeformat, 'JD')
     if size(dt,2)==5 % SMP with pressure
         cnv_days=dt(:,4); % seconds since 1st Jan 2000.
         jd=cnv_days+julian(toffset,1,1,0) - 1;
@@ -482,6 +476,7 @@ rodbsave(outfile,...
     la,lo,cols,SerialNumber,mo,wd,z,...
     sdate,stime,edate,etime,...
     data);
+if nargout>0; varargout{1} = 1; end %wrote to file
 
 %% % --- New graphics section --- 
 % (because why would you need 400+ lines of code to do what 40 odd will do?)

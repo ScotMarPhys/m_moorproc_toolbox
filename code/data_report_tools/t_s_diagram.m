@@ -86,7 +86,7 @@ plot_string={};
 % START OF READING IN INSTRUMENT DATA
 % -----------------------------------
 for iid=1:length(id_z_sn.id)
-    if ~isempty(id_z_sn.dirs{iid}) && ((contains(id_z_sn.vars{iid},'c') && contains(id_z_sn.vars{iid},'p')) || contains(id_z_sn.vars{iid},'s'))
+    if ~isempty(id_z_sn.dirs{iid}) && ((contains(id_z_sn.vars_st{iid},'c') && contains(id_z_sn.vars_st{iid},'p')) || contains(id_z_sn.vars_st{iid},'s'))
         disp('*************************************************************')
         disp(['Reading ' id_z_sn.inst{iid} ' - ',num2str(id_z_sn.sn(iid))])
         disp('*************************************************************')
@@ -99,7 +99,7 @@ for iid=1:length(id_z_sn.id)
         %read data into structure array
         fileopen=fopen(infile,'r');
         if fileopen>0
-            if contains(id_z_sn.vars{iid},'c')
+            if contains(id_z_sn.vars_st{iid},'c')
                 [yy,mm,dd,hh,data.t,data.c,data.p] = rodbload(infile,'yy:mm:dd:hh:t:c:p');
                 data.c(data.c<-999) = NaN;
                 data.s = gsw_SP_from_C(data.c,data.t,data.p);

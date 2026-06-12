@@ -43,7 +43,7 @@ switch datatype
         pd.stage1path = fullfile(mg.moordatadir, 'proc_calib', mg.cruise, 'cal_dip', 'microcat', ['cast' cast]);
         pd.stage1form = ['cast' cast '_%4.4d.raw'];
         pd.stage1log = fullfile(pd.stage1path,'microcat2rodb.log');
-        pd.stage1fig = fullfile(mg.reportdir,'figs','caldip');
+        pd.stage1fig = fullfile(mg.reportdir,'figs','caldip', cast);
         pd.ctdfile = fullfile(mg.ctddir,sprintf('ctd_%s_%03d_psal.nc',mg.cruise_ctd,castn));
         pd.stage2path = fullfile(mg.moordatadir, 'proc_calib'); %***
         pd.stage2fig = fullfile(mg.reportdir,'figs','caldip',['microcat_check_cast_' cast '_plot']);
@@ -59,7 +59,7 @@ switch datatype
         pd.stage2path = fullfile(mg.moordatadir, 'proc', moor, 'microcat');
         pd.stage2form = [moor '_%4.4d.use'];
         pd.stage2log = fullfile(pd.stage2path, ['stage2_log_' moor,'.log']);
-        pd.stage2figpath = fullfile(mg.reportdir, 'figs');
+        pd.stage2figpath = fullfile(mg.reportdir, 'figs', moor);
         pd.stage3path = fullfile(mg.moordatadir, 'proc', moor, 'microcat');
         pd.stage3form = [moor '_%0.3d.microcat'];
 

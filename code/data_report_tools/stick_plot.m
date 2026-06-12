@@ -44,8 +44,6 @@ global MOORPROC_G
 
 cruise   = MOORPROC_G.cruise;
 operator = MOORPROC_G.operator;
-procpath = [MOORPROC_G.moordatadir,'/proc/'];
-% % moor = input('mooring deployment (e.g. ebh2_15_2022) to process:   ','s');
 
 if nargin==0
     help stick_plot
@@ -97,18 +95,12 @@ else
     proclvlstr = [proclvlstr0 '_lpfilt'];      
 end
 
-if isunix
-    infofile=[MOORPROC_G.moordatadir,'/proc/',moor,'/',moor,'info.dat'];
-elseif ispc
-    infofile=[MOORPROC_G.moordatadir,'\proc\',moor,'\',moor,'info.dat'];
-end
-
 % Load vectors of mooring information
 % id instrument id, sn serial number, z nominal depth of each instrument
 % s_t, e_t, s_d, e_d start and end times and dates
 % lat lon mooring position, wd corrected water depth (m)
 % mr mooring name
-[id,sn,z,s_t,s_d,e_t,e_d,lat,lon,wd,mr]  =  rodbload(infofile,...
+[id,sn,z,s_t,s_d,e_t,e_d,lat,lon,wd,mr]  =  rodbload(pd.infofile,...
     'instrument:serialnumber:z:Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:WaterDepth:Mooring');
 
 

@@ -1,7 +1,8 @@
 function varargout=stats_table(moor,varargin)
 % function varargout=stats_table(moor,'procpath','layout','non-verbose')
 %
-% function to generate a simple stats table for data reports
+% function to generate a simple stats table for data reports, based on the
+%   .use files
 %
 % required inputs:-
 %   moor: complete mooring name as string. e.g. 'wb1_1_200420'
@@ -10,16 +11,13 @@ function varargout=stats_table(moor,varargin)
 %   layout: orientation of figure portrait/lanscape (default = portrait)
 %           input of 'landscape' or 'portrait'
 %           e.g. pressure_overlay('wb1_1_200420','layout','landscape')
-%   procpath: specify exact procpath
-%           e.g. pressure_overlay('wb1_1_200420','procpath','/Volumes/noc/mpoc/hydro/rpdmoc/rapid/data/moor/proc/')
-%   outpath: specify exact output path
 %   non-verbose: a mode to output the stats for other routines without
 %           saving an ascii file. If called in this mode there will be an
 %           output to the function consisiting of the Microcat serial
 %           numbers and statistics
-%   dummy: value to replace with NaN (default -9999)
+%   dummy: value to replace with NaN (default -9999) before computing stats
 %
-%   output: an ascii text file containing the summary statistics for the
+% output: an ascii text file containing the summary statistics for the
 %   mooring - naming convention is moor_stats.asc where moor is the mooring
 %   name as input to the function
 %
@@ -53,8 +51,8 @@ end
 %defaults
 layout = 'portrait';
 dummy = -9999;
-procpath = fullfile(MOORPROC_G.moordatadir,'proc');
-outpath = fullfile(MOORPROC_G.reportdir,'stats');
+pd = moor_inoutpaths('reports',moor);
+infofile = fullfile(MOORPROC_G.moordatadir,'proc',moor,[moor 'info.dat']);
 non_verbose = 0;
 %and optional inputs overwrite them
 n = 1; 
@@ -70,7 +68,6 @@ while n+1<=nargin
     end
 end
 
-infofile = fullfile(procpath,moor,[moor 'info.dat']);
 
 %-----------------------------------------------------
 % Load vectors of mooring information
@@ -97,7 +94,7 @@ id_z_sn = all_inst_table(id, z, sn);
 id_z_sn.data_loaded = false(length(id),1);
 
 % -----------------------------------
-% START OF READING IN INSTRUMENT DATA
+% START OF  IN INSTRUMENT DATA
 % -----------------------------------
 
 for iid=1:length(id_z_sn.id)
@@ -108,17 +105,17 @@ for iid=1:length(id_z_sn.id)
             disp(['Reading ' id_z_sn.inst{iid} ' - ',num2str(id_z_sn.sn(iid))])
             disp('*************************************************************')
         end
-        infile = sprintf('%s_%0.4d%s.use',moor,id_z_sn.sn(iid),id_z_sn.suf{iid});
-        infile = fullfile(procpath,moor,id_z_sn.dirs{iid},infile);
+        pds = moor_inoutpaths(id_z_sn.dirs{iid},moor);
+        infile = fullfile(pds.stage2path,sprintf('%s_%0.4d%s.use',moor,id_z_sn.sn(iid),id_z_sn.suf{iid}));
         iname = sprintf('%s_%d', id_z_sn.inst{iid}, id_z_sn.sn(iid));
 
         %read data into structure array
         fileopen=fopen(infile,'r');
         if fileopen>0
-            varstr = ['yy:mm:dd:hh:' id_z_sn.vars{iid}];
+            varstr = ['yy:mm:dd:hh:' id_z_sn.vars_st{iid}];
             clear a; a(1).a = [];
             [yy,mm,dd,hh,a(1).a,a(2).a,a(3).a,a(4).a,a(5).a,a(6).a,a(7).a,a(8).a,a(9).a] = rodbload(infile,varstr);
-            vars = split(id_z_sn.vars{iid},':');
+            vars = split(id_z_sn.vars_st{iid},':');
             for no = 1:length(vars)
                 data.(vars{no}) = a(no).a;
             end
@@ -138,8 +135,8 @@ for iid=1:length(id_z_sn.id)
             for no = 1:length(fn)
                 vnam = fn{no};
                 data.(vnam)(data.(vnam)==dummy) = NaN;
-                data.([vnam 'mean']) = nanmean(data.(vnam));
-                data.([vnam 'std']) = nanstd(data.(vnam));
+                data.([vnam 'mean']) = mean(data.(vnam),'omitmissing');
+                data.([vnam 'std']) = std(data.(vnam),'omitmissing');
                 data.([vnam 'max']) = max(data.(vnam));
                 data.([vnam 'min']) = min(data.(vnam));
             end
@@ -154,7 +151,7 @@ for iid=1:length(id_z_sn.id)
                 % calculate spd and dir means and stds
                 data.dirmean=atan2(data.vmean,data.umean)*180/pi;
                 data.spdmean=sqrt(data.umean.^2 + data.vmean.^2);
-                data.spdstd = nanstd(data.spd);
+                data.spdstd = std(data.spd,'omitmissing');
                 data.spdmin = min(data.spd);
                 data.spdmax = max(data.spd);
                 % for dir STD convert directions to values around mean direction
@@ -163,7 +160,7 @@ for iid=1:length(id_z_sn.id)
                 dir_new = data.dir-data.dirmean;
                 dir_new(dir_new>180) = dir_new(dir_new>180)-360;
                 dir_new(dir_new<-180) = dir_new(dir_new<-180)+360;
-                data.dirstd = nanstd(dir_new);
+                data.dirstd = std(dir_new,'omitmissing');
                 data.dirmin = min(dir_new)+data.dirmean;
                 data.dirmax = max(dir_new)+data.dirmean;
             end
@@ -180,10 +177,10 @@ id_z_sn = id_z_sn(id_z_sn.data_loaded,:);
 % ============================================
 % START OF OUPUTTING SUMMARY DATA TO TEXT FILE
 % ============================================
-if ~exist(outpath,'dir')
-    mkdir(outpath)
+if ~exist(pd.statsdir,'dir')
+    mkdir(pd.statsdir)
 end
-outfile=fullfile(outpath,[moor '_stats.asc']);
+outfile=fullfile(pd.statsdir,[moor '_stats.asc']);
 check=0;
 while check==0
     if exist(outfile,'file')
