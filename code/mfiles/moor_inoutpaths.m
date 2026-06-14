@@ -116,25 +116,18 @@ switch datatype
         pd.stage3forml = [moor '_%d_bin%02.f.lowedt'];
         pd.stage3logl = [moor '_%d_bin%02.f.lowedt.log'];
 
-    case 's55'
+    case 'adcp_S55'
         disp(datatype)
         moor = loc;
         pd.rawpath = fullfile(mg.moordatadir, 'raw', mg.cruise, datatype);
         pd.infofile = fullfile(mg.moordatadir, 'proc', moor, [moor 'info.dat']);
+        pd.scotiafile = fullfile(fileparts(fileparts(mg.moordatadir)), 'scotia/SCOTIA_monthly_clim_V8.nc');
         pd.stage1path = fullfile(mg.moordatadir, 'proc', moor, datatype);
-        pd.stage1log = fullfile(pd.stage1path, [moor '_s55_stage1.log']);
-        pd.stage1form = [moor '_%d_bin%02.f.raw'];
-        pd.stage2inform = [moor '_%d_bin'];
+        pd.stage1log = fullfile(pd.stage1path, [moor '_ADCP_stage1.log']);
+        pd.stage1form = [moor '_%d_stage1.nc'];
         pd.stage2path = fullfile(mg.moordatadir, 'proc', moor, datatype);
-        pd.stage2log = fullfile(pd.stage2path, [moor '_s55_stage2.log']);
-        pd.stage2form = [moor '_%d_bin%02.f.use'];
-        pd.stage3path = fullfile(mg.moordatadir, 'proc', moor, datatype);
-        pd.stage3form = [moor '_%d_bin%02.f.edt'];
-        pd.stage3log = [moor '_%d_bin%02.f.edt.log'];
-        pd.stage3formh = [moor '_%d_bin%02.f.highedt'];
-        pd.stage3logh = [moor '_%d_bin%02.f.highedt.log'];   
-        pd.stage3forml = [moor '_%d_bin%02.f.lowedt'];
-        pd.stage3logl = [moor '_%d_bin%02.f.lowedt.log'];
+        pd.stage2log = fullfile(pd.stage2path, [moor '_ADCP_stage2.log']);
+        pd.stage2form = [moor '_%d_stage2.nc'];
 
     case 'cal_coef' %***ctd path setting should be its own thing, same for microcat_cal_dip and for cal_coef?
         cast = loc;
