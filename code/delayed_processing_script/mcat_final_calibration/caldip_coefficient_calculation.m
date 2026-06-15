@@ -33,7 +33,9 @@ p_insitucal.apply_offset   = input('apply time offset between CTD and MC (y/n/i)
 if strcmp(p_insitucal.cruise,'pe399') & (p_insitucal.cast == 17 | p_insitucal.cast == 38)   
     p_insitucal.interval_move  = [-100 -50];
 elseif strcmp(p_insitucal.cruise,'dy078') | strcmp(p_insitucal.cruise,'ar304') | strcmp(p_insitucal.cruise,'dy120')
-    p_insitucal.interval_move  = [-600 600]*2; % bottlestop can be up to 20 mins for 02 sensors   
+    p_insitucal.interval_move  = [-600 600]*2; % bottlestop can be up to 20 mins for 02 sensors
+elseif strcmp(p_insitucal.cruise,'jc238')
+    p_insitucal.interval_move  = [-300 300]; % [-600 600] for RHADCP_SJ
 else
     p_insitucal.interval_move  = [-480 480];    
 end
@@ -220,11 +222,53 @@ elseif strcmp(p_insitucal.cruise,'dy120') & p_insitucal.cast == 10
     p_insitucal.dp_interval    = [-10 10];   
     p_insitucal.p_interval       = [0  3000];
     p_insitucal.average_interval = [1500 2950];% [1000 2150];
-elseif strcmp(p_insitucal.cruise,'jc238') & p_insitucal.cast == 19
+if strcmp(p_insitucal.cruise,'jc238') & p_insitucal.cast == 1
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
     p_insitucal.dp_interval    = [-10 10];   
-    p_insitucal.p_interval       = [0  1200];
+    p_insitucal.p_interval       = [0  2580];
+    p_insitucal.average_interval = [0 750];% [1000 2150];   
+elseif strcmp(p_insitucal.cruise,'jc238') & p_insitucal.cast == 3
+    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0  1850]; % [0  2200] for RHADCP_SJ
+    p_insitucal.average_interval = [1500 1800];% [1200 2200] for RHADCP_SJ
+elseif strcmp(p_insitucal.cruise,'jc238') & p_insitucal.cast == 4
+    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0  2050];
+    p_insitucal.average_interval = [1500 2050];% [1000 2150];  
+elseif strcmp(p_insitucal.cruise,'jc238') & p_insitucal.cast ==19
+    p_insitucal.c_interval     = [-0.03 0.03]; % [-0.025 0.025] for RHADCP_SJ
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [500 1090]; %[0  1200] for RHADCP_SJ
+    p_insitucal.average_interval = [800 1100];% [1500 2950] for RHADCP_SJ
+elseif strcmp(p_insitucal.cruise,'jc238') & p_insitucal.cast == 33
+    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0  3000];
+    p_insitucal.average_interval = [2000 3000];% [1000 2150]; 
+elseif strcmp(p_insitucal.cruise,'jc238') & p_insitucal.cast == 37
+    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0  3000];
+    p_insitucal.average_interval = [2000 3000];% [1000 2150];  
+elseif strcmp(p_insitucal.cruise,'jc238') & p_insitucal.cast == 38
+    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0  3000];
+    p_insitucal.average_interval = [1500 2950];% [1000 2150];
+elseif strcmp(p_insitucal.cruise,'jc238') & p_insitucal.cast == 43
+    p_insitucal.c_interval     = [-0.025 0.025]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0  3000];
     p_insitucal.average_interval = [1500 2950];% [1000 2150];
 elseif strcmp(p_insitucal.cruise,'dy181')  & p_insitucal.cast == 3
     p_insitucal.c_interval     = [-0.025 0.025]; 
