@@ -176,7 +176,7 @@ switch pl
         MOORPROC_G.moordatadir = fullfile(MOORPROC_G.basedir,'rapid','data','moor');
     case 'RAPID_atsea'
         if ~isfield(MOORPROC_G,'basedir')
-            MOORPROC_G.basedir = input('base data directory (e.g. /data/pstar/projects/rpdmoc, containing subdirectories cruise_data and rapid) ','s');
+            MOORPROC_G.basedir = input('base data directory (e.g. /data/pstar/projects/rpdmoc, containing subdirectories cruises and moorings) ','s');
         end
         MOORPROC_G.cruisedir = fullfile(MOORPROC_G.basedir,'cruises',MOORPROC_G.cruise);
         MOORPROC_G.ctddatadir = fullfile(MOORPROC_G.cruisedir,'data','ctd');
@@ -184,7 +184,7 @@ switch pl
         MOORPROC_G.moordatadir = fullfile(MOORPROC_G.basedir,'moorings');
     case 'OSNAP_atsea'
         if ~isfield(MOORPROC_G,'basedir')
-            MOORPROC_G.basedir = input('base data directory (e.g. /data/pstar/projects/osnap, containing subdirectories cruise_data and data) ','s');
+            MOORPROC_G.basedir = input('base data directory (e.g. /data/pstar/projects/osnap, containing subdirectories cruises and moorings) ','s');
         end
         MOORPROC_G.cruisedir = fullfile(MOORPROC_G.basedir,'cruises',MOORPROC_G.cruise);
         MOORPROC_G.ctddatadir = fullfile(MOORPROC_G.cruisedir,'data','ctd');
