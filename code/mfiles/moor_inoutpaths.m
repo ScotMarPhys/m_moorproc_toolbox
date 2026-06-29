@@ -3,11 +3,14 @@ function pd = moor_inoutpaths(datatype,loc)
 %
 % predirs = moor_inoutpaths('microcat_cal_dip',cast)
 % predirs = moor_inoutpaths('microcat',moor)
-% predirs = moor_inoutpaths('nor',moor)
+% predirs = moor_inoutpaths('nor',moor) - exchangeable 'nor'/'nortek'
 % predirs = moor_inoutpaths('bpr',moor)
-% predirs = moor_inoutpaths('adcp',moor)
-% predirs = moor_inoutpaths('s55',moor)
+% predirs = moor_inoutpaths('adcp',moor) - exchangeable 'adcp'/'adp'
+% predirs = moor_inoutpaths('adcp_S55',moor)
 % predirs = moor_inoutpaths('cal_coef',cast)
+% predirs = moor_inoutpaths('reports',moor)
+% predirs = moor_inoutpaths('mcgrid',moor)
+% predirs = moor_inoutpaths('oceansites',moor)
 %
 % set input and output subdirectories (relative to data and reports
 % top-level directories defined by moor_setup and held in MOORPROC_G) and
@@ -43,15 +46,18 @@ switch datatype
         pd.stage1path = fullfile(mg.moordatadir, 'proc_calib', mg.cruise, 'cal_dip', 'microcat', ['cast' cast]);
         pd.stage1form = ['cast' cast '_%4.4d.raw'];
         pd.stage1log = fullfile(pd.stage1path,'microcat2rodb.log');
-        pd.stage1fig = fullfile(mg.reportdir,'datareports','figs','caldip', cast);
+        pd.stage1fig = fullfile(mg.reportdir,'datareports','figs','caldip');
         pd.ctdfile = fullfile(mg.ctddatadir,sprintf('ctd_%s_%03d_psal.nc',mg.cruise_ctd,castn));
         pd.stage2path = fullfile(mg.moordatadir, 'proc_calib'); %***
         pd.stage2fig = fullfile(mg.reportdir,'datareports','figs','caldip',['microcat_check_cast_' cast '_plot']);
-        pd.stage2log = fullfile(mg.reportdir,'datareports','stats',['microcat_check' cast '.log']);
+        pd.stage2log = fullfile(mg.reportdir,'datareports','stats','caldip',['microcat_check' cast '.log']);
 
     case 'microcat'
         moor = loc;
-        pd.rawpath = fullfile(mg.moordatadir, 'raw', mg.cruise, 'microcat');
+        pd.rawpath = fullfile(mg.moordatadir, 'raw', mg.cruise, 'microcat', moor);
+        if ~exist(pd.rawpath,'dir')
+            pd.rawpath = fullfile(mg.moordatadir, 'raw', mg.cruise, 'microcat');
+        end
         pd.infofile = fullfile(mg.moordatadir, 'proc', moor, [moor 'info.dat']);
         pd.stage1path = fullfile(mg.moordatadir, 'proc', moor, 'microcat');
         pd.stage1form = [moor '_%4.4d.raw'];
@@ -59,7 +65,7 @@ switch datatype
         pd.stage2path = fullfile(mg.moordatadir, 'proc', moor, 'microcat');
         pd.stage2form = [moor '_%4.4d.use'];
         pd.stage2log = fullfile(pd.stage2path, ['stage2_log_' moor,'.log']);
-        pd.stage2figpath = fullfile(mg.reportdir,'datareports', 'figs', moor);
+        pd.stage2figpath = fullfile(mg.reportdir,'datareports', 'figs', 'stage2');
         pd.stage3path = fullfile(mg.moordatadir, 'proc', moor, 'microcat');
         pd.stage3form = [moor '_%0.3d.microcat'];
 
@@ -89,12 +95,16 @@ switch datatype
     case 'bpr'
         moor = loc;
         pd.rawpath = fullfile(mg.moordatadir, 'raw', mg.cruise, 'seagauge');
-        pd.rawform = [moor '_%4.4d_data.tid'];
         pd.infofile = fullfile(mg.moordatadir, 'proc', moor, [moor 'info.dat']);
-        pd.offsetfile = fullfile(mg.moordatadir, 'raw', mg.cruise, 'clock_offset.dat');
+        pd.offset1file = fullfile(mg.moordatadir, 'raw', mg.cruise, 'clock_offset.dat'); %used in stage 1: large offsets due to errors in time setting at deployment
+        pd.offset2file = fullfile(mg.moordatadir, 'raw', mg.cruise, 'seagauge', 'bpr_clock_offset.dat'); %used in stage 2: offsets in [s] at download
         pd.stage1path = fullfile(mg.moordatadir, 'proc', moor, 'seagauge');
-        pd.stage1log = fullfile(pd.stage1path, [moor '_seaguard_stage1.log']);
+        pd.stage1log = fullfile(pd.stage1path, [moor '_seagauge_stage1.log']);
         pd.stage1form = [moor '_%5.5d.raw'];
+        pd.stage2path = pd.stage1path;
+        pd.stage2form = [moor '_%4.4d.use'];
+        pd.stage2log = fullfile(pd.stage2path, [moor '_seaguard_stage2.log']);
+        pd.stage2figpath = fullfile(mg.reportdir, 'datareports', 'figs', 'stage2');
 
     case {'adcp' 'adp'}
         disp(datatype)
@@ -154,12 +164,22 @@ switch datatype
             end
         end
         pd.mc_file = fullfile(pd.mc_dir,sprintf('cast%d',cast),sprintf('cast%d_',cast));
-        pd.info_file = fullfile(pd.datadir,'proc_calib',mg.cruise,'cal_dip',sprintf('cast%dinfo.dat',cast));
+        pd.infofile = fullfile(pd.datadir,'proc_calib',mg.cruise,'cal_dip',sprintf('cast%dinfo.dat',cast));
         pd.ctdformat = 'mstar';
         pd.ctdcnv_cunit = 'S/m'; %***
         pd.ctd1hz_cunit = 'mS/cm';
         pd.mc_cunit = 'mS/cm';
-        pd.mc_ext = '.raw';
+        pd.mc_ext = 'raw';
+    
+    case 'reports'
+        moor = loc;
+        pd.targetdir = fullfile(MOORPROC_G.reportdir,'moor_positions');
+        pd.trilatdir = fullfile(MOORPROC_G.reportdir,'moor_positions');
+        pd.target_fn = fullfile(pd.targetdir,'moor_pos_target.dat');
+        pd.infofile = fullfile(mg.moordatadir, 'proc', moor, [moor 'info.dat']);
+        % not sure if following two needed as under calib
+        pd.statsdir = fullfile(MOORPROC_G.reportdir,'datareports','stats');
+        pd.figsdir = fullfile(MOORPROC_G.reportdir,'datareports','figs');
 
     case 'mcgrid'
         pd.hydrodir = fullfile(mg.moordatadir,'proc','hydro_grid');
@@ -182,9 +202,9 @@ switch datatype
         defs = {'dy053' 'dy078' 'ar304' 'dy120' 'jc238' 'dy181'};
         if ~ismember(mg.cruise,defs)
         %cruise, ctdformat, ctdcnv_cunit, ctd1hz_cunit, mc_cunit, mc_ext
-        a = {'kn221-02' 'aoml' 'S/m' 'S/m' 'S/m' '.raw';...
+        a = {'kn221-02' 'aoml' 'S/m' 'S/m' 'S/m' 'raw';...
             'kn221-03' 'aoml' 'S/m' 'S/m' 'mS/cm' 'raw';...
-            'pe399' 'mstar' 'mS/cm' 'mS/cm' 'mS/cm' '.raw';...
+            'pe399' 'mstar' 'mS/cm' 'mS/cm' 'mS/cm' 'raw';...
             };
         m = strcmp(mg.cruise,a(:,1));
         [pd.ctdformat,pd.ctdcnv_cunit,pd.ctd1hz_cunit,pd.mc_cunit,pd.mc_ext] = deal(a{m,2:end});
