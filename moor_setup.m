@@ -121,7 +121,7 @@ while n<4 && ~exist(MOORPROC_G.moordatadir,'dir')
 end
 n = 0;
 while n<4 && (~isfield(MOORPROC_G,'ctddatadir') || ~exist(MOORPROC_G.ctddatadir,'dir'))
-    c = input(sprintf('directory for ctd data, %s, not found\n; create (1), change setting (2), or skip(3)?  ',strrep(MOORPROC_G.ctddatadir, filesep, '/'))));
+    c = input(sprintf('directory for ctd data, %s, not found\n; create (1), change setting (2), or skip(3)?  ',strrep(MOORPROC_G.ctddatadir, filesep, '/')));
     if c==1
         mkdir(MOORPROC_G.ctddatadir);
     elseif c==2
