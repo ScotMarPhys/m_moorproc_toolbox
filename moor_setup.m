@@ -100,7 +100,7 @@ if sum(ismember(fn,dirs_req))<length(dirs_req)
     end
 end
 if ~exist(MOORPROC_G.reportdir,'dir')
-    c = input(sprintf('data report directory %s does not exist; create it? (y/n)  ',MOORPROC_G.reportdir),'s');
+    c = input(sprintf('data report directory %s does not exist; create it? (y/n)  ',strrep(MOORPROC_G.ctddatadir, filesep, '/')),'s');
     if strcmp(c,'y')
         mkdir(MOORPROC_G.reportdir)
     end
@@ -109,7 +109,7 @@ end
 %check directories at this stage
 n = 0;
 while n<4 && ~exist(MOORPROC_G.moordatadir,'dir')
-    c = input(sprintf('directory for mooring data, %s, not found\n; create (1), change setting (2), or skip(3)?  ',MOORPROC_G.moordatadir),'s');
+    c = input(sprintf('directory for mooring data, %s, not found\n; create (1), change setting (2), or skip(3)?  ',strrep(MOORPROC_G.moordatadir, filesep, '/')),'s');
     if c==1
         mkdir(MOORPROC_G.moordatadir);
     elseif c==2
@@ -121,7 +121,7 @@ while n<4 && ~exist(MOORPROC_G.moordatadir,'dir')
 end
 n = 0;
 while n<4 && (~isfield(MOORPROC_G,'ctddatadir') || ~exist(MOORPROC_G.ctddatadir,'dir'))
-    c = input(sprintf('directory for ctd data, %s, not found\n; create (1), change setting (2), or skip(3)?  ',MOORPROC_G.ctddatadir));
+    c = input(sprintf('directory for ctd data, %s, not found\n; create (1), change setting (2), or skip(3)?  ',strrep(MOORPROC_G.ctddatadir, filesep, '/'))));
     if c==1
         mkdir(MOORPROC_G.ctddatadir);
     elseif c==2
