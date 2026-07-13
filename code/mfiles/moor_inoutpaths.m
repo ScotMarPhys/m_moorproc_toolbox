@@ -61,10 +61,10 @@ switch datatype
         pd.infofile = fullfile(mg.moordatadir, 'proc', moor, [moor 'info.dat']);
         pd.stage1path = fullfile(mg.moordatadir, 'proc', moor, 'microcat');
         pd.stage1form = [moor '_%4.4d.raw'];
-        pd.stage1log = fullfile(pd.stage1path,'stage1_log' moor,'.log');
+        pd.stage1log = fullfile(pd.stage1path,['stage1_log_' moor '.log']);
         pd.stage2path = fullfile(mg.moordatadir, 'proc', moor, 'microcat');
         pd.stage2form = [moor '_%4.4d.use'];
-        pd.stage2log = fullfile(pd.stage2path, ['stage2_log_' moor,'.log']);
+        pd.stage2log = fullfile(pd.stage2path, ['stage2_log_' moor '.log']);
         pd.stage2figpath = fullfile(mg.reportdir,'datareports', 'figs', 'stage2');
         pd.stage3path = fullfile(mg.moordatadir, 'proc', moor, 'microcat');
         pd.stage3form = [moor '_%0.3d.microcat'];
