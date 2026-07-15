@@ -205,9 +205,13 @@ for proc = 1 : length(vec)
             '; Target Depth: ',num2str(indep)])
 
         orient tall
-
-        %eval(['print -depsc2 -tiff ',outfile,'.eps'])
-        eval(['print -dpng ',outfile,'.png'])
+        
+        if ~exist(pd.stage2figpath,'dir')
+            mkdir(pd.stage2figpath)
+        end
+        figname = fullfile(pd.stage2figpath,sprintf(pd.stage2form,sn(proc)));
+        print(gcf,'-dpng','-r300',[figname,'.png']);
+        savefig([figname '.fig']);
 
         figure;
 
@@ -222,8 +226,8 @@ for proc = 1 : length(vec)
         title(['Nortek s/n: ',num2str(sn(proc)), ...
             '; Target Depth: ',num2str(indep)])
         orient tall
-        %       eval(['print -depsc ',outfile,'.filtered.eps'])
-        eval(['print -dpng ',outfile,'.filtered.png'])
+        print(gcf,'-dpng','-r300',[figname,'_filtered.png']);
+        savefig([figname '_filtered.fig']);
 
         % plot of diagnostics info
         figure;
@@ -254,8 +258,8 @@ for proc = 1 : length(vec)
             '; Target Depth: ',num2str(indep)])
 
         orient tall
-        % eval(['print -depsc2 -tiff ',outfile,'_diagnostics.eps'])
-        eval(['print -dpng ',outfile,'_diagnostics.png'])
+        print(gcf,'-dpng','-r300',[figname,'_diagnostics.png']);
+        savefig([figname '_diagnostics.fig']);
     end % if exist(infile)==0
 end  % for proc=1:length(combo_sn)+length(individual_sn) loop
 
