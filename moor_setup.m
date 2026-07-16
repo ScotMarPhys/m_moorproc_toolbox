@@ -100,7 +100,7 @@ if sum(ismember(fn,dirs_req))<length(dirs_req)
     end
 end
 if ~exist(MOORPROC_G.reportdir,'dir')
-    c = input(sprintf('data report directory %s does not exist; create it? (y/n)  ',strrep(MOORPROC_G.ctddatadir, filesep, '/')),'s');
+    c = input(sprintf('data report directory %s does not exist; create it? (y/n)  ',strrep(MOORPROC_G.reportdir, filesep, '/')),'s');
     if strcmp(c,'y')
         mkdir(MOORPROC_G.reportdir)
     end
