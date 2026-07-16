@@ -13,13 +13,11 @@ pd = moor_inoutpaths('adcp',moor);
 
 display('Starting stage 1 adcp2rodb_01')
 
-if contains(moor,'ib')
-    % Flag bad data 
-    read_flag_raw_adcp(moor,pd)
-    adcp2rodb_01(moor,pd)
-elseif contains(moor,'rhadcp')
-    adcp2rodb_02(moor,pd)
-end
+% Flag bad data 
+read_flag_raw_adcp(moor,pd)
+
+% Stage 1 processing
+adcp2rodb_01(moor,pd)
 
 display('Starting stage 2 adcp_raw2use')
 adcp_raw2use_01(moor,pd,'plot_interval',plot_interval)

@@ -119,6 +119,7 @@ switch datatype
         pd.stage2path = fullfile(mg.moordatadir, 'proc', moor, datatype);
         pd.stage2log = fullfile(pd.stage2path, [moor '_ADCP_stage2.log']);
         pd.stage2form = [moor '_%d_bin%02.f.use'];
+        pd.stage2figpath = fullfile(mg.reportdir,'datareports', 'figs',moor, 'stage2', 'adcp');
         pd.stage3path = fullfile(mg.moordatadir, 'proc', moor, datatype);
         pd.stage3form = [moor '_%d_bin%02.f.edt'];
         pd.stage3log = [moor '_%d_bin%02.f.edt.log'];

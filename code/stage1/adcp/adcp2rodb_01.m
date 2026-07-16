@@ -107,7 +107,7 @@ for i = 1:length(vec)
         if (strcmp(press_sensor,'y')||strcmp(press_sensor,'Y')||strcmp(press_sensor,'yes')||strcmp(press_sensor,'Yes')||strcmp(press_sensor,'YES'))
             depth=all_data.AnDepthmm/1000;
             % convert depth to pressure using standard seawater routines
-            p=sw_pres(depth,sw_lat);
+            p = gsw_p_from_z(-depth, sw_lat);
             press_sensor=1;
         else
             correct_depth=eval(['input(''\nThe input depth during instrument setup was ' num2str(all_data.AnDepthmm(1)/1000) 'm\n If you want to use a new depth for bin-mapping and processing,\n enter it now in m (leave empty if not): '')']);
@@ -116,7 +116,7 @@ for i = 1:length(vec)
             else
                 depth=all_data.AnDepthmm/1000;
             end
-            p=sw_pres(depth,sw_lat);        
+            p = gsw_p_from_z(-depth, sw_lat);        
         end
         
         
