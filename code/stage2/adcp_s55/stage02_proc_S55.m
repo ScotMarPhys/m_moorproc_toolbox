@@ -33,6 +33,7 @@ if nargin == 1 && ~isempty(MOORPROC_G)
     infofile = pd.infofile;
     logfile = pd.stage2log;
     outdir = pd.stage1path;
+    figpath = pd.stage2figpath;
     infile_form = pd.stage1form;
     ouput_form = pd.stage2form;
     scotiafile = pd.scotiafile;
@@ -43,6 +44,7 @@ else
         infofile = varargin{2};
         logfile = varargin{3};
         outdir = varargin{4};
+        figpath = outdir;
         scotiafile = varargin{5};
         infile_form =  [moor '_%d_stage1.nc'];
         ouput_form = [moor '_%d_stage2.nc'];
@@ -139,10 +141,14 @@ hist_hard_iron = sprintf(['Hard-iron correction: circle fit applied to compass d
     datestr(t_lim(2,:), 'yyyy-mm-dd HH:MM'), ...
     err_min, err_max);
 
+if ~exist(figpath,'dir')
+mkdir(figpath)
+end
 % Save figure
 set(h_fig,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print(h_fig,'-dpng',fullfile(outdir,[filename,'_f1_hard_iron_correction.png']));
-
+figname1= fullfile(figpath,[filename,'_f1_hard_iron_correction']);
+print(gcf,'-dpng','-r300',[figname1 '.png']);
+savefig([figname1 '.fig']);
 
 % 2. Now rotate the corrected U/V to True North
 mag_dev = info_adcp.magdev;
@@ -226,7 +232,9 @@ end
 
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[filename,'_f2_UV_hard_iron_mag_dev_correction.png']));
+figname2= fullfile(figpath,[filename,'_f2_UV_hard_iron_mag_dev_correction']);
+print(gcf,'-dpng','-r300',[figname2 '.png']);
+savefig([figname2 '.fig']);
 clear ax
 
 %% Apply QC and ensemble mean
@@ -415,7 +423,9 @@ if use_MC
     grid on
     % Save figure
     set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-    print('-dpng',fullfile(outdir,[filename,'_f3_SoS_correction_range.png']));
+    figname3= fullfile(figpath,[filename,'_f3_SoS_correction_range']);
+    print(gcf,'-dpng','-r300',[figname3 '.png']);
+    savefig([figname3 '.fig']);
   
     % 1. Prompt user for input with a default option
     disp('Which speed of sound correction do you want to apply?');
@@ -534,8 +544,10 @@ lgd.Units = 'normalized';
 lgd.Position = [0.73 .8 0.12 0.3];  % [x y width height]
 
 % Save figure
-    set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-    print('-dpng',fullfile(outdir,[filename,'_f4_sidelobe_interference.png']));
+set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
+figname4= fullfile(figpath,[filename,'_f4_sidelobe_interference']);
+print(gcf,'-dpng','-r300',[figname4 '.png']);
+savefig([figname4 '.fig']);
 
 %% sidelobe contamination
 % 

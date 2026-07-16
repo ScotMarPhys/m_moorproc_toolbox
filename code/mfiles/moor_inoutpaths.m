@@ -133,13 +133,16 @@ switch datatype
         moor = loc;
         pd.rawpath = fullfile(mg.moordatadir, 'raw', mg.cruise, datatype);
         pd.infofile = fullfile(mg.moordatadir, 'proc', moor, [moor 'info.dat']);
-        pd.scotiafile = fullfile(fileparts(fileparts(mg.moordatadir)), 'scotia/SCOTIA_monthly_clim_V8.nc');
+        pd.scotiafile = fullfile(fileparts(mg.moordatadir), 'external/scotia/SCOTIA_monthly_clim_V8.nc');
         pd.stage1path = fullfile(mg.moordatadir, 'proc', moor, datatype);
         pd.stage1log = fullfile(pd.stage1path, [moor '_ADCP_stage1.log']);
         pd.stage1form = [moor '_%d_stage1.nc'];
+        pd.stage1figpath = fullfile(mg.reportdir,'datareports', 'figs',moor, 'stage1', 'adcp');
         pd.stage2path = fullfile(mg.moordatadir, 'proc', moor, datatype);
         pd.stage2log = fullfile(pd.stage2path, [moor '_ADCP_stage2.log']);
         pd.stage2form = [moor '_%d_stage2.nc'];
+        pd.stage2figpath = fullfile(mg.reportdir,'datareports', 'figs',moor, 'stage2', 'adcp');
+        
 
     case 'cal_coef' %***ctd path setting should be its own thing, same for microcat_cal_dip and for cal_coef?
         cast = loc;

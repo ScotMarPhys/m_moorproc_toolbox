@@ -33,7 +33,7 @@
 %      - 6 Diagnostic QC Figures
 %
 %   DEPENDENCIES:
-%      - [m_moorproc_toolbox](URL_TO_YOUR_REPO) (for rodbload.m)
+%      - [m_moorproc_toolbox](https://github.com/ScotMarPhys/m_moorproc_toolbox) (for rodbload.m)
 %      - [GSW Oceanographic Toolbox](https://www.teos-10.org) (v3.06+)
 %
 %   NOTE: This is a Stage 1 function. It FLAGS data only; physical 
@@ -57,6 +57,7 @@ if nargin == 1 && ~isempty(MOORPROC_G)
     infofile    = pd.infofile;
     logfile     = pd.stage1log;
     outdir      = pd.stage1path;
+    figpath     = pd.stage1figpath;
     output_form = pd.stage1form;
 else
     try
@@ -66,6 +67,7 @@ else
         infofile = varargin{3};
         logfile = varargin{4};
         outdir = varargin{5};
+        figpath     = outdir;
         output_form = [moor '_%d_stage1.nc'];
     catch
         error('Not enough manual arguments provided. Expected 5 additional arguments after "moor".');
@@ -408,9 +410,15 @@ annotation('textbox', [0 0.02 1 0.06], ...   % [x y w h] in normalized figure un
 
 
 % Save figure
-set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[figure_base,'_stage1_f1_pressure_tilt_heading_QC.png']));
 
+if ~exist(figpath,'dir')
+mkdir(figpath)
+end
+set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
+figname1= fullfile(figpath,[figure_base,'_stage1_f1_pressure_tilt_heading_QC']);
+print(gcf,'-dpng','-r300',[figname1 '.png']);
+savefig([figname1 '.fig']);
+% add savefig
 
 %% 2. Beam amplitudes %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 nCells = 1:Data.Average_NCells(1);  %number of cells
@@ -528,7 +536,9 @@ end
 
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[figure_base,'_stage1_f2_beam_amplitude_correlation_QC.png']));
+figname2= fullfile(figpath,[figure_base,'_stage1_f2_beam_amplitude_correlation_QC']);
+print(gcf,'-dpng','-r300',[figname2 '.png']);
+savefig([figname2 '.fig']);
 clear ax
 
 %% 3. suface bin detection %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -571,7 +581,9 @@ for k=1:numel(ax)
 end
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[figure_base,'_stage1_f3_beam_amplitude_correlation_QC.png']));
+figname3= fullfile(figpath,[figure_base,'_stage1_f3_beam_amplitude_correlation_QC']);
+print(gcf,'-dpng','-r300',[figname3 '.png']);
+savefig([figname3 '.fig']);
 clear ax
 
 %% prombts after plotting
@@ -725,7 +737,9 @@ end
 
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[figure_base,'_stage1_f4_velocity_and_speed_QC.png']));
+figname4= fullfile(figpath,[figure_base,'_stage1_f4_velocity_and_speed_QC']);
+print(gcf,'-dpng','-r300',[figname4 '.png']);
+savefig([figname4 '.fig']);
 clear ax
 
 
@@ -744,7 +758,9 @@ fprintf(fidlog, prombt, err_min, err_max);
 
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[figure_base,'_stage1_f5_horizontal_magnetometer_QC.png']));
+figname5= fullfile(figpath,[figure_base,'_stage1_f5_horizontal_magnetometer_QC']);
+print(gcf,'-dpng','-r300',[figname5 '.png']);
+savefig([figname5 '.fig']);
 %% 6. Sensor diagnostics %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 f6 = figure(6); clf;
@@ -789,8 +805,11 @@ end
 sgtitle('ADCP Sensor Diagnostic');
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
-print('-dpng',fullfile(outdir,[figure_base,'_stage1_f6_sensor_diagnostics.png']));
+figname6= fullfile(figpath,[figure_base,'_stage1_f6_sensor_diagnostics']);
+print(gcf,'-dpng','-r300',[figname6 '.png']);
+savefig([figname6 '.fig']);
 clear ax
+
 %%
 m_u=median(U_QC,"omitnan" )*1e2;m_v=median(V_QC,"omitnan" )*1e2;
 m_w=median(W_QC,"omitnan" )*1e2;
