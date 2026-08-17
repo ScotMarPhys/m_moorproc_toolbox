@@ -6,10 +6,13 @@ basedir = '/Users/yfiring/programs/moor_demo/'; %contains osnap, or rpdmoc
 progdir = '/Users/yfiring/programs/gitvcd/'; %contains m_moorproc_toolbox
 use_mexec = 0;
 cruise = 'dy174';
+location = 'atsea';
+
 if use_mexec
     MEXEC_G_user.other_programs_root = '/data/pstar/programs/others/'; %gsw, etc.
     MEXEC_G_user.mexec_data_root = '/data/pstar/cruise/data'; %mexec hydro data
 end
+
 %example other paths for NOCS Linux machines
 %basedir = '/noc/mpoc/';
 %progdir = '/noc/mpoc/drake/programs/';
@@ -19,14 +22,18 @@ end
 
 % setup for hydro data processing including running m_setup
 addpath(fullfile(progdir,'ocp_hydro_matlab'))
+addpath(genpath(fullfile(progdir,'other_software'))) % gsw library, m_map, etc
+
+%%% end of editing %%%
+
 global MOORPROC_G
 if use_mexec
     path_choose = m_setup(MEXEC_G_user); %m_setup returns 1 if cruise options/user selects to process LADCP rather than moored data
     m_common %global variables to workspace
 else
     path_choose = 2;
-    MOORPROC_G.cruise = 'dy174';
-    MOORPROC_G.cruise_ctd = 'dy174';
+    MOORPROC_G.cruise = cruise;
+    MOORPROC_G.cruise_ctd = cruise;
 end    
 
 if path_choose==0 || path_choose==2
@@ -39,6 +46,7 @@ if path_choose==0 || path_choose==2
         pause
     end
     MOORPROC_G.project = project;
+    MOORPROC_G.location = location;
     switch project
         case 'RAPID'
             MOORPROC_G.datadir = fullfile(basedir,'rpdmoc/rapid');

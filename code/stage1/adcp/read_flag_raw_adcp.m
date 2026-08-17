@@ -44,6 +44,9 @@ operator = MOORPROC_G.operator;
 infovar = 'instrument:serialnumber:z:Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:WaterDepth'; 
 [id,sn,z,s_t,s_d,e_t,e_d,lat,lon,wd]  =  rodbload(pd.infofile,infovar);
 
+if ~exist(pd.stage1path,'dir')
+    mkdir(pd.stage1path)
+end
 fidlog   = fopen(pd.stage1log,'a');
 fprintf(fidlog,'Transformation of ADCP .mat data to rodb format \n');
 fprintf(fidlog,'Processing carried out by %s at %s\n\n\n',operator,datestr(clock));
