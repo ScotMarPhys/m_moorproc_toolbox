@@ -161,7 +161,7 @@ if ~isfield(MOORPROC_G,'project') || ~isfield(MOORPROC_G,'location')
     return
 end
 
-pl = [MOORPROC_G.project '_' MOORPROC_G.location];
+pl = [upper(MOORPROC_G.project) '_' lower(MOORPROC_G.location)];
 switch pl
     case 'RAPID_atnoc'
         if ~isfield(MOORPROC_G,'basedir')
