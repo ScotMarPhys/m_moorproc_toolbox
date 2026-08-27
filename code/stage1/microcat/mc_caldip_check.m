@@ -16,6 +16,26 @@ YEAR = MOORPROC_G.YEAR;
 % Time origin to turn jday into dday -- same function used by rodbload
 jd0 = julian(YEAR,1,1,0);
 
+%-------------------------------
+% possible variable names for ctd
+possible_var_names = {'time', 'press', 'temp1', 'cond1', 'oxygen1', 'oxy1', ...
+                     'temp2', 'cond2', 'oxygen2', 'oxy2', 'temp', 'cond', 'oxygen'};
+var_mapping = { ...
+    'press',   'meanctdpr';  ... % Special case layout
+    'cond1',   'ctd1_cond';  ...
+    'temp1',   'ctd1_temp';  ...
+    'oxygen1', 'ctd1_oxy';   ...
+    'oxy1',    'ctd1_oxy';   ... % Fallback alias mappings
+    'cond2',   'ctd2_cond';  ...
+    'temp2',   'ctd2_temp';  ...
+    'oxygen2', 'ctd2_oxy';   ...
+    'oxy2',    'ctd2_oxy';   ...
+    'cond',    'ctd_cond';   ...
+    'temp',    'ctd_temp';   ...
+    'oxygen',  'ctd_oxy';    ...
+    'oxy',     'ctd_oxy'     ...
+};
+
 % -----------------------------------------------------------------
 % User supplied information
 % Select cast number and choose which set of instruments from CTD
@@ -39,8 +59,10 @@ if ~exist(fileparts(pd.stage2log),'dir')
 end
 
 % ----------------- load CTD DATA   ----------------------------------
-cvars = 'time press temp1 cond1 oxygen1 temp2 cond2 temp cond oxygen ';
-h = m_read_header(pd.ctdfile); if sum(strcmp(h.fldnam,'oxygen2')); cvars = [cvars 'oxygen2 ']; end
+h = m_read_header(pd.ctdfile);
+present_vars = intersect(possible_var_names, h.fldnam, 'stable');
+cvars = [strjoin(present_vars, ' ') ' '];
+
 d = mload(pd.ctdfile,[cvars ' ']);
 if strcmp(cruise,'d382')
     % Correction for Di382
@@ -52,7 +74,11 @@ d.temp = d.(['temp' ctdsen]);
 dnum = m_commontime(d,'time',h,'datenum');
 d.dday = dnum - datenum(MOORPROC_G.YEAR,1,1);
 d.cond = d.(['cond' ctdsen]);
-d.oxygen = d.(['oxygen' oxysen]);
+if isfield(d,['oxygen' oxysen])
+    d.oxygen = d.(['oxygen' oxysen]);
+elseif isfield(d,['oxy' oxysen])
+    d.oxygen = d.(['oxy' oxysen]);
+end
 ctdtimetx = datestr(dnum(1));
 ptittxt = sprintf('Cast %s start %s SBE-CTD sensor set %s',cast,ctdtimetx,ctdsen);
 
@@ -79,26 +105,31 @@ imp2 = d.dday > tm1p & d.dday < tm2p;
 meanctdpr = nanmean(d.press(imp2));
 
 % CTD stats during period
-meanctdpr = nanmean(d.press(imp2));
-stdctdpr = nanstd(d.press(imp2));
-ctd1_cond_mn = nanmean(d.cond1(imp2));
-ctd1_cond_st = nanstd(d.cond1(imp2));
-ctd1_temp_mn = nanmean(d.temp1(imp2));
-ctd1_temp_st = nanstd(d.temp1(imp2));
-ctd1_oxy_mn = nanmean(d.oxygen1(imp2));
-ctd1_oxy_st = nanstd(d.oxygen1(imp2));
-ctd2_cond_mn = nanmean(d.cond2(imp2));
-ctd2_cond_st = nanstd(d.cond2(imp2));
-ctd2_temp_mn = nanmean(d.temp2(imp2));
-ctd2_temp_st = nanstd(d.temp2(imp2));
-ctd2_oxy_mn = nanmean(d.oxygen2(imp2));
-ctd2_oxy_st = nanstd(d.oxygen2(imp2));
-ctd_cond_mn = nanmean(d.cond(imp2));
-ctd_cond_st = nanstd(d.cond(imp2));
-ctd_temp_mn = nanmean(d.temp(imp2));
-ctd_temp_st = nanstd(d.temp(imp2));
-ctd_oxy_mn = nanmean(d.oxygen(imp2));
-ctd_oxy_st = nanstd(d.oxygen(imp2));
+for i = 1:size(var_mapping, 1)
+    infld  = var_mapping{i, 1}; % e.g., 'temp1'
+    outpre = var_mapping{i, 2}; % e.g., 'ctd1_temp'
+    
+    % Determine the actual target variable names dynamically
+    if strcmp(infld, 'press')
+        mean_name = 'meanctdpr';
+        std_name  = 'stdctdpr';
+    else
+        mean_name = [outpre '_mn']; % e.g., 'ctd1_temp_mn'
+        std_name  = [outpre '_st']; % e.g., 'ctd1_temp_st'
+    end
+    
+    % 3. Calculate statistics using dynamic workspace mapping
+    if isfield(d, infld)
+        eval([mean_name ' = nanmean(d.(infld)(imp2));']);
+        eval([std_name  ' = nanstd(d.(infld)(imp2));']);
+    else
+        % Only assign NaN if the variable hasn't been created yet by an alias
+        if ~isvarname(mean_name) || ~exist(mean_name, 'var')
+            eval([mean_name ' = NaN;']);
+            eval([std_name  ' = NaN;']);
+        end
+    end
+end
 
 % --- get mooring information from infofile ---
 [zins,id,sn]= rodbload(pd.infofile,'z:instrument:serialnumber');
@@ -267,13 +298,21 @@ for i = 1:nvec
     if i == 1
         tix = interp1(d.dday, d.temp2-d.temp1, dday);
         cix = interp1(d.dday, d.cond2-d.cond1, dday);
-        oix = interp1(d.dday, d.oxygen2-d.oxygen1, dday);
         c_ctd_m = nanmean(cix(impt));
         c_ctd_s = nanstd(cix(impt));
         t_ctd_m = nanmean(tix(impt));
         t_ctd_s = nanstd(tix(impt));
-        o_ctd_m = nanmean(oix(impt));
-        o_ctd_s = nanstd(oix(impt));
+        f1 = var_mapping{strcmp(var_mapping(:, 2), 'ctd1_oxy') & cellfun(@(x) isfield(d, x), var_mapping(:, 1)), 1};
+        f2 = var_mapping{strcmp(var_mapping(:, 2), 'ctd2_oxy') & cellfun(@(x) isfield(d, x), var_mapping(:, 1)), 1};
+        if ~isempty(f1) && ~isempty(f2)
+            oix = interp1(d.dday, d.(f2)-d.(f1), dday);
+            o_ctd_m = nanmean(oix(impt));
+            o_ctd_s = nanstd(oix(impt));
+        else
+            oix=NaN;
+            o_ctd_m=NaN;
+            o_ctd_s=NaN;
+        end
     end
 
     % Select data close to microcat's nominal deployment depth
