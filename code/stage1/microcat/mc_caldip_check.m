@@ -305,7 +305,7 @@ for i = 1:nvec
         f1 = var_mapping{strcmp(var_mapping(:, 2), 'ctd1_oxy') & cellfun(@(x) isfield(d, x), var_mapping(:, 1)), 1};
         f2 = var_mapping{strcmp(var_mapping(:, 2), 'ctd2_oxy') & cellfun(@(x) isfield(d, x), var_mapping(:, 1)), 1};
         if ~isempty(f1) && ~isempty(f2)
-            oix = interp1(d.dday, d.(f2)-d.(f1), dday);
+            oix  = interp1(d.dday, d.(f2) - d.(f1), dday);
             o_ctd_m = nanmean(oix(impt));
             o_ctd_s = nanstd(oix(impt));
         else
