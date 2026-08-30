@@ -68,21 +68,6 @@ fprintf(fid_stat,['        MicroCAT in Mooring ',moor,'\n\n\n']);
 
 manual_despiking='No spikes were removed manually \n';
 
-% ---- despike parameters
-despike = 1; %***prompt
-if despike %***track parameters (and whether used) for each cruise/record
-    T_range = [-15 +15];
-    C_range = [-30 +30];
-    P_range = [-100 2000];
-    O_range = [-50 550];
-    % change from one point to the next can be no larger than 18*standard deviation of time series (after range editing)
-    dT_range = 10; 
-    dC_range = 10; 
-    dP_range = 10; 
-    dO_range = 10;
-    nloop    = 3;
-    %*** consider adding (even more conservative) parameters for oxygen?
-end
 
 dummy    = -9999;
 
@@ -142,27 +127,6 @@ for proc = 1 : length(sn)
         End_Date = [YY(cycles) MM(cycles) DD(cycles)];
         End_Time = HH(cycles);
 
-        if despike %***also plot with and without! 
-            %------------------------------------------
-            %--- despike ------------------------------
-            %------------------------------------------
-            disp('ddspike')
-            [t,tdx,tndx] = ddspike(t,T_range,dT_range,nloop,'y',dummy);
-            [c,cdx,cndx] = ddspike(c,C_range,dC_range,nloop,'y',dummy);
-            if length(p) > 1
-                [p,pdx,pndx] = ddspike(p,P_range,dP_range,nloop,'y',dummy);
-            end
-            if id(proc)==335
-               [o2,o2dx,o2ndx] = ddspike(o2,O_range,dO_range,nloop,'y',dummy);
-               [ot,otdx,otndx] = ddspike(ot,T_range,dT_range,nloop,'y',dummy);
-            end
-
-        end
-
-        %close(989)
-
-
-
         % ----------------------------------------
         % ---  Manual De-spike -------------------
         % ----------------------------------------
@@ -176,7 +140,7 @@ for proc = 1 : length(sn)
         end
 
         % manual editing with brush
-        n = 3; varnames = {'p','t','c'};
+        n = 3; varnames = {'t','c','p'}; % changed order to match final figure order
         x = jd-jd1; xl = x([1 end]);
         if id(proc)==335
             n = 5; varnames = [varnames,'ot','o2'];
@@ -193,6 +157,11 @@ for proc = 1 : length(sn)
             ylabel(varnames{no})
             estr = [estr sprintf('%d = %s,',no,varnames{no})];
         end
+
+        % link axes for zooming - allows better reference for finding
+        % spikes if all variables zoom to same time range
+        linkaxes(ha,'x');
+
         estr = estr(1:end-1);
         editing=input('Manual editing for plotting required? 0=no, 1=yes: ');
         while editing==1
@@ -203,11 +172,12 @@ for proc = 1 : length(sn)
                 hl(no) = plot(x,dsplotdata.(varnames{no})); 
                 xlim(xl); grid on; ylabel(varnames{no})
             end
-            zoomx = input('use figure buttons to zoom then type z to zoom all to current xlims, or enter to skip  ','s');
-            if ~isempty(zoomx) && strcmp(zoomx,'z')
-                xl = get(gca,'xlim');
-                set(ha(:),'xlim',xl)
-            end
+            linkaxes(ha,'x') % this does the same as the lines below without the need to type anything
+            % zoomx = input('use figure buttons to zoom then type z to zoom all to current xlims, or enter to skip  ','s');
+            % if ~isempty(zoomx) && strcmp(zoomx,'z')
+            %     xl = get(gca,'xlim');
+            %     set(ha(:),'xlim',xl)
+            % end
             varnum = input(sprintf('which variable do you want to edit (%s or enter to stop editing)? ',estr));
             if isempty(varnum)
                 editing = 0; continue
