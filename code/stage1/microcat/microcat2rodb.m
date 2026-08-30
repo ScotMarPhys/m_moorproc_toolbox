@@ -60,11 +60,13 @@ end
 
 Instrument = 'MicroCAT';           % Instr. info for rodb header
 cols       = 'YY:MM:DD:HH:T:C';    % column info for rodb header
-colsp      = 'YY:MM:DD:HH:T:C:P'; % column info for rodb header (mc with pressure sensor)
-colso      = 'YY:MM:DD:HH:T:C:P:OT:O2'; % column info for rodb header (mc with pressure sensor and oxygen sensor)
 fort       = '%4.4d  %2.2d  %2.2d  %7.5f   %6.4f  %6.4f'; %data output format
-fortp      = '%4.4d  %2.2d  %2.2d  %7.5f   %6.4f  %6.4f  %5.1f'; %data output format(mc with pressure sensor)
-forto      = '%4.4d  %2.2d  %2.2d  %7.5f   %6.4f  %6.4f  %5.1f %6.4f %5.2f'; %data output format(mc with pressure sensor and oxygen sensor)
+
+% updated so columns and format change dynamically based on variables found rather than rigidly setting here
+%colsp      = 'YY:MM:DD:HH:T:C:P'; % column info for rodb header (mc with pressure sensor)
+%colso      = 'YY:MM:DD:HH:T:C:P:OT:O2'; % column info for rodb header (mc with pressure sensor and oxygen sensor)
+%fortp      = '%4.4d  %2.2d  %2.2d  %7.5f   %6.4f  %6.4f  %5.1f'; %data output format(mc with pressure sensor)
+%forto      = '%4.4d  %2.2d  %2.2d  %7.5f   %6.4f  %6.4f  %5.1f %6.4f %5.2f'; %data output format(mc with pressure sensor and oxygen sensor)
 
 % check if infile and infofile exist
 
@@ -268,7 +270,7 @@ end
 
 % --- convert data string
 disp('Convert datastr into numbers')
-%save tmp.mat dt ;
+tmp_dt=dt ; % create backup of uncleaned dt for use with pinpointing format errors later
 
 % This next line won't work if there're still ??? (carriage returns are ok) in dt
 dt = str2num(dt);
@@ -291,10 +293,10 @@ sz = size(dt);
 % but on D382 we found some bad data in the middle of a record that was
 % difficult to track down
 if isempty(dt)
-    load tmp.mat % reload dt data
+    % use backup of dt rather than saving and loading something 
     k2=1; 
-    for k=1:length(dt)/57
-        string=dt(57*(k-1)+1:57*(k-1)+55);
+    for k=1:length(tmp_dt)/57
+        string=tmp_dt(57*(k-1)+1:57*(k-1)+55);
         dt_convert=str2num(string);
         if isempty(dt_convert)
             bad_data_line(k2)=k;
@@ -336,6 +338,9 @@ if cnv
         elseif contains(varstr, 'sbeopoxMm/Kg')
             oxyi = k;
 
+        elseif contains(varstr,'sbeoxpd') % oxygen phase delay in micro sec
+            oxphi = k;
+
         elseif contains(varstr, 'timeK') 
             timeformat = 'sec';
             timei = k;
@@ -351,7 +356,11 @@ if cnv
         elseif contains(varstr, 'timeJ')
             timeformat = 'JD';
             timei = k;
-
+            starti = strfind(zeile,'start_time'); starti = starti(starti>spani(end)); starti = starti(1); % DR updated DY214 to also handle files with time format in timeJV2 or timeJ
+            tb = datevec(datenum(zeile(starti+[13:32])));
+            % set mm to 1, dd and HH, MM, SS to 0 to find timebase at start
+            % of year as timeJV2 and timeJ are both julian days
+            timebase = julian(tb(1),1,0,0);
         elseif contains(varstr(10), 'c') && contains(varstr, '0mS/cm')
             condi = k;
             dt(:,condi)=dt(:,condi)/10;
@@ -389,7 +398,9 @@ if cnv==0 % data is in .asc file
     end
 else % data is in cnv file
   if contains(timeformat, 'sec')
-    if size(dt,2)==5 % SMP with pressure
+    %if size(dt,2)==5 % SMP with pressure
+        % using timei means checking size of dt is now irrelevant, and each
+        % option had the same code anyway,
         cnv_secs=dt(:,timei); % seconds since 1st Jan 2000.
         jd=cnv_secs/(60*60*24)+timebase - toffset;
         disp(['toffset : ',num2str(toffset)]);
@@ -397,33 +408,37 @@ else % data is in cnv file
         HH=hms2h(gtime(:,4),gtime(:,5),gtime(:,6));
         Start_Date = gtime(1,[1 2 3]);
         End_Date = gtime(dtl,[1 2 3]);
-    elseif size(dt,2)==7 % SMP-ODO with pressure
-        cnv_secs=dt(:,timei); % seconds since 1st Jan 2000.
-        jd=cnv_secs/(60*60*24)+timebase - toffset;
-        disp(['toffset : ',num2str(toffset)]);
-        gtime=gregorian(jd);
-        HH=hms2h(gtime(:,4),gtime(:,5),gtime(:,6));
-        Start_Date = gtime(1,[1 2 3]);
-        End_Date = gtime(dtl,[1 2 3]);
-    end
+    %elseif size(dt,2)==7 % SMP-ODO with pressure
+    %    cnv_secs=dt(:,timei); % seconds since 1st Jan 2000.
+    %    jd=cnv_secs/(60*60*24)+timebase - toffset;
+    %    disp(['toffset : ',num2str(toffset)]);
+    %    gtime=gregorian(jd);
+    %    HH=hms2h(gtime(:,4),gtime(:,5),gtime(:,6));
+    %    Start_Date = gtime(1,[1 2 3]);
+    %    End_Date = gtime(dtl,[1 2 3]);
+    %end
   elseif contains(timeformat, 'JD')
-    if size(dt,2)==5 % SMP with pressure
-        cnv_days=dt(:,4); % seconds since 1st Jan 2000.
-        jd=cnv_days+julian(toffset,1,1,0) - 1;
+    %if size(dt,2)==5 % SMP with pressure
+        % same comment as above, though code also updated to use timei here
+        % too as was previously still using hard-coded column number
+        % also updated code to use timebase as seemed 
+        cnv_days=dt(:,timei); % days since start of year
+        %jd=cnv_days+julian(toffset,1,1,0) - 1;
+        jd=cnv_days+timebase;
         disp(['dateoffset : ',num2str(toffset)]);
         gtime=gregorian(jd);
         HH=hms2h(gtime(:,4),gtime(:,5),gtime(:,6));
         Start_Date = gtime(1,[1 2 3]);
         End_Date = gtime(dtl,[1 2 3]);
-    elseif size(dt,2)==7 % SMP-ODO with pressure
-        cnv_days=dt(:,4); % seconds since 1st Jan 2000.
-        jd=cnv_days+julian(toffset,1,1,0) - 1;
-        disp(['dateoffset : ',num2str(toffset)]);
-        gtime=gregorian(jd);
-        HH=hms2h(gtime(:,4),gtime(:,5),gtime(:,6));
-        Start_Date = gtime(1,[1 2 3]);
-        End_Date = gtime(dtl,[1 2 3]);                
-    end      
+    %elseif size(dt,2)==7 % SMP-ODO with pressure
+    %    cnv_days=dt(:,4); % seconds since 1st Jan 2000.
+    %    jd=cnv_days+julian(toffset,1,1,0) - 1;
+    %    disp(['dateoffset : ',num2str(toffset)]);
+    %    gtime=gregorian(jd);
+    %    HH=hms2h(gtime(:,4),gtime(:,5),gtime(:,6));
+    %    Start_Date = gtime(1,[1 2 3]);
+    %    End_Date = gtime(dtl,[1 2 3]);                
+    %end      
   end
 end
 
@@ -450,24 +465,41 @@ TIME = gregorian(jd);
 
 if cnv==0 %.asc file
     data = [TIME(:,1:3) hms2h(TIME(:,4:6)) dt(:,1) dt(:,2)*10];
-    
-    if  size(dt,2) ==9           % with pressure
-        data = [data dt(:,3)];
-        cols = colsp;
-        fort = fortp;
-    end
+    % all MCs used since start of RAPID have had P sensors so don't really
+    % need to have option for those without
+    data = [data dt(:,3)]; % include pressure
+    cols = [cols ':P'];
+    fort = [fort ' %5.1f'];
+
+    %if  size(dt,2) ==9           % with pressure
+    %    data = [data dt(:,3)];
+    %    cols = colsp;
+    %    fort = fortp;
+    %end
 else % .cnv file
     data = [TIME(:,1:3) hms2h(TIME(:,4:6)) dt(:,tempi) dt(:,condi)*10];
     
-    if size(dt,2)==5
+    if (exist('presi','var')) % check if has P sensor
         data = [data dt(:,presi)];
-        cols = colsp;
-        fort = fortp;
-    elseif size(dt,2)==7 % ODO sensor
-        data = [data dt(:,[presi oxyti oxyi])];
-        cols = colso;
-        fort = forto;
+        cols = [cols ':P'];
+        fort = [fort ' %5.1f'];
     end
+    if (exist('oxyi','var')) % check if has O2 sensor
+        data = [data dt(:,oxyi)];
+        cols = [cols ':O2'];
+        fort = [fort ' %5.2f'];
+    end
+    if (exist('oxyti','var')) % check if O2 sensor also recorded T
+        data = [data dt(:,oxyti)];
+        cols = [cols ':OT'];
+        fort = [fort ' %6.4f'];
+    end
+    if (exist('oxphi','var')) % check if outputting O2 raw phase delay data
+        data = [data dt(:,oxphi)];
+        cols = [cols ':O2phase'];
+        fort = [fort ' %5.3f'];
+    end
+    % other variables not yet coded but could be added here if desired
 end
 
 rodbsave(outfile,...
@@ -511,6 +543,9 @@ for k = 1:nplots
     elseif k == 5
         ylabel('Oxygen')
         fprintf(fidlog,'Median Oxygen %5.2f\n',mt);
+    elseif k == 6
+        ylabel('Pha shif.')
+        fprintf(fidlog,'Median Oxygen Phase Shift %5.3f\n',mt);
     end
 
     set(gca,'ylim',prctile(data(:,4+k),[1 99])+[-1 1]*std(data(:,4+k))/10)
