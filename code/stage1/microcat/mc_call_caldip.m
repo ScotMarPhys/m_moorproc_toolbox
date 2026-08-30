@@ -54,11 +54,12 @@ close all;
 
 cast = input('Which cast number? ','s');
 do_microcat2rodb = input('write rodb files (1) or only make plots (0)?  ');
+doctd = input('Include CTD data - in mstar format (1) or just MCs for quick check before CTD processed (0)?  ');
 ctdnum = sprintf('%03d',str2double(cast));
 
 cruise = MOORPROC_G.cruise;
 
-doctd = 1;% 1; % whether to load and plot CTD data: 1 if mstar format, 99 if native cnv file (without header)
+%doctd = 0;% 1; % whether to load and plot CTD data: 0 if no ctd data (yet), 1 if mstar format, 99 if native cnv file (without header)
 
 % get paths for data input and output
 pd = moor_inoutpaths('microcat_cal_dip',cast);
@@ -85,7 +86,7 @@ end
 if ~exist(pd.infofile,'file')
     error('infofile %s not found',pd.infofile)
 end
-if ~exist(pd.ctdfile,'file')
+if ~exist(pd.ctdfile,'file') && doctd~=0
     error('ctdinfile %s not found',pd.ctdfile)
 end
 if ~exist(pd.stage1fig,'dir')
@@ -97,6 +98,12 @@ if ~exist('doctd','var') || doctd == 1
     [d, h]=mload(pd.ctdfile,'/');
     dnum = m_commontime(d,'time',h,'datenum');
     d.yd = dnum - t0;
+    if ~isfield(d,'oxygen1')
+        d.oxygen1=d.oxy1;
+    end
+    if ~isfield(d,'d.oxygen2') && isfield(d,'d.oxy2')
+        d.oxygen2=d.oxy2;
+    end
     if ~isfield(d,'oxygen2')
         d.oxygen2 = d.oxygen1;
     end
@@ -241,11 +248,11 @@ for i = 1:length(sn)
     % interp here if doctd
     if doctd==1 || doctd==99
         ni = ~isnan(yd(i,:));
-        ctdc2(i,ni)=interp1(d.yd, d.cond, yd(i,ni));
-        ctdt2(i,ni)=interp1(d.yd, d.temp, yd(i,ni));
+        ctdc2(i,ni)=interp1(d.yd, d.cond1, yd(i,ni));
+        ctdt2(i,ni)=interp1(d.yd, d.temp1, yd(i,ni));
         ctdp(i,ni)=interp1(d.yd, d.press, yd(i,ni));
-        ctdot(i,ni)=interp1(d.yd, d.temp, yd(i,ni));
-        ctdo2(i,ni)=interp1(d.yd, d.oxygen, yd(i,ni));
+        ctdot(i,ni)=interp1(d.yd, d.temp1, yd(i,ni));
+        ctdo2(i,ni)=interp1(d.yd, d.oxygen1, yd(i,ni));
     end
 end
 
@@ -345,9 +352,13 @@ if find(id2==335)
 
     figure(38);hold on; box on;
     for i=1:a(1)
-        plot(yd(i,:),o2(i,:),'color',colours(i,:),'linestyle',linestyles{i},'linewidth',lwmc);
+        if id2(i)==335 % set check so only plotting ODOs to avoid a confusing legend
+            plot(yd(i,:),o2(i,:),'color',colours(i,:),'linestyle',linestyles{i},'linewidth',lwmc);
+        end
     end
-    legend(snl,'location','eastoutside')
+    snl02=snl(id2==335,:); % reduce legend text to just ODOs
+    legend(snl02,'location','eastoutside')
+    %legend(snl,'location','eastoutside')
     ylabel('oxygen')
     xlabel(['yearday (relative to ' num2str(MOORPROC_G.YEAR) '/1/0 00:00)'])
     title(['CAST ' cast ' Calibration Dip'])
