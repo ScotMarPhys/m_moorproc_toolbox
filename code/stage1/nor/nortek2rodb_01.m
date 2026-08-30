@@ -139,30 +139,38 @@ for i = 1:length(filenames)
     fprintf(fidlog,'outfile: %s\n',outfile);
     fprintf(fidlog,'Nortek serial number  : %d\n',serial_nums(i));
     
-    all_data=load(infile);
-    month=all_data(:,1); day=all_data(:,2); year=all_data(:,3); 
-    hour=all_data(:,4); minute=all_data(:,5); second=all_data(:,6);
-    %errcode=all_data(:,7); statcode=all_data(:,8);
-    u=all_data(:,9); v=all_data(:,10); w=all_data(:,11);
-    Amp1=all_data(:,12); Amp2=all_data(:,13); Amp3=all_data(:,14);
-    bat=all_data(:,15); 
-    
-    % updated for differences in file format depending on which version of the software used to download and convert - dr400
-    % cruise kn200-4
-    a=size(all_data);
-    if a(2)==27 % I THINK THIS IS RIGHT FOR USING "SOUNDSPEED USED" rather than just SOUNDSPEED for newer Norteks. Need to check really.
-        disp(' I THINK THIS IS RIGHT FOR USING "SOUNDSPEED USED" rather than just SOUNDSPEED for newer Norteks. Need to check really.')
-        %soundspeed=all_data(:,17); 
-        heading=all_data(:,18); pitch=all_data(:,19); roll=all_data(:,20);
-        pressure=all_data(:,21); temperature=all_data(:,23);
-        %analogue1=all_data(:,24); analogue2=all_data(:,25);
-        speed=all_data(:,26); direction=all_data(:,27);
-    elseif a(2)==25 % converted in older software
-        %soundspeed=all_data(:,16);  
-        heading=all_data(:,17); pitch=all_data(:,18); roll=all_data(:,19);
-        pressure=all_data(:,20); temperature=all_data(:,21);
-        %analogue1=all_data(:,22); analogue2=all_data(:,23);
-        speed=all_data(:,24); direction=all_data(:,25);
+    % check whether Mk2 Aquadopp based on serial number - Mk2 units have 6
+    % digit number and the lowest we have is 400379. Mk1 units are 5 digits
+    % and highest number that NOC has (including NMEP) is 16293
+    if serial_nums(i)<99999 % is Mk1 unit
+        all_data=load(infile);
+        month=all_data(:,1); day=all_data(:,2); year=all_data(:,3); 
+        hour=all_data(:,4); minute=all_data(:,5); second=all_data(:,6);
+        %errcode=all_data(:,7); statcode=all_data(:,8);
+        u=all_data(:,9); v=all_data(:,10); w=all_data(:,11);
+        Amp1=all_data(:,12); Amp2=all_data(:,13); Amp3=all_data(:,14);
+        bat=all_data(:,15); 
+        
+        % updated for differences in file format depending on which version of the software used to download and convert - dr400
+        % cruise kn200-4
+        a=size(all_data);
+        if a(2)==27 % I THINK THIS IS RIGHT FOR USING "SOUNDSPEED USED" rather than just SOUNDSPEED for newer Norteks. Need to check really.
+            %disp(' I THINK THIS IS RIGHT FOR USING "SOUNDSPEED USED" rather than just SOUNDSPEED for newer Norteks. Need to check really.')
+            %soundspeed=all_data(:,17); 
+            heading=all_data(:,18); pitch=all_data(:,19); roll=all_data(:,20);
+            pressure=all_data(:,21); temperature=all_data(:,23);
+            %analogue1=all_data(:,24); analogue2=all_data(:,25);
+            speed=all_data(:,26); direction=all_data(:,27);
+        elseif a(2)==25 % converted in older software
+            %soundspeed=all_data(:,16);  
+            heading=all_data(:,17); pitch=all_data(:,18); roll=all_data(:,19);
+            pressure=all_data(:,20); temperature=all_data(:,21);
+            %analogue1=all_data(:,22); analogue2=all_data(:,23);
+            speed=all_data(:,24); direction=all_data(:,25);
+        end
+    else % serial number will be 6 digits so is Mk2
+        all_data=readtable(infile,'NumHeaderLines',1,'delimiter',',');
+        % DR still working on this part
     end
 
     dat       = [year month day hms2h(hour,minute,second)];
