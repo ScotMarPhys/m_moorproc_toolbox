@@ -1,8 +1,3 @@
-% 
-% assumed file naming is same as for .dat files i.e. using that specified
-% in _filenames.txt file for each mooring but changing .dat to .dia
-%
-
 % function nortek_beam_check(moor)
 % function nortek_beam_check(moor, pd)
 %
@@ -183,6 +178,7 @@ for proc = 1:length(filenames)
     for sub=1:3
         subplot(1,3,sub)
         set(gca,'ylim',[min_y max_y])
+        datetick('x','mmm-yy','keeplimits')
     end
     sgtitle(['Beam checking from diagnostic signal strength from file: ' regexprep(filenames{proc},'_','\\_')])
 
@@ -239,9 +235,10 @@ for proc = 1:length(filenames)
         for sub=1:3
             subplot(1,3,sub)
             set(gca,'ylim',[min_y max_y])
+            datetick('x','mmm-yy','keeplimits')
         end
         sgtitle(['Beam checking from main data signal strength from file: ' regexprep([moor '_' num2str(serial_nums(proc)) '.use'],'_','\\_')])
-        figname = fullfile(pd.stage2figpath,sprintf(pd.stage2form,sn(proc)));
+        figname = fullfile(pd.stage2figpath,sprintf(pd.stage2form,serial_nums(proc)));
 
         orient landscape
         print(gcf,'-dpng','-r300',[figname,'_main_data_beam_strength.png']);
