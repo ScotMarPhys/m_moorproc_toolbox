@@ -1,4 +1,3 @@
-% STAGE01_READ_QC_S55 Read and perform initial QC on Signature 55 ADCP data.
 %   This function processes Nortek Signature 55 .mat files, performing 
 %   automated flagging for pressure, tilt, signal strength, sidelobe interference,
 %   and plots magnetometer hard-iron distortions and generell sensor
@@ -179,15 +178,15 @@ msg_suffix = ' is not equal for all time steps. Please check ';
 
 for k = 1:length(check_fields)
     if size(unique(Data.(check_fields{k}), 'rows'), 1) ~= 1
-        prombt_2 = [check_labels{k}, msg_suffix, 'Data.', check_fields{k}];
-        disp(prombt_2); fprintf(fidlog, '%s\n', prombt_2);
+        prompt_2 = [check_labels{k}, msg_suffix, 'Data.', check_fields{k}];
+        disp(prompt_2); fprintf(fidlog, '%s\n', prompt_2);
     end
 end
 
 % Specific Check for Average Error
 if size(unique(Data.Average_Error, 'rows'), 1) ~= 1 || Data.Average_Error(1) ~= 0
-    prombt_2 = 'Errors occurred during measuring. Please check Data.Average_Error';
-    disp(prombt_2); fprintf(fidlog, '%s\n', prombt_2);
+    prompt_2 = 'Errors occurred during measuring. Please check Data.Average_Error';
+    disp(prompt_2); fprintf(fidlog, '%s\n', prompt_2);
 end
 
 %% STAGE 1.  Nortek suggested quality control steps %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -209,7 +208,14 @@ n_std    = 1;
 
 %% figure settings
 fs = 14;
-set(findall(gcf, '-property', 'FontSize'), 'FontUnits', 'points', 'FontSize', fs);
+%set(findall(gcf, '-property', 'FontSize'), 'FontUnits', 'points', 'FontSize', fs);
+% line above fails if have figures with colorbars open. Either need to
+% close all figures before running code (may not be desired) or use lines
+% below
+fig_handles = findall(gcf, '-property', 'FontSize');
+% Exclude colorbars (and legends) that lack the FontUnits property
+fig_handles(ismember(string(get(fig_handles, 'Type')), ["colorbar", "legend"])) = [];
+set(fig_handles, 'FontUnits', 'points', 'FontSize', fs);
 
 % ylims
 yl_P     = (P_median + n_std * [-P_std P_std]);
@@ -239,7 +245,7 @@ prompt = sprintf(['\n***Pressure check***\n', ...
     S.nTrimStart, S.nTrimEnd, QC_BAD);
 fprintf(1, prompt); % Print to Command Window
 fprintf(fidlog, prompt); % Print to Log File
-clear prombt
+clear prompt
 
 % --- 2. Information File Check ---
 ds_vec = datevec(T([S.startIdx, S.endIdx])); 
@@ -247,13 +253,13 @@ bg_suggest = datenum([ds_vec(1, 1:end-1), 0]);
 ed_suggest = datenum([ds_vec(2, 1:end-1), 0]);
 
 if bg_suggest~=info_adcp.start_timestamp
-    prombt = ['***',newline,'Suggest to set mooring start date and time in ',... 
+    prompt = ['***',newline,'Suggest to set mooring start date and time in ',... 
             moor,'info.dat to ',datestr(bg_suggest),newline,'***',newline,newline];
-    disp(prombt); fprintf(fidlog,prombt); clear prombt
+    disp(prompt); fprintf(fidlog,prompt); clear prompt
 elseif ed_suggest~=info_adcp.end_timestamp
-        prombt = ['***',newline,'Suggest to set mooring end date and time in ',... 
+        prompt = ['***',newline,'Suggest to set mooring end date and time in ',... 
             moor,'info.dat to ',datestr(ed_suggest),newline,'***',newline,newline];
-    disp(prombt); fprintf(fidlog,prombt);clear prombt
+    disp(prompt); fprintf(fidlog,prompt);clear prompt
 end
 
 % --- 3. Pitch and Roll Check ---
@@ -281,7 +287,7 @@ prompt = sprintf(['***Pitch check***\n', ...
     'Post processing possible.\n\n'], ...
     length(badind_tilt_severe), QC_BAD, ...
     length(badind_tilt_mod), QC_PROBABLY_BAD);
-fprintf(1, prompt); fprintf(fidlog, prompt); clear prombt
+fprintf(1, prompt); fprintf(fidlog, prompt); clear prompt
 
 % Heading mark values with bad pressure
 H_trim = H;
@@ -491,7 +497,8 @@ ax(6) = subplot(2,3,6);hold on; imagesc(T, y, Cor3');
 
 for k = 1:numel(ax)
     axis(ax(k),'xy','ij');
-    ylim(ax(k),[0,1080])
+    %ylim(ax(k),[0,1080]) % remove hardcoding of depth so script can be useful at other sites
+    ylim(ax(k),[ceil(info_adcp.wd/100)*100-1100,ceil(info_adcp.wd/100)*100]) % use 1100 as Sig-55 range
     ylabel(ax(k),'Nominal cell depth (m)')
     datetick(ax(k),'x','mmm-yyyy','keepticks','keeplimits');
     xlim(ax(k),[min(T),max(T)])
@@ -586,7 +593,7 @@ print(gcf,'-dpng','-r300',[figname3 '.png']);
 savefig([figname3 '.fig']);
 clear ax
 
-%% prombts after plotting
+%% prompts after plotting
 % surface bin
 srf_bins = min([SB,CB]);
 bins_to_process=input(['\n\n***Surface bins***', ...
@@ -629,10 +636,10 @@ combined_spike_mask = mask_spikes_Amp1 | mask_spikes_Amp2 | mask_spikes_Amp3;
 % 3. Update your QC flag
 Data.mask_QC_2D(combined_spike_mask) = QC_BAD;
 
-prombt = ['\nFlagged Amplitude spikes (burst median ± %d*Median ' ...
+prompt = ['\nFlagged Amplitude spikes (burst median ± %d*Median ' ...
     'Absolute Deviation\n and >10dB jump) as QC_BAD (%d).\n\n'];
-fprintf(fidlog, prombt, SDc, QC_BAD);
-fprintf(prombt, SDc, QC_BAD);
+fprintf(fidlog, prompt, SDc, QC_BAD);
+fprintf(prompt, SDc, QC_BAD);
 
 
 %% 4. Velocity %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -668,12 +675,12 @@ mask_vd = [false(Tidx, 1), (abs(V_diff)>CUR_thr)];
 mask_vel_comb = (mask_u | mask_v | mask_s | mask_w | mask_ud | mask_vd);
 Data.mask_QC_2D(mask_vel_comb)= QC_BAD;
 
-prombt = ['\nVelocity QC Summary: Flagged cells as QC_BAD (%d) based on:\n' ...
+prompt = ['\nVelocity QC Summary: Flagged cells as QC_BAD (%d) based on:\n' ...
           ' - Vertical jumps of horizontal velocity |diff(U)|,|diff(V)|> %0.2f m/s\n' ...
           ' - Temporal outliers > 3 standard deviations (per depth bin)\n' ...
           ' - Vertical velocity outliers (|W|) > %0.2f m/s\n'];
-fprintf(1, prombt, QC_BAD, CUR_thr, W_thr); 
-fprintf(fidlog, prombt, QC_BAD, CUR_thr, W_thr);
+fprintf(1, prompt, QC_BAD, CUR_thr, W_thr); 
+fprintf(fidlog, prompt, QC_BAD, CUR_thr, W_thr);
 
 
 U_QC = U; U_QC(Data.mask_QC_2D~=0)=NaN;
@@ -739,7 +746,11 @@ end
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
 figname4= fullfile(figpath,[figure_base,'_stage1_f4_velocity_and_speed_QC']);
 print(gcf,'-dpng','-r300',[figname4 '.png']);
-savefig([figname4 '.fig']);
+%savefig([figname4 '.fig']); % problem with filesize on DY214. Instead need
+%to force savefig to use v7.3 as the MAT-file version instead of default
+%v7.0. v7.0 is Matlab's proprietary MAT-file format. v7.3 is HDF5 that
+%allows larger files
+savefig(gcf,[figname4 '.fig'],'-v7.3');
 clear ax
 
 
@@ -750,11 +761,11 @@ err_max = max(Data_corr.hard_iron_CCW_angle,[],'omitnan');
 
 % Logfile output
 deg = char(176); 
-prombt = ['\n***Hard-Iron compass correction***\n' ...
+prompt = ['\n***Hard-Iron compass correction***\n' ...
     'Simple circle fit shows error angle varies between %3.0f' deg ... 
     'and %3.0f' deg '\n'];
-fprintf(1, prombt, err_min, err_max); 
-fprintf(fidlog, prombt, err_min, err_max); 
+fprintf(1, prompt, err_min, err_max); 
+fprintf(fidlog, prompt, err_min, err_max); 
 
 % Save figure
 set(gcf,'PaperUnits','centimeters','PaperPosition',[0 0 16 12]*1.5)
