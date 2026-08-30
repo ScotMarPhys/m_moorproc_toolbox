@@ -20,3 +20,5 @@ pd = moor_inoutpaths('nor',moor);
 nortek2rodb_01(moor,pd)
 
 nortek_raw2use_02(moor,pd,'plot_interval',plot_interval)
+
+nortek_beam_check(moor,pd)
