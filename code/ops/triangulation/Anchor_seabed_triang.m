@@ -51,6 +51,7 @@ function Anchor_seabed_triang(varargin)
 global MEXEC_G MOORPROC_G
 
 iscor = 0;
+warning('off', 'all');
 
 % User input
 if nargin>0
@@ -77,6 +78,7 @@ if isempty(loc_name)
 end
 pd = moor_inoutpaths('reports',loc_name);
 fprintf(1, ' Output will be saved to <name>_triangle.txt in %s\n\n',pd.trilatdir);
+if ~exist(pd.trilatdir,'dir');mkdir(pd.trilatdir);end
 
 %target positions
 targ_loc=NaN(2,1);
@@ -182,6 +184,9 @@ else
    ich = input('Enter 1 to accept or 2 to change values: ');
    if ich == 2
        wd=input('Enter uncorrected water depth in metres: ');
+       man_wd = 1;
+   else
+       man_wd = 0;
    end
    %and correct
    corr_struct = mcarter(lat(1),lon(1),wd);
@@ -224,7 +229,7 @@ end
 % the vector is close to vertical; otherwise just use the same % correction
 % as for the anchor-drop depth 
 mo = (wd_corr-wd)./wd;
-rangeC = range*(1+mo);
+rangeC = range.*(1+mo);
 m = acos(wd./range)<=10/180*pi;
 corr_struct = mcarter(lat(m),lon(m),range(m));
 rangeC(m) = corr_struct.cordep;
@@ -252,9 +257,18 @@ xdegr = -180:2:180;
 clon = clon-360;
 hl = plot([lon lon]',[lat lat]','b+'); if length(hl)>3; set(hl(4:end),'color','r'); end
 hlc = plot(clon',clat','b'); if length(hlc)>3; set(hlc(4:end),'color','r'); end
-titletext={sprintf('Triangulation Survey for: %s',loc_name);...
-    sprintf('Corrected water depth: %5.0f m.',wd_corr);... 
-    sprintf('Release Height: %3.1f m. Transducer depth: %3.1f',rht,td)};
+
+if man_wd==0 % if water depth was obtained conventionally, e.g. at anchor drop
+    titletext={sprintf('Triangulation Survey for: %s',loc_name);...
+        sprintf('Corrected water depth: %5.0f m.',wd_corr);...
+        sprintf('Release Height: %3.1f m. Transducer depth: %3.1f',rht,td)};
+else % if water depth has been manually overwritten for some reason, flag this in the figure title.
+    titletext={sprintf('Triangulation Survey for: %s',loc_name);...
+        sprintf(['Corrected water depth: %5.0f m. *Calculated from manual depth entry. ' ...
+        'Check this value is in agreement with depth at closest ship track to anchor position.*'],wd_corr);...
+        sprintf('Release Height: %3.1f m. Transducer depth: %3.1f',rht,td)};
+end
+
 title(titletext);
 xlabel('Longitude'); ylabel('Latitude')
 
@@ -318,13 +332,11 @@ else
 end
 
 % Calculate distance from drop to moored positions
-fallback=sw_dist([latD APlat],[lonD APlon],'km')*1000;
+fallback=gsw_distance([lonD APlon],[latD APlat]);
 fallback=sprintf('%5.0f',fallback);
-fallbacknm = sw_dist([latD APlat],[lonD APlon],'nm');
-fallbacknm = sprintf('%5.2f',fallbacknm);
 
 if numel(~isnan(targ_loc))==2
-    dist2targ = sw_dist([targ_loc(1) APlat],[targ_loc(2) APlon],'km')*1000;
+    dist2targ = gsw_distance([targ_loc(2) APlon],[targ_loc(1) APlat]);
 else
     dist2targ=NaN;
 end
@@ -341,7 +353,7 @@ titletext = [titletext;...
 title(titletext);
 
 % Text for plot
-text((east-west)*0.1+west,(north-south)*0.95+south,['Fallback = ' fallback 'm/' fallbacknm 'nm'],'color','k');
+text((east-west)*0.1+west,(north-south)*0.95+south,['Fallback = ' fallback 'm'],'color','k');
 text((east-west)*0.1+west,(north-south)*0.90+south,'Anchor drop','color','g');
 text((east-west)*0.1+west,(north-south)*0.85+south,'Anchor seabed location','color','r');
 
@@ -361,16 +373,18 @@ end
 % again check against mapped and ship track bathymetry
 [swtx,mdep] = get_mapbathy(loc_name,APlon,APlat,wd_corr);
 % bathymetry when ship passed over the calculated anchor point
-[pos, dep] = get_uway([tmeD-0.5 max(tme)+0.5]);
+[pos, dep] = get_uway([tmeD-1 max(tme)+1]);
 [wd_sh, dis_sh, im] = shipdep(pos, dep, APlon, APlat);
-fprintf(1,'Depth at closest ship track to anchor position was %6.1f m (%6.1f nm away)\n',wd_sh,dis_sh(im));
-if abs(wd_sh-wd)>200 || dis_sh(im)>2
+fprintf(1,'Depth at closest ship track to anchor position was %6.1f m (%6.1f m away)\n',wd_sh,dis_sh(im));
+if max(abs(wd_sh-wd))>40 || dis_sh(im)>2
     figure(5); clf; 
     if ~isempty(mdep); contour(mdep.lon,mdep.lat,mdep.depth); end
     hold on
     scatter(pos.lon,pos.lat,10,dep.depthm,'filled'); colorbar
     plot(APlon,APlat,'ok',lonD,latD,'xk'); grid on
-    axis([APlon-.1 APlon+.1 APlat-.1 APlat+.1])
+    text(APlon+0.001, APlat+0.001, sprintf('Depth at closest ship track to anchor position:\n%.1f m (%.1f m away)', wd_sh, dis_sh(im)), 'Color', 'r');
+    axis([APlon-.02 APlon+.02 APlat-.02 APlat+.02])
+    clim([wd_sh-50 wd_sh+50])
     title('raw underway depths (colors), anchor position (o), drop position (x)')
     fprintf(1,'there may be bad depth data;\n');
     a = input('edit data and recalculate (e), select new point (s), or enter to continue  ', 's');
@@ -382,7 +396,7 @@ if abs(wd_sh-wd)>200 || dis_sh(im)>2
             dep.time = dep.time(igood); dep.depthm = dep.depthm(igood);
             pos.time = pos.time(igood); pos.lat = pos.lat(igood); pos.lon = pos.lon(igood);
             [wd_sh, dis_sh, im] = shipdep(pos, dep, APlon, APlat);
-            fprintf(1,'Depth at closest ship track (with good depth) to anchor position was %6.1f m (%6.1f nm away)\n',wd_sh,dis_sh(im));
+            fprintf(1,'Uncorrected depth at closest ship track (with good depth) to anchor position was %6.1f m (%6.1f m away)\n',wd_sh,dis_sh(im));
         end
     elseif strcmp(a,'s')
         fprintf(1,'zoom if necessary then press enter\n'); pause
@@ -390,8 +404,8 @@ if abs(wd_sh-wd)>200 || dis_sh(im)>2
         [x,y] = ginput(1);
         if ~isempty(x)
             [wd_sh,~,im] = shipdep(pos, dep, x, y);
-            dnew = sw_dist([pos.lat(im) APlat],[pos.lon(im) APlon]);
-            fprintf(1,'Depth at chosen ship track point was %6.1f m (%6.1f nm away)\n',wd_sh,dnew);
+            dnew = gsw_distance([pos.lon(im) APlon],[pos.lat(im) APlat]);
+            fprintf(1,'Depth at chosen ship track point was %6.1f m (%6.1f m away)\n',wd_sh,dnew);
         end
     end
 end
@@ -422,6 +436,9 @@ function [pos, dep] = get_uway(t_range)
 % load nav and depth data, interpolate depth to nav times, 
 % subsample to 30 s
 
+origState = warning('off', 'all');
+cleanupObj = onCleanup(@() warning(oldState));
+
 global MEXEC_G
 
 %where to get position and uncorrected (singlebeam) depth on this ship
@@ -431,7 +448,7 @@ if exist('default_navstream','var')
     nav_stream = default_navstream;
 else
     nav_stream = {'techsas' 'cnav'; 'scs' 'posfur'; 'rvdas' 'posmv_gpgga'};
-    nav_stream = nav_stream(strcmp(MEXEC_G.Mshipdatasystem,nav_stream(:,1)),2);
+    nav_stream = nav_stream{strcmp(MEXEC_G.Mshipdatasystem,nav_stream(:,1)),2};
 end
 
 dv1 = datevec(t_range(1));
@@ -508,9 +525,9 @@ fprintf(1,'%s',swtx)
 function [wd_sh,dis_sh,im] = shipdep(pos, dep, APlon, APlat)
 
 dy = [pos.lat repmat(APlat,size(pos.lat))]'; dx = [pos.lon repmat(APlon,size(pos.lon))]';
-dis_sh = sw_dist(dy(:),dx(:)); dis_sh = dis_sh(1:2:end);
+dis_sh = gsw_distance(dx(:),dy(:)); dis_sh = dis_sh(1:2:end);
 
-m = dis_sh<5; 
+m = dis_sh<5000; 
 dis_sh = dis_sh(m); 
 pos.lon = pos.lon(m); pos.lat = pos.lat(m); pos.time = pos.time(m);
 dep.time = dep.time(m); dep.depthm = dep.depthm(m);
