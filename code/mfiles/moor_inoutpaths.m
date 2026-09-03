@@ -47,7 +47,9 @@ switch datatype
         pd.stage1form = ['cast' cast '_%4.4d.raw'];
         pd.stage1log = fullfile(pd.stage1path,'microcat2rodb.log');
         pd.stage1fig = fullfile(mg.reportdir,'datareports','figs','caldip');
-        pd.ctdfile = fullfile(mg.ctddatadir,sprintf('ctd_%s_%03d_psal.nc',mg.cruise_ctd,castn));
+        %pd.ctdfile =
+        %fullfile(mg.ctddatadir,sprintf('ctd_%s_%03d_psal.nc',mg.cruise_ctd,castn)); %for when have calibrated CTD data - which is unlikely when looking at cal dips on cruise
+        pd.ctdfile = fullfile(mg.ctddatadir,sprintf('ctd_%s_%03d_cnv.nc',mg.cruise_ctd,castn)); % for raw ctd data on cruise (previously called ctd_%s_%03d_raw.nc)
         pd.stage2path = fullfile(mg.moordatadir, 'proc_calib'); %***
         pd.stage2fig = fullfile(mg.reportdir,'datareports','figs','caldip',['microcat_check_cast_' cast '_plot']);
         pd.stage2log = fullfile(mg.reportdir,'datareports','stats','caldip',['microcat_check' cast '.log']);
