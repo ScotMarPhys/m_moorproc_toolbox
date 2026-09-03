@@ -534,15 +534,15 @@ for k = 1:nplots
     elseif k == 2
         ylabel('Cond.')
         fprintf(fidlog,'Median Conductivity %5.2f\n',mt);
-    elseif k == 3
+    elseif k == 3 
         ylabel('Press.')
         fprintf(fidlog,'Median Pressure %5.2f\n',mt);
     elseif k == 4
-        ylabel('Oxy Temp.')
-        fprintf(fidlog,'Median Oxygen Temperature %5.2f\n',mt);
-    elseif k == 5
         ylabel('Oxygen')
         fprintf(fidlog,'Median Oxygen %5.2f\n',mt);
+    elseif k == 5
+        ylabel('Oxy Temp.')
+        fprintf(fidlog,'Median Oxygen Temperature %5.2f\n',mt);
     elseif k == 6
         ylabel('Pha shif.')
         fprintf(fidlog,'Median Oxygen Phase Shift %5.3f\n',mt);
