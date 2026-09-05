@@ -57,7 +57,7 @@ id     = id(zx);
 
 
 
-fid_stat = fopen(pd.stage2log,'w');
+fid_stat = fopen(pd.stage2log,'a'); % changed append so don't inadvertently overwrite log of processing already completed!
 
 fprintf(fid_stat,'Processing steps taken by %s:\n',mfilename);
 fprintf(fid_stat,'  1. eliminate lauching and recovery period\n');
