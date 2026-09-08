@@ -229,17 +229,17 @@ if iiS4>0
        disp('*************************************************************')
 
        if isunix
-           infile = [procpath,moor,'/s4/',moor,'_',sprintf('%4.4d',vecS4(i)),'.use'];
+           infile = [pd.stage1path,'/',moor,'_',sprintf('%4.4d',vecS4(i)),'.use'];
            outfile = ['./',moor,'_',sprintf('%4.4d',vecS4(i)),'.edt'];
            logfile = ['./',moor,'_',sprintf('%4.4d',vecS4(i)),'.edt.txt'];
            outfile1 = ['./',moor,'_',sprintf('%4.4d',vecS4(i)),'.high_edt'];
            logfile1 = ['./',moor,'_',sprintf('%4.4d',vecS4(i)),'.high_edt.txt'];
        elseif ispc
-           infile = [procpath,moor,'\s4\',moor,'_',sprintf('%4.4d',vecS4(i)),'.use'];
+           infile = [pd.stage1path,'\',moor,'_',sprintf('%4.4d',vecS4(i)),'.use'];
            outfile = ['.\',moor,'_',sprintf('%4.4d',vecS4(i)),'.edt'];
            logfile = ['.\',moor,'_',sprintf('%4.4d',vecS4(i)),'.edt.txt'];
-           outfile1 = ['./',moor,'_',sprintf('%4.4d',vecS4(i)),'.high_edt'];
-           logfile1 = ['./',moor,'_',sprintf('%4.4d',vecS4(i)),'.high_edt.txt'];
+           outfile1 = ['.\',moor,'_',sprintf('%4.4d',vecS4(i)),'.high_edt'];
+           logfile1 = ['.\',moor,'_',sprintf('%4.4d',vecS4(i)),'.high_edt.txt'];
        end
 
        % read data into vectors and then into structure array if wanted
@@ -472,17 +472,17 @@ if iiRCM11>0
        disp('*************************************************************')
 
        if isunix
-           infile = [procpath,moor,'/rcm/',moor,'_',sprintf('%3.3d',vecRCM11(i)),'.use'];
+           infile = [pd.stage1path,'/',moor,'_',sprintf('%3.3d',vecRCM11(i)),'.use'];
            outfile = ['./',moor,'_',sprintf('%3.3d',vecRCM11(i)),'.edt'];
            logfile = ['./',moor,'_',sprintf('%3.3d',vecRCM11(i)),'.edt.txt'];
            outfile1 = ['./',moor,'_',sprintf('%3.3d',vecRCM11(i)),'.high_edt'];
            logfile1 = ['./',moor,'_',sprintf('%3.3d',vecRCM11(i)),'.high_edt.txt'];
        elseif ispc
-           infile = [procpath,moor,'\rcm\',moor,'_',sprintf('%3.3d',vecRCM11(i)),'.use'];
+           infile = [pd.stage1path,'\',moor,'_',sprintf('%3.3d',vecRCM11(i)),'.use'];
            outfile = ['.\',moor,'_',sprintf('%3.3d',vecRCM11(i)),'.edt'];
            logfile = ['.\',moor,'_',sprintf('%3.3d',vecRCM11(i)),'.edt.txt'];
-           outfile1 = ['./',moor,'_',sprintf('%3.3d',vecRCM11(i)),'.high_edt'];
-           logfile1 = ['./',moor,'_',sprintf('%3.3d',vecRCM11(i)),'.high_edt.txt'];
+           outfile1 = ['.\',moor,'_',sprintf('%3.3d',vecRCM11(i)),'.high_edt'];
+           logfile1 = ['.\',moor,'_',sprintf('%3.3d',vecRCM11(i)),'.high_edt.txt'];
        end
 
        % read data into vectors and then into structure array if required
@@ -832,7 +832,8 @@ if iiNOR>0
        mcat_choice=input('Do you want to use nearby microcat data to correct the speed of sound?   y/n ','s');
        if strcmp(mcat_choice,'y')   
 		 mcat_number=input('Enter the serial number of the microcat you want to use ','s');
-		 infilemc = [procpath,moor,'/microcat/',moor,'_',mcat_number,'.use'];
+		 %infilemc = [procpath,moor,'/microcat/',moor,'_',mcat_number,'.use'];
+		 infilemc = [pd.stage1path,'/../microcat/',moor,'_',mcat_number,'.use'];
 		 [yymc,mmmc,ddmc,hhmc,tmc,cmc,pmc] = rodbload(infilemc,'yy:mm:dd:hh:t:c:p');
 		 jdmc=julian(yymc,mmmc,ddmc,hhmc);		
 		 smc =sw_salt(cmc/sw_c3515,tmc,pmc);
@@ -1242,14 +1243,18 @@ if iiADCP>0
        
        outpath  = pd.stage1path;
        outfileflag=[moor '_' num2str(vecADCP(i)) '_pg1pg4'];
-       matpgfourfile = fullfile(outpath,[outfileflag '_manualflag.mat']);
-       if exist(matpgfourfile)==2
-        ierase=input('\n A mat file with the good data bin domain exists, do you want to load it ? y/n:  ','s');
-          if (strcmp(ierase,'y')||strcmp(ierase,'Y')||strcmp(ierase,'yes')||strcmp(ierase,'Yes')||strcmp(ierase,'YES'))
-            manualflag = load(matpgfourfile);
-          end
-       end
+
+       % TESTING REMOVING USE OF MANUAL FLAG OPERATION
+       % matpgfourfile = fullfile(outpath,[outfileflag '_manualflag.mat']);
+       % if exist(matpgfourfile)==2
+       %  ierase=input('\n A mat file with the good data bin domain exists, do you want to load it ? y/n:  ','s');
+       %    if (strcmp(ierase,'y')||strcmp(ierase,'Y')||strcmp(ierase,'yes')||strcmp(ierase,'Yes')||strcmp(ierase,'YES'))
+       %      manualflag = load(matpgfourfile);
+       %    end
+       % end
+
        % ask for operator's input of fixed salinity value
+
        s_old = input('What was the fixed value of salinity used when the instrument was setup? ');
        use_c=input('What value to use for fixed salinity (in PSU) for speed of sound correction? ');
        
@@ -1310,18 +1315,21 @@ if iiADCP>0
 
        p = sw_pres(z,lat);
     
-       if exist('manualflag','var')==1 
-            datevecmflag = datevec(manualflag.mtime);
-            if datevecmflag(:,1)>1900
-                timemflag = julian(datevecmflag(:,1),datevecmflag(:,2),datevecmflag(:,3),datevecmflag(:,4)+datevecmflag(:,5)/60);
-            else
-                 timemflag = julian(datevecmflag(:,1)+2000,datevecmflag(:,2),datevecmflag(:,3),datevecmflag(:,4)+datevecmflag(:,5)/60);        
-            end
-            baddata = logical(interp1(timemflag,double(manualflag.ibaddata(j,:)),jd,'nearest'));
-            u(baddata)=NaN;
-            v(baddata)=NaN;
-            w(baddata)=NaN;           
-       end
+       % commented out call to read_flag_raw_adcp.m in process_adcps.m as
+       % it was very clunky and I don't think it's needed if using the TRDI
+       % QC flags.
+       % if exist('manualflag','var')==1 
+       %      datevecmflag = datevec(manualflag.mtime);
+       %      if datevecmflag(:,1)>1900
+       %          timemflag = julian(datevecmflag(:,1),datevecmflag(:,2),datevecmflag(:,3),datevecmflag(:,4)+datevecmflag(:,5)/60);
+       %      else
+       %           timemflag = julian(datevecmflag(:,1)+2000,datevecmflag(:,2),datevecmflag(:,3),datevecmflag(:,4)+datevecmflag(:,5)/60);        
+       %      end
+       %      baddata = logical(interp1(timemflag,double(manualflag.ibaddata(j,:)),jd,'nearest'));
+       %      u(baddata)=NaN;
+       %      v(baddata)=NaN;
+       %      w(baddata)=NaN;           
+       % end
 
        
        if pgoodselec==1
@@ -1339,7 +1347,9 @@ if iiADCP>0
            end
        end
        
-       % remove obvious outlier: > 2m.s-1
+       % remove obvious outlier: > 2m.s-1 
+       
+       % Is this not a little low? Ok for OSNAP and probably RAPID, but could be future deployments in stronger currents
        u(abs(u)>200) = nan;
        v(abs(v)>200) = nan;       
        
@@ -1352,6 +1362,21 @@ if iiADCP>0
        %%
        % CORRECT FOR SOUND VELOCITY OF SEAWATER
 
+        % first remap bin depths using remap_bins_for_sos.m that used to be
+        % called in adcp2rodb_01.m
+        remap_bins=input('\nDo you want to remap the ADCP bin depths using a different speed of sound? \n   y/n:  ','s');
+        %     remap_bins ='n';
+        if (strcmp(remap_bins,'y')||strcmp(remap_bins,'Y')||strcmp(remap_bins,'yes')||strcmp(remap_bins,'Yes')||strcmp(remap_bins,'YES'))
+            [new_bin_mids, sos_source]=remap_bins_for_sos(z,p,lat,t,'use_adcpT_fixedS',use_c); %calls sub-function with series of pressure if ADCP has P sensor
+            new_bin_mids=sw_pres(new_bin_mids,lat); % convert depths back to pressure for saving with rodb files
+            new_bin_mids=new_bin_mids';
+            z=new_bin_mids; % reassign to original bin depth to continue
+            NEED TO THINK ABOUT THIS. .use files have mid-depth of bins, but if changing that need
+            to take into account whether ADCP is upward or downward looking.
+            fprintf(logfid,'Bins remapped for changes in speed of sound using: %s\n',sos_source);
+        end
+                     
+            
        if j==1 | ~exist('corfac','var') % calculation of the corrected speed of sound for the 1st bin at the transducer depth. 
            % If there are no data available for the 1st bin, calculate it
            % for next good bin
@@ -1750,22 +1775,22 @@ if iiARG>0
        disp('*************************************************************')
 
        if isunix
-           infile = [procpath,moor,'/arg/',moor,'_',sprintf('%3.3d',vecARG(i)),'.use'];
+           infile = [pd.stage1path,'/',moor,'_',sprintf('%3.3d',vecARG(i)),'.use'];
            outfile = ['./',moor,'_',sprintf('%3.3d',vecARG(i)),'.edt'];
            logfile = ['./',moor,'_',sprintf('%3.3d',vecARG(i)),'.edt.txt'];
            outfile1 = ['./',moor,'_',sprintf('%3.3d',vecARG(i)),'.high_edt'];
            logfile1 = ['./',moor,'_',sprintf('%3.3d',vecARG(i)),'.high_edt.txt'];
            if exist(infile)==0  % older Arg files had 4 digit serial number starting with zero in filename
-               infile = [procpath,moor,'/arg/',moor,'_0',sprintf('%3.3d',vecARG(i)),'.use'];
+               infile = [pd.stage1path,'/',moor,'_0',sprintf('%3.3d',vecARG(i)),'.use'];
            end
        elseif ispc
-           infile = [procpath,moor,'\arg\',moor,'_',sprintf('%3.3d',vecARG(i)),'.use'];
+           infile = [pd.stage1path,'\',moor,'_',sprintf('%3.3d',vecARG(i)),'.use'];
            outfile = ['.\',moor,'_',sprtinf('%3.3d',vecARG(i)),'.edt'];
            logfile = ['.\',moor,'_',sprtinf('%3.3d',vecARG(i)),'.edt.txt'];
            outfile1 = ['./',moor,'_',sprintf('%3.3d',vecARG(i)),'.high_edt'];
            logfile1 = ['./',moor,'_',sprintf('%3.3d',vecARG(i)),'.high_edt.txt'];
            if exist(infile)==0  % older Arg files had 4 digit serial number starting with zero in filename
-               infile = [procpath,moor,'\arg\',moor,'_0',sprtinf('%3.3d',vecARG(i)),'.use'];
+               infile = [pd.stage1path,'/',moor,'_0',sprtinf('%3.3d',vecARG(i)),'.use'];
            end
        end
 
@@ -2085,17 +2110,17 @@ if iiSEAGRD>0
        disp('*************************************************************')
 
        if isunix
-           infile = [procpath,moor,'/seaguard/',moor,'_',sprintf('%3.3d',vecSEAGRD(i)),'.use'];
+           infile = [pd.stage1path,'/',moor,'_',sprintf('%3.3d',vecSEAGRD(i)),'.use'];
            outfile = ['./',moor,'_',sprintf('%3.3d',vecSEAGRD(i)),'.edt'];
            logfile = ['./',moor,'_',sprintf('%3.3d',vecSEAGRD(i)),'.edt.txt'];
            outfile1 = ['./',moor,'_',sprintf('%3.3d',vecSEAGRD(i)),'.high_edt'];
            logfile1 = ['./',moor,'_',sprintf('%3.3d',vecSEAGRD(i)),'.high_edt.txt'];
        elseif ispc
-           infile = [procpath,moor,'\seaguard\',moor,'_',sprintf('%3.3d',vecSEAGRD(i)),'.use'];
+           infile = [pd.stage1path,'\',moor,'_',sprintf('%3.3d',vecSEAGRD(i)),'.use'];
            outfile = ['.\',moor,'_',sprintf('%3.3d',vecSEAGRD(i)),'.edt'];
            logfile = ['.\',moor,'_',sprintf('%3.3d',vecSEAGRD(i)),'.edt.txt'];
-           outfile1 = ['./',moor,'_',sprintf('%3.3d',vecSEAGRD(i)),'.high_edt'];
-           logfile1 = ['./',moor,'_',sprintf('%3.3d',vecSEAGRD(i)),'.high_edt.txt'];
+           outfile1 = ['.\',moor,'_',sprintf('%3.3d',vecSEAGRD(i)),'.high_edt'];
+           logfile1 = ['.\',moor,'_',sprintf('%3.3d',vecSEAGRD(i)),'.high_edt.txt'];
        end
 
        % read data into vectors and then into structure array if required
