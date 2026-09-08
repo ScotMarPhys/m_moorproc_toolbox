@@ -14,7 +14,10 @@ pd = moor_inoutpaths('adcp',moor);
 display('Starting stage 1 adcp2rodb_01')
 
 % Flag bad data 
-read_flag_raw_adcp(moor,pd)
+%read_flag_raw_adcp(moor,pd)
+% don't think this is actually needed as when used in stage 3 processing
+% (cm_edit_NOCS_v4.m) the TRDI QC flags should be sufficient and not as
+% prone to errors as the manual flagging script
 
 % Stage 1 processing
 adcp2rodb_01(moor,pd)
