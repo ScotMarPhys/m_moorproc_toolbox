@@ -158,15 +158,15 @@ for i = 1:length(vec)
             return
         end
         
-        remap_bins=input('\nDo you want to remap the bin depths using a different speed of sound? \n   y/n:  ','s');
-    %     remap_bins ='n';
-        if (strcmp(remap_bins,'y')||strcmp(remap_bins,'Y')||strcmp(remap_bins,'yes')||strcmp(remap_bins,'Yes')||strcmp(remap_bins,'YES'))
-            remap_bins=1;
-            [new_bin_mids, sos_source]=remap_bins_for_sos(bin_depths_mid,p,lat,t); %calls sub-function with series of pressure if ADCP has P sensor
-            sw_lat2=zeros(size(new_bin_mids))+lat;
-            new_bin_mids=sw_pres(new_bin_mids,sw_lat2); % convert depths back to pressure for saving with rodb files
-            new_bin_mids=new_bin_mids';
-        end
+    %     remap_bins=input('\nDo you want to remap the bin depths using a different speed of sound? \n   y/n:  ','s');
+    % %     remap_bins ='n';
+    %     if (strcmp(remap_bins,'y')||strcmp(remap_bins,'Y')||strcmp(remap_bins,'yes')||strcmp(remap_bins,'Yes')||strcmp(remap_bins,'YES'))
+    %         remap_bins=1;
+    %         [new_bin_mids, sos_source]=remap_bins_for_sos(bin_depths_mid,p,lat,t); %calls sub-function with series of pressure if ADCP has P sensor
+    %         sw_lat2=zeros(size(new_bin_mids))+lat;
+    %         new_bin_mids=sw_pres(new_bin_mids,sw_lat2); % convert depths back to pressure for saving with rodb files
+    %         new_bin_mids=new_bin_mids';
+    %     end
         
     
         % ----- save data to rodb -----------------
@@ -177,14 +177,14 @@ for i = 1:length(vec)
     
             columns = 'YY:MM:DD:HH:Z:T:U:V:W:HDG:PIT:ROL:CS:CD:BEAM1SS:BEAM2SS:BEAM3SS:BEAM4SS:BEAM1COR:BEAM2COR:BEAM3COR:BEAM4COR:EV:BEAM1PGP:BEAM2PGP:BEAM3PGP:BEAM4PGP';
             fort =('%4.4d %2.2d %2.2d  %6.4f  %4.2f  %4.2f %4.1f %4.1f %4.1f  %4.2f %4.2f %4.2f  %4.1f  %4.1f  %3.0f %3.0f %3.0f %3.0f   %3.0f %3.0f %3.0f %3.0f  %4.1f  %3.0f %3.0f %3.0f %3.0f');
-            if remap_bins==1
-                if j==1
-                    fprintf(fidlog,'Bins remapped for changes in speed of sound using: %s\n',sos_source);
-                end
-                data = [dat depth+up_down*new_bin_mids(:,j) t u(:,j) v(:,j) w(:,j) heading pitch roll spd(:,j) dir(:,j) Amp1(:,j) Amp2(:,j) Amp3(:,j) Amp4(:,j) Beam1Cor(:,j) Beam2Cor(:,j) Beam3Cor(:,j) Beam4Cor(:,j) err(:,j) PG1(:,j) PG2(:,j) PG3(:,j) PG4(:,j)];
-            else
+            % if remap_bins==1
+            %     if j==1
+            %         fprintf(fidlog,'Bins remapped for changes in speed of sound using: %s\n',sos_source);
+            %     end
+            %     data = [dat depth+up_down*new_bin_mids(:,j) t u(:,j) v(:,j) w(:,j) heading pitch roll spd(:,j) dir(:,j) Amp1(:,j) Amp2(:,j) Amp3(:,j) Amp4(:,j) Beam1Cor(:,j) Beam2Cor(:,j) Beam3Cor(:,j) Beam4Cor(:,j) err(:,j) PG1(:,j) PG2(:,j) PG3(:,j) PG4(:,j)];
+            % else
                 data = [dat depth+up_down*bin_depths_mid(:,j) t u(:,j) v(:,j) w(:,j) heading pitch roll spd(:,j) dir(:,j) Amp1(:,j) Amp2(:,j) Amp3(:,j) Amp4(:,j) Beam1Cor(:,j) Beam2Cor(:,j) Beam3Cor(:,j) Beam4Cor(:,j) err(:,j) PG1(:,j) PG2(:,j) PG3(:,j) PG4(:,j)];
-            end
+            % end
             infovar = ['Mooring:Start_Time:Start_Date:End_Time:End_Date:Latitude:Longitude:WaterDepth:' ...
                        'Columns:SerialNumber:InstrDepth']; 
             rodbsave(outfile,infovar,fort,moor,s_t,s_d,e_t,e_d,lat,lon,wd,columns,...
