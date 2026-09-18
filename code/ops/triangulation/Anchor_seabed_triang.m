@@ -151,7 +151,7 @@ dptvlD = dptvl(1); dptvl = dptvl(2:end);
 
 % get ship position and depth on ship track between anchor drop and last
 % ranging
-[pos, dep] = get_uway([tmeD-0.1 max(tme)+0.1]);
+[pos, dep] = get_uway([tmeD-0.5 max(tme)+0.1]);
 
 % interpolate for positions
 latD = interp1(pos.time,pos.lat,tmeD);
