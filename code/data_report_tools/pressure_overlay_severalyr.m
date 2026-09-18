@@ -232,6 +232,9 @@ vecNOR = sn(iiNOR);
 iiSG = find(id == 301);
 vecSG = sn(iiSG);
 
+clear depths % need to reset in case subsequent moorings in severalyr have different number of sensors
+clear eval_string
+
 depths(:,1) = id([iiMC;iiRBR;iiIDR;iiS4;iiRCM11;iiARG;iiNOR;iiSG]);
 depths(:,2) = z([iiMC;iiRBR;iiIDR;iiS4;iiRCM11;iiARG;iiNOR;iiSG]);
 depths=sortrows(depths,2);
