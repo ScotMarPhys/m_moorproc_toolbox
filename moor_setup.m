@@ -190,4 +190,13 @@ switch pl
         MOORPROC_G.ctddatadir = fullfile(MOORPROC_G.cruisedir,'data','ctd');
         MOORPROC_G.reportdir = fullfile(MOORPROC_G.cruisedir,'report_tables');
         MOORPROC_G.moordatadir = fullfile(MOORPROC_G.basedir,'moorings');
+    case 'OSNAP_atsams'
+        if ~isfield(MOORPROC_G,'basedir')
+            MOORPROC_G.basedir = input('base data directory (e.g. /data/pstar/projects/[cruises,moorings, etc.], containing subdirectories cruises and moorings) ','s');
+        end
+        MOORPROC_G.cruisedir = fullfile(MOORPROC_G.basedir,'cruises',MOORPROC_G.cruise);
+        MOORPROC_G.ctddatadir = fullfile(MOORPROC_G.cruisedir,'data','ctd');
+        MOORPROC_G.reportdir = fullfile(MOORPROC_G.cruisedir,'report_tables');
+        MOORPROC_G.moordatadir = fullfile(MOORPROC_G.basedir,'moorings');
+
 end
