@@ -95,7 +95,7 @@ fprintf(1,'\n Loading CTD  and bottle data ...\n')
 fprintf(1,'\n loading MicroCAT data ... \n\n')
 ninst = length(instr);
 for mct = 1 : ninst
-    fname = sprintf('%s%4.4d%s',pd.mc_file,instr(mct),pd.mc_ext);
+    fname = sprintf('%s%4.4d.%s',pd.mc_file,instr(mct),pd.mc_ext);
     [yy,mm,dd,hh,p,t,c,s]  = rodbload(fname,'YY:MM:DD:HH:P:T:C:S');
     lyy                = length(yy);
     mc.datnum(1:lyy,mct) = datenum(yy,mm,dd,hh,0,0);
