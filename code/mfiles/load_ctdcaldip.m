@@ -111,7 +111,16 @@ switch pd.ctdformat
                     dat = ncread(pd.ctd1hz_file,varsload{vno});
                     ctd.(varsload{vno}) = dat(:);
                 end
-                dto = ncreadatt(pd.ctd1hz_file,'/','data_time_origin');
+                ncid = netcdf.open(pd.ctd1hz_file);
+                [~, ~, na, ~] = netcdf.inq(ncid);
+                gID = netcdf.getConstant("NC_GLOBAL");
+                n = 0; 
+                while n<na && ~exist('dto','var')
+                    if strcmp(netcdf.inqAttName(ncid,gID,n),'data_time_origin')
+                        dto = ncreadatt(pd.ctd1hz_file,'/','data_time_origin');
+                    end
+                    n = n+1;
+                end
                 if isempty(dto)
                     dto = datevec(replace(ncreadatt(pd.ctd1hz_file,'time','units'),'seconds since ',''));
                 end
