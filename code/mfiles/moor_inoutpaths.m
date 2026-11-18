@@ -206,7 +206,7 @@ end
 % (keep above defaults more readable)
 switch datatype
     case 'cal_coef'
-        defs = {'dy053' 'dy078' 'ar304' 'dy120' 'jc238' 'dy181'};
+        defs = {'dy053' 'dy078' 'ar304' 'dy120' 'jc238' 'dy181' 'dy214'};
         if ~ismember(mg.cruise,defs)
         %cruise, ctdformat, ctdcnv_cunit, ctd1hz_cunit, mc_cunit, mc_ext
         a = {'kn221-02' 'aoml' 'S/m' 'S/m' 'S/m' 'raw';...

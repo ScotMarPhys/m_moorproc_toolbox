@@ -222,7 +222,7 @@ elseif strcmp(p_insitucal.cruise,'dy120') & p_insitucal.cast == 10
     p_insitucal.dp_interval    = [-10 10];   
     p_insitucal.p_interval       = [0  3000];
     p_insitucal.average_interval = [1500 2950];% [1000 2150];
-if strcmp(p_insitucal.cruise,'jc238') & p_insitucal.cast == 1
+elseif strcmp(p_insitucal.cruise,'jc238') & p_insitucal.cast == 1
     p_insitucal.c_interval     = [-0.025 0.025]; 
     p_insitucal.t_interval     = [-.02 .02];
     p_insitucal.dp_interval    = [-10 10];   
@@ -325,6 +325,7 @@ else
     p_insitucal.p_interval       = [0  2000]; % plotting only
     p_insitucal.average_interval = [1000 2000];        
 end
+
     
 % % --- futhers parameters (unlikely to be changed) -------------------
 % if strcmp(p_insitucal.cruise,'kn221-03')  & p_insitucal.cast == 1 

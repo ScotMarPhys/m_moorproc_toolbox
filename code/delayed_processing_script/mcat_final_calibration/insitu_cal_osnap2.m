@@ -64,7 +64,7 @@ pd = moor_inoutpaths('cal_coef',calp.cast);
 %-------------------------------------
 
 % ----MicroCAT ID -----------
-[~,typ,instr,sn1] = rodbload(pd.info_file,'z:instrument:serialnumber:deployment');
+[~,typ,instr,sn1] = rodbload(pd.infofile,'z:instrument:serialnumber:deployment');
 m = (typ>=calp.sensor_id(1) & typ<=calp.sensor_id(end));
 instr = instr(m);
 sn1 = sn1(m);
