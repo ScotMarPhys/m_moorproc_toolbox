@@ -35,35 +35,38 @@ switch cruise
     otherwise,    error('Cruise ID "%s" not recognized in mapping.', cruise);
 end
 
-%% 2. Path Configuration by Computer
-pc_name = getenv('COMPUTERNAME');
-
-switch pc_name
-    case 'SA07KB-3JN9YY2'
-        basedir      = 'C:\Users\sa07kb\Projects\Moor_Data_Proc\';
-        pathgit      = fullfile(basedir, 'm_moorproc_toolbox');
-        dataindir    = fullfile(basedir, 'moor_examples\osnap\data\moor\proc\', moor, 'adcp_S55');
-        infofile     = fullfile(basedir, 'moor_examples\osnap\data\moor\proc\', moor, [moor 'info.dat']);
-        outdir       = dataindir;
-        toolbox_path = 'C:\Users\sa07kb\Matlab\toolboxes\gsw_matlab_v3_06_16';
-        filename     = '200044_data';
-        scotiafile = fullfile(basedir, 'moor_examples\osnap\scotia/SCOTIA_monthly_clim_V8.nc');
-    case 'SA01SJ-G9WC2J3'
-        basedir      = 'D:\Work_computer_sync\OSNAP_postdoc\Moorproc_toolbox\RHADCP\';
-        pathgit      = fullfile(basedir, 'm_moorproc_toolbox');    
-        dataindir    = fullfile(basedir, 'moor_examples\osnap\data\moor\proc', moor, 'adcp_s55');
-        infofile     = fullfile(basedir, 'moor_examples\osnap\data\moor\proc', moor, [moor 'info.dat']);
-        outdir       = dataindir;
-        toolbox_path = 'D:\Work_computer_sync\MATLAB_functions\gsw';
-        filename     = '200044_data';
-    otherwise
-        error('PC name "%s" not recognized. Add your paths to Section 2.', pc_name);
-end
-
-%% 3. Environment Setup and Execution
-addpath(genpath(fullfile(pathgit, 'exec', 'gitrepo')));
-addpath(genpath(toolbox_path));
-logfile = fullfile(outdir, [moor '_ADCP_stage2.log']);
+% %% 2. Path Configuration by Computer
+% 
+% if isempty(MOORPROC_G)
+%     pc_name = getenv('COMPUTERNAME');
+% 
+%     switch pc_name
+%         case 'SA07KB-3JN9YY2'
+%             basedir      = 'C:\Users\sa07kb\Projects\Moor_Data_Proc\';
+%             pathgit      = fullfile(basedir, 'm_moorproc_toolbox');
+%             dataindir    = fullfile(basedir, 'moor_examples\osnap\data\moor\proc\', moor, 'adcp_S55');
+%             infofile     = fullfile(basedir, 'moor_examples\osnap\data\moor\proc\', moor, [moor 'info.dat']);
+%             outdir       = dataindir;
+%             toolbox_path = 'C:\Users\sa07kb\Matlab\toolboxes\gsw_matlab_v3_06_16';
+%             filename     = '200044_data';
+%             scotiafile = fullfile(basedir, 'moor_examples\osnap\scotia/SCOTIA_monthly_clim_V8.nc');
+%         case 'SA01SJ-G9WC2J3'
+%             basedir      = 'D:\Work_computer_sync\OSNAP_postdoc\Moorproc_toolbox\RHADCP\';
+%             pathgit      = fullfile(basedir, 'm_moorproc_toolbox');    
+%             dataindir    = fullfile(basedir, 'moor_examples\osnap\data\moor\proc', moor, 'adcp_s55');
+%             infofile     = fullfile(basedir, 'moor_examples\osnap\data\moor\proc', moor, [moor 'info.dat']);
+%             outdir       = dataindir;
+%             toolbox_path = 'D:\Work_computer_sync\MATLAB_functions\gsw';
+%             filename     = '200044_data';
+%         otherwise
+%             error('PC name "%s" not recognized. Add your paths to Section 2.', pc_name);
+%     end
+% end
+% 
+% %% 3. Environment Setup and Execution
+% addpath(genpath(fullfile(pathgit, 'exec', 'gitrepo')));
+% addpath(genpath(toolbox_path));
+% logfile = fullfile(outdir, [moor '_ADCP_stage2.log']);
 
 if ~isempty(MOORPROC_G)
     % Standard toolbox execution
