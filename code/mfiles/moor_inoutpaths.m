@@ -153,7 +153,7 @@ switch datatype
         pd.coef_dir = fullfile(fp,'metadata','cal_coef',lower(mg.project));
         pd.mc_dir = fullfile(pd.datadir, 'proc_calib', mg.cruise, 'cal_dip','microcat');
         pd.ctd1hz_file = fullfile(mg.ctddatadir,sprintf('ctd_%s_%3.3d_psal.nc',mg.cruise,cast));
-     i   if ~exist(pd.ctd1hz_file,'file')
+        if ~exist(pd.ctd1hz_file,'file')
             pd.ctd1hz_file = fullfile(mg.ctddatadir,sprintf('ctd_%s_%3.3d_1hz.nc',mg.cruise,cast));
         end
         pd.ctdcnv_file = fullfile(mg.ctddatadir,'ASCII_FILES',sprintf('%s_CTD_%3.3d.cnv',upper(mg.cruise),cast));
