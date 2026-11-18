@@ -109,7 +109,7 @@ end
 %check directories at this stage
 n = 0;
 while n<4 && ~exist(MOORPROC_G.moordatadir,'dir')
-    c = input(sprintf('directory for mooring data, %s, not found\n; create (1), change setting (2), or skip(3)?  ',strrep(MOORPROC_G.moordatadir, filesep, '/')),'s');
+    c = input(sprintf('directory for mooring data, %s, not found\n; create (1), change setting (2), or skip(3)?  ',strrep(MOORPROC_G.moordatadir, filesep, '/')));
     if c==1
         mkdir(MOORPROC_G.moordatadir);
     elseif c==2
@@ -125,7 +125,7 @@ while n<4 && (~isfield(MOORPROC_G,'ctddatadir') || ~exist(MOORPROC_G.ctddatadir,
     if c==1
         mkdir(MOORPROC_G.ctddatadir);
     elseif c==2
-        MOORPROC_G.ctddatadir = input('directory for mooring data:    ','s');
+        MOORPROC_G.ctddatadir = input('directory for ctd data:    ','s');
     elseif c==3
         n = 6;
     end
