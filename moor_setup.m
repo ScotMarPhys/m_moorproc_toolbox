@@ -22,9 +22,6 @@ function moor_setup(varargin)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 global MEXEC_G MOORPROC_G
-if isempty(MOORPROC_G)
-    clear MOORPROC_G
-end
 
 %parameters input to function
 if nargin>0
@@ -44,10 +41,17 @@ addpath(genpath(fullfile(pathgit, 'code')))
 %cruise, cruise_ctd, YEAR, project, operator
 if isstruct(MEXEC_G)
     if ~isfield(MOORPROC_G,'cruise')
-        MOORPROC_G.cruise = MEXEC_G.MSCRIPT_CRUISE_STRING;
+        if isfield(MEXEC_G,'mcruise')
+            MOORPROC_G.cruise = MEXEC_G.mcruise;
+        else
+            MOORPROC_G.cruise = MEXEC_G.MSCRIPT_CRUISE_STRING;
+        end
     end
     if ~isfield(MOORPROC_G,'cruise_ctd')
-        MOORPROC_G.cruise_ctd = MEXEC_G.MSCRIPT_CRUISE_STRING;
+        MOORPROC_G.cruise_ctd = MOORPROC_G.cruise;
+    end
+    if ~isfield(MOORPROC_G,'location')
+        MOORPROC_G.location = replace(MEXEC_G.SITE,['_' MOORPROC_G.cruise],'');
     end
 else
     if ~isfield(MOORPROC_G,'cruise')
@@ -82,9 +86,7 @@ end
 % Define where to find the mooring and other data (formerly pathdata)
 dirs_req = {'ctddatadir', 'reportdir', 'moordatadir'};
 fn = fieldnames(MOORPROC_G);
-if isfield(MOORPROC_G,'basedir') && isempty(MOORPROC_G.basedir)
-    MOORPROC_G = rmfield(MOORPROC_G,'basedir');
-elseif sum(ismember(fn,dirs_req))<length(dirs_req)
+if ~isempty(setdiff(dirs_req,fn))
     MOORPROC_G = project_default_dirs(MOORPROC_G);
 end
 fn = fieldnames(MOORPROC_G);
@@ -176,7 +178,10 @@ switch pl
         MOORPROC_G.moordatadir = fullfile(MOORPROC_G.basedir,'rapid','data','moor');
     case 'RAPID_atsea'
         if ~isfield(MOORPROC_G,'basedir')
-            MOORPROC_G.basedir = input('base data directory (e.g. /data/pstar/projects/rpdmoc, containing subdirectories cruises and moorings) ','s');
+            MOORPROC_G.basedir = '/data/pstar/projects/rpdmoc';
+            if ~exist(MOORPROC_G.basedir,'dir')
+                MOORPROC_G.basedir = input('base data directory (e.g. /data/pstar/projects/rpdmoc, containing subdirectories cruises and moorings) ','s');
+            end
         end
         MOORPROC_G.cruisedir = fullfile(MOORPROC_G.basedir,'cruises',MOORPROC_G.cruise);
         MOORPROC_G.ctddatadir = fullfile(MOORPROC_G.cruisedir,'data','ctd');
@@ -184,7 +189,10 @@ switch pl
         MOORPROC_G.moordatadir = fullfile(MOORPROC_G.basedir,'moorings');
     case 'OSNAP_atsea'
         if ~isfield(MOORPROC_G,'basedir')
-            MOORPROC_G.basedir = input('base data directory (e.g. /data/pstar/projects/osnap, containing subdirectories cruises and moorings) ','s');
+            MOORPROC_G.basedir = '/data/pstar/projects/osnap';
+            if ~exist(MOORPROC_G.basedir,'dir')
+                MOORPROC_G.basedir = input('base data directory (e.g. /data/pstar/projects/osnap, containing subdirectories cruises and moorings) ','s');
+            end
         end
         MOORPROC_G.cruisedir = fullfile(MOORPROC_G.basedir,'cruises',MOORPROC_G.cruise);
         MOORPROC_G.ctddatadir = fullfile(MOORPROC_G.cruisedir,'data','ctd');
@@ -192,7 +200,15 @@ switch pl
         MOORPROC_G.moordatadir = fullfile(MOORPROC_G.basedir,'moorings');
     case 'OSNAP_atsams'
         if ~isfield(MOORPROC_G,'basedir')
-            MOORPROC_G.basedir = input('base data directory (e.g. /data/pstar/projects/[cruises,moorings, etc.], containing subdirectories cruises and moorings) ','s');
+            MOORPROC_G.basedir = input('base data directory (e.g. /data/pstar/projects/osnap, containing subdirectories cruises and moorings) ','s');
+        end
+        MOORPROC_G.cruisedir = fullfile(MOORPROC_G.basedir,'cruises',MOORPROC_G.cruise);
+        MOORPROC_G.ctddatadir = fullfile(MOORPROC_G.cruisedir,'data','ctd');
+        MOORPROC_G.reportdir = fullfile(MOORPROC_G.cruisedir,'report_tables');
+        MOORPROC_G.moordatadir = fullfile(MOORPROC_G.basedir,'moorings');
+    case 'OSNAP_atnoc'
+        if ~isfield(MOORPROC_G,'basedir')
+            MOORPROC_G.basedir = input('base data directory (e.g. /data/pstar/projects/osnap, containing subdirectories cruises and moorings) ','s');
         end
         MOORPROC_G.cruisedir = fullfile(MOORPROC_G.basedir,'cruises',MOORPROC_G.cruise);
         MOORPROC_G.ctddatadir = fullfile(MOORPROC_G.cruisedir,'data','ctd');

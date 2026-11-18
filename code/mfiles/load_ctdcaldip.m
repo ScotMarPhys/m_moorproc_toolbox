@@ -1,4 +1,4 @@
-function [ctd, varargout] = load_ctddata(pd, cast, sensorselec, cnv_time_correction,jd_mdn)
+function [ctd, varargout] = load_ctdcaldip(pd, cast, sensorselec, cnv_time_correction,jd_mdn)
 %
 % ctd = load_ctddata(pd, cast, sensorselect);
 % [ctd, bottle] = load_ctddata(pd, cast, sensorselect);
@@ -13,7 +13,7 @@ switch pd.ctdformat
 
     %%%%%%% AOML %%%%%%%
     case 'aoml'
-        load(pd.ctd_file)
+        load(pd.pd.ctd1hz_file)
         disp('aoml')
         switch mg.cruise
             case {'kn221-02','kn221-03'}
@@ -38,7 +38,7 @@ switch pd.ctdformat
                         ctd.temp  = cnv_cor_save(i).t190C;
                         ctd.press = cnv_cor_save(i).prDM;
 
-                        ctd_time_ori = julian([cnv_cor_save(i).gtime(1:3) 0]);
+                        ctd_time_ori = julian([cncor_save(i).gtime(1:3) 0]);
                         jul_day_frac = cnv_cor_save(i).timeJ - floor(cnv_cor_save(i).timeJ);
                         ctd.time = jul_day_frac + ctd_time_ori;
                         ctd.datnum = ctd.time-jd_mdn; ctd = rmfield(ctd,'time');
@@ -62,22 +62,20 @@ switch pd.ctdformat
 
     %%%%%%% PSTAR %%%%%%%
     case 'pstar'
-    pd.ctd_file
-    [ctd, h]  = pload(pd.ctd_file,'press temp cond time','silent');
+        pd.pd.ctd1hz_file
+        [ctd, h]  = pload(pd.pd.ctd1hz_file,'press temp cond time','silent');
 
-    year   = floor(h.iymd/10000);
-    month  = floor((h.iymd - year*10000)/100);
-    day    = h.iymd -year*10000 - month*100;
-    hour   = h.ihms;
+        year   = floor(h.iymd/10000);
+        month  = floor((h.iymd - year*10000)/100);
+        day    = h.iymd -year*10000 - month*100;
+        hour   = h.ihms;
 
-    ctd_time_ori = datenum(year+h.icent, month, day,hour,0,0);
-    ctd.datnum       = ctd.time/86400 + ctd_time_ori; % ctd time in datenum
-    ctd = rmfield(ctd,'time');
+        ctd_time_ori = datenum(year+h.icent, month, day,hour,0,0);
+        ctd.datnum       = ctd.time/86400 + ctd_time_ori; % ctd time in datenum
+        ctd = rmfield(ctd,'time');
 
     %%%%%%% MSTAR %%%%%%%
     case 'mstar'
-        ctd_file=pd.ctd1hz_file
-
         switch mg.cruise
             case {'d344','d359'}
                 dd  = netcdf(pd.ctd1hz_file); %,'press temp cond time','silent');
@@ -108,24 +106,17 @@ switch pd.ctdformat
                 ctd.datnum=datenum(h.data_time_origin)+ctd.time/86400;
                 ctd = rmfield(ctd,'time');
             otherwise
-                if MOORPROC_G.YEAR>=2024
-                    [ctd, h] = mload(pd.ctd1hz_file,'time','press','temp','cond',' ','q');
-                    ctd.datnum = m_commontime(ctd, 'time', h, 'datenum');
-                    ctd = rmfield(ctd,'time');
-                else
-                    dd  = netcdf(pd.ctd1hz_file); %,'press temp cond time','silent');
-                    d = struct('press',ncread(ctd_file,'press'),...
-                        'temp',ncread(ctd_file,'temp'),...
-                        'cond',ncread(ctd_file,'cond'),...
-                        'time',ncread(ctd_file,'time'));
-                    ctd.temp=ctd.temp(:);
-                    ctd.cond=ctd.cond(:);
-                    ctd.press=ctd.press(:);
-                    ctd.time=ctd.time(:);
-                    ctd_time_ori = datenum(dd.data_time_origin);
-                    ctd.datnum       = ctd.time/86400 + ctd_time_ori; % ctd time in datenum
-                    ctd = rmfield(ctd,'time');
+                varsload = {'time','press','temp','cond'};
+                for vno = 1:length(varsload)
+                    dat = ncread(pd.ctd1hz_file,varsload{vno});
+                    ctd.(varsload{vno}) = dat(:);
                 end
+                dto = ncreadatt(pd.ctd1hz_file,'/','data_time_origin');
+                if isempty(dto)
+                    dto = datevec(replace(ncreadatt(pd.ctd1hz_file,'time','units'),'seconds since ',''));
+                end
+                ctd.datenum = ctd.time/86400 + datenum(dto);
+                ctd = rmfield(ctd,'time');
         end
 
 end
