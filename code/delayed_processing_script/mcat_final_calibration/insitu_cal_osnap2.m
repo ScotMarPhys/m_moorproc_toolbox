@@ -171,11 +171,13 @@ dwit_mc   = (wit_mc_mdn - start_mc_mdn)*24*3600;
 m = (dwit_mc > 60);   % only consider mc with impact time > 60 for others
 % may have started after surface impact
 impact_offset =  wit_ctd_mdn - wit_mc_mdn; % individual impact time offsets ctd - mc
+calp.impact_offset = impact_offset;
 if sum(m)
     offset    = wit_ctd_mdn -  median(wit_mc_mdn(m));   % decimal days
 else
     offset = 0;
 end
+calp.offset = offset;
 [ohms(1),ohms(2),ohms(3)] = s2hms(offset*24*3600);
 [oh,om,os] = s2hms(impact_offset*86400);
 fprintf(1,'\n Time offset of MicroCATs rel. to CTD:\n\n')

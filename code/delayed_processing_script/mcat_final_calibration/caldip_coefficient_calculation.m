@@ -318,6 +318,42 @@ elseif strcmp(p_insitucal.cruise,'dy181') & p_insitucal.cast == 76
     p_insitucal.dp_interval    = [-10 10];   
     p_insitucal.p_interval       = [0 3000];
     p_insitucal.average_interval = [1500 3100];% [1000 2150];
+elseif strcmp(p_insitucal.cruise,'dy214') & p_insitucal.cast == 3
+    p_insitucal.c_interval     = [-0.03 0.07]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0 2500];
+    p_insitucal.average_interval = [1500 3100];% [1000 2150];
+elseif strcmp(p_insitucal.cruise,'dy214') & p_insitucal.cast == 4
+    p_insitucal.c_interval     = [-0.03 0.06]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0 2500];
+    p_insitucal.average_interval = [900 1700];% [1000 2150];
+elseif strcmp(p_insitucal.cruise,'dy214') & p_insitucal.cast == 42
+    p_insitucal.c_interval     = [-0.03 0.06]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0 3100];
+    p_insitucal.average_interval = [1250 3000];% [1000 2150];
+elseif strcmp(p_insitucal.cruise,'dy214') & p_insitucal.cast == 48
+    p_insitucal.c_interval     = [-0.03 0.06]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0 3100];
+    p_insitucal.average_interval = [1500 3000];% [1000 2150];
+elseif strcmp(p_insitucal.cruise,'dy214') & p_insitucal.cast == 49
+    p_insitucal.c_interval     = [-0.03 0.06]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0 600];
+    p_insitucal.average_interval = [200 600];% [1000 2150];
+elseif strcmp(p_insitucal.cruise,'dy214') & p_insitucal.cast == 50
+    p_insitucal.c_interval     = [-0.03 0.06]; 
+    p_insitucal.t_interval     = [-.02 .02];
+    p_insitucal.dp_interval    = [-10 10];   
+    p_insitucal.p_interval       = [0 1200];
+    p_insitucal.average_interval = [500 1200];% [1000 2150];
 else
     p_insitucal.c_interval     = [-0.025 0.025]; % plotting only
     p_insitucal.t_interval     = [-.02 .02]; % plotting only
