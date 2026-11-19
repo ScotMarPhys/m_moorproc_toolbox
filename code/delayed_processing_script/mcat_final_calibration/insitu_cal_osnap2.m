@@ -349,7 +349,7 @@ print([figname '.png'],'-dpng')
 
 set(0,'currentfigure',figure(2))
 orient landscape
-print([figname '.ps'],'-dpsc')
+print([figname '.ps'],'-depsc')
 
 
 if ~isempty(pproblem)

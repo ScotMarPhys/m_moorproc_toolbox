@@ -63,9 +63,12 @@ while 1
   name =  ['name ',num2str(i-1)];
   ln   = length(name);
   a = findstr(zeile,name); 
+  
   if isempty(a)
     break
   end
+
+  a = a(1); % otherwise name 1 also returns name 10, etc.
 
   for  j = 1 : size(vars,1)
     varstr =   zeile(a+ln+3:a+ln+4);
