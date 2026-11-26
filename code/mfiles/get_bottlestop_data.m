@@ -23,7 +23,7 @@ else
     bst2 = [1; find(diff(bottle.p)<-calp.bottlestop_dpmin)+1];
     bot_start = bottle.datnum(bst2);
     nstop = length(bot_start);
-    bstp = round(bottle.p)
+    bstp = round(bottle.p(bst2));
 end
 
 if strcmp(calp.apply_offset,'y')
